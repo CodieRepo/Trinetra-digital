@@ -1,35 +1,49 @@
-import Cursor from "./components/Cursor";
-import SmoothScroll from "./components/SmoothScroll";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
-import Services from "./components/Services";
+import TrustBar from "./components/TrustBar";
+import TheProblem from "./components/TheProblem";
+import TheSystem from "./components/TheSystem";
 import Workflow from "./components/Workflow";
-import Dashboard from "./components/Dashboard";
-import Pricing from "./components/Pricing";
+import Services from "./components/Services";
 import Testimonials from "./components/Testimonials";
+import Pricing from "./components/Pricing";
 import FinalCTA from "./components/FinalCTA";
 import WhatsAppFloat from "./components/WhatsAppFloat";
 
 export default function App() {
   return (
-    <div className="bg-[#03060c] text-white antialiased selection:bg-cyan-300 selection:text-slate-900">
-      {/* Global systems */}
-      <SmoothScroll />
-      <Cursor />
-
-      {/* Navigation */}
+    <div className="bg-[#F9F8F5] text-[#18170F] antialiased selection:bg-[#BF7340]/25 selection:text-[#18170F]">
+      {/* Section 0: Sticky Navigation */}
       <Navbar />
 
-      {/* Page sections */}
+      {/* Section 1: Hero */}
       <Hero />
-      <Services />
+
+      {/* Section 2: Industry Trust Marquee */}
+      <TrustBar />
+
+      {/* Section 3: The Manual Problem Case */}
+      <TheProblem />
+
+      {/* Section 4: The Trinetra System Solution tabbed layout */}
+      <TheSystem />
+
+      {/* Section 5: The Process Steps */}
       <Workflow />
-      <Dashboard />
-      <Pricing />
+
+      {/* Section 6: Industry Fit Cards */}
+      <Services />
+
+      {/* Section 7: Key Metrics & Testimonial Carousel */}
       <Testimonials />
+
+      {/* Section 8: Interactive Pricing Switch */}
+      <Pricing />
+
+      {/* Section 9: Final Inverted CTA & Section 10: Footer */}
       <FinalCTA />
 
-      {/* Global floating CTA */}
+      {/* Global Floating Action Nudge */}
       <WhatsAppFloat />
     </div>
   );
