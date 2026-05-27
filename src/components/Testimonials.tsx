@@ -1,157 +1,201 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState, useRef } from "react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+
+// Count Up Helper Component
+function MetricCounter({ value, duration = 1.2 }: { value: string; duration?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, amount: 0.5 });
+  const [displayValue, setDisplayValue] = useState("0");
+
+  useEffect(() => {
+    if (!isInView) return;
+
+    // Parse the numbers and symbols
+    const numPart = parseFloat(value.replace(/[^0-9.]/g, "")) || 0;
+    const prefix = value.match(/^[^\d]*/)?.[0] || "";
+    const suffix = value.match(/[^\d.]*$/)?.[0] || "";
+    
+    let start = 0;
+    const end = numPart;
+    const isFloat = value.includes(".");
+    
+    let startTime: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+      
+      // easeOutExpo
+      const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      const current = start + easeProgress * (end - start);
+      
+      const formattedNumber = isFloat 
+        ? current.toFixed(1) 
+        : Math.floor(current).toString();
+
+      setDisplayValue(`${prefix}${formattedNumber}${suffix}`);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [isInView, value, duration]);
+
+  return <span ref={ref}>{displayValue}</span>;
+}
+
+const STATS = [
+  { value: "50+", label: "Businesses Automated" },
+  { value: "3.0x", label: "Lead Response Rate Increase" },
+  { value: "2m", label: "Average AI Reply Time" },
+];
 
 const TESTIMONIALS = [
   {
-    quote: "Their WhatsApp CRM flow reduced our lead response time from 3 hours to under 3 minutes. The AI qualification alone saved us 2 hours a day.",
-    name: "Arjun Malhotra",
+    quote: "We were losing 30% of leads just because nobody followed up. Trinetra fixed that in the first week. The AI now qualifies and schedules site visits autonomously.",
+    author: "Rajesh Kumar",
     role: "Founder",
-    company: "B2C Education Brand",
-    metric: "60× faster response",
+    company: "PropFinder Realty",
+    location: "Mumbai",
+    avatar: "R",
   },
   {
-    quote: "We replaced 5 manual tools with one intelligent pipeline. The sales team now focuses entirely on closing — everything else is automated.",
-    name: "Neha Shah",
-    role: "Director of Growth",
-    company: "Marketing Consultancy",
-    metric: "5 tools replaced",
+    quote: "OPD scheduling was causing a massive bottleneck. Connecting Trinetra to our hospital's WhatsApp number automated booking instantly and cut front-desk load in half.",
+    author: "Dr. Ananya Sen",
+    role: "Chief Medical Officer",
+    company: "Metro Care Clinics",
+    location: "Kolkata",
+    avatar: "A",
   },
   {
-    quote: "The custom workflow system gave us end-to-end visibility and automation we couldn't achieve with any off-the-shelf CRM. Truly custom-built.",
-    name: "Rohit Sinha",
-    role: "COO",
-    company: "Real Estate Advisory",
-    metric: "100% custom system",
-  },
-  {
-    quote: "Within 30 days of launch, our Instagram leads were fully automated — qualified, followed up, and handed off without any manual intervention.",
-    name: "Divya Rao",
-    role: "CEO",
-    company: "D2C Lifestyle Brand",
-    metric: "30-day full launch",
+    quote: "Our marketing spend went 2x further when we automated lead qualification. No cold lead gets skipped, and our sales reps only chat with vetted prospects.",
+    author: "Vikram Malhotra",
+    role: "Growth Director",
+    company: "Malhotra Academy",
+    location: "Delhi NCR",
+    avatar: "V",
   },
 ];
 
 export default function Testimonials() {
   const [active, setActive] = useState(0);
 
+  const prev = () => setActive((a) => (a - 1 + TESTIMONIALS.length) % TESTIMONIALS.length);
+  const next = () => setActive((a) => (a + 1) % TESTIMONIALS.length);
+
   return (
-    <section id="testimonials" className="relative overflow-hidden py-28">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_50%,rgba(34,211,238,0.04),transparent)]" />
+    <section id="testimonials" className="relative overflow-hidden bg-[#F9F8F5] py-20 md:py-28 border-b border-[#E2DDD5]">
+      <div className="main-container relative z-10">
+        
+        {/* Subsection A: Key Metrics */}
+        <div className="grid gap-6 md:grid-cols-3 mb-24 text-center">
+          {STATS.map((stat, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 0.5, delay: i * 0.12 }}
+              className="flex flex-col items-center justify-center p-6 border-r border-[#E2DDD5] last:border-r-0 md:border-r-1 md:border-b-0 border-b pb-8 last:pb-6 md:pb-6"
+            >
+              {/* Stat counter */}
+              <span className="font-display text-[56px] leading-none text-[#18170F] font-semibold mb-2">
+                {stat.value === "2m" ? (
+                  <>
+                    &lt; <MetricCounter value="2" /> min
+                  </>
+                ) : (
+                  <MetricCounter value={stat.value} />
+                )}
+              </span>
+              <span className="text-xs font-semibold tracking-wider text-[#5C5A52] uppercase font-interface">
+                {stat.label}
+              </span>
+            </motion.div>
+          ))}
+        </div>
 
-      <div className="relative mx-auto max-w-7xl px-6 md:px-10">
-        <div className="section-line mb-16" />
+        {/* Subsection B: Testimonials */}
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <span className="mixed-headline-eyebrow">
+              Proof of Impact
+            </span>
+            <h2 className="display-lg text-[#18170F] tracking-tight max-w-[620px] mx-auto">
+              Real infrastructure results, built for scale.
+            </h2>
+          </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-4 text-center"
-        >
-          <p className="mb-3 text-xs tracking-[0.25em] text-cyan-400/80">CLIENT OUTCOMES</p>
-          <h2 className="mx-auto max-w-3xl text-3xl font-medium tracking-tight text-white md:text-5xl">
-            Businesses That Moved Fast
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-slate-400">
-            Built with long-term reliability, conversion focus, and premium delivery standards.
-          </p>
-        </motion.div>
+          {/* Testimonial Card */}
+          <div className="relative">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={active}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.3 }}
+                className="relative rounded-2xl border border-[#E2DDD5] bg-[#F4F2ED] p-8 md:p-12 shadow-xs text-left"
+              >
+                {/* Large decorative quotation mark top-left */}
+                <span className="absolute top-4 left-6 font-display text-[84px] leading-none text-[#BF7340] opacity-15 select-none pointer-events-none font-semibold">
+                  “
+                </span>
 
-        {/* Featured testimonial */}
-        <motion.div
-          initial={{ opacity: 0, y: 32 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-14 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-[#0c1825]/90 to-[#070e1a]/90 p-px"
-        >
-          <div className="relative rounded-3xl p-8 md:p-12">
-            <div className="absolute inset-x-0 top-0 h-px shimmer-border rounded-t-3xl opacity-50" />
+                {/* Quote block text */}
+                <blockquote className="display-md text-[#18170F] font-medium leading-relaxed italic mb-8 relative z-10">
+                  {TESTIMONIALS[active].quote}
+                </blockquote>
 
-            <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
-              {/* Quote */}
-              <div>
-                <svg viewBox="0 0 40 32" className="mb-6 h-8 w-8 text-cyan-400/40" fill="currentColor">
-                  <path d="M0 32V20C0 8.533 6.4 2.133 19.2 0l2.4 4.8C16 6.4 13.067 10.133 12 16h8v16H0zm20 0V20C20 8.533 26.4 2.133 39.2 0l2.4 4.8C36 6.4 33.067 10.133 32 16h8v16H20z" />
-                </svg>
+                {/* Divider Line */}
+                <div className="w-full h-px bg-[#E2DDD5] mb-6" />
 
-                <AnimatePresence mode="wait">
-                  <motion.blockquote
-                    key={active}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -16 }}
-                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                    className="text-xl font-light leading-relaxed text-white md:text-2xl"
-                  >
-                    "{TESTIMONIALS[active].quote}"
-                  </motion.blockquote>
-                </AnimatePresence>
-
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`${active}-meta`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
-                    className="mt-8 flex items-center gap-4"
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-400/10 text-sm font-semibold text-cyan-300">
-                      {TESTIMONIALS[active].name.charAt(0)}
+                {/* Footer Details */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    {/* Minimal Avatar placeholder */}
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#BF7340]/10 text-sm font-bold text-[#BF7340]">
+                      {TESTIMONIALS[active].avatar}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-white">{TESTIMONIALS[active].name}</p>
-                      <p className="text-xs text-slate-400">{TESTIMONIALS[active].role} · {TESTIMONIALS[active].company}</p>
+                      <p className="text-sm font-bold text-[#18170F]">{TESTIMONIALS[active].author}</p>
+                      <p className="text-xs text-[#5C5A52]">
+                        {TESTIMONIALS[active].role} · {TESTIMONIALS[active].company}
+                      </p>
                     </div>
-                    <div className="ml-auto rounded-full border border-emerald-400/25 bg-emerald-400/8 px-4 py-1.5 text-xs font-medium text-emerald-300">
-                      {TESTIMONIALS[active].metric}
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
-
-                {/* Dots */}
-                <div className="mt-8 flex gap-2">
-                  {TESTIMONIALS.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActive(i)}
-                      data-hover
-                      className={`h-1.5 rounded-full transition-all duration-400 ${
-                        i === active ? "w-8 bg-cyan-400" : "w-1.5 bg-white/20 hover:bg-white/40"
-                      }`}
-                    />
-                  ))}
+                  </div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82] self-start sm:self-center">
+                    {TESTIMONIALS[active].location}
+                  </span>
                 </div>
-              </div>
 
-              {/* Side cards */}
-              <div className="space-y-3">
-                {TESTIMONIALS.map((t, i) => (
-                  <motion.button
-                    key={t.name}
-                    onClick={() => setActive(i)}
-                    data-hover
-                    whileHover={{ x: 4 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    className={`w-full rounded-xl border p-4 text-left transition-all duration-300 ${
-                      i === active
-                        ? "border-cyan-400/35 bg-cyan-400/8"
-                        : "border-white/8 bg-white/3 hover:border-white/15"
-                    }`}
-                  >
-                    <p className="text-xs font-semibold text-white">{t.name}</p>
-                    <p className="mt-0.5 text-[10px] text-slate-500">{t.role} · {t.company}</p>
-                    <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-slate-400">
-                      "{t.quote}"
-                    </p>
-                  </motion.button>
-                ))}
-              </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Slider Navigation Buttons */}
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={prev}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2DDD5] bg-[#FFFFFF] text-[#5C5A52] hover:bg-[#F4F2ED] hover:text-[#18170F] shadow-xs transition-colors duration-200"
+                aria-label="Previous testimonial"
+              >
+                <ArrowLeft size={16} />
+              </button>
+              <button
+                onClick={next}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2DDD5] bg-[#FFFFFF] text-[#5C5A52] hover:bg-[#F4F2ED] hover:text-[#18170F] shadow-xs transition-colors duration-200"
+                aria-label="Next testimonial"
+              >
+                <ArrowRight size={16} />
+              </button>
             </div>
           </div>
-        </motion.div>
+        </div>
+
       </div>
     </section>
   );

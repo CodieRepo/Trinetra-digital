@@ -1,18 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X } from "lucide-react";
 
 const WA_NUMBER = "919334757759";
-const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi! I'd like to know more about Trinetra Digital's automation services.")}`;
-
-const WA_ICON = (
-  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-current" aria-hidden="true">
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-  </svg>
-);
+const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi! I'd like to know more about Trinetra Digital's AI automation infrastructure.")}`;
 
 const links = [
-  { label: "Services", href: "#services" },
-  { label: "Workflow", href: "#workflow" },
+  { label: "Solutions", href: "#system" },
+  { label: "How It Works", href: "#process" },
+  { label: "Industries", href: "#industries" },
   { label: "Pricing", href: "#pricing" },
   { label: "Results", href: "#testimonials" },
 ];
@@ -22,38 +18,63 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 48);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 40);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
     <motion.header
-      initial={{ y: -24, opacity: 0 }}
+      initial={{ y: -12, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
+      transition={{ duration: 400 / 1000, ease: "easeOut", delay: 0.1 }}
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "glass border-b border-white/10 shadow-[0_8px_40px_rgba(0,0,0,0.6)]"
-          : "bg-transparent"
+          ? "bg-[#F9F8F5]/92 backdrop-blur-md border-b border-[#E2DDD5] shadow-sm"
+          : "bg-transparent border-b border-transparent"
       }`}
+      style={{ height: "60px" }}
     >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-10">
-        {/* Brand text */}
-        <a href="#" className="flex items-center gap-2.5 group" data-hover>
-          {/* Cyan accent mark */}
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-400/15 ring-1 ring-cyan-400/30 group-hover:bg-cyan-400/25 transition-all duration-300">
-            <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-              <path d="M10 3 C12.5 5.5 13.5 8 13.5 10.5 C12 9.8 11 9.5 10 9.5 C9 9.5 8 9.8 6.5 10.5 C6.5 8 7.5 5.5 10 3Z" stroke="#22d3ee" strokeWidth="1.2" fill="rgba(34,211,238,0.15)" strokeLinejoin="round"/>
-              <circle cx="10" cy="10.5" r="1.5" fill="#22d3ee"/>
-            </svg>
-          </span>
+      <nav className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-6 md:px-10">
+        {/* Brand Horizontal Compact Lockup */}
+        <a href="#" className="flex items-center gap-3 group transition-opacity duration-200 hover:opacity-90" aria-label="Trinetra Home">
+          {/* Custom Geometric Three-Eye Sanskrit Logomark */}
+          <svg
+            viewBox="0 0 32 32"
+            fill="none"
+            className="h-7 w-7 text-[#18170F]"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            {/* Minimalist central outer triangle */}
+            <polygon
+              points="16,3 3,27 29,27"
+              stroke="#18170F"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+            {/* Eye 3 (See Ahead): Top Node in Copper Accent */}
+            <circle cx="16" cy="11" r="2.5" fill="#BF7340" />
+            
+            {/* Eye 1 (See Everything): Bottom Left Node */}
+            <circle cx="11.5" cy="20.5" r="2" fill="#18170F" />
+            
+            {/* Eye 2 (See Patterns): Bottom Right Node */}
+            <circle cx="20.5" cy="20.5" r="2" fill="#18170F" />
+
+            {/* Connecting thin vector line representing nervous systems / patterns */}
+            <line x1="16" y1="11" x2="11.5" y2="20.5" stroke="#18170F" strokeWidth="1" strokeDasharray="1 1" />
+            <line x1="16" y1="11" x2="20.5" y2="20.5" stroke="#18170F" strokeWidth="1" strokeDasharray="1 1" />
+            <line x1="11.5" y1="20.5" x2="20.5" y2="20.5" stroke="#18170F" strokeWidth="1" strokeDasharray="1 1" />
+          </svg>
+          
           <div className="flex flex-col leading-none">
-            <span className="text-[15px] font-bold tracking-[0.2em] text-white group-hover:text-cyan-100 transition-colors duration-300">
+            <span className="text-[14px] font-semibold tracking-[0.2em] text-[#18170F] font-interface">
               TRINETRA
             </span>
-            <span className="text-[9px] tracking-[0.18em] text-cyan-400/70 mt-0.5">
-              DIGITAL SOLUTION
+            <span className="text-[8px] tracking-[0.15em] text-[#5C5A52] mt-0.5 uppercase font-interface font-medium">
+              Digital Solution
             </span>
           </div>
         </a>
@@ -64,106 +85,92 @@ export default function Navbar() {
             <a
               key={link.label}
               href={link.href}
-              data-hover
-              className="text-xs tracking-wider text-slate-300 transition-colors duration-300 hover:text-white"
+              className="text-xs font-medium tracking-[0.06em] text-[#5C5A52] hover:text-[#18170F] transition-colors duration-200"
             >
               {link.label}
             </a>
           ))}
         </div>
 
-        {/* CTA */}
-        <div className="flex items-center gap-3">
-          {/* Brand name — right side desktop */}
-          <div className="hidden items-center gap-2 border-r border-white/10 pr-4 mr-1 md:flex">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-cyan-400/15 ring-1 ring-cyan-400/25">
-              <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <path d="M10 3 C12.5 5.5 13.5 8 13.5 10.5 C12 9.8 11 9.5 10 9.5 C9 9.5 8 9.8 6.5 10.5 C6.5 8 7.5 5.5 10 3Z" stroke="#22d3ee" strokeWidth="1.2" fill="rgba(34,211,238,0.15)" strokeLinejoin="round"/>
-                <circle cx="10" cy="10.5" r="1.5" fill="#22d3ee"/>
-              </svg>
-            </span>
-            <div className="flex flex-col leading-none">
-              <span className="text-[11px] font-bold tracking-[0.18em] text-white">
-                TRINETRA
-              </span>
-              <span className="text-[8px] tracking-[0.15em] text-cyan-400/70">
-                DIGITAL SOLUTION
-              </span>
-            </div>
-          </div>
-          {/* WhatsApp quick-link */}
+        {/* Desktop CTA */}
+        <div className="hidden items-center gap-4 md:flex">
           <a
             href={WA_URL}
             target="_blank"
             rel="noopener noreferrer"
-            data-hover
-            aria-label="WhatsApp us"
-            className="hidden h-8 w-8 items-center justify-center rounded-full border border-[#25D366]/40 bg-[#25D366]/10 text-[#25D366] transition-all duration-300 hover:border-[#25D366]/70 hover:bg-[#25D366]/20 md:flex"
+            className="text-xs font-medium text-[#5C5A52] hover:text-[#18170F] transition-colors duration-200"
           >
-            {WA_ICON}
+            Talk to an Expert
           </a>
           <a
             href="#contact"
-            data-hover
-            className="hidden rounded-full border border-cyan-400/30 px-5 py-2 text-xs font-medium tracking-wide text-cyan-200 transition-all duration-300 hover:border-cyan-300/60 hover:bg-cyan-300/8 hover:text-white md:flex"
+            className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-sm bg-[#2A4A3E] px-4 text-[#F9F8F5] transition-all hover:bg-[#1E3630]"
+            style={{ height: "36px", padding: "0 16px", borderRadius: "8px" }}
           >
             Book Demo
           </a>
-          {/* Mobile toggle */}
-          <button
-            onClick={() => setOpen(!open)}
-            className="flex h-9 w-9 flex-col items-center justify-center gap-1.5 rounded-lg md:hidden"
-            data-hover
-            aria-label="Menu"
-          >
-            <span className={`block h-px w-5 bg-white transition-all duration-300 ${open ? "translate-y-2 rotate-45" : ""}`} />
-            <span className={`block h-px w-5 bg-white transition-all duration-300 ${open ? "opacity-0" : ""}`} />
-            <span className={`block h-px w-5 bg-white transition-all duration-300 ${open ? "-translate-y-2 -rotate-45" : ""}`} />
-          </button>
         </div>
+
+        {/* Mobile toggle */}
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#18170F] md:hidden focus:outline-none"
+          aria-label="Toggle menu"
+        >
+          {open ? <X size={20} /> : <Menu size={20} />}
+        </button>
       </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile Drawer Slide-in from right */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="glass overflow-hidden border-t border-white/8 md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 top-[60px] z-40 bg-[#18170F]/20 backdrop-blur-sm md:hidden"
+            onClick={() => setOpen(false)}
           >
-            <div className="flex flex-col gap-1 px-6 py-4">
-              {links.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  onClick={() => setOpen(false)}
-                  className="py-3 text-sm text-slate-200 transition hover:text-white"
-                >
-                  {link.label}
-                </a>
-              ))}
-              <div className="mt-2 flex flex-col gap-2">
-                <a
-                  href={WA_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center justify-center gap-2 rounded-full border border-[#25D366]/50 bg-[#25D366]/15 px-5 py-2.5 text-sm font-semibold text-[#25D366]"
-                >
-                  {WA_ICON}
-                  WhatsApp Us
-                </a>
-                <a
-                  href="#contact"
-                  onClick={() => setOpen(false)}
-                  className="rounded-full bg-cyan-300 px-5 py-2.5 text-center text-sm font-semibold text-slate-900"
-                >
-                  Book Demo
-                </a>
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+              className="absolute right-0 top-0 h-[calc(100vh-60px)] w-72 bg-[#F9F8F5] border-l border-[#E2DDD5] p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-col gap-5">
+                {links.map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className="border-b border-[#E2DDD5]/60 pb-3 text-sm font-medium tracking-wide text-[#5C5A52] hover:text-[#18170F] transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+                <div className="mt-4 flex flex-col gap-3">
+                  <a
+                    href={WA_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setOpen(false)}
+                    className="flex h-11 items-center justify-center rounded-lg border border-[#E2DDD5] bg-[#F4F2ED] text-xs font-semibold text-[#18170F] hover:bg-[#EEEAE3] transition-colors"
+                  >
+                    Chat on WhatsApp
+                  </a>
+                  <a
+                    href="#contact"
+                    onClick={() => setOpen(false)}
+                    className="btn-primary-forest flex h-11 items-center justify-center rounded-lg text-xs font-semibold uppercase tracking-wider text-[#F9F8F5]"
+                  >
+                    Book a Free Demo
+                  </a>
+                </div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
