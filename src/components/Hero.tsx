@@ -29,7 +29,13 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-[#F9F8F5] pt-[120px] pb-16 md:pt-[160px] md:pb-24">
+    <section
+      id="main-content"
+      aria-label="Hero — Trinetra AI WhatsApp Automation for Indian Businesses"
+      className="relative overflow-hidden bg-[#F9F8F5] pt-[120px] pb-16 md:pt-[160px] md:pb-24"
+      itemScope
+      itemType="https://schema.org/WebPageElement"
+    >
       {/* Structural visual quiet backdrop */}
       <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style={{
         backgroundImage: `radial-gradient(#BF7340 1px, transparent 1px)`,

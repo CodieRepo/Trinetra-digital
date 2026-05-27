@@ -12,7 +12,8 @@ export default function TheSystem() {
   const [activeTab, setActiveTab] = useState("whatsapp");
 
   return (
-    <section id="system" className="relative overflow-hidden bg-[#FAF5EF] py-20 md:py-28 border-b border-[#E2DDD5]">
+    <section id="system" aria-label="Trinetra AI Automation System — WhatsApp Automation, AI CRM, Smart Follow-Up" className="relative overflow-hidden bg-[#FAF5EF] py-20 md:py-28 border-b border-[#E2DDD5]">
+
       <div className="main-container relative z-10">
         
         {/* Header */}

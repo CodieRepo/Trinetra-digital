@@ -14,7 +14,8 @@ export default function Pricing() {
   const growthPrice = billing === "annual" ? "₹7,999" : "₹9,999";
 
   return (
-    <section id="pricing" className="relative overflow-hidden bg-[#F4F2ED] py-20 md:py-28 border-b border-[#E2DDD5]">
+    <section id="pricing" aria-label="Pricing Plans — AI Automation Infrastructure Packages" className="relative overflow-hidden bg-[#F4F2ED] py-20 md:py-28 border-b border-[#E2DDD5]">
+
       <div className="main-container relative z-10">
         
         {/* Header */}

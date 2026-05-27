@@ -36,7 +36,8 @@ const INDUSTRIES = [
 
 export default function Services() {
   return (
-    <section id="industries" className="relative overflow-hidden bg-[#F4F2ED] py-20 md:py-28 border-b border-[#E2DDD5]">
+    <section id="industries" aria-label="Industries Trinetra Serves — Healthcare, Real Estate, Coaching, Solar, Local Business" className="relative overflow-hidden bg-[#F4F2ED] py-20 md:py-28 border-b border-[#E2DDD5]">
+
       <div className="main-container relative z-10">
         
         {/* Header */}
