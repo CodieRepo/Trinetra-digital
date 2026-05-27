@@ -113,11 +113,12 @@ export default function Hero() {
           className="h-full w-full object-cover"
           aria-hidden="true"
         >
-          {/* MP4 first — universal browser support */}
+          {/* Primary: the main hero video file */}
+          <source src="/hero.mov" type="video/mp4" />
+          <source src="/HeroVideoNew.mov" type="video/mp4" />
+          {/* MP4 fallback */}
           <source src="/HeroNew.mp4" type="video/mp4" />
           <source src="/HeroVideo.mp4" type="video/mp4" />
-          {/* MOV fallback for Safari */}
-          <source src="/HeroVideoNew.mov" type="video/mp4" />
         </video>
         {/* Dark overlay to ensure readability */}
         <div className="absolute inset-0 bg-[#04070f]/80" />

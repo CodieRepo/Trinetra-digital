@@ -74,6 +74,23 @@ export default function Navbar() {
 
         {/* CTA */}
         <div className="flex items-center gap-3">
+          {/* Brand name — right side desktop */}
+          <div className="hidden items-center gap-2 border-r border-white/10 pr-4 mr-1 md:flex">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-cyan-400/15 ring-1 ring-cyan-400/25">
+              <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                <path d="M10 3 C12.5 5.5 13.5 8 13.5 10.5 C12 9.8 11 9.5 10 9.5 C9 9.5 8 9.8 6.5 10.5 C6.5 8 7.5 5.5 10 3Z" stroke="#22d3ee" strokeWidth="1.2" fill="rgba(34,211,238,0.15)" strokeLinejoin="round"/>
+                <circle cx="10" cy="10.5" r="1.5" fill="#22d3ee"/>
+              </svg>
+            </span>
+            <div className="flex flex-col leading-none">
+              <span className="text-[11px] font-bold tracking-[0.18em] text-white">
+                TRINETRA
+              </span>
+              <span className="text-[8px] tracking-[0.15em] text-cyan-400/70">
+                DIGITAL SOLUTION
+              </span>
+            </div>
+          </div>
           {/* WhatsApp quick-link */}
           <a
             href={WA_URL}
