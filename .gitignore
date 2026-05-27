@@ -35,3 +35,11 @@ pnpm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Large media files (serve locally or via CDN)
+*.mov
+*.mp4
+*.avi
+*.mkv
+*.webm
+*.gif
