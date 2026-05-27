@@ -9,6 +9,7 @@ import Testimonials from "./components/Testimonials";
 import Pricing from "./components/Pricing";
 import FinalCTA from "./components/FinalCTA";
 import WhatsAppFloat from "./components/WhatsAppFloat";
+import MobileStickyCTA from "./components/MobileStickyCTA";
 
 export default function App() {
   return (
@@ -45,6 +46,9 @@ export default function App() {
 
       {/* Global Floating Action Nudge */}
       <WhatsAppFloat />
+
+      {/* Mobile Sticky Bottom CTA Bar */}
+      <MobileStickyCTA />
     </div>
   );
 }

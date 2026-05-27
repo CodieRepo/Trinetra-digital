@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight, ArrowRight, CheckCircle2, MessageSquare, ShieldAlert, Sparkles, FolderKanban, TrendingUp } from "lucide-react";
 
 const WA_NUMBER = "919334757759";
-const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi! I'd like to book a free demo of Trinetra's AI automation.")}`;
+const PHONE_TEL = "tel:+919334757759";
+const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's AI automation services.")}`;
 
 export default function Hero() {
   const [pipelineStep, setPipelineStep] = useState(0);
@@ -80,8 +81,19 @@ export default function Hero() {
             <a href="#contact" className="btn-primary-forest text-sm font-semibold tracking-wide gap-2">
               Book a Free Demo <ArrowUpRight size={16} />
             </a>
-            <a href="#system" className="btn-secondary-outlined text-sm font-semibold tracking-wide gap-2">
-              See How It Works <ArrowRight size={16} />
+            <a
+              href={WA_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary-outlined text-sm font-semibold tracking-wide gap-2"
+            >
+              💬 WhatsApp Us <ArrowRight size={16} />
+            </a>
+            <a
+              href={PHONE_TEL}
+              className="text-sm font-semibold text-[#BF7340] hover:text-[#A6612E] transition-colors flex items-center gap-1.5"
+            >
+              📞 Call Now
             </a>
           </motion.div>
 

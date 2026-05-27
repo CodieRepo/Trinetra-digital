@@ -3,7 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
 const WA_NUMBER = "919334757759";
-const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi! I'd like to know more about Trinetra Digital's AI automation infrastructure.")}`;
+const PHONE_NUMBER = "+91 9334757759";
+const PHONE_TEL = "tel:+919334757759";
+const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's AI automation services.")}`;
 
 const links = [
   { label: "Solutions", href: "#system" },
@@ -95,15 +97,15 @@ export default function Navbar() {
         {/* Desktop CTA */}
         <div className="hidden items-center gap-4 md:flex">
           <a
+            href={PHONE_TEL}
+            className="text-xs font-medium text-[#5C5A52] hover:text-[#18170F] transition-colors duration-200 flex items-center gap-1.5"
+          >
+            <span className="text-[#BF7340] font-semibold">{PHONE_NUMBER}</span>
+          </a>
+          <a
             href={WA_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-medium text-[#5C5A52] hover:text-[#18170F] transition-colors duration-200"
-          >
-            Talk to an Expert
-          </a>
-          <a
-            href="#contact"
             className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-sm bg-[#2A4A3E] px-4 text-[#F9F8F5] transition-all hover:bg-[#1E3630]"
             style={{ height: "36px", padding: "0 16px", borderRadius: "8px" }}
           >
@@ -153,13 +155,20 @@ export default function Navbar() {
                 ))}
                 <div className="mt-4 flex flex-col gap-3">
                   <a
+                    href={PHONE_TEL}
+                    onClick={() => setOpen(false)}
+                    className="flex h-11 items-center justify-center rounded-lg border border-[#BF7340]/30 bg-[#FAF5EF] text-xs font-semibold text-[#BF7340] hover:bg-[#F2E8DC] transition-colors gap-2"
+                  >
+                    📞 {PHONE_NUMBER}
+                  </a>
+                  <a
                     href={WA_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setOpen(false)}
                     className="flex h-11 items-center justify-center rounded-lg border border-[#E2DDD5] bg-[#F4F2ED] text-xs font-semibold text-[#18170F] hover:bg-[#EEEAE3] transition-colors"
                   >
-                    Chat on WhatsApp
+                    💬 WhatsApp Us
                   </a>
                   <a
                     href="#contact"

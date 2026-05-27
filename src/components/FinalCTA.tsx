@@ -3,7 +3,10 @@ import { motion } from "framer-motion";
 import { ArrowRight, Send, Check } from "lucide-react";
 
 const WA_NUMBER = "919334757759";
-const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi! I'd like a free consultation on automating my business lead flow.")}`;
+const PHONE_TEL = "tel:+919334757759";
+const PHONE_NUMBER = "+91 9334757759";
+const EMAIL = "info@trinetradigitalsolution.com";
+const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's AI automation services.")}`;
 
 export default function FinalCTA() {
   const [email, setEmail] = useState("");
@@ -68,14 +71,23 @@ export default function FinalCTA() {
           
           <div className="mt-6">
             <span className="text-[10px] text-[#FAF5EF]/40 font-semibold tracking-wider uppercase block">OR</span>
-            <a
-              href={WA_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-xs font-bold text-[#BF7340] hover:text-[#A6612E] mt-3 hover:underline"
-            >
-              Start direct WhatsApp conversation →
-            </a>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-3">
+              <a
+                href={WA_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-xs font-bold text-[#25D366] hover:text-[#1ebe5d] transition-colors"
+              >
+                💬 WhatsApp Us directly →
+              </a>
+              <span className="text-[#FAF5EF]/20 hidden sm:block">|</span>
+              <a
+                href={PHONE_TEL}
+                className="inline-flex items-center gap-2 text-xs font-bold text-[#BF7340] hover:text-[#A6612E] transition-colors"
+              >
+                📞 {PHONE_NUMBER}
+              </a>
+            </div>
           </div>
         </div>
 
@@ -131,9 +143,10 @@ export default function FinalCTA() {
         {/* Bottom Credits */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-8 text-[11px] text-[#FAF5EF]/40 font-medium">
           <span>© 2026 Trinetra Digital Solution. All rights reserved.</span>
-          <div className="flex gap-4">
-            <a href="mailto:hello@trinetradigital.in" className="hover:text-[#F9F8F5]">hello@trinetradigital.in</a>
-            <a href={`https://wa.me/${WA_NUMBER}`} target="_blank" rel="noopener noreferrer" className="hover:text-[#F9F8F5]">WhatsApp Support</a>
+          <div className="flex flex-wrap gap-4 items-center">
+            <a href={`mailto:${EMAIL}`} className="hover:text-[#F9F8F5] transition-colors">{EMAIL}</a>
+            <a href={PHONE_TEL} className="hover:text-[#F9F8F5] transition-colors">{PHONE_NUMBER}</a>
+            <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[#F9F8F5] transition-colors">WhatsApp Support</a>
           </div>
         </div>
 

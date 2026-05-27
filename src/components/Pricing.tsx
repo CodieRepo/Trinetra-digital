@@ -2,6 +2,11 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Sparkles } from "lucide-react";
 
+const WA_NUMBER = "919334757759";
+const PHONE_TEL = "tel:+919334757759";
+const EMAIL = "info@trinetradigitalsolution.com";
+const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's AI automation services.")}`;
+
 export default function Pricing() {
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
 
@@ -114,7 +119,7 @@ export default function Pricing() {
               </ul>
             </div>
 
-            <a href="#contact" className="btn-secondary-outlined mt-8 w-full text-xs font-bold uppercase tracking-wider h-11 flex items-center justify-center rounded-lg">
+            <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="btn-secondary-outlined mt-8 w-full text-xs font-bold uppercase tracking-wider h-11 flex items-center justify-center rounded-lg">
               Get Started
             </a>
           </motion.div>
@@ -187,7 +192,7 @@ export default function Pricing() {
               </ul>
             </div>
 
-            <a href="#contact" className="btn-primary-forest mt-8 w-full text-xs font-bold uppercase tracking-wider bg-[#2A4A3E] text-[#F9F8F5] hover:bg-[#1E3630] border-0 h-11 flex items-center justify-center rounded-lg">
+            <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="btn-primary-forest mt-8 w-full text-xs font-bold uppercase tracking-wider bg-[#2A4A3E] text-[#F9F8F5] hover:bg-[#1E3630] border-0 h-11 flex items-center justify-center rounded-lg">
               Start Scaling
             </a>
           </motion.div>
@@ -251,7 +256,7 @@ export default function Pricing() {
               </ul>
             </div>
 
-            <a href="mailto:hello@trinetradigital.in" className="btn-secondary-outlined mt-8 w-full text-xs font-bold uppercase tracking-wider h-11 flex items-center justify-center rounded-lg">
+            <a href={`mailto:${EMAIL}`} className="btn-secondary-outlined mt-8 w-full text-xs font-bold uppercase tracking-wider h-11 flex items-center justify-center rounded-lg">
               Consult Architect
             </a>
           </motion.div>
