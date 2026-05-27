@@ -8,6 +8,7 @@ import Dashboard from "./components/Dashboard";
 import Pricing from "./components/Pricing";
 import Testimonials from "./components/Testimonials";
 import FinalCTA from "./components/FinalCTA";
+import WhatsAppFloat from "./components/WhatsAppFloat";
 
 export default function App() {
   return (
@@ -27,6 +28,9 @@ export default function App() {
       <Pricing />
       <Testimonials />
       <FinalCTA />
+
+      {/* Global floating CTA */}
+      <WhatsAppFloat />
     </div>
   );
 }

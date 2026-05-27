@@ -264,3 +264,54 @@ body {
   mix-blend-mode: screen;
 }
 
+/* ── WhatsApp Float Button ────────────────────────── */
+.wa-float-btn {
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.wa-float-btn:hover {
+  box-shadow: 0 12px 48px rgba(37, 211, 102, 0.55);
+}
+
+/* Pulse rings for WhatsApp button */
+.wa-pulse-ring {
+  background: rgba(37, 211, 102, 0.35);
+  animation: waPulse 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.wa-pulse-ring-2 {
+  animation-delay: 0.7s;
+}
+
+@keyframes waPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* ── Gradient text animation ─────────────────────── */
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+.gradient-text-animated {
+  background: linear-gradient(135deg, #ffffff 0%, #22d3ee 35%, #a78bfa 65%, #ffffff 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 5s ease infinite;
+}
+
+/* ── Scroll reveal utility ─────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
