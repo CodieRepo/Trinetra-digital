@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Send, Check } from "lucide-react";
+import { Phone, MessageCircle, ArrowRight } from "lucide-react";
 
 const WA_NUMBER = "919334757759";
 const PHONE_TEL = "tel:+919334757759";
@@ -9,15 +8,6 @@ const EMAIL = "info@trinetradigitalsolution.com";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's AI automation services.")}`;
 
 export default function FinalCTA() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setSubmitted(true);
-  };
-
   return (
     <section className="relative overflow-hidden bg-[#131210] pt-24 pb-12 z-10 text-left border-t border-[#FAF5EF]/10">
       
@@ -40,55 +30,42 @@ export default function FinalCTA() {
           Build operational infrastructure that qualifies leads in 3 minutes, updates CRM records autonomously, and ensures no opportunity is forgotten.
         </p>
 
-        {/* Action Form */}
-        <div className="max-w-[480px] mx-auto">
-          {!submitted ? (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="email"
-                placeholder="Enter your work email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="flex-1 h-12 bg-[#1E1C18] border border-[#FAF5EF]/10 rounded-lg px-4 text-sm text-[#F9F8F5] placeholder-[#8C8A82] focus:outline-none focus:border-[#BF7340] focus:ring-1 focus:ring-[#BF7340] transition-all"
-              />
-              <button
-                type="submit"
-                className="btn-primary-forest h-12 bg-[#2A4A3E] text-[#F9F8F5] hover:bg-[#1E3630] text-xs uppercase font-bold tracking-wider rounded-lg px-6 flex items-center justify-center gap-2 border-none cursor-pointer shrink-0"
-              >
-                Schedule Demo <ArrowRight size={14} />
-              </button>
-            </form>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center justify-center gap-3 rounded-lg border border-[#2D6A4F]/30 bg-[#2D6A4F]/10 p-4 text-[#E8F5EE] text-sm font-semibold"
-            >
-              <Check size={16} /> Thank you! Our Solution Architect will check in within 12 hours.
-            </motion.div>
-          )}
+        {/* CTA Actions — Direct Contact (no login/credential form) */}
+        <div className="max-w-[480px] mx-auto" role="group" aria-label="Contact Trinetra Digital Solution">
           
-          <div className="mt-6">
-            <span className="text-[10px] text-[#FAF5EF]/40 font-semibold tracking-wider uppercase block">OR</span>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-3">
-              <a
-                href={WA_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-xs font-bold text-[#25D366] hover:text-[#1ebe5d] transition-colors"
-              >
-                💬 WhatsApp Us directly →
-              </a>
-              <span className="text-[#FAF5EF]/20 hidden sm:block">|</span>
-              <a
-                href={PHONE_TEL}
-                className="inline-flex items-center gap-2 text-xs font-bold text-[#BF7340] hover:text-[#A6612E] transition-colors"
-              >
-                📞 {PHONE_NUMBER}
-              </a>
-            </div>
-          </div>
+          {/* Primary: WhatsApp */}
+          <motion.a
+            href={WA_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            id="final-cta-whatsapp"
+            aria-label="Chat with Trinetra Digital Solution on WhatsApp"
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex w-full items-center justify-center gap-3 h-14 rounded-xl bg-[#2A4A3E] text-[#F9F8F5] font-bold text-sm tracking-wide border border-[#2A4A3E] hover:bg-[#1E3630] transition-colors mb-3"
+          >
+            <MessageCircle size={18} className="fill-[#F9F8F5]/10" />
+            WhatsApp Us for a Free Demo
+            <ArrowRight size={15} />
+          </motion.a>
+
+          {/* Secondary: Call */}
+          <motion.a
+            href={PHONE_TEL}
+            id="final-cta-call"
+            aria-label="Call Trinetra Digital Solution"
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex w-full items-center justify-center gap-3 h-12 rounded-xl border border-[#FAF5EF]/15 text-[#FAF5EF]/70 font-semibold text-sm tracking-wide hover:border-[#BF7340]/40 hover:text-[#BF7340] transition-all mb-6"
+          >
+            <Phone size={16} />
+            {PHONE_NUMBER} — Call Now
+          </motion.a>
+
+          {/* Trust note */}
+          <p className="text-[11px] text-[#FAF5EF]/30 font-medium tracking-wide">
+            No sign-up required · We respond within 30 minutes
+          </p>
         </div>
 
       </div>
