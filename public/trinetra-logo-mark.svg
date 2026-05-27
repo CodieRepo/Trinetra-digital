@@ -1,0 +1,13 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="markGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(128 128) rotate(90) scale(92)">
+      <stop offset="0" stop-color="#F2FBFF"/>
+      <stop offset="1" stop-color="#F2FBFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="128" cy="128" r="92" fill="url(#markGlow)"/>
+  <path d="M128 34C159.2 56.8 178 91.6 178 130.2C161.6 123.3 144.8 120.1 128 120.1C111.2 120.1 94.4 123.3 78 130.2C78 91.6 96.8 56.8 128 34Z" stroke="#EAF4FF" stroke-width="6"/>
+  <path d="M53.6 157.1C53.6 118.5 72.4 83.7 103.6 60.9C103.6 77.1 108.1 92.5 116.9 106C125.8 119.8 137.4 131 151.7 140.4C137.8 151.6 120.6 158.2 103.6 158.2C83.7 158.2 66.9 154.4 53.6 147.8V157.1Z" stroke="#EAF4FF" stroke-width="6"/>
+  <path d="M202.4 157.1V147.8C189.1 154.4 172.3 158.2 152.4 158.2C135.4 158.2 118.2 151.6 104.3 140.4C118.6 131 130.2 119.8 139.1 106C147.9 92.5 152.4 77.1 152.4 60.9C183.6 83.7 202.4 118.5 202.4 157.1Z" stroke="#EAF4FF" stroke-width="6"/>
+  <circle cx="128" cy="128" r="14" fill="#22C7FF"/>
+</svg>

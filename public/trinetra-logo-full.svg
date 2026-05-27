@@ -1,0 +1,35 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="centerGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(512 358) rotate(90) scale(220)">
+      <stop offset="0" stop-color="#F4FCFF"/>
+      <stop offset="1" stop-color="#F4FCFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bottomGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(512 655) rotate(90) scale(130)">
+      <stop offset="0" stop-color="#22C7FF" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#22C7FF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="taglineFill" x1="230" y1="690" x2="794" y2="690" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#66D7FF"/>
+      <stop offset="1" stop-color="#36BFF2"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="512" cy="350" r="210" fill="url(#centerGlow)"/>
+  <circle cx="512" cy="650" r="150" fill="url(#bottomGlow)"/>
+
+  <g stroke="#ECF5FF" stroke-width="8">
+    <path d="M512 191C574.4 236.6 612 306.2 612 383.4C579.2 369.6 545.6 363.2 512 363.2C478.4 363.2 444.8 369.6 412 383.4C412 306.2 449.6 236.6 512 191Z"/>
+    <path d="M363.2 437.2C363.2 360 400.8 290.4 463.2 244.8C463.2 277.2 472.2 308 489.8 335C507.6 362.6 530.8 385 559.4 403.8C531.6 426.2 497.2 439.4 463.2 439.4C423.4 439.4 389.8 431.8 363.2 418.6V437.2Z"/>
+    <path d="M660.8 437.2V418.6C634.2 431.8 600.6 439.4 560.8 439.4C526.8 439.4 492.4 426.2 464.6 403.8C493.2 385 516.4 362.6 534.2 335C551.8 308 560.8 277.2 560.8 244.8C623.2 290.4 660.8 360 660.8 437.2Z"/>
+  </g>
+
+  <circle cx="512" cy="350" r="28" fill="#22C7FF"/>
+
+  <g fill="#F2F9FF" font-family="Inter, Arial, sans-serif" font-weight="600" text-anchor="middle">
+    <text x="512" y="602" font-size="92" letter-spacing="16">TRINETRA</text>
+  </g>
+  <rect x="511" y="540" width="42" height="8" rx="4" fill="#22C7FF"/>
+  <g fill="url(#taglineFill)" font-family="Inter, Arial, sans-serif" text-anchor="middle">
+    <text x="512" y="673" font-size="38" letter-spacing="12">AI AUTOMATION FOR BUSINESSES</text>
+  </g>
+</svg>
