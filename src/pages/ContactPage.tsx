@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Phone, MessageCircle, Mail, MapPin, Clock, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
 import { useForm, ValidationError } from "@formspree/react";
 import SEO from "../components/seo/SEO";
+import LocationMap from "../components/LocationMap";
 
 const WA_NUMBER = "919334757759";
 const PHONE_TEL = "tel:+919334757759";
@@ -17,9 +18,22 @@ const SCHEMA = {
   "@type": "ContactPage",
   "url": "https://trinetradigitalsolution.com/contact",
   "name": "Contact Trinetra Digital Solution",
-  "description": "Get in touch with Trinetra Digital Solution for AI automation, WhatsApp CRM, and digital marketing services in India.",
+  "description": "Get in touch with Trinetra Digital Solution for AI automation, WhatsApp CRM, and digital marketing services in Gorakhpur and across India.",
   "mainEntity": {
     "@id": "https://trinetradigitalsolution.com/#localbusiness",
+    "@type": "LocalBusiness",
+    "name": "Trinetra Digital Solution",
+    "telephone": "+91-9334757759",
+    "email": "info@trinetradigitalsolution.com",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Gorakhpur",
+      "addressRegion": "Uttar Pradesh",
+      "postalCode": "273001",
+      "addressCountry": "IN",
+    },
+    "geo": { "@type": "GeoCoordinates", "latitude": 26.7606, "longitude": 83.3732 },
+    "sameAs": ["https://maps.app.goo.gl/5d6fHtwWNEDcY1rH8", "https://wa.me/919334757759"],
   },
 };
 
@@ -275,6 +289,9 @@ export default function ContactPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* ── Google Maps + Location Section ───────────────────────── */}
+      <LocationMap variant="full" />
 
       {/* Related links */}
       <section className="bg-[#F9F8F5] py-12 border-t border-[#E2DDD5]">

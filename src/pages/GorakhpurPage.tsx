@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, MapPin } from "lucide-react";
 import SEO from "../components/seo/SEO";
+import LocationMap from "../components/LocationMap";
 
 const SCHEMA = [
   {
@@ -123,6 +124,9 @@ export default function GorakhpurPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Google Maps mini section (local SEO signal) */}
+      <LocationMap variant="mini" />
 
       {/* CTA */}
       <section className="bg-[#F4F2ED] py-14">

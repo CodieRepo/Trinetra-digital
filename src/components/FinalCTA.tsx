@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Phone, MessageCircle, ArrowRight } from "lucide-react";
+import { Phone, MessageCircle, ArrowRight, MapPin, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const WA_NUMBER = "919334757759";
@@ -61,6 +61,32 @@ export function FinalCTAFooter() {
 
       {/* Footer Nav */}
       <div className="main-container pt-10 md:pt-12 pb-mobile-safe md:pb-8">
+
+        {/* ── Compact GBP Location Strip ─────────────────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-[#1E1C18] border border-[#FAF5EF]/8 rounded-xl px-5 py-4 mb-8">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#BF7340]/15 text-[#BF7340]">
+              <MapPin size={15} />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#FAF5EF]/40 mb-0.5">Our Office</p>
+              <p className="text-xs font-semibold text-[#F9F8F5]">
+                Gorakhpur, Uttar Pradesh, India — 273001
+              </p>
+              <p className="text-[10.5px] text-[#FAF5EF]/50 mt-0.5">Mon–Sat · 9:00 AM – 7:00 PM IST</p>
+            </div>
+          </div>
+          <a
+            href="https://maps.app.goo.gl/5d6fHtwWNEDcY1rH8"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open Trinetra Digital Solution on Google Maps"
+            className="flex items-center justify-center gap-2 h-9 rounded-lg border border-[#FAF5EF]/15 bg-[#FAF5EF]/5 px-4 text-[10.5px] font-bold text-[#FAF5EF]/80 hover:bg-[#FAF5EF]/10 hover:text-[#F9F8F5] transition-all whitespace-nowrap shrink-0"
+          >
+            <ExternalLink size={12} /> View on Google Maps
+          </a>
+        </div>
+
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 border-b border-[#FAF5EF]/10 pb-10">
 
           {/* Logo */}
