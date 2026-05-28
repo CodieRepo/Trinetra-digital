@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { lazy, Suspense } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import PageLayout from "./layouts/PageLayout";
 
 // ── Eager-loaded (above the fold) ─────────────────────────────────────────
@@ -92,6 +93,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AnimatedRoutes />
+      <SpeedInsights />
     </BrowserRouter>
   );
 }
