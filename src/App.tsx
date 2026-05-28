@@ -1,54 +1,97 @@
-import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import TrustBar from "./components/TrustBar";
-import TheProblem from "./components/TheProblem";
-import TheSystem from "./components/TheSystem";
-import Workflow from "./components/Workflow";
-import Services from "./components/Services";
-import Testimonials from "./components/Testimonials";
-import Pricing from "./components/Pricing";
-import FinalCTA from "./components/FinalCTA";
-import WhatsAppFloat from "./components/WhatsAppFloat";
-import MobileStickyCTA from "./components/MobileStickyCTA";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import { lazy, Suspense } from "react";
+import PageLayout from "./layouts/PageLayout";
+
+// ── Eager-loaded (above the fold) ─────────────────────────────────────────
+import Home from "./pages/Home";
+
+// ── Lazy-loaded (code-split, improves LCP) ────────────────────────────────
+const ServicesPage     = lazy(() => import("./pages/ServicesPage"));
+const PricingPage      = lazy(() => import("./pages/PricingPage"));
+const ContactPage      = lazy(() => import("./pages/ContactPage"));
+const AboutPage        = lazy(() => import("./pages/AboutPage"));
+const BlogPage         = lazy(() => import("./pages/BlogPage"));
+const PrivacyPage      = lazy(() => import("./pages/PrivacyPage"));
+const NotFoundPage     = lazy(() => import("./pages/NotFoundPage"));
+
+// Service sub-pages
+const WhatsAppAutomation  = lazy(() => import("./pages/services/WhatsAppAutomation"));
+const AiCrm               = lazy(() => import("./pages/services/AiCrm"));
+const SmartFollowup       = lazy(() => import("./pages/services/SmartFollowup"));
+const WebsiteDevelopment  = lazy(() => import("./pages/services/WebsiteDevelopment"));
+const DigitalMarketing    = lazy(() => import("./pages/services/DigitalMarketing"));
+const AiChatbots          = lazy(() => import("./pages/services/AiChatbots"));
+
+// Industry pages
+const Healthcare    = lazy(() => import("./pages/industries/Healthcare"));
+const RealEstate    = lazy(() => import("./pages/industries/RealEstate"));
+const Coaching      = lazy(() => import("./pages/industries/Coaching"));
+const Solar         = lazy(() => import("./pages/industries/Solar"));
+const LocalBusiness = lazy(() => import("./pages/industries/LocalBusiness"));
+
+// Local SEO pages
+const Gorakhpur     = lazy(() => import("./pages/GorakhpurPage"));
+const UttarPradesh  = lazy(() => import("./pages/UttarPradeshPage"));
+
+// Loading fallback
+function PageSpinner() {
+  return (
+    <div className="min-h-screen bg-[#F9F8F5] flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-[#BF7340]/30 border-t-[#BF7340] rounded-full animate-spin" />
+    </div>
+  );
+}
+
+// AnimatePresence needs the key from useLocation
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  // Scroll to top on every route change
+  return (
+    <PageLayout>
+      <Suspense fallback={<PageSpinner />}>
+        <Routes location={location} key={location.pathname}>
+          {/* Core */}
+          <Route path="/"                         element={<Home />} />
+          <Route path="/services"                 element={<ServicesPage />} />
+          <Route path="/pricing"                  element={<PricingPage />} />
+          <Route path="/contact"                  element={<ContactPage />} />
+          <Route path="/about"                    element={<AboutPage />} />
+          <Route path="/blog"                     element={<BlogPage />} />
+          <Route path="/privacy-policy"           element={<PrivacyPage />} />
+
+          {/* Service Sub-pages */}
+          <Route path="/services/whatsapp-automation" element={<WhatsAppAutomation />} />
+          <Route path="/services/ai-crm"              element={<AiCrm />} />
+          <Route path="/services/smart-followup"      element={<SmartFollowup />} />
+          <Route path="/services/website-development" element={<WebsiteDevelopment />} />
+          <Route path="/services/digital-marketing"   element={<DigitalMarketing />} />
+          <Route path="/services/ai-chatbots"         element={<AiChatbots />} />
+
+          {/* Industry Pages */}
+          <Route path="/industries/healthcare"     element={<Healthcare />} />
+          <Route path="/industries/real-estate"    element={<RealEstate />} />
+          <Route path="/industries/coaching"       element={<Coaching />} />
+          <Route path="/industries/solar"          element={<Solar />} />
+          <Route path="/industries/local-business" element={<LocalBusiness />} />
+
+          {/* Local SEO */}
+          <Route path="/gorakhpur"     element={<Gorakhpur />} />
+          <Route path="/uttar-pradesh" element={<UttarPradesh />} />
+
+          {/* 404 */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+    </PageLayout>
+  );
+}
 
 export default function App() {
   return (
-    <div className="bg-[#F9F8F5] text-[#18170F] antialiased selection:bg-[#BF7340]/25 selection:text-[#18170F]">
-      {/* Section 0: Sticky Navigation */}
-      <Navbar />
-
-      {/* Section 1: Hero */}
-      <Hero />
-
-      {/* Section 2: Industry Trust Marquee */}
-      <TrustBar />
-
-      {/* Section 3: The Manual Problem Case */}
-      <TheProblem />
-
-      {/* Section 4: The Trinetra System Solution tabbed layout */}
-      <TheSystem />
-
-      {/* Section 5: The Process Steps */}
-      <Workflow />
-
-      {/* Section 6: Industry Fit Cards */}
-      <Services />
-
-      {/* Section 7: Key Metrics & Testimonial Carousel */}
-      <Testimonials />
-
-      {/* Section 8: Interactive Pricing Switch */}
-      <Pricing />
-
-      {/* Section 9: Final Inverted CTA & Section 10: Footer */}
-      <FinalCTA />
-
-      {/* Global Floating Action Nudge */}
-      <WhatsAppFloat />
-
-      {/* Mobile Sticky Bottom CTA Bar */}
-      <MobileStickyCTA />
-    </div>
+    <BrowserRouter>
+      <AnimatedRoutes />
+    </BrowserRouter>
   );
 }

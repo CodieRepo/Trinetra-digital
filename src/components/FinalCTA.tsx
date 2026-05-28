@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Phone, MessageCircle, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const WA_NUMBER = "919334757759";
 const PHONE_TEL = "tel:+919334757759";
@@ -7,33 +8,24 @@ const PHONE_NUMBER = "+91 9334757759";
 const EMAIL = "info@trinetradigitalsolution.com";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's AI automation services.")}`;
 
-export default function FinalCTA() {
+// ── Shared Footer (used on all pages via PageLayout) ──────────────────────
+export function FinalCTAFooter() {
   return (
-    <section className="relative overflow-hidden bg-[#131210] pt-24 pb-12 z-10 text-left border-t border-[#FAF5EF]/10">
-      
-      {/* ── Section 9: Final CTA ──────────────────────── */}
-      <div className="main-container max-w-[680px] mx-auto text-center pb-24 border-b border-[#FAF5EF]/10">
-        
-        {/* Eyebrow */}
+    <footer className="relative overflow-hidden bg-[#131210] z-10 border-t border-[#FAF5EF]/10">
+      {/* CTA Block */}
+      <div className="main-container max-w-[680px] mx-auto text-center pt-24 pb-24 border-b border-[#FAF5EF]/10">
         <span className="text-[11px] font-semibold tracking-[0.25em] text-[#BF7340] uppercase font-interface mb-4 block">
           Get Automated Today
         </span>
-
-        {/* Headline */}
         <h2 className="font-display text-[44px] sm:text-[56px] leading-[1.1] text-[#F9F8F5] tracking-tight mb-6">
           Stop losing leads. <br />
           <span className="italic text-[#BF7340]">Automate</span> your business.
         </h2>
-
-        {/* Subtext */}
         <p className="text-sm sm:text-base leading-relaxed text-[#F9F8F5]/70 max-w-[500px] mx-auto mb-10">
           Build operational infrastructure that qualifies leads in 3 minutes, updates CRM records autonomously, and ensures no opportunity is forgotten.
         </p>
 
-        {/* CTA Actions — Direct Contact (no login/credential form) */}
         <div className="max-w-[480px] mx-auto" role="group" aria-label="Contact Trinetra Digital Solution">
-          
-          {/* Primary: WhatsApp */}
           <motion.a
             href={WA_URL}
             target="_blank"
@@ -49,7 +41,6 @@ export default function FinalCTA() {
             <ArrowRight size={15} />
           </motion.a>
 
-          {/* Secondary: Call */}
           <motion.a
             href={PHONE_TEL}
             id="final-cta-call"
@@ -62,32 +53,20 @@ export default function FinalCTA() {
             {PHONE_NUMBER} — Call Now
           </motion.a>
 
-          {/* Trust note */}
           <p className="text-[11px] text-[#FAF5EF]/30 font-medium tracking-wide">
             No sign-up required · We respond within 30 minutes
           </p>
         </div>
-
       </div>
 
-      {/* ── Section 10: Premium Restraint Footer ─────── */}
-      <div className="main-container pt-12">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 border-b border-[#FAF5EF]/10 pb-10">
-          
-          {/* Logo Lockup - Compact monochrome light */}
+      {/* Footer Nav */}
+      <div className="main-container pt-12 pb-8">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 border-b border-[#FAF5EF]/10 pb-10">
+
+          {/* Logo */}
           <div className="flex items-center gap-3">
-            <svg
-              viewBox="0 0 32 32"
-              fill="none"
-              className="h-7 w-7 text-[#F9F8F5]"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <polygon
-                points="16,3 3,27 29,27"
-                stroke="#F9F8F5"
-                strokeWidth="2"
-                strokeLinejoin="round"
-              />
+            <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="16,3 3,27 29,27" stroke="#F9F8F5" strokeWidth="2" strokeLinejoin="round" />
               <circle cx="16" cy="11" r="2.5" fill="#BF7340" />
               <circle cx="11.5" cy="20.5" r="2" fill="#F9F8F5" />
               <circle cx="20.5" cy="20.5" r="2" fill="#F9F8F5" />
@@ -95,40 +74,64 @@ export default function FinalCTA() {
               <line x1="16" y1="11" x2="20.5" y2="20.5" stroke="#F9F8F5" strokeWidth="1" strokeDasharray="1 1" />
               <line x1="11.5" y1="20.5" x2="20.5" y2="20.5" stroke="#F9F8F5" strokeWidth="1" strokeDasharray="1 1" />
             </svg>
-            
             <div className="flex flex-col leading-none">
-              <span className="text-[14px] font-semibold tracking-[0.2em] text-[#F9F8F5] font-interface">
-                TRINETRA
-              </span>
-              <span className="text-[8px] tracking-[0.15em] text-[#FAF5EF]/60 mt-0.5 uppercase font-interface font-medium">
-                Operational Intelligence
-              </span>
+              <span className="text-[14px] font-semibold tracking-[0.2em] text-[#F9F8F5] font-interface">TRINETRA</span>
+              <span className="text-[8px] tracking-[0.15em] text-[#FAF5EF]/60 mt-0.5 uppercase font-interface font-medium">Digital Solution</span>
             </div>
           </div>
 
-          {/* Links grid */}
-          <div className="flex flex-wrap gap-x-8 gap-y-3 text-xs">
-            <a href="#system" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Solutions</a>
-            <a href="#process" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">How It Works</a>
-            <a href="#industries" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Industries</a>
-            <a href="#pricing" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Pricing</a>
-            <a href="#testimonials" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Results</a>
+          {/* Footer Links Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-12 gap-y-6 text-xs">
+            <div>
+              <p className="text-[#FAF5EF]/30 font-semibold uppercase tracking-widest text-[10px] mb-3">Services</p>
+              <div className="flex flex-col gap-2.5">
+                <Link to="/services/whatsapp-automation" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">WhatsApp Automation</Link>
+                <Link to="/services/ai-crm" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">AI CRM</Link>
+                <Link to="/services/smart-followup" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Smart Follow-Up</Link>
+                <Link to="/services/website-development" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Website Development</Link>
+                <Link to="/services/digital-marketing" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Digital Marketing</Link>
+                <Link to="/services/ai-chatbots" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">AI Chatbots</Link>
+              </div>
+            </div>
+            <div>
+              <p className="text-[#FAF5EF]/30 font-semibold uppercase tracking-widest text-[10px] mb-3">Industries</p>
+              <div className="flex flex-col gap-2.5">
+                <Link to="/industries/healthcare" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Healthcare</Link>
+                <Link to="/industries/real-estate" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Real Estate</Link>
+                <Link to="/industries/coaching" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Coaching</Link>
+                <Link to="/industries/solar" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Solar</Link>
+                <Link to="/industries/local-business" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Local Business</Link>
+              </div>
+            </div>
+            <div>
+              <p className="text-[#FAF5EF]/30 font-semibold uppercase tracking-widest text-[10px] mb-3">Company</p>
+              <div className="flex flex-col gap-2.5">
+                <Link to="/about" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">About Us</Link>
+                <Link to="/pricing" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Pricing</Link>
+                <Link to="/contact" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Contact</Link>
+                <Link to="/blog" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Blog</Link>
+                <Link to="/gorakhpur" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Gorakhpur</Link>
+                <Link to="/privacy-policy" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Privacy Policy</Link>
+              </div>
+            </div>
           </div>
-
         </div>
 
-        {/* Bottom Credits */}
+        {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-8 text-[11px] text-[#FAF5EF]/40 font-medium">
-          <span>© 2026 Trinetra Digital Solution. All rights reserved.</span>
+          <span>© 2026 Trinetra Digital Solution. All rights reserved. · Gorakhpur, UP, India</span>
           <div className="flex flex-wrap gap-4 items-center">
             <a href={`mailto:${EMAIL}`} className="hover:text-[#F9F8F5] transition-colors">{EMAIL}</a>
             <a href={PHONE_TEL} className="hover:text-[#F9F8F5] transition-colors">{PHONE_NUMBER}</a>
-            <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[#F9F8F5] transition-colors">WhatsApp Support</a>
+            <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[#F9F8F5] transition-colors">WhatsApp</a>
           </div>
         </div>
-
       </div>
-
-    </section>
+    </footer>
   );
+}
+
+// ── Homepage-only full CTA section (hero dark section) ────────────────────
+export default function FinalCTA() {
+  return <FinalCTAFooter />;
 }
