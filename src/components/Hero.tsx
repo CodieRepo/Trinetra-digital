@@ -13,6 +13,7 @@ export default function Hero() {
   useEffect(() => {
     const intervals = [1600, 1800, 1800, 1800, 4000]; // timing for each stage
     let current = 0;
+    let timer: ReturnType<typeof setTimeout>;
 
     const runNext = () => {
       current = (current + 1) % 6; // 0 to 4 steps, 5 is all showing static state
@@ -24,7 +25,7 @@ export default function Hero() {
       timer = setTimeout(runNext, nextDelay);
     };
 
-    let timer = setTimeout(runNext, 1600);
+    timer = setTimeout(runNext, 1600);
     return () => clearTimeout(timer);
   }, []);
 

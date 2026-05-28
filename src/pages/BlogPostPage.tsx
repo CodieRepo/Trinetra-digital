@@ -20,66 +20,66 @@ const TAG_STYLES: Record<string, string> = {
 
 // ── Markdown component overrides (Tailwind-free, uses inline styles + classes) ──
 const mdComponents = {
-  h2: ({ children }: any) => (
+  h2: ({ children }: { children?: React.ReactNode }) => (
     <h2 className="text-[1.35rem] font-bold text-[#18170F] mt-10 mb-4 leading-snug tracking-tight">
       {children}
     </h2>
   ),
-  h3: ({ children }: any) => (
+  h3: ({ children }: { children?: React.ReactNode }) => (
     <h3 className="text-[1.05rem] font-bold text-[#18170F] mt-7 mb-3 leading-snug">
       {children}
     </h3>
   ),
-  p: ({ children }: any) => (
+  p: ({ children }: { children?: React.ReactNode }) => (
     <p className="text-[0.9375rem] text-[#3A3830] leading-[1.8] mb-5">{children}</p>
   ),
-  strong: ({ children }: any) => (
+  strong: ({ children }: { children?: React.ReactNode }) => (
     <strong className="font-bold text-[#18170F]">{children}</strong>
   ),
-  em: ({ children }: any) => (
+  em: ({ children }: { children?: React.ReactNode }) => (
     <em className="italic text-[#5C5A52]">{children}</em>
   ),
-  ul: ({ children }: any) => (
+  ul: ({ children }: { children?: React.ReactNode }) => (
     <ul className="list-none mb-5 flex flex-col gap-2.5">{children}</ul>
   ),
-  ol: ({ children }: any) => (
+  ol: ({ children }: { children?: React.ReactNode }) => (
     <ol className="list-decimal list-inside mb-5 flex flex-col gap-2.5 text-[#3A3830] text-[0.9375rem]">
       {children}
     </ol>
   ),
-  li: ({ children }: any) => (
+  li: ({ children }: { children?: React.ReactNode }) => (
     <li className="flex items-start gap-2.5 text-[0.9375rem] text-[#3A3830] leading-relaxed">
       <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[#BF7340]" />
       <span>{children}</span>
     </li>
   ),
-  blockquote: ({ children }: any) => (
+  blockquote: ({ children }: { children?: React.ReactNode }) => (
     <blockquote className="border-l-4 border-[#BF7340] bg-[#F9F4EE] rounded-r-xl px-5 py-4 my-6 text-[0.9rem] text-[#5C5A52] italic leading-relaxed">
       {children}
     </blockquote>
   ),
-  table: ({ children }: any) => (
+  table: ({ children }: { children?: React.ReactNode }) => (
     <div className="overflow-x-auto my-7 rounded-xl border border-[#E2DDD5]">
       <table className="w-full text-sm border-collapse">{children}</table>
     </div>
   ),
-  thead: ({ children }: any) => (
+  thead: ({ children }: { children?: React.ReactNode }) => (
     <thead className="bg-[#F4F2ED] text-[#18170F]">{children}</thead>
   ),
-  tbody: ({ children }: any) => (
+  tbody: ({ children }: { children?: React.ReactNode }) => (
     <tbody className="divide-y divide-[#E2DDD5]">{children}</tbody>
   ),
-  tr: ({ children }: any) => <tr>{children}</tr>,
-  th: ({ children }: any) => (
+  tr: ({ children }: { children?: React.ReactNode }) => <tr>{children}</tr>,
+  th: ({ children }: { children?: React.ReactNode }) => (
     <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-[#5C5A52]">
       {children}
     </th>
   ),
-  td: ({ children }: any) => (
+  td: ({ children }: { children?: React.ReactNode }) => (
     <td className="px-4 py-3 text-[0.875rem] text-[#3A3830] even:bg-[#FAFAF8]">{children}</td>
   ),
   hr: () => <hr className="border-[#E2DDD5] my-10" />,
-  a: ({ href, children }: any) => (
+  a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
     <a
       href={href}
       className="text-[#BF7340] font-semibold underline underline-offset-2 hover:text-[#A0602E] transition-colors"
@@ -90,7 +90,7 @@ const mdComponents = {
     </a>
   ),
   // Bold FAQs — render **Q** as a visible FAQ entry
-  code: ({ children }: any) => (
+  code: ({ children }: { children?: React.ReactNode }) => (
     <code className="bg-[#F0EDE7] text-[#BF7340] px-1.5 py-0.5 rounded text-[0.85em] font-mono">
       {children}
     </code>
