@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Link2, Settings, Landmark, ArrowRight, ArrowDown } from "lucide-react";
+import { Link2, Settings, Landmark } from "lucide-react";
 
 const STEPS = [
   {

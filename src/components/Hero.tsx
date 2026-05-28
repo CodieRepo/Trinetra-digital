@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, ArrowRight, CheckCircle2, MessageSquare, ShieldAlert, Sparkles, FolderKanban, TrendingUp } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowUpRight, ArrowRight, CheckCircle2, MessageSquare, Sparkles, FolderKanban, TrendingUp } from "lucide-react";
 
 const WA_NUMBER = "919334757759";
 const PHONE_TEL = "tel:+919334757759";

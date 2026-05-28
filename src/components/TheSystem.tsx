@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, MessageSquare, ShieldCheck, Clock, Layers, Sparkles, Send, Users, Calendar } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 
 const TABS = [
   { id: "whatsapp", label: "WhatsApp Automation" },
