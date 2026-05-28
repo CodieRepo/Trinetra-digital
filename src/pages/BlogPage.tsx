@@ -1,92 +1,35 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen, Clock, Calendar } from "lucide-react";
 import SEO from "../components/seo/SEO";
+import { BLOG_POSTS } from "../data/blogPosts";
 
-const BLOG_POSTS = [
-  {
-    title: "How WhatsApp Automation Is Transforming Indian Businesses in 2026",
-    excerpt: "The average Indian business responds to a WhatsApp lead after 4–6 hours. By then, the lead has spoken to two competitors. Here's exactly how WhatsApp Automation fixes this — with real numbers.",
-    slug: "#", // /blog/whatsapp-automation-india-2026
-    tag: "WhatsApp Automation",
-    readTime: "7 min read",
-    date: "May 28, 2026",
-    featured: true,
-  },
-  {
-    title: "Why Every Growing Business Needs an AI CRM System",
-    excerpt: "A spreadsheet is not a CRM. A WhatsApp group is not a pipeline. Here's what an AI CRM actually does — and why Indian SMBs from Gorakhpur to Mumbai are switching right now.",
-    slug: "#", // /blog/ai-crm-system-for-indian-businesses
-    tag: "AI CRM",
-    readTime: "8 min read",
-    date: "May 28, 2026",
-    featured: true,
-  },
-  {
-    title: "How WhatsApp Automation Helps Real Estate Agents Close 3x More Deals",
-    excerpt: "Real estate agents lose leads every day — not because of bad properties, but because of slow response. Here's how automation fixes the follow-up gap and books 2x more site visits.",
-    slug: "#", // /blog/whatsapp-automation-real-estate-india
-    tag: "Real Estate",
-    readTime: "5 min read",
-    date: "May 28, 2026",
-    featured: true,
-  },
-  {
-    title: "5 Ways AI Follow-Up Sequences Increase Appointment Bookings for Clinics",
-    excerpt: "From instant OPD booking responses to automated report dispatch and Google review collection — here are 5 proven AI automation strategies that fill clinic slots and reduce no-shows.",
-    slug: "#", // /blog/ai-follow-up-clinic-appointment-automation
-    tag: "Healthcare",
-    readTime: "6 min read",
-    date: "May 28, 2026",
-    featured: true,
-  },
-];
+// Tag colour mapping
+const TAG_STYLES: Record<string, string> = {
+  copper: "bg-[#F2E8DC] text-[#BF7340]",
+  green:  "bg-[#E8F0ED] text-[#2A4A3E]",
+  slate:  "bg-[#EEEAE3] text-[#5C5A52]",
+};
 
+// Schema — built dynamically from central data
 const SCHEMA = {
   "@context": "https://schema.org",
   "@type": "Blog",
-  "url": "https://trinetradigitalsolution.com/blog",
-  "name": "Trinetra Digital Blog — AI Automation Insights",
-  "description": "Expert insights on WhatsApp automation, AI CRM, lead management, and business automation for Indian businesses.",
-  "publisher": { "@id": "https://trinetradigitalsolution.com/#organization" },
-  "blogPost": [
-    {
-      "@type": "BlogPosting",
-      "headline": "How WhatsApp Automation Is Transforming Indian Businesses in 2026",
-      "datePublished": "2026-05-28",
-      "url": "https://trinetradigitalsolution.com/blog/whatsapp-automation-india-2026",
-      "author": { "@type": "Organization", "name": "Trinetra Digital Solution" },
-      "keywords": "WhatsApp Automation India, WhatsApp CRM, Business Automation, AI Automation Company",
-    },
-    {
-      "@type": "BlogPosting",
-      "headline": "Why Every Growing Business Needs an AI CRM System",
-      "datePublished": "2026-05-28",
-      "url": "https://trinetradigitalsolution.com/blog/ai-crm-system-for-indian-businesses",
-      "author": { "@type": "Organization", "name": "Trinetra Digital Solution" },
-      "keywords": "AI CRM India, CRM for small business, Lead Management System, Sales Automation",
-    },
-    {
-      "@type": "BlogPosting",
-      "headline": "How WhatsApp Automation Helps Real Estate Agents Close 3x More Deals",
-      "datePublished": "2026-05-28",
-      "url": "https://trinetradigitalsolution.com/blog/whatsapp-automation-real-estate-india",
-      "author": { "@type": "Organization", "name": "Trinetra Digital Solution" },
-      "keywords": "WhatsApp Automation Real Estate India, Real Estate CRM, Property Lead Management",
-    },
-    {
-      "@type": "BlogPosting",
-      "headline": "5 Ways AI Follow-Up Sequences Increase Appointment Bookings for Clinics",
-      "datePublished": "2026-05-28",
-      "url": "https://trinetradigitalsolution.com/blog/ai-follow-up-clinic-appointment-automation",
-      "author": { "@type": "Organization", "name": "Trinetra Digital Solution" },
-      "keywords": "AI Automation Healthcare India, WhatsApp for Clinics, OPD Appointment Automation",
-    },
-  ],
+  url: "https://trinetradigitalsolution.com/blog",
+  name: "Trinetra Digital Blog — AI Automation Insights",
+  description:
+    "Expert insights on WhatsApp automation, AI CRM, lead management, and business automation for Indian businesses.",
+  publisher: { "@id": "https://trinetradigitalsolution.com/#organization" },
+  blogPost: BLOG_POSTS.map((p) => ({
+    "@type": "BlogPosting",
+    headline: p.title,
+    datePublished: p.dateISO,
+    url: `https://trinetradigitalsolution.com/blog/${p.slug}`,
+    author: { "@type": "Organization", name: "Trinetra Digital Solution" },
+    keywords: p.keywords,
+  })),
 };
-
-
 
 export default function BlogPage() {
   useEffect(() => window.scrollTo({ top: 0, behavior: "instant" }), []);
@@ -131,65 +74,61 @@ export default function BlogPage() {
           <div className="grid gap-6 md:grid-cols-2">
             {BLOG_POSTS.map((post, i) => (
               <motion.article
-                key={i}
+                key={post.slug}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.07 }}
-                className={`group flex flex-col bg-white border rounded-2xl p-8 transition-all duration-300 ${
-                  post.featured
-                    ? "border-[#BF7340]/25 hover:shadow-md hover:border-[#BF7340]/40"
-                    : "border-[#E2DDD5] hover:shadow-sm"
-                }`}
+                className="group flex flex-col bg-white border border-[#BF7340]/20 rounded-2xl p-8 hover:shadow-md hover:border-[#BF7340]/40 transition-all duration-300"
               >
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-[9px] font-bold uppercase tracking-widest bg-[#F2E8DC] text-[#BF7340] px-2.5 py-1 rounded-full">
+                {/* Tags + meta */}
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <span className={`text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${TAG_STYLES[post.tagColor]}`}>
                     {post.tag}
                   </span>
-                  {post.featured ? (
-                    <span className="text-[9px] font-bold uppercase tracking-widest bg-[#E8F0ED] text-[#2A4A3E] px-2.5 py-1 rounded-full">
-                      Published
-                    </span>
-                  ) : null}
-                  <span className="text-[10px] text-[#8C8A82] ml-auto">{post.date}</span>
-                  <span className="text-[10px] text-[#8C8A82]">· {post.readTime}</span>
+                  <span className="text-[9px] font-bold uppercase tracking-widest bg-[#E8F0ED] text-[#2A4A3E] px-2.5 py-1 rounded-full">
+                    Published
+                  </span>
+                  <span className="ml-auto flex items-center gap-1 text-[10px] text-[#8C8A82]">
+                    <Calendar size={10} />{post.date}
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] text-[#8C8A82]">
+                    <Clock size={10} />{post.readTime}
+                  </span>
                 </div>
 
-                <h2 className={`heading-sm text-[#18170F] mb-3 transition-colors ${post.featured ? "group-hover:text-[#BF7340]" : ""}`}>
+                {/* Title */}
+                <h2 className="heading-sm text-[#18170F] mb-3 group-hover:text-[#BF7340] transition-colors">
                   {post.title}
                 </h2>
+
+                {/* Excerpt */}
                 <p className="body-sm text-[#5C5A52] leading-relaxed flex-1">{post.excerpt}</p>
 
-                <div className="mt-6 flex items-center gap-2">
-                  {post.featured ? (
-                    <Link
-                      to="/contact"
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#BF7340] hover:underline"
-                    >
-                      <BookOpen size={13} /> Read full article — contact us for the PDF
-                    </Link>
-                  ) : (
-                    <>
-                      <BookOpen size={14} className="text-[#8C8A82]" />
-                      <span className="text-xs font-semibold text-[#8C8A82]">Publishing soon</span>
-                    </>
-                  )}
+                {/* Read link */}
+                <div className="mt-6">
+                  <Link
+                    to={`/blog/${post.slug}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#BF7340] hover:underline group-hover:gap-2.5 transition-all"
+                  >
+                    <BookOpen size={13} /> Read Article <ArrowRight size={12} />
+                  </Link>
                 </div>
               </motion.article>
             ))}
           </div>
 
-          {/* Newsletter Prompt */}
+          {/* Newsletter / CTA strip */}
           <div className="mt-16 text-center bg-white border border-[#E2DDD5] rounded-2xl p-10 max-w-[560px] mx-auto">
-            <h2 className="heading-md text-[#18170F] mb-3">Get notified when we publish</h2>
+            <h2 className="heading-md text-[#18170F] mb-3">Want us to build this for your business?</h2>
             <p className="body-sm text-[#5C5A52] mb-6">
-              We write about WhatsApp automation, AI CRM, and business growth for Indian businesses. No spam, ever.
+              Everything we write about, we build. Book a free 30-minute demo and see exactly how these systems work for your industry.
             </p>
             <Link
               to="/contact"
               className="inline-flex items-center gap-2 h-11 rounded-lg bg-[#2A4A3E] px-6 text-xs font-bold uppercase tracking-wider text-[#F9F8F5] hover:bg-[#1E3630] transition-colors"
             >
-              Contact Us to Stay Updated <ArrowRight size={14} />
+              Book Free Demo <ArrowRight size={14} />
             </Link>
           </div>
         </div>
@@ -197,4 +136,3 @@ export default function BlogPage() {
     </>
   );
 }
-
