@@ -6,28 +6,31 @@ import SEO from "../components/seo/SEO";
 
 const BLOG_POSTS = [
   {
+    title: "How WhatsApp Automation Is Transforming Indian Businesses in 2026",
+    excerpt: "The average Indian business responds to a WhatsApp lead after 4–6 hours. By then, the lead has spoken to two competitors. Here's exactly how WhatsApp Automation fixes this — with real numbers.",
+    slug: "#",   // Update to /blog/whatsapp-automation-india-2026 when post route is live
+    tag: "WhatsApp Automation",
+    readTime: "7 min read",
+    date: "May 28, 2026",
+    featured: true,
+  },
+  {
+    title: "Why Every Growing Business Needs an AI CRM System",
+    excerpt: "A spreadsheet is not a CRM. A WhatsApp group is not a pipeline. Here's what an AI CRM actually does — and why Indian SMBs from Gorakhpur to Mumbai are switching right now.",
+    slug: "#",   // Update to /blog/ai-crm-system-for-indian-businesses when post route is live
+    tag: "AI CRM",
+    readTime: "8 min read",
+    date: "May 28, 2026",
+    featured: true,
+  },
+  {
     title: "How WhatsApp Automation Helps Real Estate Agents Close 3x More Deals",
-    excerpt: "Most real estate agents lose 30-40% of leads simply because they don't follow up fast enough. Here's how AI changes that.",
+    excerpt: "Most real estate agents lose 30–40% of leads simply because they don't follow up fast enough. Here's how AI changes that.",
     slug: "#",
     tag: "Real Estate",
     readTime: "5 min read",
     date: "Coming Soon",
-  },
-  {
-    title: "The Complete Guide to Setting Up AI CRM for Indian SMBs in 2026",
-    excerpt: "A step-by-step walkthrough of what an AI-powered CRM actually does and why traditional CRMs fall short for Indian businesses.",
-    slug: "#",
-    tag: "AI CRM",
-    readTime: "8 min read",
-    date: "Coming Soon",
-  },
-  {
-    title: "Why Your Business Is Losing Leads on WhatsApp (And How to Fix It)",
-    excerpt: "WhatsApp is your biggest lead channel. But without automation, it's also your biggest leak. Here's the data and the fix.",
-    slug: "#",
-    tag: "WhatsApp",
-    readTime: "4 min read",
-    date: "Coming Soon",
+    featured: false,
   },
   {
     title: "5 Ways AI Follow-Up Sequences Increase Appointment Bookings for Clinics",
@@ -36,6 +39,7 @@ const BLOG_POSTS = [
     tag: "Healthcare",
     readTime: "6 min read",
     date: "Coming Soon",
+    featured: false,
   },
 ];
 
@@ -46,7 +50,26 @@ const SCHEMA = {
   "name": "Trinetra Digital Blog — AI Automation Insights",
   "description": "Expert insights on WhatsApp automation, AI CRM, lead management, and business automation for Indian businesses.",
   "publisher": { "@id": "https://trinetradigitalsolution.com/#organization" },
+  "blogPost": [
+    {
+      "@type": "BlogPosting",
+      "headline": "How WhatsApp Automation Is Transforming Indian Businesses in 2026",
+      "datePublished": "2026-05-28",
+      "url": "https://trinetradigitalsolution.com/blog/whatsapp-automation-india-2026",
+      "author": { "@type": "Organization", "name": "Trinetra Digital Solution" },
+      "keywords": "WhatsApp Automation India, WhatsApp CRM, Business Automation, AI Automation Company",
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "Why Every Growing Business Needs an AI CRM System",
+      "datePublished": "2026-05-28",
+      "url": "https://trinetradigitalsolution.com/blog/ai-crm-system-for-indian-businesses",
+      "author": { "@type": "Organization", "name": "Trinetra Digital Solution" },
+      "keywords": "AI CRM India, CRM for small business, Lead Management System, Sales Automation",
+    },
+  ],
 };
+
 
 export default function BlogPage() {
   useEffect(() => window.scrollTo({ top: 0, behavior: "instant" }), []);
@@ -96,24 +119,44 @@ export default function BlogPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.07 }}
-                className="group flex flex-col bg-white border border-[#E2DDD5] rounded-2xl p-8 hover:shadow-md transition-all duration-300"
+                className={`group flex flex-col bg-white border rounded-2xl p-8 transition-all duration-300 ${
+                  post.featured
+                    ? "border-[#BF7340]/25 hover:shadow-md hover:border-[#BF7340]/40"
+                    : "border-[#E2DDD5] hover:shadow-sm"
+                }`}
               >
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-[9px] font-bold uppercase tracking-widest bg-[#F2E8DC] text-[#BF7340] px-2.5 py-1 rounded-full">
                     {post.tag}
                   </span>
-                  <span className="text-[10px] text-[#8C8A82]">{post.date}</span>
+                  {post.featured ? (
+                    <span className="text-[9px] font-bold uppercase tracking-widest bg-[#E8F0ED] text-[#2A4A3E] px-2.5 py-1 rounded-full">
+                      Published
+                    </span>
+                  ) : null}
+                  <span className="text-[10px] text-[#8C8A82] ml-auto">{post.date}</span>
                   <span className="text-[10px] text-[#8C8A82]">· {post.readTime}</span>
                 </div>
 
-                <h2 className="heading-sm text-[#18170F] mb-3 group-hover:text-[#BF7340] transition-colors">
+                <h2 className={`heading-sm text-[#18170F] mb-3 transition-colors ${post.featured ? "group-hover:text-[#BF7340]" : ""}`}>
                   {post.title}
                 </h2>
                 <p className="body-sm text-[#5C5A52] leading-relaxed flex-1">{post.excerpt}</p>
 
                 <div className="mt-6 flex items-center gap-2">
-                  <BookOpen size={14} className="text-[#8C8A82]" />
-                  <span className="text-xs font-semibold text-[#8C8A82]">Publishing soon</span>
+                  {post.featured ? (
+                    <Link
+                      to="/contact"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#BF7340] hover:underline"
+                    >
+                      <BookOpen size={13} /> Read full article — contact us for the PDF
+                    </Link>
+                  ) : (
+                    <>
+                      <BookOpen size={14} className="text-[#8C8A82]" />
+                      <span className="text-xs font-semibold text-[#8C8A82]">Publishing soon</span>
+                    </>
+                  )}
                 </div>
               </motion.article>
             ))}
@@ -137,3 +180,4 @@ export default function BlogPage() {
     </>
   );
 }
+
