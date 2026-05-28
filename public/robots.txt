@@ -1,12 +1,8 @@
 User-agent: *
 Allow: /
 
-# Disallow build artifacts
-Disallow: /src/
-Disallow: /*.json$
+# Disallow Google verification file from being indexed
+Disallow: /google58396e467e534b87.html
 
 # Sitemap location
 Sitemap: https://trinetradigitalsolution.com/sitemap.xml
-
-# Crawl delay (polite crawling)
-Crawl-delay: 1

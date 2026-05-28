@@ -4,48 +4,19 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
-  <!-- Homepage -->
+  <!--
+    NOTE: This website is currently a Single-Page Application (SPA).
+    Only the homepage exists as a real crawlable URL.
+    Hash (#) fragment URLs are NOT indexable by Google and have been removed.
+    This sitemap will be expanded as new pages are added via React Router.
+  -->
+
+  <!-- Homepage (only real page — SPA) -->
   <url>
     <loc>https://trinetradigitalsolution.com/</loc>
     <lastmod>2026-05-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-  </url>
-
-  <!-- Section anchors (treated as deep-link destinations for GSC) -->
-  <url>
-    <loc>https://trinetradigitalsolution.com/#system</loc>
-    <lastmod>2026-05-28</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://trinetradigitalsolution.com/#process</loc>
-    <lastmod>2026-05-28</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://trinetradigitalsolution.com/#industries</loc>
-    <lastmod>2026-05-28</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://trinetradigitalsolution.com/#pricing</loc>
-    <lastmod>2026-05-28</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://trinetradigitalsolution.com/#testimonials</loc>
-    <lastmod>2026-05-28</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
   </url>
 
 </urlset>
