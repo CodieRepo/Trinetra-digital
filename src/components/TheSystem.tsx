@@ -30,8 +30,8 @@ export default function TheSystem() {
         </div>
 
         {/* Tab Switcher Wrapper */}
-        <div className="flex justify-center mb-12">
-          <div className="inline-flex gap-1 bg-[#EEEAE3] p-1 rounded-lg border border-[#E2DDD5] z-10">
+        <div className="flex justify-center mb-10 overflow-x-auto pb-1">
+          <div className="inline-flex gap-1 bg-[#EEEAE3] p-1 rounded-lg border border-[#E2DDD5] z-10 shrink-0">
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -59,7 +59,7 @@ export default function TheSystem() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.3 }}
-            className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center bg-[#F4F2ED] border border-[#E2DDD5] rounded-2xl p-6 md:p-10 shadow-xs"
+            className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center bg-[#F4F2ED] border border-[#E2DDD5] rounded-2xl p-5 md:p-8 lg:p-10 shadow-xs"
           >
             
             {/* Left Column: Description & Bullet Points */}
@@ -142,7 +142,7 @@ export default function TheSystem() {
 
             {/* Right Column: High Fidelity Operational Visual Flow Diagram */}
             <div className="flex items-center justify-center">
-              <div className="w-full max-w-[480px] rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-6 shadow-sm min-h-[320px] flex flex-col justify-center">
+              <div className="w-full max-w-[480px] rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-4 md:p-6 shadow-sm min-h-[260px] flex flex-col justify-center">
                 
                 {/* Visual 1: WhatsApp Automation Chat Interface */}
                 {activeTab === "whatsapp" && (

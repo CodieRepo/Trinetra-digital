@@ -113,7 +113,7 @@ export default function Navbar() {
       }`}
       style={{ height: "60px" }}
     >
-      <nav className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-6 md:px-10">
+      <nav className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-4 md:px-10">
         <LogoMark />
 
         {/* Desktop Nav */}
@@ -197,7 +197,7 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-              className="absolute right-0 top-0 h-[calc(100vh-60px)] w-72 bg-[#F9F8F5] border-l border-[#E2DDD5] p-6 shadow-xl overflow-y-auto"
+              className="absolute right-0 top-0 h-[calc(100vh-132px)] w-64 sm:w-72 bg-[#F9F8F5] border-l border-[#E2DDD5] p-5 shadow-xl overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex flex-col gap-1">

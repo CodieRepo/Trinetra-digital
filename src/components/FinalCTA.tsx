@@ -13,11 +13,11 @@ export function FinalCTAFooter() {
   return (
     <footer className="relative overflow-hidden bg-[#131210] z-10 border-t border-[#FAF5EF]/10">
       {/* CTA Block */}
-      <div className="main-container max-w-[680px] mx-auto text-center pt-24 pb-24 border-b border-[#FAF5EF]/10">
+      <div className="main-container max-w-[680px] mx-auto text-center pt-14 md:pt-24 pb-16 md:pb-24 border-b border-[#FAF5EF]/10">
         <span className="text-[11px] font-semibold tracking-[0.25em] text-[#BF7340] uppercase font-interface mb-4 block">
           Get Automated Today
         </span>
-        <h2 className="font-display text-[44px] sm:text-[56px] leading-[1.1] text-[#F9F8F5] tracking-tight mb-6">
+        <h2 className="font-display text-[36px] sm:text-[44px] md:text-[56px] leading-[1.1] text-[#F9F8F5] tracking-tight mb-5 md:mb-6">
           Stop losing leads. <br />
           <span className="italic text-[#BF7340]">Automate</span> your business.
         </h2>
@@ -60,7 +60,7 @@ export function FinalCTAFooter() {
       </div>
 
       {/* Footer Nav */}
-      <div className="main-container pt-12 pb-8">
+      <div className="main-container pt-10 md:pt-12 pb-mobile-safe md:pb-8">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 border-b border-[#FAF5EF]/10 pb-10">
 
           {/* Logo */}

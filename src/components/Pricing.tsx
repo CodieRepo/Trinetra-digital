@@ -59,7 +59,7 @@ export default function Pricing() {
         </div>
 
         {/* 3 Pricing Cards */}
-        <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto items-stretch mt-12">
+        <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto items-stretch mt-10">
           
           {/* Starter Plan */}
           <motion.div
@@ -67,7 +67,7 @@ export default function Pricing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.25 }}
             transition={{ duration: 0.5 }}
-            className="flex flex-col justify-between rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-8 shadow-xs hover:shadow-md transition-shadow duration-300 text-left"
+            className="flex flex-col justify-between rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-6 md:p-8 shadow-xs hover:shadow-md transition-shadow duration-300 text-left"
           >
             <div>
               <span className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82]">Starter Plan</span>
@@ -131,7 +131,7 @@ export default function Pricing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.25 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="flex flex-col justify-between rounded-xl border border-[#BF7340]/40 bg-[#131210] p-8 shadow-md ring-1 ring-[#BF7340]/25 text-left relative overflow-hidden"
+            className="flex flex-col justify-between rounded-xl border border-[#BF7340]/40 bg-[#131210] p-6 md:p-8 shadow-md ring-1 ring-[#BF7340]/25 text-left relative overflow-hidden"
           >
             {/* Shimmer top accent */}
             <div className="absolute top-0 inset-x-0 h-[3px] bg-[#BF7340]" />
@@ -204,7 +204,7 @@ export default function Pricing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.25 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex flex-col justify-between rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-8 shadow-xs hover:shadow-md transition-shadow duration-300 text-left"
+            className="flex flex-col justify-between rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-6 md:p-8 shadow-xs hover:shadow-md transition-shadow duration-300 text-left"
           >
             <div>
               <span className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82]">Enterprise Plan</span>

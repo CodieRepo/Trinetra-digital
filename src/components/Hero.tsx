@@ -32,7 +32,7 @@ export default function Hero() {
     <section
       id="main-content"
       aria-label="Hero — Trinetra AI WhatsApp Automation for Indian Businesses"
-      className="relative overflow-hidden bg-[#F9F8F5] pt-[120px] pb-16 md:pt-[160px] md:pb-24"
+      className="relative overflow-hidden bg-[#F9F8F5] pt-[100px] pb-16 md:pt-[160px] md:pb-24"
       itemScope
       itemType="https://schema.org/WebPageElement"
     >
@@ -42,7 +42,7 @@ export default function Hero() {
         backgroundSize: "24px 24px"
       }} />
 
-      <div className="main-container relative z-10 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <div className="main-container relative z-10 grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         {/* Left Column (55%) */}
         <div className="flex flex-col text-left">
           {/* Eyebrow Label */}
@@ -82,16 +82,16 @@ export default function Hero() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: "easeOut", delay: 0.3 }}
-            className="flex flex-wrap items-center gap-4 mb-10"
+            className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 mb-8"
           >
-            <a href="#contact" className="btn-primary-forest text-sm font-semibold tracking-wide gap-2">
+            <a href="#contact" className="btn-primary-forest text-sm font-semibold tracking-wide gap-2 w-full sm:w-auto">
               Book a Free Demo <ArrowUpRight size={16} />
             </a>
             <a
               href={WA_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-secondary-outlined text-sm font-semibold tracking-wide gap-2"
+              className="btn-secondary-outlined text-sm font-semibold tracking-wide gap-2 w-full sm:w-auto"
             >
               💬 WhatsApp Us <ArrowRight size={16} />
             </a>
@@ -132,15 +132,15 @@ export default function Hero() {
           </motion.div>
         </div>
 
-        {/* Right Column (45%): Premium Workflow Loop */}
-        <div className="relative flex justify-center lg:justify-end">
+        {/* Right Column (45%): Premium Workflow Loop — hidden on mobile to keep hero clean */}
+        <div className="relative justify-center lg:justify-end hidden sm:flex">
           {/* Card shell simulating structured background */}
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-            className="relative w-full max-w-[440px] rounded-2xl border border-[#E2DDD5] bg-[#F4F2ED] p-6 shadow-sm overflow-hidden"
-            style={{ minHeight: "480px" }}
+            className="relative w-full max-w-[440px] rounded-2xl border border-[#E2DDD5] bg-[#F4F2ED] p-5 md:p-6 shadow-sm overflow-hidden"
+            style={{ minHeight: "380px" }}
           >
             <div className="absolute top-3 left-4 flex gap-1.5 opacity-60">
               <span className="h-2 w-2 rounded-full bg-[#18170F]/10" />

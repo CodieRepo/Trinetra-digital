@@ -53,13 +53,13 @@ export default function ServicePageTemplate({
           >
             {subheadline}
           </motion.p>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex flex-wrap gap-3">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row flex-wrap gap-3">
             <a href={WA_URL} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 h-11 rounded-lg bg-[#2A4A3E] px-6 text-xs font-bold uppercase tracking-wider text-[#F9F8F5] hover:bg-[#1E3630] transition-colors">
+              className="inline-flex items-center justify-center gap-2 h-11 rounded-lg bg-[#2A4A3E] px-6 text-xs font-bold uppercase tracking-wider text-[#F9F8F5] hover:bg-[#1E3630] transition-colors w-full sm:w-auto">
               Book Free Demo <ArrowRight size={14} />
             </a>
             <Link to="/pricing"
-              className="inline-flex items-center gap-2 h-11 rounded-lg border border-[#E2DDD5] bg-white px-6 text-xs font-semibold text-[#18170F] hover:bg-[#F4F2ED] transition-colors">
+              className="inline-flex items-center justify-center gap-2 h-11 rounded-lg border border-[#E2DDD5] bg-white px-6 text-xs font-semibold text-[#18170F] hover:bg-[#F4F2ED] transition-colors w-full sm:w-auto">
               See Pricing
             </Link>
           </motion.div>
@@ -67,7 +67,7 @@ export default function ServicePageTemplate({
       </section>
 
       {/* Features */}
-      <section className="bg-[#F4F2ED] py-20 md:py-28 border-b border-[#E2DDD5]" aria-label="Key features">
+      <section className="bg-[#F4F2ED] py-14 md:py-24 border-b border-[#E2DDD5]" aria-label="Key features">
         <div className="main-container grid gap-12 lg:grid-cols-2 lg:items-center">
           <div>
             <h2 className="display-md text-[#18170F] tracking-tight mb-8">What's included</h2>
@@ -108,7 +108,7 @@ export default function ServicePageTemplate({
       </section>
 
       {/* CTA + Related */}
-      <section className="bg-[#F9F8F5] py-16 border-t border-[#E2DDD5]">
+      <section className="bg-[#F9F8F5] py-14 md:py-16 border-t border-[#E2DDD5] pb-mobile-safe md:pb-16">
         <div className="main-container text-center">
           <h2 className="heading-md text-[#18170F] mb-4">Ready to get started?</h2>
           <p className="body-sm text-[#5C5A52] mb-8 max-w-[440px] mx-auto">

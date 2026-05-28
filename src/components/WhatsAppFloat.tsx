@@ -19,7 +19,7 @@ export default function WhatsAppFloat() {
   return (
     <AnimatePresence>
       {visible && (
-        <div className="fixed bottom-6 right-6 z-[9990] flex flex-col items-end gap-3 font-interface">
+        <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[9990] flex flex-col items-end gap-3 font-interface">
           
           {/* Custom Styled Tooltip */}
           <AnimatePresence>
