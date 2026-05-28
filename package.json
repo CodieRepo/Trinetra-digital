@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@formspree/react": "^3.0.0",
     "@studio-freight/lenis": "^1.0.42",
     "clsx": "2.1.1",
     "framer-motion": "^12.40.0",
