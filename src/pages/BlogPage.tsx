@@ -8,7 +8,7 @@ const BLOG_POSTS = [
   {
     title: "How WhatsApp Automation Is Transforming Indian Businesses in 2026",
     excerpt: "The average Indian business responds to a WhatsApp lead after 4–6 hours. By then, the lead has spoken to two competitors. Here's exactly how WhatsApp Automation fixes this — with real numbers.",
-    slug: "#",   // Update to /blog/whatsapp-automation-india-2026 when post route is live
+    slug: "#", // /blog/whatsapp-automation-india-2026
     tag: "WhatsApp Automation",
     readTime: "7 min read",
     date: "May 28, 2026",
@@ -17,7 +17,7 @@ const BLOG_POSTS = [
   {
     title: "Why Every Growing Business Needs an AI CRM System",
     excerpt: "A spreadsheet is not a CRM. A WhatsApp group is not a pipeline. Here's what an AI CRM actually does — and why Indian SMBs from Gorakhpur to Mumbai are switching right now.",
-    slug: "#",   // Update to /blog/ai-crm-system-for-indian-businesses when post route is live
+    slug: "#", // /blog/ai-crm-system-for-indian-businesses
     tag: "AI CRM",
     readTime: "8 min read",
     date: "May 28, 2026",
@@ -25,21 +25,21 @@ const BLOG_POSTS = [
   },
   {
     title: "How WhatsApp Automation Helps Real Estate Agents Close 3x More Deals",
-    excerpt: "Most real estate agents lose 30–40% of leads simply because they don't follow up fast enough. Here's how AI changes that.",
-    slug: "#",
+    excerpt: "Real estate agents lose leads every day — not because of bad properties, but because of slow response. Here's how automation fixes the follow-up gap and books 2x more site visits.",
+    slug: "#", // /blog/whatsapp-automation-real-estate-india
     tag: "Real Estate",
     readTime: "5 min read",
-    date: "Coming Soon",
-    featured: false,
+    date: "May 28, 2026",
+    featured: true,
   },
   {
     title: "5 Ways AI Follow-Up Sequences Increase Appointment Bookings for Clinics",
-    excerpt: "Healthcare clinics are one of the highest-volume WhatsApp use cases. Learn how automation handles OPD bookings at scale.",
-    slug: "#",
+    excerpt: "From instant OPD booking responses to automated report dispatch and Google review collection — here are 5 proven AI automation strategies that fill clinic slots and reduce no-shows.",
+    slug: "#", // /blog/ai-follow-up-clinic-appointment-automation
     tag: "Healthcare",
     readTime: "6 min read",
-    date: "Coming Soon",
-    featured: false,
+    date: "May 28, 2026",
+    featured: true,
   },
 ];
 
@@ -67,8 +67,25 @@ const SCHEMA = {
       "author": { "@type": "Organization", "name": "Trinetra Digital Solution" },
       "keywords": "AI CRM India, CRM for small business, Lead Management System, Sales Automation",
     },
+    {
+      "@type": "BlogPosting",
+      "headline": "How WhatsApp Automation Helps Real Estate Agents Close 3x More Deals",
+      "datePublished": "2026-05-28",
+      "url": "https://trinetradigitalsolution.com/blog/whatsapp-automation-real-estate-india",
+      "author": { "@type": "Organization", "name": "Trinetra Digital Solution" },
+      "keywords": "WhatsApp Automation Real Estate India, Real Estate CRM, Property Lead Management",
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "5 Ways AI Follow-Up Sequences Increase Appointment Bookings for Clinics",
+      "datePublished": "2026-05-28",
+      "url": "https://trinetradigitalsolution.com/blog/ai-follow-up-clinic-appointment-automation",
+      "author": { "@type": "Organization", "name": "Trinetra Digital Solution" },
+      "keywords": "AI Automation Healthcare India, WhatsApp for Clinics, OPD Appointment Automation",
+    },
   ],
 };
+
 
 
 export default function BlogPage() {
