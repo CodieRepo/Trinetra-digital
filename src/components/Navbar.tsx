@@ -27,6 +27,7 @@ const INDUSTRIES_LINKS = [
 
 const NAV_LINKS = [
   { label: "Pricing", href: "/pricing" },
+  { label: "Blog", href: "/blog" },
   { label: "About", href: "/about" },
 ];
 

@@ -137,6 +137,7 @@ export function FinalCTAFooter() {
                 <Link to="/contact" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Contact</Link>
                 <Link to="/blog" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Blog</Link>
                 <Link to="/gorakhpur" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Gorakhpur</Link>
+                <Link to="/uttar-pradesh" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Uttar Pradesh</Link>
                 <Link to="/privacy-policy" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Privacy Policy</Link>
               </div>
             </div>
