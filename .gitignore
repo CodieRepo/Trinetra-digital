@@ -43,3 +43,15 @@ pnpm-debug.log*
 *.mkv
 *.webm
 *.gif
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+server/data/backups/
+
+# WhatsApp session data
+**/wa-session/
+
+# Zip / backup archives
+*.zip

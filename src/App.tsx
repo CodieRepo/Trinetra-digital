@@ -1,39 +1,41 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
-import PageLayout from "./layouts/PageLayout";
+import PageLayout from "@/layouts/PageLayout";
 
 // ── Eager-loaded (above the fold) ─────────────────────────────────────────
-import Home from "./pages/Home";
+import Home from "@/pages/Home";
 
 // ── Lazy-loaded (code-split, improves LCP) ────────────────────────────────
-const ServicesPage     = lazy(() => import("./pages/ServicesPage"));
-const PricingPage      = lazy(() => import("./pages/PricingPage"));
-const ContactPage      = lazy(() => import("./pages/ContactPage"));
-const AboutPage        = lazy(() => import("./pages/AboutPage"));
-const BlogPage         = lazy(() => import("./pages/BlogPage"));
-const BlogPostPage     = lazy(() => import("./pages/BlogPostPage"));
-const PrivacyPage      = lazy(() => import("./pages/PrivacyPage"));
-const NotFoundPage     = lazy(() => import("./pages/NotFoundPage"));
+const ServicesPage     = lazy(() => import("@/pages/ServicesPage"));
+const PricingPage      = lazy(() => import("@/pages/PricingPage"));
+const ContactPage      = lazy(() => import("@/pages/ContactPage"));
+const AboutPage        = lazy(() => import("@/pages/AboutPage"));
+const BlogPage         = lazy(() => import("@/pages/BlogPage"));
+const BlogPostPage     = lazy(() => import("@/pages/BlogPostPage"));
+const PrivacyPage      = lazy(() => import("@/pages/PrivacyPage"));
+const NotFoundPage     = lazy(() => import("@/pages/NotFoundPage"));
+const AdminCrm         = lazy(() => import("@/pages/admin/AdminCrm"));
+
 
 // Service sub-pages
-const WhatsAppAutomation  = lazy(() => import("./pages/services/WhatsAppAutomation"));
-const AiCrm               = lazy(() => import("./pages/services/AiCrm"));
-const SmartFollowup       = lazy(() => import("./pages/services/SmartFollowup"));
-const WebsiteDevelopment  = lazy(() => import("./pages/services/WebsiteDevelopment"));
-const DigitalMarketing    = lazy(() => import("./pages/services/DigitalMarketing"));
-const AiChatbots          = lazy(() => import("./pages/services/AiChatbots"));
+const WhatsAppAutomation  = lazy(() => import("@/pages/services/WhatsAppAutomation"));
+const AiCrm               = lazy(() => import("@/pages/services/AiCrm"));
+const SmartFollowup       = lazy(() => import("@/pages/services/SmartFollowup"));
+const WebsiteDevelopment  = lazy(() => import("@/pages/services/WebsiteDevelopment"));
+const DigitalMarketing    = lazy(() => import("@/pages/services/DigitalMarketing"));
+const AiChatbots          = lazy(() => import("@/pages/services/AiChatbots"));
 
 // Industry pages
-const Healthcare    = lazy(() => import("./pages/industries/Healthcare"));
-const RealEstate    = lazy(() => import("./pages/industries/RealEstate"));
-const Coaching      = lazy(() => import("./pages/industries/Coaching"));
-const Solar         = lazy(() => import("./pages/industries/Solar"));
-const LocalBusiness = lazy(() => import("./pages/industries/LocalBusiness"));
+const Healthcare    = lazy(() => import("@/pages/industries/Healthcare"));
+const RealEstate    = lazy(() => import("@/pages/industries/RealEstate"));
+const Coaching      = lazy(() => import("@/pages/industries/Coaching"));
+const Solar         = lazy(() => import("@/pages/industries/Solar"));
+const LocalBusiness = lazy(() => import("@/pages/industries/LocalBusiness"));
 
 // Local SEO pages
-const Gorakhpur     = lazy(() => import("./pages/GorakhpurPage"));
-const UttarPradesh  = lazy(() => import("./pages/UttarPradeshPage"));
+const Gorakhpur     = lazy(() => import("@/pages/GorakhpurPage"));
+const UttarPradesh  = lazy(() => import("@/pages/UttarPradeshPage"));
 
 // Loading fallback
 function PageSpinner() {
@@ -62,6 +64,7 @@ function AnimatedRoutes() {
           <Route path="/blog"                     element={<BlogPage />} />
           <Route path="/blog/:slug"               element={<BlogPostPage />} />
           <Route path="/privacy-policy"           element={<PrivacyPage />} />
+          <Route path="/admin"                    element={<AdminCrm />} />
 
           {/* Service Sub-pages */}
           <Route path="/services/whatsapp-automation" element={<WhatsAppAutomation />} />

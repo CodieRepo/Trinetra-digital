@@ -1,8 +1,7 @@
-import { useEffect } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Phone, MessageCircle, Mail, MapPin, Clock, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
-import { useForm, ValidationError } from "@formspree/react";
 import SEO from "../components/seo/SEO";
 import LocationMap from "../components/LocationMap";
 
@@ -39,7 +38,91 @@ const SCHEMA = {
 
 export default function ContactPage() {
   useEffect(() => window.scrollTo({ top: 0, behavior: "instant" }), []);
-  const [state, handleSubmit] = useForm(FORMSPREE_ID);
+  
+  const [submitting, setSubmitting] = useState(false);
+  const [succeeded, setSucceeded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      name: formData.get("name") as string,
+      phone: formData.get("phone") as string,
+      company: formData.get("business") as string,
+      service: formData.get("service") as string,
+      message: formData.get("message") as string,
+      source: "website"
+    };
+
+    console.log("🚀 Form submission started. Payload data:", data);
+
+    const isDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    const apiEndpoint = isDev ? "http://localhost:5000/api/leads" : "/api/leads";
+
+    try {
+      console.log(`📡 Fetching backend lead capture endpoint: ${apiEndpoint}`);
+      const response = await fetch(apiEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+
+      console.log("📥 API response status:", response.status);
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log("✅ Lead successfully captured by backend:", responseData);
+        setToast({ message: "Lead captured successfully ✓", type: 'success' });
+        setTimeout(() => setToast(null), 4000);
+        setSucceeded(true);
+      } else {
+        const errData = await response.json();
+        console.error("❌ Backend returned error:", errData);
+        throw new Error(errData.error || "Server submission failed");
+      }
+    } catch (err) {
+      console.error("❌ Primary Express backend submission failed:", err);
+      
+      if (isDev) {
+        setError("Local backend submission failed. Check that backend server is running on port 5000 and has SQLite initialized.");
+        setToast({ message: "Backend offline. Submission blocked in dev.", type: 'error' });
+        setTimeout(() => setToast(null), 4000);
+      } else {
+        console.warn("⚠️ Production fallback: triggering Formspree...");
+        try {
+          const formspreeUrl = `https://formspree.io/f/${FORMSPREE_ID}`;
+          const fallbackResponse = await fetch(formspreeUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify(data)
+          });
+
+          if (fallbackResponse.ok) {
+            console.log("✅ Fallback Formspree submission succeeded.");
+            setSucceeded(true);
+          } else {
+            throw new Error("Formspree submission also failed");
+          }
+        } catch (fallbackErr) {
+          console.error("❌ All submission pathways failed:", fallbackErr);
+          setError("Unable to process your message right now. Please reach out to us on WhatsApp directly.");
+        }
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
 
   return (
     <>
@@ -156,7 +239,7 @@ export default function ContactPage() {
             transition={{ delay: 0.2 }}
             className="bg-white border border-[#E2DDD5] rounded-2xl p-8 md:p-10 shadow-xs"
           >
-            {state.succeeded ? (
+            {succeeded ? (
               /* ── Success State ── */
               <motion.div
                 initial={{ opacity: 0, scale: 0.97 }}
@@ -168,7 +251,7 @@ export default function ContactPage() {
                 </div>
                 <h2 className="heading-sm text-[#18170F]">Message sent!</h2>
                 <p className="text-sm text-[#5C5A52] max-w-[320px]">
-                  Thanks for reaching out. We'll respond on WhatsApp or email within 2 hours.
+                  Thanks for reaching out. We've captured your lead and our active AI agent is sending a demo confirmation to your WhatsApp right now!
                 </p>
                 <a
                   href={WA_URL}
@@ -202,7 +285,6 @@ export default function ContactPage() {
                         placeholder="Rajesh Kumar"
                         className="h-11 rounded-lg border border-[#E2DDD5] bg-[#F9F8F5] px-3.5 text-sm text-[#18170F] placeholder-[#B8B5AE] focus:outline-none focus:ring-2 focus:ring-[#BF7340]/30 focus:border-[#BF7340] transition-all"
                       />
-                      <ValidationError field="name" errors={state.errors} className="text-xs text-red-500 mt-0.5" />
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label htmlFor="contact-phone" className="text-[11px] font-semibold text-[#5C5A52] uppercase tracking-wider">WhatsApp / Phone *</label>
@@ -215,7 +297,6 @@ export default function ContactPage() {
                         placeholder="+91 98765 43210"
                         className="h-11 rounded-lg border border-[#E2DDD5] bg-[#F9F8F5] px-3.5 text-sm text-[#18170F] placeholder-[#B8B5AE] focus:outline-none focus:ring-2 focus:ring-[#BF7340]/30 focus:border-[#BF7340] transition-all"
                       />
-                      <ValidationError field="phone" errors={state.errors} className="text-xs text-red-500 mt-0.5" />
                     </div>
                   </div>
 
@@ -258,18 +339,17 @@ export default function ContactPage() {
                       placeholder="What does your business do? How many leads do you get per day? What's your biggest challenge?"
                       className="rounded-lg border border-[#E2DDD5] bg-[#F9F8F5] px-3.5 py-3 text-sm text-[#18170F] placeholder-[#B8B5AE] focus:outline-none focus:ring-2 focus:ring-[#BF7340]/30 focus:border-[#BF7340] transition-all resize-none"
                     />
-                    <ValidationError field="message" errors={state.errors} className="text-xs text-red-500 mt-0.5" />
                   </div>
 
                   {/* Global form error */}
-                  <ValidationError errors={state.errors} className="text-xs text-red-500 -mt-2" />
+                  {error && <p className="text-xs text-red-500 font-semibold -mt-2">{error}</p>}
 
                   <button
                     type="submit"
-                    disabled={state.submitting}
+                    disabled={submitting}
                     className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2A4A3E] text-[#F9F8F5] text-xs font-bold uppercase tracking-wider hover:bg-[#1E3630] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {state.submitting ? (
+                    {submitting ? (
                       <><Loader2 size={15} className="animate-spin" /> Sending…</>
                     ) : (
                       <>Send Message &amp; Book Demo <ArrowRight size={14} /></>
@@ -310,6 +390,24 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
+
+      {/* Floating Success/Error Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl px-5 py-4 shadow-xl backdrop-blur-md border ${
+              toast.type === 'success'
+                ? 'bg-[#E8F0ED]/90 text-[#2A4A3E] border-emerald-300'
+                : 'bg-red-50/90 text-red-800 border-red-200'
+            }`}
+          >
+            <span className="text-xs font-bold uppercase tracking-wider">{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
