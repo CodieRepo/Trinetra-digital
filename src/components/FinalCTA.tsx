@@ -146,7 +146,7 @@ export function FinalCTAFooter() {
 
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-8 text-[11px] text-[#FAF5EF]/40 font-medium">
-          <span>© 2026 Trinetra Digital Solution. All rights reserved. · Gorakhpur, UP, India</span>
+          <span>© 2026 Trinetra Digital Solution. A Brand of Charulata Enterprises. All Rights Reserved. · Gorakhpur, UP, India</span>
           <div className="flex flex-wrap gap-4 items-center">
             <a href={`mailto:${EMAIL}`} className="hover:text-[#F9F8F5] transition-colors">{EMAIL}</a>
             <a href={PHONE_TEL} className="hover:text-[#F9F8F5] transition-colors">{PHONE_NUMBER}</a>

@@ -47,6 +47,18 @@ export default function PrivacyPage() {
               <h2 className="heading-xs text-[#18170F] mb-3">7. Contact</h2>
               <p>For privacy-related queries: <a href="mailto:info@trinetradigitalsolution.com" className="text-[#BF7340] hover:underline">info@trinetradigitalsolution.com</a> · +91 9334757759</p>
             </div>
+            
+            <div className="mt-6 pt-8 border-t border-[#E2DDD5]">
+              <h2 className="heading-xs text-[#18170F] mb-3">8. Legal Disclaimer &amp; Brand Ownership</h2>
+              <div className="p-5 bg-[#F4F2ED] border border-[#E2DDD5] rounded-xl text-xs leading-relaxed text-[#5C5A52] flex flex-col gap-3">
+                <p>
+                  <strong>Trinetra Digital Solution</strong> is the trading and service brand of <strong>Charulata Enterprises</strong>. Any reference to "Trinetra Digital Solution" on this website, in any marketing material, proposals, or during service delivery refers to the digital services, software products, and technology consulting provided by the parent legal entity <strong>Charulata Enterprises</strong>, unless explicitly stated otherwise.
+                </p>
+                <p>
+                  All official agreements, business covenants, proposals, invoices, and bank payments are strictly transacted under the legal entity name <strong>Charulata Enterprises</strong>. This corporate transparency statement is provided for the purpose of business compliance, payment gateway verification, Meta Business Suite verification, and WhatsApp Business verification.
+                </p>
+              </div>
+            </div>
           </div>
         </motion.div>
       </section>

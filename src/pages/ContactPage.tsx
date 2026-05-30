@@ -230,6 +230,14 @@ export default function ContactPage() {
               </div>
               <p className="text-xs text-[#8C8A82] pl-7">We serve businesses across all of India remotely.</p>
             </div>
+
+            {/* Legal Entity Notice */}
+            <div className="flex flex-col gap-2 p-5 bg-[#F9F8F5] border border-[#E2DDD5] rounded-xl">
+              <p className="text-[11px] font-bold text-[#18170F] uppercase tracking-wider">Legal Entity &amp; Operations</p>
+              <p className="text-[11px] leading-relaxed text-[#5C5A52] mb-0">
+                <strong>Trinetra Digital Solution</strong> is a brand owned and operated by <strong>Charulata Enterprises</strong>. All official contracts, invoices, payments, and legal transactions are conducted under the registered corporate name <strong>Charulata Enterprises</strong>.
+              </p>
+            </div>
           </motion.div>
 
           {/* Right: Contact Form */}

@@ -134,6 +134,25 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Brand Ownership & Legal Entity */}
+      <section className="bg-white py-16 md:py-20 border-b border-[#E2DDD5]" aria-labelledby="brand-ownership-title">
+        <div className="main-container max-w-[740px]">
+          <span className="mixed-headline-eyebrow" id="brand-ownership-title">Corporate Structure</span>
+          <h2 className="display-sm text-[#18170F] tracking-tight mt-2 mb-6">
+            Brand Ownership &amp; Legal Entity
+          </h2>
+          <div className="p-6 md:p-8 bg-[#F9F8F5] border border-[#E2DDD5] rounded-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-[#BF7340]"></div>
+            <p className="text-sm leading-relaxed text-[#5C5A52] mb-4">
+              <strong>Trinetra Digital Solution</strong> is a premium service and technology brand owned and operated by <strong>Charulata Enterprises</strong>. All business operations, contractual agreements, invoices, payments, and legal transactions are officially processed and executed under the registered corporate entity, <strong>Charulata Enterprises</strong>.
+            </p>
+            <p className="text-sm leading-relaxed text-[#5C5A52]">
+              While <strong>Charulata Enterprises</strong> serves as the parent legal and financial entity, <strong>Trinetra Digital Solution</strong> is the customer-facing brand specializing in website development, custom CRM solutions, AI automation, WhatsApp automation, digital transformation, and business software development services.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="bg-[#F4F2ED] py-16">
         <div className="main-container text-center">
