@@ -6,26 +6,26 @@ const WA_NUMBER = "919334757759";
 const PHONE_TEL = "tel:+919334757759";
 const PHONE_NUMBER = "+91 9334757759";
 const EMAIL = "info@trinetradigitalsolution.com";
-const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's AI automation services.")}`;
+const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in booking a consultation with Trinetra Digital Solution.")}`;
 
 // ── Shared Footer (used on all pages via PageLayout) ──────────────────────
 export function FinalCTAFooter() {
   return (
-    <footer className="relative overflow-hidden bg-[#131210] z-10 border-t border-[#FAF5EF]/10">
+    <footer className="relative overflow-hidden bg-slate-50 z-10 border-t border-slate-200">
+      
       {/* CTA Block */}
-      <div className="main-container max-w-[680px] mx-auto text-center pt-14 md:pt-24 pb-16 md:pb-24 border-b border-[#FAF5EF]/10">
-        <span className="text-[11px] font-semibold tracking-[0.25em] text-[#BF7340] uppercase font-interface mb-4 block">
-          Get Automated Today
+      <div className="main-container max-w-[700px] mx-auto text-center pt-16 md:pt-20 pb-16 md:pb-20 border-b border-slate-200 px-4">
+        <span className="text-xs font-bold tracking-[0.2em] text-[#2563EB] uppercase mb-4 block">
+          Streamline Your Digital Presence
         </span>
-        <h2 className="font-display text-[36px] sm:text-[44px] md:text-[56px] leading-[1.1] text-[#F9F8F5] tracking-tight mb-5 md:mb-6">
-          Stop losing leads. <br />
-          <span className="italic text-[#BF7340]">Automate</span> your business.
+        <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-5 max-w-[550px] mx-auto leading-tight">
+          Ready to scale your business operations?
         </h2>
-        <p className="text-sm sm:text-base leading-relaxed text-[#F9F8F5]/70 max-w-[500px] mx-auto mb-10">
-          Build operational infrastructure that qualifies leads in 3 minutes, updates CRM records autonomously, and ensures no opportunity is forgotten.
+        <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-[500px] mx-auto mb-8">
+          Partner with a reliable technology agency. We build custom websites, CRM systems, and performance digital marketing campaigns focused on real growth.
         </p>
 
-        <div className="max-w-[480px] mx-auto" role="group" aria-label="Contact Trinetra Digital Solution">
+        <div className="max-w-[420px] mx-auto flex flex-col gap-3" role="group" aria-label="Contact Trinetra Digital Solution">
           <motion.a
             href={WA_URL}
             target="_blank"
@@ -34,11 +34,11 @@ export function FinalCTAFooter() {
             aria-label="Chat with Trinetra Digital Solution on WhatsApp"
             whileHover={{ scale: 1.02, y: -1 }}
             whileTap={{ scale: 0.98 }}
-            className="flex w-full items-center justify-center gap-3 h-14 rounded-xl bg-[#2A4A3E] text-[#F9F8F5] font-bold text-sm tracking-wide border border-[#2A4A3E] hover:bg-[#1E3630] transition-colors mb-3"
+            className="flex w-full items-center justify-center gap-3.5 h-12 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs tracking-wider uppercase transition-colors shadow-xs"
           >
-            <MessageCircle size={18} className="fill-[#F9F8F5]/10" />
-            WhatsApp Us for a Free Demo
-            <ArrowRight size={15} />
+            <MessageCircle size={17} className="fill-white/10" />
+            Chat on WhatsApp
+            <ArrowRight size={14} />
           </motion.a>
 
           <motion.a
@@ -47,33 +47,33 @@ export function FinalCTAFooter() {
             aria-label="Call Trinetra Digital Solution"
             whileHover={{ scale: 1.02, y: -1 }}
             whileTap={{ scale: 0.98 }}
-            className="flex w-full items-center justify-center gap-3 h-12 rounded-xl border border-[#FAF5EF]/15 text-[#FAF5EF]/70 font-semibold text-sm tracking-wide hover:border-[#BF7340]/40 hover:text-[#BF7340] transition-all mb-6"
+            className="flex w-full items-center justify-center gap-3.5 h-11 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-xs tracking-wider uppercase hover:bg-slate-50 transition-all"
           >
-            <Phone size={16} />
+            <Phone size={14} />
             {PHONE_NUMBER} — Call Now
           </motion.a>
 
-          <p className="text-[11px] text-[#FAF5EF]/30 font-medium tracking-wide">
-            No sign-up required · We respond within 30 minutes
+          <p className="text-[10px] text-slate-400 font-semibold tracking-wide mt-2">
+            No obligation · Initial consultation is completely free
           </p>
         </div>
       </div>
 
       {/* Footer Nav */}
-      <div className="main-container pt-10 md:pt-12 pb-mobile-safe md:pb-8">
+      <div className="main-container max-w-[1200px] mx-auto pt-10 pb-8 px-4">
 
-        {/* ── Compact GBP Location Strip ─────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-[#1E1C18] border border-[#FAF5EF]/8 rounded-xl px-5 py-4 mb-8">
+        {/* ── Compact Office Location Strip ─────────────────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white border border-slate-200 rounded-2xl px-5 py-4 mb-10 shadow-3xs">
           <div className="flex items-start sm:items-center gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#BF7340]/15 text-[#BF7340]">
-              <MapPin size={15} />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
+              <MapPin size={16} />
             </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#FAF5EF]/40 mb-0.5">Our Office</p>
-              <p className="text-xs font-semibold text-[#F9F8F5]">
+            <div className="text-left">
+              <p className="text-[9px] font-extrabold uppercase tracking-widest text-[#94A3B8] mb-0.5">Our Office Address</p>
+              <p className="text-xs font-bold text-slate-900 leading-tight">
                 Gorakhpur, Uttar Pradesh, India — 273001
               </p>
-              <p className="text-[10.5px] text-[#FAF5EF]/50 mt-0.5">Mon–Sat · 9:00 AM – 7:00 PM IST</p>
+              <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Business Hours: Mon–Sat · 9:00 AM – 7:00 PM IST</p>
             </div>
           </div>
           <a
@@ -81,84 +81,89 @@ export function FinalCTAFooter() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Open Trinetra Digital Solution on Google Maps"
-            className="flex items-center justify-center gap-2 h-9 rounded-lg border border-[#FAF5EF]/15 bg-[#FAF5EF]/5 px-4 text-[10.5px] font-bold text-[#FAF5EF]/80 hover:bg-[#FAF5EF]/10 hover:text-[#F9F8F5] transition-all whitespace-nowrap shrink-0"
+            className="flex items-center justify-center gap-2 h-9 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all whitespace-nowrap shrink-0"
           >
             <ExternalLink size={12} /> View on Google Maps
           </a>
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 border-b border-[#FAF5EF]/10 pb-10">
-
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" xmlns="http://www.w3.org/2000/svg">
-              <polygon points="16,3 3,27 29,27" stroke="#F9F8F5" strokeWidth="2" strokeLinejoin="round" />
-              <circle cx="16" cy="11" r="2.5" fill="#BF7340" />
-              <circle cx="11.5" cy="20.5" r="2" fill="#F9F8F5" />
-              <circle cx="20.5" cy="20.5" r="2" fill="#F9F8F5" />
-              <line x1="16" y1="11" x2="11.5" y2="20.5" stroke="#F9F8F5" strokeWidth="1" strokeDasharray="1 1" />
-              <line x1="16" y1="11" x2="20.5" y2="20.5" stroke="#F9F8F5" strokeWidth="1" strokeDasharray="1 1" />
-              <line x1="11.5" y1="20.5" x2="20.5" y2="20.5" stroke="#F9F8F5" strokeWidth="1" strokeDasharray="1 1" />
-            </svg>
-            <div className="flex flex-col leading-none">
-              <span className="text-[14px] font-semibold tracking-[0.2em] text-[#F9F8F5] font-interface">TRINETRA</span>
-              <span className="text-[8px] tracking-[0.15em] text-[#FAF5EF]/60 mt-0.5 uppercase font-interface font-medium">Digital Solution</span>
+        <div className="grid gap-8 md:grid-cols-[1.2fr_2fr] lg:grid-cols-[1.5fr_2fr] pb-10 border-b border-slate-200">
+          
+          {/* Brand Column */}
+          <div className="space-y-4 text-left">
+            <div className="flex items-center gap-3">
+              <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="16,3 3,27 29,27" stroke="#0F172A" strokeWidth="2" strokeLinejoin="round" />
+                <circle cx="16" cy="11" r="2.5" fill="#2563EB" />
+                <circle cx="11.5" cy="20.5" r="2" fill="#0F172A" />
+                <circle cx="20.5" cy="20.5" r="2" fill="#0F172A" />
+                <line x1="16" y1="11" x2="11.5" y2="20.5" stroke="#0F172A" strokeWidth="1" strokeDasharray="1 1" />
+                <line x1="16" y1="11" x2="20.5" y2="20.5" stroke="#0F172A" strokeWidth="1" strokeDasharray="1 1" />
+                <line x1="11.5" y1="20.5" x2="20.5" y2="20.5" stroke="#0F172A" strokeWidth="1" strokeDasharray="1 1" />
+              </svg>
+              <div className="flex flex-col leading-none">
+                <span className="text-[14px] font-bold tracking-[0.2em] text-[#0F172A] font-interface">TRINETRA</span>
+                <span className="text-[8px] tracking-[0.15em] text-[#475569] mt-0.5 uppercase font-interface font-semibold">Digital Solution</span>
+              </div>
             </div>
+            <p className="text-slate-500 text-xs leading-relaxed max-w-[280px]">
+              Legitimate technology and digital growth partner helping businesses establish credibility through custom websites, streamlined software, and strategic marketing.
+            </p>
           </div>
 
-          {/* Footer Links Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-12 gap-y-6 text-xs">
+          {/* Links Column Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 text-left text-xs">
             <div>
-              <p className="text-[#FAF5EF]/30 font-semibold uppercase tracking-widest text-[10px] mb-3">Services</p>
-              <div className="flex flex-col gap-2.5">
-                <Link to="/services/whatsapp-automation" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">WhatsApp Automation</Link>
-                <Link to="/services/ai-crm" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">AI CRM</Link>
-                <Link to="/services/smart-followup" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Smart Follow-Up</Link>
-                <Link to="/services/website-development" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Website Development</Link>
-                <Link to="/services/digital-marketing" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Digital Marketing</Link>
-                <Link to="/services/ai-chatbots" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">AI Chatbots</Link>
+              <p className="text-slate-400 font-extrabold uppercase tracking-widest text-[9.5px] mb-3">Our Services</p>
+              <div className="flex flex-col gap-2.5 font-semibold">
+                <Link to="/services/website-development" className="text-slate-500 hover:text-[#2563EB] transition-colors">Website Development</Link>
+                <Link to="/services/ai-crm" className="text-slate-500 hover:text-[#2563EB] transition-colors">CRM Development</Link>
+                <Link to="/services/digital-marketing" className="text-slate-500 hover:text-[#2563EB] transition-colors">Digital Marketing</Link>
               </div>
             </div>
             <div>
-              <p className="text-[#FAF5EF]/30 font-semibold uppercase tracking-widest text-[10px] mb-3">Industries</p>
-              <div className="flex flex-col gap-2.5">
-                <Link to="/industries/healthcare" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Healthcare</Link>
-                <Link to="/industries/real-estate" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Real Estate</Link>
-                <Link to="/industries/coaching" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Coaching</Link>
-                <Link to="/industries/solar" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Solar</Link>
-                <Link to="/industries/local-business" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Local Business</Link>
+              <p className="text-slate-400 font-extrabold uppercase tracking-widest text-[9.5px] mb-3">Company</p>
+              <div className="flex flex-col gap-2.5 font-semibold">
+                <Link to="/about" className="text-slate-500 hover:text-[#2563EB] transition-colors">About Us</Link>
+                <Link to="/pricing" className="text-slate-500 hover:text-[#2563EB] transition-colors">Transparent Pricing</Link>
+                <Link to="/contact" className="text-slate-500 hover:text-[#2563EB] transition-colors">Free Consultation</Link>
+                <Link to="/blog" className="text-slate-500 hover:text-[#2563EB] transition-colors">Blog &amp; Resources</Link>
               </div>
             </div>
-            <div>
-              <p className="text-[#FAF5EF]/30 font-semibold uppercase tracking-widest text-[10px] mb-3">Company</p>
-              <div className="flex flex-col gap-2.5">
-                <Link to="/about" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">About Us</Link>
-                <Link to="/pricing" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Pricing</Link>
-                <Link to="/contact" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Contact</Link>
-                <Link to="/blog" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Blog</Link>
-                <Link to="/gorakhpur" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Gorakhpur</Link>
-                <Link to="/uttar-pradesh" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Uttar Pradesh</Link>
-                <Link to="/privacy-policy" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Privacy Policy</Link>
+            <div className="col-span-2 sm:col-span-1">
+              <p className="text-slate-400 font-extrabold uppercase tracking-widest text-[9.5px] mb-3">Trust &amp; Compliance</p>
+              <div className="flex flex-col gap-2.5 font-semibold">
+                <Link to="/privacy-policy" className="text-slate-500 hover:text-[#2563EB] transition-colors">Privacy Policy</Link>
+                <Link to="/terms-and-conditions" className="text-slate-500 hover:text-[#2563EB] transition-colors">Terms &amp; Conditions</Link>
+                <Link to="/refund-policy" className="text-slate-500 hover:text-[#2563EB] transition-colors">Refund Policy</Link>
+                <Link to="/disclaimer" className="text-slate-500 hover:text-[#2563EB] transition-colors">Legal Disclaimer</Link>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-8 text-[11px] text-[#FAF5EF]/40 font-medium">
-          <span>© 2026 Trinetra Digital Solution. A Brand of Charulata Enterprises. All Rights Reserved. · Gorakhpur, UP, India</span>
-          <div className="flex flex-wrap gap-4 items-center">
-            <a href={`mailto:${EMAIL}`} className="hover:text-[#F9F8F5] transition-colors">{EMAIL}</a>
-            <a href={PHONE_TEL} className="hover:text-[#F9F8F5] transition-colors">{PHONE_NUMBER}</a>
-            <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[#F9F8F5] transition-colors">WhatsApp</a>
+        {/* Corporate & Brand Ownership Declaration */}
+        <div className="mt-8 text-left text-[11px] leading-relaxed text-slate-400 space-y-4">
+          <p>
+            <strong>Ownership &amp; Transparency Statement:</strong> Trinetra Digital Solution is the official digital services and technology consulting brand owned and operated by <strong>Charulata Enterprises</strong>. All agreements, commercial covenants, customer proposals, invoices, and banking transactions are strictly executed under the legal business entity name <strong>Charulata Enterprises</strong>. This statement is provided to satisfy business compliance requirements for Meta Business Verification, Google Business Profiles, online advertising policies, and payment merchant gateways.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-slate-200 text-[10.5px] font-semibold text-slate-500">
+            <span>© 2026 Trinetra Digital Solution (Charulata Enterprises). All Rights Reserved. · Gorakhpur, UP, India</span>
+            <div className="flex flex-wrap gap-4 items-center">
+              <a href={`mailto:${EMAIL}`} className="hover:text-[#2563EB] transition-colors">{EMAIL}</a>
+              <a href={PHONE_TEL} className="hover:text-[#2563EB] transition-colors">{PHONE_NUMBER}</a>
+              <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[#2563EB] transition-colors">WhatsApp Support</a>
+            </div>
           </div>
         </div>
+
       </div>
     </footer>
   );
 }
 
-// ── Homepage-only full CTA section (hero dark section) ────────────────────
+// ── Homepage-only CTA section fallback ────────────────────
 export default function FinalCTA() {
   return <FinalCTAFooter />;
 }

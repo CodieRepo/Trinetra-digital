@@ -14,6 +14,9 @@ const AboutPage        = lazy(() => import("@/pages/AboutPage"));
 const BlogPage         = lazy(() => import("@/pages/BlogPage"));
 const BlogPostPage     = lazy(() => import("@/pages/BlogPostPage"));
 const PrivacyPage      = lazy(() => import("@/pages/PrivacyPage"));
+const TermsPage        = lazy(() => import("@/pages/TermsPage"));
+const RefundPage       = lazy(() => import("@/pages/RefundPage"));
+const DisclaimerPage   = lazy(() => import("@/pages/DisclaimerPage"));
 const NotFoundPage     = lazy(() => import("@/pages/NotFoundPage"));
 const AdminCrm         = lazy(() => import("@/pages/admin/AdminCrm"));
 
@@ -64,6 +67,9 @@ function AnimatedRoutes() {
           <Route path="/blog"                     element={<BlogPage />} />
           <Route path="/blog/:slug"               element={<BlogPostPage />} />
           <Route path="/privacy-policy"           element={<PrivacyPage />} />
+          <Route path="/terms-and-conditions"     element={<TermsPage />} />
+          <Route path="/refund-policy"            element={<RefundPage />} />
+          <Route path="/disclaimer"               element={<DisclaimerPage />} />
           <Route path="/admin"                    element={<AdminCrm />} />
 
           {/* Service Sub-pages */}

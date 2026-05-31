@@ -1,75 +1,66 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { MessageSquare, Database, Bell, Globe, BarChart2, Bot, ArrowRight } from "lucide-react";
+import { Globe, Database, BarChart3, Clock, Check, ArrowRight } from "lucide-react";
 import SEO from "../components/seo/SEO";
 
 const SERVICES = [
   {
-    icon: <MessageSquare size={22} />,
-    title: "WhatsApp Automation",
-    description: "AI-powered auto-replies, lead qualification, and conversation routing on your existing WhatsApp Business number. Respond to every lead within 3 minutes, 24/7.",
-    href: "/services/whatsapp-automation",
-    tag: "Most Popular",
+    icon: <Globe size={22} />,
+    title: "Website Development",
+    description: "Fully custom, mobile responsive, and SEO-friendly websites engineered to establish instant brand credibility and convert raw visitors into enquiries.",
+    details: [
+      "Business & Corporate Websites",
+      "Service & Portfolio Showcase Sites",
+      "Conversion-tuned Landing Pages",
+      "E-commerce & Store Solutions",
+      "High-speed performance (LCP optimized)",
+      "WhatsApp & Google Maps integrations",
+      "Hosting & domain configuration guidance",
+      "Secure contact & enquiry capture forms"
+    ],
+    href: "/services/website-development",
+    tag: null
   },
   {
     icon: <Database size={22} />,
-    title: "AI CRM",
-    description: "A self-updating CRM that extracts names, budgets, and requirements from WhatsApp chats automatically. No manual data entry ever again.",
+    title: "CRM Development",
+    description: "Tailored customer relationship databases and lead tracking pipelines built to match your operational workflows, eliminating admin overhead.",
+    details: [
+      "Centralized Lead Management systems",
+      "Structured Customer databases",
+      "Visual sales pipeline drag-and-drop",
+      "Follow-up logs & reminder trackers",
+      "Up to 15 team seats & member dashboards",
+      "Comprehensive performance reports",
+      "WhatsApp API notification capability",
+      "Secure role-based user access controls"
+    ],
     href: "/services/ai-crm",
-    tag: null,
+    tag: "Highly Requested"
   },
   {
-    icon: <Bell size={22} />,
-    title: "Smart Follow-Up",
-    description: "Intelligent re-engagement sequences that send personalized messages on Day 1, 3, and 7. Auto-stops when a lead responds or books.",
-    href: "/services/smart-followup",
-    tag: null,
-  },
-  {
-    icon: <Globe size={22} />,
-    title: "Website Development",
-    description: "Fast, SEO-optimized websites built for Indian businesses. Landing pages, service sites, and portfolio sites that convert visitors into leads.",
-    href: "/services/website-development",
-    tag: null,
-  },
-  {
-    icon: <BarChart2 size={22} />,
+    icon: <BarChart3 size={22} />,
     title: "Digital Marketing",
-    description: "Performance marketing campaigns on Google, Meta, and WhatsApp. We combine organic SEO with paid acquisition for maximum ROI.",
+    description: "Strategic performance marketing campaigns designed to help businesses improve their online presence and acquire qualified customer enquiries.",
+    details: [
+      "Meta Ads Management (Facebook & Instagram)",
+      "Google Ads (Search & Local Display)",
+      "Lead generation target campaigns",
+      "Conversion tracking pixels (Meta Pixel / GTM)",
+      "A/B landing page layout optimization",
+      "Detailed organic SEO keyword structures",
+      "Social media setup & branding",
+      "No misleading lead volume guarantees"
+    ],
     href: "/services/digital-marketing",
-    tag: null,
-  },
-  {
-    icon: <Bot size={22} />,
-    title: "AI Chatbots",
-    description: "Custom AI chatbots trained on your business data. Deploy on WhatsApp, website, or Instagram — handles FAQs, bookings, and lead capture autonomously.",
-    href: "/services/ai-chatbots",
-    tag: null,
-  },
+    tag: null
+  }
 ];
 
-const SCHEMA = {
-  "@context": "https://schema.org",
-  "@type": "Service",
-  "serviceType": "AI Business Automation",
-  "provider": { "@id": "https://trinetradigitalsolution.com/#organization" },
-  "areaServed": "IN",
-  "hasOfferCatalog": {
-    "@type": "OfferCatalog",
-    "name": "Trinetra Digital Solution Services",
-    "itemListElement": SERVICES.map((s) => ({
-      "@type": "Offer",
-      "name": s.title,
-      "description": s.description,
-      "url": `https://trinetradigitalsolution.com${s.href}`,
-    })),
-  },
-};
-
 const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  show: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.5, delay: i * 0.07 } }),
+  hidden: { opacity: 0, y: 16 },
+  show: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.4, delay: i * 0.08 } }),
 };
 
 export default function ServicesPage() {
@@ -78,86 +69,109 @@ export default function ServicesPage() {
   return (
     <>
       <SEO
-        title="AI Automation Services — WhatsApp CRM, Chatbots & Digital Marketing | Trinetra Digital"
-        description="Explore Trinetra Digital Solution's full suite of AI automation services: WhatsApp Automation, AI CRM, Smart Follow-Up, Website Development, Digital Marketing, and AI Chatbots for Indian businesses."
+        title="Software & Digital Solutions Services — Trinetra Digital Solution"
+        description="Explore Trinetra Digital Solution's key services: Website Development, CRM Software Engineering, and Performance Digital Marketing for Indian businesses."
         canonical="https://trinetradigitalsolution.com/services"
-        schema={SCHEMA}
       />
 
-      {/* Hero */}
-      <section className="relative bg-[#F9F8F5] pt-20 pb-16 md:pt-28 md:pb-20 border-b border-[#E2DDD5]">
-        <div className="main-container text-center">
-          <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mixed-headline-eyebrow">
-            What We Build
-          </motion.span>
-          <motion.h1
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="display-lg text-[#18170F] tracking-tight max-w-[680px] mx-auto mb-5 mt-2"
-          >
-            AI automation services built for Indian businesses
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="body-lg text-[#5C5A52] max-w-[520px] mx-auto mb-8"
-          >
-            From WhatsApp lead automation to AI CRMs and performance marketing — we build the operational infrastructure your business needs to scale without adding headcount.
-          </motion.p>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex flex-wrap gap-3 justify-center">
-            <Link to="/contact" className="inline-flex items-center gap-2 h-11 rounded-lg bg-[#2A4A3E] px-6 text-xs font-bold uppercase tracking-wider text-[#F9F8F5] hover:bg-[#1E3630] transition-colors">
-              Book Free Demo <ArrowRight size={14} />
+      {/* Hero Header */}
+      <section className="relative bg-white pt-20 pb-16 md:pt-24 md:pb-20 border-b border-slate-200">
+        <div className="main-container text-center max-w-[800px] mx-auto px-4">
+          <span className="text-xs font-bold tracking-widest text-[#2563EB] uppercase block mb-3">
+            Our Core Capabilities
+          </span>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-5 leading-tight">
+            Robust software engineering and strategic marketing solutions
+          </h1>
+          <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-[580px] mx-auto mb-8 font-medium">
+            We reject exaggerated promises and build clean operational foundations. Whether you require a credible website, custom sales software, or strategic ads management, we design to your specifications.
+          </p>
+          <div className="flex flex-wrap gap-3.5 justify-center">
+            <Link to="/contact" className="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-xs">
+              Book Strategy Call <ArrowRight size={14} />
             </Link>
-            <Link to="/pricing" className="inline-flex items-center gap-2 h-11 rounded-lg border border-[#E2DDD5] bg-white px-6 text-xs font-semibold text-[#18170F] hover:bg-[#F4F2ED] transition-colors">
-              See Pricing
+            <Link to="/pricing" className="inline-flex items-center gap-2 h-11 px-6 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold uppercase tracking-wider hover:bg-slate-50 transition-colors">
+              View Transparent Pricing
             </Link>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Services Grid */}
-      <section className="bg-[#F4F2ED] py-20 md:py-28" aria-label="All Services">
-        <div className="main-container">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <section className="bg-slate-50 py-16 md:py-24 border-b border-slate-200" aria-label="All services details">
+        <div className="main-container max-w-[1200px] mx-auto px-4 space-y-12">
+          
+          <div className="grid gap-8 md:grid-cols-3">
             {SERVICES.map((service, i) => (
               <motion.div
-                key={service.href}
+                key={service.title}
                 custom={i}
                 variants={fadeUp}
                 initial="hidden"
                 whileInView="show"
-                viewport={{ once: true, amount: 0.2 }}
-                className="group relative flex flex-col justify-between bg-white border border-[#E2DDD5] rounded-2xl p-8 hover:shadow-md transition-all duration-300 overflow-hidden"
-                style={{ minHeight: "280px" }}
+                viewport={{ once: true, amount: 0.15 }}
+                className="group bg-white border border-slate-200 rounded-2xl p-6 md:p-8 flex flex-col justify-between hover:shadow-md transition-shadow duration-300 relative text-left"
               >
-                {/* Top accent line on hover */}
-                <div className="absolute top-0 inset-x-0 h-[3px] bg-[#BF7340] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
-
                 {service.tag && (
-                  <span className="absolute top-4 right-4 text-[9px] font-bold uppercase tracking-widest bg-[#F2E8DC] text-[#BF7340] px-2.5 py-1 rounded-full">
+                  <span className="absolute top-4 right-4 text-[9px] font-extrabold bg-[#EFF6FF] text-[#2563EB] border border-[#2563EB]/25 px-2 py-0.5 rounded-full uppercase tracking-wider">
                     {service.tag}
                   </span>
                 )}
 
                 <div>
-                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-[#F2E8DC] text-[#BF7340]">
+                  <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
                     {service.icon}
                   </div>
-                  <h2 className="heading-sm text-[#18170F] mb-3">{service.title}</h2>
-                  <p className="body-sm text-[#5C5A52] leading-relaxed">{service.description}</p>
+                  <h2 className="text-lg font-bold text-slate-900 mb-3">{service.title}</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-semibold mb-6">
+                    {service.description}
+                  </p>
+
+                  <div className="h-px bg-slate-100 my-4" />
+                  
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Key Features:</p>
+                  <ul className="space-y-2.5 text-xs text-slate-600 font-semibold mb-6">
+                    {service.details.map((detail, d) => (
+                      <li key={d} className="flex items-start gap-2.5">
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563EB] mt-0.5">
+                          <Check size={9} strokeWidth={3} />
+                        </span>
+                        <span className="leading-normal">{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
-                <Link
-                  to={service.href}
-                  className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-[#8C8A82] group-hover:text-[#BF7340] transition-colors"
-                >
-                  Learn more <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-                </Link>
+                <div className="mt-8 border-t border-slate-100 pt-5">
+                  <Link
+                    to="/contact"
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#2563EB] hover:underline"
+                  >
+                    Request consultation proposal <ArrowRight size={13} />
+                  </Link>
+                </div>
               </motion.div>
             ))}
           </div>
+
+          {/* Coming Soon Block */}
+          <div className="max-w-3xl mx-auto bg-slate-100/50 border border-slate-200/80 p-6 md:p-8 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-left gap-6 mt-12 shadow-3xs">
+            <div className="space-y-2">
+              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold bg-slate-200 text-slate-600 border border-slate-300 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                <Clock size={10} /> Automation Solutions (Coming Soon)
+              </span>
+              <h3 className="text-sm font-bold text-slate-800">Advanced Business Workflow Automation</h3>
+              <p className="text-xs text-slate-500 font-semibold leading-relaxed max-w-xl">
+                We are currently developing advanced automation solutions that will be available soon. Future modules will integrate WhatsApp Auto-replies, smart lead follow-up automation, custom customer support flows, and AI assistants.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border border-slate-200 bg-white rounded-lg px-4 py-2">
+                Dev Stage
+              </span>
+            </div>
+          </div>
+
         </div>
       </section>
     </>

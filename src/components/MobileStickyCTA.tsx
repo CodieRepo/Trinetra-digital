@@ -29,7 +29,7 @@ export default function MobileStickyCTA() {
         >
           {/* Glassmorphism bar */}
           <div
-            className="flex items-stretch border-t border-[#E2DDD5]/60 bg-[#F9F8F5]/95 backdrop-blur-md"
+            className="flex items-stretch border-t border-slate-200 bg-white/95 backdrop-blur-md shadow-lg"
             style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
           >
             {/* WhatsApp Button */}
@@ -38,15 +38,15 @@ export default function MobileStickyCTA() {
               target="_blank"
               rel="noopener noreferrer"
               id="mobile-whatsapp-cta"
-              className="flex flex-1 items-center justify-center gap-2.5 py-4 text-sm font-bold text-[#18170F] bg-[#F4F2ED] border-r border-[#E2DDD5] active:bg-[#EEEAE3] transition-colors duration-150"
+              className="flex flex-1 items-center justify-center gap-2.5 py-3.5 text-sm font-bold text-slate-800 bg-slate-50 border-r border-slate-200 active:bg-slate-100 transition-colors duration-150"
               style={{ WebkitTapHighlightColor: "transparent" }}
             >
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#25D366]/10 text-[#25D366] shrink-0">
                 <MessageCircle size={17} className="fill-[#25D366]/10" />
               </span>
               <div className="flex flex-col leading-none text-left">
-                <span className="text-[11px] font-semibold text-[#18170F] tracking-wide">WhatsApp Us</span>
-                <span className="text-[10px] text-[#5C5A52] mt-0.5">Reply in minutes</span>
+                <span className="text-[11px] font-semibold text-slate-800 tracking-wide">WhatsApp Us</span>
+                <span className="text-[9px] text-slate-500 mt-0.5 font-medium">Reply in minutes</span>
               </div>
             </a>
 
@@ -54,15 +54,15 @@ export default function MobileStickyCTA() {
             <a
               href={PHONE_TEL}
               id="mobile-call-cta"
-              className="flex flex-1 items-center justify-center gap-2.5 py-4 text-sm font-bold bg-[#2A4A3E] text-[#F9F8F5] active:bg-[#1E3630] transition-colors duration-150"
+              className="flex flex-1 items-center justify-center gap-2.5 py-3.5 text-sm font-bold bg-[#2563EB] text-white active:bg-[#1D4ED8] transition-colors duration-150"
               style={{ WebkitTapHighlightColor: "transparent" }}
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#BF7340]/15 text-[#BF7340] shrink-0">
-                <Phone size={16} />
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white shrink-0">
+                <Phone size={15} />
               </span>
               <div className="flex flex-col leading-none text-left">
-                <span className="text-[11px] font-semibold text-[#F9F8F5] tracking-wide">Call Now</span>
-                <span className="text-[10px] text-[#FAF5EF]/60 mt-0.5">{PHONE_NUMBER}</span>
+                <span className="text-[11px] font-semibold text-white tracking-wide">Call Now</span>
+                <span className="text-[9px] text-white/80 mt-0.5 font-medium">{PHONE_NUMBER}</span>
               </div>
             </a>
           </div>
