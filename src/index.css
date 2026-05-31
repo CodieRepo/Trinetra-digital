@@ -1,53 +1,53 @@
 @import "tailwindcss";
 
 @theme {
-  --color-base: #FFFFFF;
-  --color-surface-1: #F8FAFC;
-  --color-surface-2: #F1F5F9;
-  --color-surface-3: #E2E8F0;
-  --color-border: #E2E8F0;
-  --color-border-subtle: rgba(226, 232, 240, 0.4);
+  --color-base: #F9F8F5;
+  --color-surface-1: #F4F2ED;
+  --color-surface-2: #EEEAE3;
+  --color-surface-3: #E8E3DA;
+  --color-border: #E2DDD5;
+  --color-border-subtle: rgba(226, 221, 213, 0.5);
 
-  --color-ink-1: #0F172A;
-  --color-ink-2: #334155;
-  --color-ink-3: #64748B;
-  --color-ink-4: #94A3B8;
-  --color-ink-inverse: #FFFFFF;
+  --color-ink-1: #18170F;
+  --color-ink-2: #5C5A52;
+  --color-ink-3: #8C8A82;
+  --color-ink-4: #B8B5AC;
+  --color-ink-inverse: #F9F8F5;
 
-  --color-accent: #2563EB;
-  --color-accent-hover: #1D4ED8;
-  --color-accent-active: #1E40AF;
-  --color-accent-light: #DBEAFE;
-  --color-accent-lighter: #EFF6FF;
+  --color-accent: #BF7340;
+  --color-accent-hover: #A6612E;
+  --color-accent-active: #8F5226;
+  --color-accent-light: #F2E8DC;
+  --color-accent-lighter: #FAF5EF;
 
-  --color-cta: #2563EB;
-  --color-cta-hover: #1D4ED8;
-  --color-cta-light: #EFF6FF;
+  --color-cta: #2A4A3E;
+  --color-cta-hover: #1E3630;
+  --color-cta-light: #E8F0ED;
 
-  --color-success: #10B981;
-  --color-success-light: #ECFDF5;
-  --color-warning: #F59E0B;
-  --color-warning-light: #FEF3C7;
-  --color-error: #EF4444;
-  --color-error-light: #FEF2F2;
+  --color-success: #2D6A4F;
+  --color-success-light: #E8F5EE;
+  --color-warning: #B5600A;
+  --color-warning-light: #FDF0E5;
+  --color-error: #C0392B;
+  --color-error-light: #FCE8E6;
 
-  --color-dark-surface: #0F172A;
-  --color-dark-card: #1E293B;
+  --color-dark-surface: #131210;
+  --color-dark-card: #1E1C18;
   --color-dark-border: rgba(255, 255, 255, 0.08);
-  --color-dark-text: #FFFFFF;
-  --color-dark-text-2: rgba(255, 255, 255, 0.6);
+  --color-dark-text: #F9F8F5;
+  --color-dark-text-2: rgba(249, 248, 245, 0.6);
 
-  --font-display: "Inter", "Outfit", system-ui, sans-serif;
+  --font-display: "Instrument Serif", Georgia, serif;
   --font-interface: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", Courier New, monospace;
 
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 4px rgba(15, 23, 42, 0.05), 0 2px 8px rgba(15, 23, 42, 0.03);
-  --shadow-md: 0 2px 8px rgba(15, 23, 42, 0.04), 0 4px 20px rgba(15, 23, 42, 0.06);
-  --shadow-lg: 0 4px 16px rgba(15, 23, 42, 0.05), 0 8px 40px rgba(15, 23, 42, 0.08);
-  --shadow-xl: 0 8px 32px rgba(15, 23, 42, 0.06), 0 16px 64px rgba(15, 23, 42, 0.10);
-  --shadow-inner: inset 0 1px 3px rgba(15, 23, 42, 0.04);
-  --shadow-focus: 0 0 0 3px rgba(37, 99, 235, 0.20);
+  --shadow-xs: 0 1px 2px rgba(24, 23, 15, 0.04);
+  --shadow-sm: 0 1px 4px rgba(24, 23, 15, 0.06), 0 2px 8px rgba(24, 23, 15, 0.04);
+  --shadow-md: 0 2px 8px rgba(24, 23, 15, 0.06), 0 4px 20px rgba(24, 23, 15, 0.08);
+  --shadow-lg: 0 4px 16px rgba(24, 23, 15, 0.06), 0 8px 40px rgba(24, 23, 15, 0.10);
+  --shadow-xl: 0 8px 32px rgba(24, 23, 15, 0.08), 0 16px 64px rgba(24, 23, 15, 0.12);
+  --shadow-inner: inset 0 1px 3px rgba(24, 23, 15, 0.06);
+  --shadow-focus: 0 0 0 3px rgba(191, 115, 64, 0.20);
 }
 
 :root {

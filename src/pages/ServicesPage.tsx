@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Globe, Database, BarChart3, Clock, Check, ArrowRight } from "lucide-react";
+import { Globe, Database, BarChart2, Clock, ArrowRight } from "lucide-react";
 import SEO from "../components/seo/SEO";
 
 const SERVICES = [
@@ -9,16 +9,6 @@ const SERVICES = [
     icon: <Globe size={22} />,
     title: "Website Development",
     description: "Fully custom, mobile responsive, and SEO-friendly websites engineered to establish instant brand credibility and convert raw visitors into enquiries.",
-    details: [
-      "Business & Corporate Websites",
-      "Service & Portfolio Showcase Sites",
-      "Conversion-tuned Landing Pages",
-      "E-commerce & Store Solutions",
-      "High-speed performance (LCP optimized)",
-      "WhatsApp & Google Maps integrations",
-      "Hosting & domain configuration guidance",
-      "Secure contact & enquiry capture forms"
-    ],
     href: "/services/website-development",
     tag: null
   },
@@ -26,41 +16,39 @@ const SERVICES = [
     icon: <Database size={22} />,
     title: "CRM Development",
     description: "Tailored customer relationship databases and lead tracking pipelines built to match your operational workflows, eliminating admin overhead.",
-    details: [
-      "Centralized Lead Management systems",
-      "Structured Customer databases",
-      "Visual sales pipeline drag-and-drop",
-      "Follow-up logs & reminder trackers",
-      "Up to 15 team seats & member dashboards",
-      "Comprehensive performance reports",
-      "WhatsApp API notification capability",
-      "Secure role-based user access controls"
-    ],
     href: "/services/ai-crm",
     tag: "Highly Requested"
   },
   {
-    icon: <BarChart3 size={22} />,
+    icon: <BarChart2 size={22} />,
     title: "Digital Marketing",
-    description: "Strategic performance marketing campaigns designed to help businesses improve their online presence and acquire qualified customer enquiries.",
-    details: [
-      "Meta Ads Management (Facebook & Instagram)",
-      "Google Ads (Search & Local Display)",
-      "Lead generation target campaigns",
-      "Conversion tracking pixels (Meta Pixel / GTM)",
-      "A/B landing page layout optimization",
-      "Detailed organic SEO keyword structures",
-      "Social media setup & branding",
-      "No misleading lead volume guarantees"
-    ],
+    description: "We help businesses improve their online presence and generate qualified enquiries through strategic digital marketing campaigns.",
     href: "/services/digital-marketing",
     tag: null
   }
 ];
 
+const SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "serviceType": "Software & Digital Growth Solutions",
+  "provider": { "@id": "https://trinetradigitalsolution.com/#organization" },
+  "areaServed": "IN",
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Trinetra Digital Solution Services Catalog",
+    "itemListElement": SERVICES.map((s) => ({
+      "@type": "Offer",
+      "name": s.title,
+      "description": s.description,
+      "url": `https://trinetradigitalsolution.com${s.href}`,
+    })),
+  },
+};
+
 const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.4, delay: i * 0.08 } }),
+  hidden: { opacity: 0, y: 24 },
+  show: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.5, delay: i * 0.07 } }),
 };
 
 export default function ServicesPage() {
@@ -70,103 +58,100 @@ export default function ServicesPage() {
     <>
       <SEO
         title="Software & Digital Solutions Services — Trinetra Digital Solution"
-        description="Explore Trinetra Digital Solution's key services: Website Development, CRM Software Engineering, and Performance Digital Marketing for Indian businesses."
+        description="Explore Trinetra Digital Solution's core services: Custom Website Development, CRM Systems, and Performance Digital Marketing for Indian businesses."
         canonical="https://trinetradigitalsolution.com/services"
+        schema={SCHEMA}
       />
 
-      {/* Hero Header */}
-      <section className="relative bg-white pt-20 pb-16 md:pt-24 md:pb-20 border-b border-slate-200">
-        <div className="main-container text-center max-w-[800px] mx-auto px-4">
-          <span className="text-xs font-bold tracking-widest text-[#2563EB] uppercase block mb-3">
-            Our Core Capabilities
-          </span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-5 leading-tight">
-            Robust software engineering and strategic marketing solutions
-          </h1>
-          <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-[580px] mx-auto mb-8 font-medium">
+      {/* Hero Header - Old UI Style */}
+      <section className="relative bg-[#F9F8F5] pt-20 pb-16 md:pt-28 md:pb-20 border-b border-[#E2DDD5]">
+        <div className="main-container text-center">
+          <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mixed-headline-eyebrow">
+            What We Build
+          </motion.span>
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="display-lg text-[#18170F] tracking-tight max-w-[680px] mx-auto mb-5 mt-2"
+          >
+            Software &amp; digital solutions engineered for growth
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="body-lg text-[#5C5A52] max-w-[520px] mx-auto mb-8 font-medium"
+          >
             We reject exaggerated promises and build clean operational foundations. Whether you require a credible website, custom sales software, or strategic ads management, we design to your specifications.
-          </p>
-          <div className="flex flex-wrap gap-3.5 justify-center">
-            <Link to="/contact" className="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-xs">
-              Book Strategy Call <ArrowRight size={14} />
+          </motion.p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex flex-wrap gap-3 justify-center">
+            <Link to="/contact" className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-[#2A4A3E] px-6 text-[#F9F8F5] transition-all hover:bg-[#1E3630]">
+              Book Consultation <ArrowRight size={14} />
             </Link>
-            <Link to="/pricing" className="inline-flex items-center gap-2 h-11 px-6 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold uppercase tracking-wider hover:bg-slate-50 transition-colors">
-              View Transparent Pricing
+            <Link to="/pricing" className="inline-flex items-center gap-2 h-9 rounded-lg border border-[#E2DDD5] bg-white px-6 text-xs font-semibold text-[#18170F] hover:bg-[#F4F2ED] transition-colors">
+              See Pricing
             </Link>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Services Grid */}
-      <section className="bg-slate-50 py-16 md:py-24 border-b border-slate-200" aria-label="All services details">
+      {/* Services Grid - Old UI Style */}
+      <section className="bg-[#F4F2ED] py-20 md:py-28" aria-label="All Services">
         <div className="main-container max-w-[1200px] mx-auto px-4 space-y-12">
           
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {SERVICES.map((service, i) => (
               <motion.div
-                key={service.title}
+                key={service.href}
                 custom={i}
                 variants={fadeUp}
                 initial="hidden"
                 whileInView="show"
-                viewport={{ once: true, amount: 0.15 }}
-                className="group bg-white border border-slate-200 rounded-2xl p-6 md:p-8 flex flex-col justify-between hover:shadow-md transition-shadow duration-300 relative text-left"
+                viewport={{ once: true, amount: 0.2 }}
+                className="group relative flex flex-col justify-between bg-white border border-[#E2DDD5] rounded-2xl p-8 hover:shadow-md transition-all duration-300 overflow-hidden text-left"
+                style={{ minHeight: "280px" }}
               >
+                {/* Top accent line on hover */}
+                <div className="absolute top-0 inset-x-0 h-[3px] bg-[#BF7340] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+
                 {service.tag && (
-                  <span className="absolute top-4 right-4 text-[9px] font-extrabold bg-[#EFF6FF] text-[#2563EB] border border-[#2563EB]/25 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  <span className="absolute top-4 right-4 text-[9px] font-bold uppercase tracking-widest bg-[#FAF5EF] text-[#BF7340] border border-[#E2DDD5] px-2.5 py-1 rounded-full">
                     {service.tag}
                   </span>
                 )}
 
                 <div>
-                  <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
+                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF5EF] text-[#BF7340] border border-[#E2DDD5]">
                     {service.icon}
                   </div>
-                  <h2 className="text-lg font-bold text-slate-900 mb-3">{service.title}</h2>
-                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-semibold mb-6">
-                    {service.description}
-                  </p>
-
-                  <div className="h-px bg-slate-100 my-4" />
-                  
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Key Features:</p>
-                  <ul className="space-y-2.5 text-xs text-slate-600 font-semibold mb-6">
-                    {service.details.map((detail, d) => (
-                      <li key={d} className="flex items-start gap-2.5">
-                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2563EB] mt-0.5">
-                          <Check size={9} strokeWidth={3} />
-                        </span>
-                        <span className="leading-normal">{detail}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <h2 className="heading-sm text-[#18170F] mb-3">{service.title}</h2>
+                  <p className="body-sm text-[#5C5A52] leading-relaxed font-semibold">{service.description}</p>
                 </div>
 
-                <div className="mt-8 border-t border-slate-100 pt-5">
-                  <Link
-                    to="/contact"
-                    className="flex items-center gap-1.5 text-xs font-bold text-[#2563EB] hover:underline"
-                  >
-                    Request consultation proposal <ArrowRight size={13} />
-                  </Link>
-                </div>
+                <Link
+                  to="/contact"
+                  className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-[#8C8A82] group-hover:text-[#BF7340] transition-colors"
+                >
+                  Request Consultation <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                </Link>
               </motion.div>
             ))}
           </div>
 
-          {/* Coming Soon Block */}
-          <div className="max-w-3xl mx-auto bg-slate-100/50 border border-slate-200/80 p-6 md:p-8 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between text-left gap-6 mt-12 shadow-3xs">
+          {/* Coming Soon Block - Classic Card design */}
+          <div className="max-w-4xl mx-auto bg-white border border-[#E2DDD5] p-6 md:p-8 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between text-left gap-6 shadow-3xs mt-12">
             <div className="space-y-2">
-              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold bg-slate-200 text-slate-600 border border-slate-300 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 text-[9px] bg-[#FAF5EF] border border-[#BF7340]/30 text-[#BF7340] px-2 py-0.5 rounded-full uppercase font-bold">
                 <Clock size={10} /> Automation Solutions (Coming Soon)
               </span>
-              <h3 className="text-sm font-bold text-slate-800">Advanced Business Workflow Automation</h3>
-              <p className="text-xs text-slate-500 font-semibold leading-relaxed max-w-xl">
+              <h3 className="text-sm font-bold text-[#18170F] mt-1">Advanced Business Workflow Automation</h3>
+              <p className="text-xs text-[#5C5A52] leading-relaxed font-semibold max-w-xl">
                 We are currently developing advanced automation solutions that will be available soon. Future modules will integrate WhatsApp Auto-replies, smart lead follow-up automation, custom customer support flows, and AI assistants.
               </p>
             </div>
             <div className="shrink-0">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border border-slate-200 bg-white rounded-lg px-4 py-2">
+              <span className="text-xs font-bold text-[#8C8A82] uppercase tracking-widest border border-[#E2DDD5] bg-[#F4F2ED] rounded-lg px-4 py-2">
                 Dev Stage
               </span>
             </div>

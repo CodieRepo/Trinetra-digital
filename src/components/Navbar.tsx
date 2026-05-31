@@ -9,9 +9,20 @@ const PHONE_TEL = "tel:+919334757759";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's AI automation services.")}`;
 
 const SERVICES_LINKS = [
+  { label: "WhatsApp Automation", href: "/services/whatsapp-automation" },
+  { label: "AI CRM", href: "/services/ai-crm" },
+  { label: "Smart Follow-Up", href: "/services/smart-followup" },
   { label: "Website Development", href: "/services/website-development" },
-  { label: "CRM Development", href: "/services/ai-crm" },
   { label: "Digital Marketing", href: "/services/digital-marketing" },
+  { label: "AI Chatbots", href: "/services/ai-chatbots" },
+];
+
+const INDUSTRIES_LINKS = [
+  { label: "Healthcare", href: "/industries/healthcare" },
+  { label: "Real Estate", href: "/industries/real-estate" },
+  { label: "Coaching", href: "/industries/coaching" },
+  { label: "Solar", href: "/industries/solar" },
+  { label: "Local Business", href: "/industries/local-business" },
 ];
 
 const NAV_LINKS = [
@@ -50,17 +61,17 @@ export default function Navbar() {
   const LogoMark = () => (
     <Link to="/" className="flex items-center gap-3 group transition-opacity duration-200 hover:opacity-90" aria-label="Trinetra Home">
       <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="16,3 3,27 29,27" stroke="#0F172A" strokeWidth="2" strokeLinejoin="round" />
-        <circle cx="16" cy="11" r="2.5" fill="#2563EB" />
-        <circle cx="11.5" cy="20.5" r="2" fill="#0F172A" />
-        <circle cx="20.5" cy="20.5" r="2" fill="#0F172A" />
-        <line x1="16" y1="11" x2="11.5" y2="20.5" stroke="#0F172A" strokeWidth="1" strokeDasharray="1 1" />
-        <line x1="16" y1="11" x2="20.5" y2="20.5" stroke="#0F172A" strokeWidth="1" strokeDasharray="1 1" />
-        <line x1="11.5" y1="20.5" x2="20.5" y2="20.5" stroke="#0F172A" strokeWidth="1" strokeDasharray="1 1" />
+        <polygon points="16,3 3,27 29,27" stroke="#18170F" strokeWidth="2" strokeLinejoin="round" />
+        <circle cx="16" cy="11" r="2.5" fill="#BF7340" />
+        <circle cx="11.5" cy="20.5" r="2" fill="#18170F" />
+        <circle cx="20.5" cy="20.5" r="2" fill="#18170F" />
+        <line x1="16" y1="11" x2="11.5" y2="20.5" stroke="#18170F" strokeWidth="1" strokeDasharray="1 1" />
+        <line x1="16" y1="11" x2="20.5" y2="20.5" stroke="#18170F" strokeWidth="1" strokeDasharray="1 1" />
+        <line x1="11.5" y1="20.5" x2="20.5" y2="20.5" stroke="#18170F" strokeWidth="1" strokeDasharray="1 1" />
       </svg>
       <div className="flex flex-col leading-none">
-        <span className="text-[14px] font-bold tracking-[0.2em] text-[#0F172A] font-interface">TRINETRA</span>
-        <span className="text-[8px] tracking-[0.15em] text-[#475569] mt-0.5 uppercase font-interface font-semibold">Digital Solution</span>
+        <span className="text-[14px] font-semibold tracking-[0.2em] text-[#18170F] font-interface">TRINETRA</span>
+        <span className="text-[8px] tracking-[0.15em] text-[#5C5A52] mt-0.5 uppercase font-interface font-medium">Digital Solution</span>
       </div>
     </Link>
   );
@@ -75,13 +86,13 @@ export default function Navbar() {
           transition={{ duration: 0.15, ease: "easeOut" }}
           onMouseEnter={() => openDropdown(name)}
           onMouseLeave={closeDropdown}
-          className="absolute top-full left-0 mt-2 min-w-[220px] rounded-xl border border-slate-200 bg-white shadow-lg py-2 z-50"
+          className="absolute top-full left-0 mt-2 min-w-[220px] rounded-xl border border-[#E2DDD5] bg-[#F9F8F5] shadow-lg py-2 z-50"
         >
           {items.map((item) => (
             <Link
               key={item.href}
               to={item.href}
-              className="block px-4 py-2.5 text-xs font-semibold text-[#475569] hover:text-[#0F172A] hover:bg-slate-50 transition-colors"
+              className="block px-4 py-2.5 text-xs font-medium text-[#5C5A52] hover:text-[#18170F] hover:bg-[#F4F2ED] transition-colors"
             >
               {item.label}
             </Link>
@@ -98,7 +109,7 @@ export default function Navbar() {
       transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white/92 backdrop-blur-md border-b border-slate-200 shadow-xs"
+          ? "bg-[#F9F8F5]/92 backdrop-blur-md border-b border-[#E2DDD5] shadow-sm"
           : "bg-transparent border-b border-transparent"
       }`}
       style={{ height: "60px" }}
@@ -114,18 +125,31 @@ export default function Navbar() {
             onMouseEnter={() => openDropdown("services")}
             onMouseLeave={closeDropdown}
           >
-            <button className="flex items-center gap-1 text-xs font-semibold tracking-[0.06em] text-[#475569] hover:text-[#0F172A] transition-colors duration-200">
+            <button className="flex items-center gap-1 text-xs font-medium tracking-[0.06em] text-[#5C5A52] hover:text-[#18170F] transition-colors duration-200">
               Services
               <ChevronDown size={13} className={`transition-transform duration-200 ${activeDropdown === "services" ? "rotate-180" : ""}`} />
             </button>
             <DropdownMenu items={SERVICES_LINKS} name="services" />
           </div>
 
+          {/* Industries Dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => openDropdown("industries")}
+            onMouseLeave={closeDropdown}
+          >
+            <button className="flex items-center gap-1 text-xs font-medium tracking-[0.06em] text-[#5C5A52] hover:text-[#18170F] transition-colors duration-200">
+              Industries
+              <ChevronDown size={13} className={`transition-transform duration-200 ${activeDropdown === "industries" ? "rotate-180" : ""}`} />
+            </button>
+            <DropdownMenu items={INDUSTRIES_LINKS} name="industries" />
+          </div>
+
           {NAV_LINKS.map((link) => (
             <Link
               key={link.label}
               to={link.href}
-              className="text-xs font-semibold tracking-[0.06em] text-[#475569] hover:text-[#0F172A] transition-colors duration-200"
+              className="text-xs font-medium tracking-[0.06em] text-[#5C5A52] hover:text-[#18170F] transition-colors duration-200"
             >
               {link.label}
             </Link>
@@ -133,25 +157,25 @@ export default function Navbar() {
         </div>
 
         {/* Desktop CTA */}
-        <div className="hidden items-center gap-5 md:flex">
+        <div className="hidden items-center gap-4 md:flex">
           <a
             href={PHONE_TEL}
-            className="text-xs font-semibold text-[#475569] hover:text-[#0F172A] transition-colors duration-200"
+            className="text-xs font-medium text-[#5C5A52] hover:text-[#18170F] transition-colors duration-200"
           >
-            <span className="text-[#2563EB] font-bold">{PHONE_NUMBER}</span>
+            <span className="text-[#BF7340] font-semibold">{PHONE_NUMBER}</span>
           </a>
           <Link
             to="/contact"
-            className="text-xs font-bold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] px-4 text-white transition-all shadow-xs"
+            className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-[#2A4A3E] px-4 text-[#F9F8F5] transition-all hover:bg-[#1E3630]"
           >
-            Consult Now
+            Book Demo
           </Link>
         </div>
 
         {/* Mobile toggle */}
         <button
           onClick={() => setOpen(!open)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#0F172A] md:hidden focus:outline-none"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#18170F] md:hidden focus:outline-none"
           aria-label="Toggle menu"
         >
           {open ? <X size={20} /> : <Menu size={20} />}
@@ -166,7 +190,7 @@ export default function Navbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 top-[60px] z-40 bg-slate-900/10 backdrop-blur-xs md:hidden"
+            className="fixed inset-0 top-[60px] z-40 bg-[#18170F]/20 backdrop-blur-sm md:hidden"
             onClick={() => setOpen(false)}
           >
             <motion.div
@@ -174,38 +198,49 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-              className="absolute right-0 top-0 h-[calc(100vh-132px)] w-64 sm:w-72 bg-white border-l border-slate-200 p-5 shadow-xl overflow-y-auto"
+              className="absolute right-0 top-0 h-[calc(100vh-132px)] w-64 sm:w-72 bg-[#F9F8F5] border-l border-[#E2DDD5] p-5 shadow-xl overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex flex-col gap-1">
-                <p className="text-[10px] uppercase font-bold tracking-widest text-[#94A3B8] mb-2 mt-2">Services</p>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82] mb-2 mt-2">Services</p>
                 {SERVICES_LINKS.map((link) => (
                   <Link
                     key={link.href}
                     to={link.href}
                     onClick={() => setOpen(false)}
-                    className="py-2.5 text-sm font-semibold text-[#475569] hover:text-[#0F172A] transition-colors border-b border-slate-100"
+                    className="py-2.5 text-sm font-medium text-[#5C5A52] hover:text-[#18170F] transition-colors border-b border-[#E2DDD5]/40"
                   >
                     {link.label}
                   </Link>
                 ))}
-                <p className="text-[10px] uppercase font-bold tracking-widest text-[#94A3B8] mb-2 mt-4">Company</p>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82] mb-2 mt-4">Industries</p>
+                {INDUSTRIES_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    onClick={() => setOpen(false)}
+                    className="py-2.5 text-sm font-medium text-[#5C5A52] hover:text-[#18170F] transition-colors border-b border-[#E2DDD5]/40"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <p className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82] mb-2 mt-4">Company</p>
                 {[...NAV_LINKS, { label: "Contact", href: "/contact" }].map((link) => (
                   <Link
                     key={link.label}
                     to={link.href}
                     onClick={() => setOpen(false)}
-                    className="py-2.5 text-sm font-semibold text-[#475569] hover:text-[#0F172A] transition-colors border-b border-slate-100"
+                    className="py-2.5 text-sm font-medium text-[#5C5A52] hover:text-[#18170F] transition-colors border-b border-[#E2DDD5]/40"
                   >
                     {link.label}
                   </Link>
                 ))}
 
-                <div className="mt-6 flex flex-col gap-3">
+                <div className="mt-5 flex flex-col gap-3">
                   <a
                     href={PHONE_TEL}
                     onClick={() => setOpen(false)}
-                    className="flex h-11 items-center justify-center rounded-lg border border-blue-200 bg-blue-50/55 text-xs font-bold text-[#2563EB] hover:bg-blue-50 transition-colors gap-2"
+                    className="flex h-11 items-center justify-center rounded-lg border border-[#BF7340]/30 bg-[#FAF5EF] text-xs font-semibold text-[#BF7340] hover:bg-[#F2E8DC] transition-colors gap-2"
                   >
                     📞 {PHONE_NUMBER}
                   </a>
@@ -214,16 +249,16 @@ export default function Navbar() {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setOpen(false)}
-                    className="flex h-11 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-xs font-bold text-[#0F172A] hover:bg-slate-100 transition-colors"
+                    className="flex h-11 items-center justify-center rounded-lg border border-[#E2DDD5] bg-[#F4F2ED] text-xs font-semibold text-[#18170F] hover:bg-[#EEEAE3] transition-colors"
                   >
                     💬 WhatsApp Us
                   </a>
                   <Link
                     to="/contact"
                     onClick={() => setOpen(false)}
-                    className="flex h-11 items-center justify-center rounded-lg text-xs font-bold uppercase tracking-wider text-white bg-[#2563EB] hover:bg-[#1D4ED8]"
+                    className="btn-primary-forest flex h-11 items-center justify-center rounded-lg text-xs font-semibold uppercase tracking-wider text-[#F9F8F5]"
                   >
-                    Get Free Consult
+                    Book a Free Demo
                   </Link>
                 </div>
               </div>

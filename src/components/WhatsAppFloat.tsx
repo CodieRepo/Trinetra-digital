@@ -38,6 +38,7 @@ export default function WhatsAppFloat() {
             )}
           </AnimatePresence>
 
+          {/* Harmonized Button Container */}
           <motion.a
             href={waUrl}
             target="_blank"
@@ -48,12 +49,12 @@ export default function WhatsAppFloat() {
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
             onClick={() => setShowTooltip(false)}
-            className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#2563EB] text-white shadow-md border border-slate-200/20"
+            className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#2A4A3E] text-[#F9F8F5] shadow-md border border-[#E2DDD5]/20"
           >
-            {/* Glowing Blue Pulse Ring */}
-            <span className="absolute inset-0 rounded-full border border-[#2563EB] opacity-40 animate-ping" />
+            {/* Glowing Copper Pulse Ring */}
+            <span className="absolute inset-0 rounded-full border border-[#BF7340] opacity-40 animate-ping" />
             
-            <MessageCircle size={20} className="fill-white/10" />
+            <MessageCircle size={20} className="fill-[#F9F8F5]/10" />
           </motion.a>
 
         </div>
