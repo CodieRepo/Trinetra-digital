@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import PageLayout from "@/layouts/PageLayout";
@@ -22,19 +22,13 @@ const AdminCrm         = lazy(() => import("@/pages/admin/AdminCrm"));
 
 
 // Service sub-pages
-const WhatsAppAutomation  = lazy(() => import("@/pages/services/WhatsAppAutomation"));
-const AiCrm               = lazy(() => import("@/pages/services/AiCrm"));
-const SmartFollowup       = lazy(() => import("@/pages/services/SmartFollowup"));
+const FutureSolutions     = lazy(() => import("@/pages/services/FutureSolutions"));
+const CrmDevelopment      = lazy(() => import("@/pages/services/CrmDevelopment"));
 const WebsiteDevelopment  = lazy(() => import("@/pages/services/WebsiteDevelopment"));
 const DigitalMarketing    = lazy(() => import("@/pages/services/DigitalMarketing"));
-const AiChatbots          = lazy(() => import("@/pages/services/AiChatbots"));
 
 // Industry pages
-const Healthcare    = lazy(() => import("@/pages/industries/Healthcare"));
-const RealEstate    = lazy(() => import("@/pages/industries/RealEstate"));
-const Coaching      = lazy(() => import("@/pages/industries/Coaching"));
-const Solar         = lazy(() => import("@/pages/industries/Solar"));
-const LocalBusiness = lazy(() => import("@/pages/industries/LocalBusiness"));
+
 
 // Local SEO pages
 const Gorakhpur     = lazy(() => import("@/pages/GorakhpurPage"));
@@ -73,19 +67,21 @@ function AnimatedRoutes() {
           <Route path="/admin"                    element={<AdminCrm />} />
 
           {/* Service Sub-pages */}
-          <Route path="/services/whatsapp-automation" element={<WhatsAppAutomation />} />
-          <Route path="/services/ai-crm"              element={<AiCrm />} />
-          <Route path="/services/smart-followup"      element={<SmartFollowup />} />
+          <Route path="/services/whatsapp-automation" element={<FutureSolutions />} />
+          <Route path="/services/ai-crm"              element={<Navigate to="/services/crm-development" replace />} />
+          <Route path="/services/crm-development"     element={<CrmDevelopment />} />
+          <Route path="/services/smart-followup"      element={<FutureSolutions />} />
           <Route path="/services/website-development" element={<WebsiteDevelopment />} />
           <Route path="/services/digital-marketing"   element={<DigitalMarketing />} />
-          <Route path="/services/ai-chatbots"         element={<AiChatbots />} />
+          <Route path="/services/ai-chatbots"         element={<FutureSolutions />} />
+          <Route path="/services/future-solutions"    element={<FutureSolutions />} />
 
           {/* Industry Pages */}
-          <Route path="/industries/healthcare"     element={<Healthcare />} />
-          <Route path="/industries/real-estate"    element={<RealEstate />} />
-          <Route path="/industries/coaching"       element={<Coaching />} />
-          <Route path="/industries/solar"          element={<Solar />} />
-          <Route path="/industries/local-business" element={<LocalBusiness />} />
+          <Route path="/industries/healthcare"     element={<Navigate to="/services" replace />} />
+          <Route path="/industries/real-estate"    element={<Navigate to="/services" replace />} />
+          <Route path="/industries/coaching"       element={<Navigate to="/services" replace />} />
+          <Route path="/industries/solar"          element={<Navigate to="/services" replace />} />
+          <Route path="/industries/local-business" element={<Navigate to="/services" replace />} />
 
           {/* Local SEO */}
           <Route path="/gorakhpur"     element={<Gorakhpur />} />

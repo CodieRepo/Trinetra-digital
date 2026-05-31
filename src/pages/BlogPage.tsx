@@ -17,9 +17,9 @@ const SCHEMA = {
   "@context": "https://schema.org",
   "@type": "Blog",
   url: "https://trinetradigitalsolution.com/blog",
-  name: "Trinetra Digital Blog — AI Automation Insights",
+  name: "Trinetra Digital Blog — Software & Digital Growth Insights",
   description:
-    "Expert insights on WhatsApp automation, AI CRM, lead management, and business automation for Indian businesses.",
+    "Expert insights on website development, custom CRM software systems, lead management databases, and performance digital marketing for Indian businesses.",
   publisher: { "@id": "https://trinetradigitalsolution.com/#organization" },
   blogPost: BLOG_POSTS.map((p) => ({
     "@type": "BlogPosting",
@@ -37,8 +37,8 @@ export default function BlogPage() {
   return (
     <>
       <SEO
-        title="AI Automation Insights — WhatsApp CRM & Lead Management Blog | Trinetra Digital"
-        description="Expert insights on WhatsApp automation, AI CRM, lead management, and business automation for Indian businesses. Published by Trinetra Digital Solution, Gorakhpur."
+        title="Software &amp; Digital Growth Insights Blog | Trinetra Digital"
+        description="Expert insights on website development, custom CRM systems, lead management, and performance digital marketing for Indian businesses. Published by Trinetra Digital Solution, Gorakhpur."
         canonical="https://trinetradigitalsolution.com/blog"
         schema={SCHEMA}
       />
@@ -55,7 +55,7 @@ export default function BlogPage() {
             transition={{ delay: 0.1 }}
             className="display-lg text-[#18170F] tracking-tight mt-2 mb-4"
           >
-            AI automation insights for Indian businesses
+            Digital growth &amp; software insights for Indian businesses
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -63,7 +63,7 @@ export default function BlogPage() {
             transition={{ delay: 0.2 }}
             className="body-lg text-[#5C5A52]"
           >
-            Practical guides, case studies, and operational intelligence — from the team that builds AI automation for Indian SMBs.
+            Practical guides, case studies, and operational intelligence — from the team that builds custom websites and software for Indian SMBs.
           </motion.p>
         </div>
       </section>

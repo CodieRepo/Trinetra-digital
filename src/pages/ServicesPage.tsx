@@ -16,7 +16,7 @@ const SERVICES = [
     icon: <Database size={22} />,
     title: "CRM Development",
     description: "Tailored customer relationship databases and lead tracking pipelines built to match your operational workflows, eliminating admin overhead.",
-    href: "/services/ai-crm",
+    href: "/services/crm-development",
     tag: "Highly Requested"
   },
   {
@@ -143,11 +143,11 @@ export default function ServicesPage() {
           <div className="max-w-4xl mx-auto bg-white border border-[#E2DDD5] p-6 md:p-8 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between text-left gap-6 shadow-3xs mt-12">
             <div className="space-y-2">
               <span className="inline-flex items-center gap-1.5 text-[9px] bg-[#FAF5EF] border border-[#BF7340]/30 text-[#BF7340] px-2 py-0.5 rounded-full uppercase font-bold">
-                <Clock size={10} /> Automation Solutions (Coming Soon)
+                <Clock size={10} /> Future Solutions (Coming Soon)
               </span>
-              <h3 className="text-sm font-bold text-[#18170F] mt-1">Advanced Business Workflow Automation</h3>
+              <h3 className="text-sm font-bold text-[#18170F] mt-1">Staging Innovation Lab</h3>
               <p className="text-xs text-[#5C5A52] leading-relaxed font-semibold max-w-xl">
-                We are currently developing advanced automation solutions that will be available soon. Future modules will integrate WhatsApp Auto-replies, smart lead follow-up automation, custom customer support flows, and AI assistants.
+                Advanced automation and AI-powered solutions are currently under development and will be announced in the future.
               </p>
             </div>
             <div className="shrink-0">

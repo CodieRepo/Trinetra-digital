@@ -4,20 +4,20 @@ import { Link2, Settings, Landmark } from "lucide-react";
 const STEPS = [
   {
     num: "01",
-    title: "Connect",
-    description: "Connect your existing WhatsApp number to the Trinetra pipeline. No coding, server setup, or high technical knowledge needed on your end.",
+    title: "Discover",
+    description: "We audit your business, analyze target audience dynamics, map exact page metrics, and design your digital growth roadmap.",
     icon: <Link2 size={22} />,
   },
   {
     num: "02",
-    title: "Configure",
-    description: "We map your exact business flows, train the AI qualifier with your documents, and construct the CRM pipeline. Live in 7 days.",
+    title: "Build",
+    description: "We develop your custom high-speed website, establish your secure CRM database pipelines, and configure ad platform assets. Live in 7–14 days.",
     icon: <Settings size={22} />,
   },
   {
     num: "03",
-    title: "Convert",
-    description: "Leads flow in, AI qualifies and nurtures them automatically, and your sales team focuses entirely on closing ready bookings.",
+    title: "Scale",
+    description: "Your systems go live, Google & Meta Ads campaigns launch, and optimized visual structures convert raw traffic into qualified enquiries.",
     icon: <Landmark size={22} />,
   },
 ];
@@ -44,7 +44,7 @@ export default function Workflow() {
             transition={{ delay: 0.1 }}
             className="display-lg text-[#18170F] tracking-tight mb-4"
           >
-            Live in 7 days. Running forever.
+            Structured execution. Scalable outcomes.
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -53,7 +53,7 @@ export default function Workflow() {
             transition={{ delay: 0.2 }}
             className="body-lg text-[#5C5A52] max-w-[540px] mx-auto"
           >
-            We take care of the architecture and training so your operational nervous system triggers results starting from Day 1.
+            We take care of the visual design, database infrastructure, and campaign mapping so you receive operational results starting from kickoff.
           </motion.p>
         </div>
 

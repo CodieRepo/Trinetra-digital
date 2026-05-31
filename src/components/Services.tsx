@@ -4,19 +4,19 @@ import { Activity, Home, GraduationCap, Sun, ShoppingBag, ArrowRight } from "luc
 const INDUSTRIES = [
   {
     title: "Healthcare",
-    description: "Automate patient OPD booking, dispatch reports instantly on chat, send appointment reminders, and handle patient feedback follow-ups seamlessly.",
+    description: "Manage patient OPD booking, coordinate report dispatch, send appointment reminders, and handle patient feedback follow-ups seamlessly.",
     icon: <Activity size={20} />,
     link: "See Healthcare",
   },
   {
     title: "Real Estate",
-    description: "Qualify high-value buyers, gather budget and locality match data, schedule site visits automatically, and nurture leads with media packages.",
+    description: "Organize high-value buyers, gather budget and locality match data, coordinate site visits, and nurture leads with digital media packages.",
     icon: <Home size={20} />,
     link: "See Real Estate",
   },
   {
     title: "Coaching",
-    description: "Manage high inbound program interest, capture student records, distribute syllabus assets automatically, and schedule admissions slots.",
+    description: "Manage high inbound program interest, capture student records, distribute syllabus assets digitally, and schedule admissions slots.",
     icon: <GraduationCap size={20} />,
     link: "See Coaching",
   },
@@ -28,7 +28,7 @@ const INDUSTRIES = [
   },
   {
     title: "Local Business",
-    description: "Reply immediately to Google/Instagram map leads, share operating hours and catalogues, automate customer support, and collect review ratings.",
+    description: "Reply promptly to Google/Instagram map leads, share operating hours and catalogues, organize customer support, and collect review ratings.",
     icon: <ShoppingBag size={20} />,
     link: "See Local Business",
   },
@@ -57,7 +57,7 @@ export default function Services() {
             transition={{ delay: 0.1 }}
             className="display-lg text-[#18170F] tracking-tight mb-4"
           >
-            Every business is different. <br />Your automation should be too.
+            Every business is different. <br />Your systems should be too.
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -66,7 +66,7 @@ export default function Services() {
             transition={{ delay: 0.2 }}
             className="body-lg text-[#5C5A52] max-w-[540px] mx-auto"
           >
-            Custom workflows and context NLP designed specifically around your operational structure, products, and target client dynamics.
+            Custom software and digital strategies designed specifically around your operational structure, products, and target client dynamics.
           </motion.p>
         </div>
 

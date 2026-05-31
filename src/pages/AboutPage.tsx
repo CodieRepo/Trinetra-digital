@@ -9,7 +9,7 @@ const SCHEMA = {
   "@type": "AboutPage",
   "url": "https://trinetradigitalsolution.com/about",
   "name": "About Trinetra Digital Solution",
-  "description": "Trinetra Digital Solution is an AI automation and digital systems company based in Gorakhpur, Uttar Pradesh. We help Indian businesses automate their customer communication, lead management, and operational workflows using AI.",
+  "description": "Trinetra Digital Solution is a premium website development, CRM development, and digital marketing agency based in Gorakhpur, Uttar Pradesh. We build custom websites, tailored CRM systems, and performance marketing campaigns for growing businesses.",
   "mainEntity": {
     "@id": "https://trinetradigitalsolution.com/#organization",
   },
@@ -28,8 +28,8 @@ const VALUES = [
   },
   {
     icon: <Users size={20} />,
-    title: "Human-First Automation",
-    desc: "We automate the repetitive work so your team can focus on building real relationships and closing deals.",
+    title: "Human-Centric Design",
+    desc: "We build intuitive software systems so your team can focus on building real relationships and closing deals.",
   },
   {
     icon: <ShieldCheck size={20} />,
@@ -44,8 +44,8 @@ export default function AboutPage() {
   return (
     <>
       <SEO
-        title="About Trinetra Digital Solution — AI Automation Company in Gorakhpur, UP"
-        description="Trinetra Digital Solution is an AI automation and digital systems company based in Gorakhpur, Uttar Pradesh. We build WhatsApp automation, AI CRM, and business automation infrastructure for Indian businesses."
+        title="About Trinetra Digital Solution — Custom Web & CRM Agency in Gorakhpur, UP"
+        description="Trinetra Digital Solution is a premium custom website development, CRM development, and digital marketing agency based in Gorakhpur, Uttar Pradesh. We help businesses scale and organize their sales operations."
         canonical="https://trinetradigitalsolution.com/about"
         schema={SCHEMA}
       />
@@ -71,13 +71,13 @@ export default function AboutPage() {
             className="flex flex-col gap-4 body-md text-[#5C5A52]"
           >
             <p>
-              Trinetra Digital Solution was founded with a single observation: Indian businesses — especially SMBs — were drowning in WhatsApp messages with no system to manage them.
+              Trinetra Digital Solution was founded with a single observation: Indian businesses — especially SMBs — struggle to manage lead generation and organize customer data without structured software systems.
             </p>
             <p>
-              Leads came in at all hours. Sales teams forgot to follow up. Appointment bookings got lost in unread chats. Valuable customers moved on because no one replied fast enough.
+              Leads came in across multiple channels. Sales teams forgot to follow up. Customer data got lost in messy Excel sheets and unorganized chat logs. Valuable customers moved on because of operational friction.
             </p>
             <p>
-              We built Trinetra to fix this. Starting in Gorakhpur, Uttar Pradesh, we developed AI-powered automation infrastructure that integrates directly with WhatsApp Business — responding to every lead instantly, qualifying intent, creating CRM records automatically, and sending intelligent follow-up sequences.
+              We built Trinetra to fix this. Starting in Gorakhpur, Uttar Pradesh, we developed high-performance digital systems that integrate custom business websites with secure CRM databases — capturing every inquiry instantly, organizing client requirements, and scaling growth through compliant search and social ads campaigns.
             </p>
             <p>
               Today, we serve businesses across India in healthcare, real estate, education, solar, and local retail — helping them scale their operations without scaling their headcount.
@@ -121,8 +121,8 @@ export default function AboutPage() {
         <div className="main-container">
           <div className="grid gap-6 md:grid-cols-3 text-center">
             {[
-              { value: "50+", label: "Businesses Automated" },
-              { value: "< 3 min", label: "Average Lead Response" },
+              { value: "50+", label: "Systems Deployed" },
+              { value: "100%", label: "Client Commitment" },
               { value: "India-wide", label: "Clients Served" },
             ].map((s, i) => (
               <div key={i} className="flex flex-col items-center p-6">
@@ -147,7 +147,7 @@ export default function AboutPage() {
               <strong>Trinetra Digital Solution</strong> is a premium service and technology brand owned and operated by <strong>Charulata Enterprises</strong>. All business operations, contractual agreements, invoices, payments, and legal transactions are officially processed and executed under the registered corporate entity, <strong>Charulata Enterprises</strong>.
             </p>
             <p className="text-sm leading-relaxed text-[#5C5A52]">
-              While <strong>Charulata Enterprises</strong> serves as the parent legal and financial entity, <strong>Trinetra Digital Solution</strong> is the customer-facing brand specializing in website development, custom CRM solutions, AI automation, WhatsApp automation, digital transformation, and business software development services.
+              While <strong>Charulata Enterprises</strong> serves as the parent legal and financial entity, <strong>Trinetra Digital Solution</strong> is the customer-facing brand specializing in website development, custom CRM solutions, performance digital marketing, digital transformation, and business software development services.
             </p>
           </div>
         </div>
@@ -156,9 +156,9 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="bg-[#F4F2ED] py-16">
         <div className="main-container text-center">
-          <h2 className="display-md text-[#18170F] tracking-tight mb-4">Ready to automate your business?</h2>
+          <h2 className="display-md text-[#18170F] tracking-tight mb-4">Ready to grow your business?</h2>
           <p className="body-md text-[#5C5A52] mb-8 max-w-[480px] mx-auto">
-            Book a free 30-minute demo and see exactly how Trinetra can transform your lead management.
+            Book a free 30-minute consultation and see exactly how Trinetra can scale and organize your operations.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link to="/contact" className="inline-flex items-center gap-2 h-11 rounded-lg bg-[#2A4A3E] px-6 text-xs font-bold uppercase tracking-wider text-[#F9F8F5] hover:bg-[#1E3630] transition-colors">

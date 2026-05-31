@@ -17,7 +17,7 @@ const SCHEMA = {
   "@type": "ContactPage",
   "url": "https://trinetradigitalsolution.com/contact",
   "name": "Contact Trinetra Digital Solution",
-  "description": "Get in touch with Trinetra Digital Solution for AI automation, WhatsApp CRM, and digital marketing services in Gorakhpur and across India.",
+  "description": "Get in touch with Trinetra Digital Solution for website development, CRM development, and digital marketing services in Gorakhpur and across India.",
   "mainEntity": {
     "@id": "https://trinetradigitalsolution.com/#localbusiness",
     "@type": "LocalBusiness",
@@ -127,8 +127,8 @@ export default function ContactPage() {
   return (
     <>
       <SEO
-        title="Contact Trinetra Digital Solution — Book a Free AI Automation Demo"
-        description="Get in touch with Trinetra Digital Solution. Book a free demo for WhatsApp Automation, AI CRM, or digital marketing services. Based in Gorakhpur, UP — serving businesses across India."
+        title="Contact Trinetra Digital Solution — Book a Free Consultation"
+        description="Get in touch with Trinetra Digital Solution. Book a free consultation for website development, CRM systems, or digital marketing services. Based in Gorakhpur, UP — serving businesses across India."
         canonical="https://trinetradigitalsolution.com/contact"
         schema={SCHEMA}
       />
@@ -145,7 +145,7 @@ export default function ContactPage() {
             transition={{ delay: 0.1 }}
             className="display-lg text-[#18170F] tracking-tight mb-4 mt-2"
           >
-            Book your free automation demo
+            Book your free consultation
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -153,7 +153,7 @@ export default function ContactPage() {
             transition={{ delay: 0.2 }}
             className="body-lg text-[#5C5A52]"
           >
-            Tell us about your business and we'll show you exactly how Trinetra can automate your lead pipeline — live, in 30 minutes.
+            Tell us about your business and we'll design a customized software and digital growth strategy — in a free 30-minute consultation.
           </motion.p>
         </div>
       </section>
@@ -259,7 +259,7 @@ export default function ContactPage() {
                 </div>
                 <h2 className="heading-sm text-[#18170F]">Message sent!</h2>
                 <p className="text-sm text-[#5C5A52] max-w-[320px]">
-                  Thanks for reaching out. We've captured your lead and our active AI agent is sending a demo confirmation to your WhatsApp right now!
+                  Thanks for reaching out. We've captured your details and our team will get back to you with a consultation schedule shortly!
                 </p>
                 <a
                   href={WA_URL}
@@ -385,8 +385,8 @@ export default function ContactPage() {
           <p className="text-xs text-[#8C8A82] mb-4">Explore what we can build for you</p>
           <div className="flex flex-wrap gap-3 justify-center">
             {[
-              { label: "WhatsApp Automation", href: "/services/whatsapp-automation" },
-              { label: "AI CRM", href: "/services/ai-crm" },
+              { label: "Website Development", href: "/services/website-development" },
+              { label: "CRM Development", href: "/services/crm-development" },
               { label: "See Pricing", href: "/pricing" },
             ].map((l) => (
               <Link key={l.href} to={l.href} className="text-xs font-semibold text-[#BF7340] border border-[#BF7340]/20 bg-[#F2E8DC] px-4 py-2 rounded-full hover:bg-[#F2E8DC]/80 transition-colors">

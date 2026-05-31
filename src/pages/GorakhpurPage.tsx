@@ -11,7 +11,7 @@ const SCHEMA = [
     "@type": "LocalBusiness",
     "@id": "https://trinetradigitalsolution.com/#localbusiness",
     "name": "Trinetra Digital Solution",
-    "description": "AI automation, WhatsApp CRM, website development, and digital marketing company in Gorakhpur, Uttar Pradesh. Serving Indian businesses with intelligent operational infrastructure.",
+    "description": "Custom website development, bespoke CRM solutions, and performance digital marketing agency in Gorakhpur, Uttar Pradesh. Serving Indian businesses with professional software infrastructure.",
     "url": "https://trinetradigitalsolution.com/gorakhpur",
     "telephone": "+91-9334757759",
     "email": "info@trinetradigitalsolution.com",
@@ -29,17 +29,16 @@ const SCHEMA = [
     "@context": "https://schema.org",
     "@type": "WebPage",
     "url": "https://trinetradigitalsolution.com/gorakhpur",
-    "name": "AI Automation & Digital Marketing in Gorakhpur, UP — Trinetra Digital Solution",
-    "description": "Trinetra Digital Solution provides AI automation, WhatsApp CRM, website development, and digital marketing services in Gorakhpur, Uttar Pradesh.",
+    "name": "Website Development & Custom CRM in Gorakhpur, UP — Trinetra Digital Solution",
+    "description": "Trinetra Digital Solution provides custom website development, secure business CRM systems, and performance digital marketing services in Gorakhpur, Uttar Pradesh.",
   },
 ];
 
 const SERVICES = [
-  { label: "WhatsApp Automation", href: "/services/whatsapp-automation", desc: "Automate lead qualification and customer communication on WhatsApp." },
-  { label: "AI CRM", href: "/services/ai-crm", desc: "Self-updating CRM that builds from your WhatsApp conversations." },
   { label: "Website Development", href: "/services/website-development", desc: "Fast, SEO-optimized business websites delivered in 7–14 days." },
-  { label: "Digital Marketing", href: "/services/digital-marketing", desc: "Google Ads, Meta Ads, and SEO for Gorakhpur businesses." },
-  { label: "AI Chatbots", href: "/services/ai-chatbots", desc: "Custom AI chatbots trained on your business, deployed on WhatsApp." },
+  { label: "CRM Development", href: "/services/crm-development", desc: "Custom lead tracking pipelines and secure business databases." },
+  { label: "Digital Marketing", href: "/services/digital-marketing", desc: "Google Ads, Meta Ads, and search SEO for Gorakhpur businesses." },
+  { label: "Future Solutions", href: "/services/future-solutions", desc: "Advanced software workflows and automation currently in development." },
 ];
 
 export default function GorakhpurPage() {
@@ -48,8 +47,8 @@ export default function GorakhpurPage() {
   return (
     <>
       <SEO
-        title="AI Automation & Digital Marketing in Gorakhpur, UP — Trinetra Digital Solution"
-        description="Trinetra Digital Solution provides AI WhatsApp automation, CRM systems, website development, and digital marketing for businesses in Gorakhpur, Uttar Pradesh. Book a free consultation today."
+        title="Website Development & Custom CRM in Gorakhpur, UP — Trinetra Digital Solution"
+        description="Trinetra Digital Solution provides custom website development, secure CRM databases, and performance digital marketing for businesses in Gorakhpur, Uttar Pradesh. Book a free consultation today."
         canonical="https://trinetradigitalsolution.com/gorakhpur"
         schema={SCHEMA}
       />
@@ -66,7 +65,7 @@ export default function GorakhpurPage() {
             animate={{ opacity: 1, y: 0 }}
             className="display-lg text-[#18170F] tracking-tight mb-5"
           >
-            AI automation and digital growth services for businesses in Gorakhpur
+            Custom website development, CRM solutions, and digital growth services in Gorakhpur
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -74,7 +73,7 @@ export default function GorakhpurPage() {
             transition={{ delay: 0.1 }}
             className="body-lg text-[#5C5A52] mb-8"
           >
-            Trinetra Digital Solution is a Gorakhpur-based AI automation company helping local businesses across Uttar Pradesh modernize their operations — from WhatsApp lead management to performance digital marketing.
+            Trinetra Digital Solution is a Gorakhpur-based technology agency helping local businesses across Uttar Pradesh modernize their operations — from custom website development to secure CRM systems and performance digital marketing.
           </motion.p>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-wrap gap-3">
             <Link to="/contact" className="inline-flex items-center gap-2 h-11 rounded-lg bg-[#2A4A3E] px-6 text-xs font-bold uppercase tracking-wider text-[#F9F8F5] hover:bg-[#1E3630] transition-colors">
@@ -119,7 +118,7 @@ export default function GorakhpurPage() {
           <h2 className="heading-md text-[#18170F] mb-6">Why Gorakhpur businesses choose Trinetra</h2>
           <div className="flex flex-col gap-5 body-sm text-[#5C5A52]">
             <p>We understand the Gorakhpur market — the mix of healthcare institutions, educational coaching centres, real estate developers, and local retail businesses that make up the city's commercial fabric.</p>
-            <p>Our AI systems are built with Indian business context in mind: Hinglish communication, local seasonal patterns, and the specific lead management challenges faced by Indian SMBs.</p>
+            <p>Our software systems are built with Indian business context in mind: intuitive user interfaces, local seasonal patterns, and the specific lead management challenges faced by Indian SMBs.</p>
             <p>Being based locally means faster onboarding, in-person demos when needed, and genuine understanding of the business environment your team operates in.</p>
           </div>
         </div>
@@ -131,9 +130,9 @@ export default function GorakhpurPage() {
       {/* CTA */}
       <section className="bg-[#F4F2ED] py-14">
         <div className="main-container text-center">
-          <h2 className="heading-md text-[#18170F] mb-3">Ready to automate your Gorakhpur business?</h2>
+          <h2 className="heading-md text-[#18170F] mb-3">Ready to grow your Gorakhpur business?</h2>
           <p className="body-sm text-[#5C5A52] mb-8 max-w-[480px] mx-auto">
-            Book a free 30-minute consultation. We'll show you exactly how AI automation can transform your operations.
+            Book a free 30-minute consultation. We'll show you exactly how custom websites and software can transform your operations.
           </p>
           <Link to="/contact" className="inline-flex items-center gap-2 h-11 rounded-lg bg-[#2A4A3E] px-6 text-xs font-bold uppercase tracking-wider text-[#F9F8F5] hover:bg-[#1E3630] transition-colors">
             Book Free Consultation <ArrowRight size={14} />

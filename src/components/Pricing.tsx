@@ -97,7 +97,7 @@ export default function Pricing() {
           "WhatsApp notifications ready",
           "Up to 15 active team seats",
           "Role-based access controls",
-          "Business automation ready"
+          "Business workflows ready"
         ],
         cta: "Deploy Business CRM",
         popular: true
@@ -110,7 +110,7 @@ export default function Pricing() {
         desc: "A fully bespoke software solution engineered from the ground up to match your unique operations.",
         features: [
           "Fully custom modular architecture",
-          "Tailored custom workflows & automation",
+          "Tailored custom workflows & database",
           "Unlimited team accounts & roles",
           "Proprietary ERP & software integrations",
           "Dedicated high-speed cloud hosting",
@@ -180,7 +180,7 @@ export default function Pricing() {
   };
 
   return (
-    <section id="pricing" aria-label="Pricing Plans — AI Automation Infrastructure Packages" className="relative overflow-hidden bg-[#F4F2ED] py-20 md:py-28 border-b border-[#E2DDD5]">
+    <section id="pricing" aria-label="Pricing Plans — Software and Growth Staged Packages" className="relative overflow-hidden bg-[#F4F2ED] py-20 md:py-28 border-b border-[#E2DDD5]">
       <div className="main-container relative z-10">
         
         {/* Header */}

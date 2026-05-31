@@ -234,7 +234,7 @@ export default function Home() {
                   <span className="h-7 w-7 rounded-lg bg-white/20 text-white flex items-center justify-center shrink-0"><Check size={13} /></span>
                   <div>
                     <span className="text-[10px] font-bold">Consultation Booked</span>
-                    <p className="text-[11px] opacity-90 italic mt-0.5">"Auto-reply confirmation details dispatched to client WhatsApp ✓"</p>
+                    <p className="text-[11px] opacity-90 italic mt-0.5">"Confirmation details dispatched to client email &amp; mobile ✓"</p>
                   </div>
                 </motion.div>
               )}
@@ -270,7 +270,7 @@ export default function Home() {
                   <li>• Service &amp; Portfolio Sites</li>
                   <li>• E-commerce &amp; Landing Pages</li>
                   <li>• Mobile Responsive &amp; Fast Loading</li>
-                  <li>• WhatsApp &amp; Maps Integrations</li>
+                  <li>• Third-Party API Integrations</li>
                 </ul>
               </div>
 
@@ -282,7 +282,7 @@ export default function Home() {
                 </span>
                 <h3 className="text-sm font-bold text-white">CRM Development</h3>
                 <p className="text-[11px] text-[#FAF5EF]/70 leading-relaxed font-semibold">
-                  Custom-built software databases tailored exactly to your operational workflows. Streamline follow-ups, align teams, and automate raw administrative tasks.
+                  Custom-built software databases tailored exactly to your operational workflows. Streamline follow-ups, align teams, and organize raw administrative tasks.
                 </p>
                 <div className="h-px bg-white/10 my-2" />
                 <ul className="space-y-1 text-[10.5px] text-[#FAF5EF]/55 font-semibold">
@@ -290,7 +290,7 @@ export default function Home() {
                   <li>• Customer &amp; Team Management</li>
                   <li>• Custom Dashboards &amp; Workflows</li>
                   <li>• Role-Based Secure Access</li>
-                  <li>• WhatsApp Integrations Ready</li>
+                  <li>• Third-Party Integrations Ready</li>
                 </ul>
               </div>
 
@@ -321,9 +321,9 @@ export default function Home() {
                 <span className="text-[9.5px] bg-[#FAF5EF] border border-[#BF7340]/30 text-[#BF7340] px-2 py-0.5 rounded-full uppercase font-bold">
                   Coming Soon
                 </span>
-                <h4 className="text-sm font-bold text-[#18170F] mt-1">Automation Solutions</h4>
+                <h4 className="text-sm font-bold text-[#18170F] mt-1">Future Solutions</h4>
                 <p className="text-xs text-[#5C5A52] leading-relaxed font-semibold max-w-xl">
-                  We are currently developing advanced automation solutions that will be available soon. Future modules will integrate WhatsApp Automation, Automated follow-ups, AI Chat Assistants, and Customer support routines.
+                  Advanced automation and AI-powered solutions are currently under development and will be announced in the future.
                 </p>
               </div>
               <div className="shrink-0">

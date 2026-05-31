@@ -8,7 +8,7 @@ import SEO from "../components/seo/SEO";
 import { getPostBySlug, getRelatedPosts, BLOG_POSTS } from "../data/blogPosts";
 
 const WA_URL = `https://wa.me/919334757759?text=${encodeURIComponent(
-  "Hi, I read your blog and I'd like to learn more about AI automation for my business."
+  "Hi, I read your blog and I'd like to learn more about your website and custom CRM services."
 )}`;
 
 // Tag colour mapping
@@ -206,7 +206,7 @@ export default function BlogPostPage() {
             </div>
             <div>
               <p className="text-[11px] font-bold text-[#18170F]">Trinetra Digital Solution</p>
-              <p className="text-[10px] text-[#8C8A82]">AI Automation · Gorakhpur, India</p>
+              <p className="text-[10px] text-[#8C8A82]">Software &amp; Digital Growth · Gorakhpur, India</p>
             </div>
           </motion.div>
         </div>
@@ -241,13 +241,13 @@ export default function BlogPostPage() {
               <div className="mt-14 pt-8 border-t border-[#E2DDD5]">
                 <div className="bg-[#F9F4EE] border border-[#BF7340]/20 rounded-2xl p-7 md:p-9">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[#BF7340] mb-2">
-                    Ready to automate your business?
+                    Ready to grow your business online?
                   </p>
                   <h2 className="heading-sm text-[#18170F] mb-3">
                     Book a free 30-minute demo with Trinetra Digital Solution
                   </h2>
                   <p className="text-sm text-[#5C5A52] mb-6 leading-relaxed">
-                    We're an AI automation company based in Gorakhpur, UP — helping Indian businesses across healthcare, real estate, coaching, and more build the operational infrastructure they need to grow.
+                    We are a professional website development and custom software agency based in Gorakhpur, UP — helping Indian businesses across healthcare, real estate, coaching, and more build the secure infrastructure they need to scale.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Link
@@ -351,7 +351,7 @@ export default function BlogPostPage() {
                   Free Demo
                 </p>
                 <p className="text-sm font-semibold leading-snug mb-4">
-                  See how automation works for your business — live, in 30 minutes.
+                  See how a custom system works for your business — live, in 30 minutes.
                 </p>
                 <Link
                   to="/contact"

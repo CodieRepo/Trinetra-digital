@@ -6,7 +6,7 @@ const WA_NUMBER = "919334757759";
 const PHONE_TEL = "tel:+919334757759";
 const PHONE_NUMBER = "+91 9334757759";
 const EMAIL = "info@trinetradigitalsolution.com";
-const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's AI automation services.")}`;
+const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's services.")}`;
 
 // ── Shared Footer (used on all pages via PageLayout) ──────────────────────
 export function FinalCTAFooter() {
@@ -15,14 +15,14 @@ export function FinalCTAFooter() {
       {/* CTA Block */}
       <div className="main-container max-w-[680px] mx-auto text-center pt-14 md:pt-24 pb-16 md:pb-24 border-b border-[#FAF5EF]/10">
         <span className="text-[11px] font-semibold tracking-[0.25em] text-[#BF7340] uppercase font-interface mb-4 block">
-          Get Automated Today
+          Scale Your Business Today
         </span>
         <h2 className="font-display text-[36px] sm:text-[44px] md:text-[56px] leading-[1.1] text-[#F9F8F5] tracking-tight mb-5 md:mb-6">
           Stop losing leads. <br />
-          <span className="italic text-[#BF7340]">Automate</span> your business.
+          <span className="italic text-[#BF7340]">Grow</span> your business.
         </h2>
         <p className="text-sm sm:text-base leading-relaxed text-[#F9F8F5]/70 max-w-[500px] mx-auto mb-10">
-          Build operational infrastructure that qualifies leads in 3 minutes, updates CRM records autonomously, and ensures no opportunity is forgotten.
+          We design and develop custom websites, bespoke CRM systems, and high-performance digital marketing campaigns to scale your online enquiries.
         </p>
 
         <div className="max-w-[480px] mx-auto" role="group" aria-label="Contact Trinetra Digital Solution">
@@ -37,7 +37,7 @@ export function FinalCTAFooter() {
             className="flex w-full items-center justify-center gap-3 h-14 rounded-xl bg-[#2A4A3E] text-[#F9F8F5] font-bold text-sm tracking-wide border border-[#2A4A3E] hover:bg-[#1E3630] transition-colors mb-3"
           >
             <MessageCircle size={18} className="fill-[#F9F8F5]/10" />
-            WhatsApp Us for a Free Demo
+            WhatsApp Us for a Consultation
             <ArrowRight size={15} />
           </motion.a>
 
@@ -54,7 +54,7 @@ export function FinalCTAFooter() {
           </motion.a>
 
           <p className="text-[11px] text-[#FAF5EF]/30 font-medium tracking-wide">
-            No sign-up required · We respond within 30 minutes
+            We respond within 30 minutes
           </p>
         </div>
       </div>
@@ -62,7 +62,7 @@ export function FinalCTAFooter() {
       {/* Footer Nav */}
       <div className="main-container pt-10 md:pt-12 pb-mobile-safe md:pb-8">
 
-        {/* ── Compact GBP Location Strip ─────────────────────────── */}
+        {/* GBP Location Strip */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-[#1E1C18] border border-[#FAF5EF]/8 rounded-xl px-5 py-4 mb-8">
           <div className="flex items-start sm:items-center gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#BF7340]/15 text-[#BF7340]">
@@ -107,26 +107,14 @@ export function FinalCTAFooter() {
           </div>
 
           {/* Footer Links Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-12 gap-y-6 text-xs">
+          <div className="grid grid-cols-2 gap-x-16 gap-y-6 text-xs text-left">
             <div>
               <p className="text-[#FAF5EF]/30 font-semibold uppercase tracking-widest text-[10px] mb-3">Services</p>
               <div className="flex flex-col gap-2.5">
-                <Link to="/services/whatsapp-automation" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">WhatsApp Automation</Link>
-                <Link to="/services/ai-crm" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">AI CRM</Link>
-                <Link to="/services/smart-followup" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Smart Follow-Up</Link>
                 <Link to="/services/website-development" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Website Development</Link>
+                <Link to="/services/crm-development" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">CRM Development</Link>
                 <Link to="/services/digital-marketing" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Digital Marketing</Link>
-                <Link to="/services/ai-chatbots" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">AI Chatbots</Link>
-              </div>
-            </div>
-            <div>
-              <p className="text-[#FAF5EF]/30 font-semibold uppercase tracking-widest text-[10px] mb-3">Industries</p>
-              <div className="flex flex-col gap-2.5">
-                <Link to="/industries/healthcare" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Healthcare</Link>
-                <Link to="/industries/real-estate" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Real Estate</Link>
-                <Link to="/industries/coaching" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Coaching</Link>
-                <Link to="/industries/solar" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Solar</Link>
-                <Link to="/industries/local-business" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Local Business</Link>
+                <Link to="/services/future-solutions" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Future Solutions</Link>
               </div>
             </div>
             <div>

@@ -4,12 +4,12 @@ import { motion } from "framer-motion";
 const PROBLEMS = [
   {
     title: "Leads fall through cracks",
-    description: "Replying manually to 50+ customer messages a day with no system. Valuable enquiries get buried under old chats.",
+    description: "Handling customer requests on spreadsheets with no system. Valuable enquiries get buried under chat logs.",
     icon: <AlertTriangle size={20} />,
   },
   {
     title: "No follow-up system",
-    description: "Hot leads go cold in 24 hours without structured, timely follow-up. Human teams simply run out of hours.",
+    description: "Hot leads go cold in 24 hours without structured CRM records and timely follow-up.",
     icon: <Clock size={20} />,
   },
   {
@@ -41,7 +41,7 @@ export default function TheProblem() {
             transition={{ delay: 0.1 }}
             className="display-lg text-[#18170F] tracking-tight max-w-[720px] mx-auto mb-4"
           >
-            Managing leads on WhatsApp manually is quietly costing you.
+            Operating without structured digital systems is quietly costing you.
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
