@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { HelpCircle, ArrowRight } from "lucide-react";
 import SEO from "../components/seo/SEO";

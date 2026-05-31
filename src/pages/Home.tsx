@@ -7,7 +7,6 @@ import {
   BarChart3,
   Calendar,
   Layers,
-  ShieldAlert,
   ArrowRight,
   TrendingUp,
   ShieldCheck,
@@ -20,6 +19,9 @@ import {
 } from "lucide-react";
 import SEO from "../components/seo/SEO";
 import Pricing from "../components/Pricing";
+
+const WA_NUMBER = "919334757759";
+const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in booking a consultation with Trinetra Digital Solution.")}`;
 
 export default function Home() {
   useEffect(() => {
