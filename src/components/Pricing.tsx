@@ -15,17 +15,16 @@ export default function Pricing() {
       {
         name: "Starter Website",
         price: "₹9,999",
-        setupLabel: "One-Time Investment",
-        monthlyPrice: "No Monthly Fee",
+        setupLabel: "One-Time Setup",
+        monthlyPrice: "₹999/month",
         desc: "Ideal for small businesses and service providers establishing their initial online presence.",
         features: [
-          "Up to 5 custom pages",
-          "100% mobile responsive design",
-          "Standard contact form",
-          "WhatsApp click-to-chat integration",
-          "Basic SEO setup configuration",
-          "High-speed loading optimization",
-          "Domain & hosting guidance"
+          "Hosting management",
+          "Basic maintenance",
+          "Security monitoring",
+          "Contact form monitoring",
+          "Minor content updates",
+          "Technical support"
         ],
         cta: "Get Started",
         popular: false
@@ -33,18 +32,16 @@ export default function Pricing() {
       {
         name: "Business Website",
         price: "₹19,999",
-        setupLabel: "One-Time Investment",
-        monthlyPrice: "No Monthly Fee",
+        setupLabel: "One-Time Setup",
+        monthlyPrice: "₹1,999/month",
         desc: "Designed for growing companies requiring detailed product showcases, blogging, and lead capture.",
         features: [
-          "Up to 15 custom pages",
-          "Premium professional design",
-          "Advanced SEO structure setup",
-          "Full blog setup & CMS",
-          "Interactive lead generation forms",
-          "Google Maps & business profile",
-          "WhatsApp & social integrations",
-          "1 month dedicated support"
+          "Everything in Starter",
+          "Priority support",
+          "Monthly backups",
+          "Performance monitoring",
+          "SEO maintenance",
+          "Content update assistance"
         ],
         cta: "Choose Business",
         popular: true
@@ -52,19 +49,18 @@ export default function Pricing() {
       {
         name: "Custom Website",
         price: "Starting ₹29,999",
-        setupLabel: "One-Time Investment",
-        monthlyPrice: "Scale Architecture",
+        setupLabel: "One-Time Setup",
+        monthlyPrice: "Starting ₹2,999/month",
         desc: "Bespoke web applications, custom databases, e-commerce stores, and high-performance scaling setups.",
         features: [
-          "Custom page count & features",
-          "Advanced API & software integrations",
-          "E-commerce & payment gateways",
-          "Highly scalable architecture",
-          "Custom workflows & automation ready",
-          "Speed-focused CDN configuration",
-          "Priority ongoing technical support"
+          "Everything in Business",
+          "Advanced maintenance",
+          "Custom feature support",
+          "Server monitoring",
+          "Scalability support",
+          "Technical consultation"
         ],
-        cta: "Consult Architect",
+        cta: "Schedule Consultation",
         popular: false
       }
     ],
@@ -338,8 +334,17 @@ export default function Pricing() {
           </AnimatePresence>
         </div>
 
+        {/* Monthly Maintenance Note */}
+        {activeTab === "website" && (
+          <div className="mt-8 text-center max-w-[650px] mx-auto p-4 bg-white border border-[#E2DDD5] rounded-xl shadow-3xs">
+            <p className="text-[11px] leading-relaxed text-[#5C5A52]">
+              Monthly maintenance covers hosting assistance, technical support, security updates, backups, and ongoing website maintenance. Domain registration and third-party service charges, if applicable, are separate.
+            </p>
+          </div>
+        )}
+
         {/* Compliant Disclaimer Box - Old UI Style */}
-        <div className="mt-12 text-center max-w-[650px] mx-auto p-5 bg-[#FAF5EF] border border-[#BF7340]/20 rounded-xl">
+        <div className="mt-6 text-center max-w-[650px] mx-auto p-5 bg-[#FAF5EF] border border-[#BF7340]/20 rounded-xl">
           <p className="text-[11px] leading-relaxed text-[#5C5A52]">
             <strong>Important Notice:</strong> Advertising budgets spent on Google Ads, Meta Ads (Facebook/Instagram), or other ad platforms are paid directly to those respective networks and are <strong>separate and not included</strong> in our agency management fees. We prioritize sustainable operational scaling and do not guarantee fixed sales, revenue numbers, or make unrealistic income claims.
           </p>
