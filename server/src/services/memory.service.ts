@@ -150,10 +150,13 @@ export async function buildContext(leadId: string): Promise<ConversationContext 
       summary = await summarizeConversation(lead.name, allMessages);
       await saveMemory(leadId, summary, totalCount);
     } else if (!summary && totalCount > 5) {
-      // Build a basic summary from what we have if none exists yet
-      summary = `${lead.name} contacted via ${lead.source}. ` +
-        (lead.company ? `Company: ${lead.company}. ` : '') +
-        (lead.ai_summary ? lead.ai_summary : `${totalCount} messages exchanged.`);
+      // Build basic summary ONLY from inbound messages (never from old outbound AI replies)
+      // Outbound messages from old AI may contain stale/wrong branding — exclude them
+      const inboundOnly = allMessages.filter(m => m.direction === 'inbound');
+      const inboundText = inboundOnly.slice(-3).map(m => m.body).join('; ');
+      summary = `${lead.name} contacted via ${lead.source || 'whatsapp'}.` +
+        (lead.company ? ` Company: ${lead.company}.` : '') +
+        (inboundText ? ` Recent messages: "${inboundText}".` : ` ${totalCount} messages exchanged.`);
     }
 
     // Get last 10 messages ONLY for the AI context
@@ -163,11 +166,11 @@ export async function buildContext(leadId: string): Promise<ConversationContext 
       content: m.body,
     }));
 
-    return {
+    const ctx = {
       leadId: lead.id,
       leadName: lead.name,
       leadPhone: lead.phone,
-      service: lead.service || 'AI Automation Solutions',
+      service: lead.service || '',          // empty = 'Not yet specified' in prompt
       source: lead.source || 'whatsapp',
       city: lead.city || undefined,
       company: lead.company || undefined,
@@ -175,6 +178,11 @@ export async function buildContext(leadId: string): Promise<ConversationContext 
       conversationSummary: summary,
       recentMessages,
     };
+
+    // ── Diagnostic log: verify what context the AI actually receives
+    console.log(`🔍 [CONTEXT] ${lead.name} | service='${ctx.service || 'Not yet specified'}' | summary='${(ctx.conversationSummary || '').substring(0,120)}' | msgs=${recentMessages.length}`);
+
+    return ctx;
 
   } catch (err) {
     console.error('❌ [MEMORY] buildContext failed:', err);

@@ -361,12 +361,15 @@ export async function processWithAI(ctx: AIContext): Promise<AIResponse> {
   // 3. Build system prompt (same every time for a lead — can be cached by OpenRouter)
   const systemPrompt = buildSystemPrompt(ctx);
 
+  // ── Diagnostic: log prompt fingerprint so we can verify the correct prompt is being sent
+  console.log(`\ud83d\udccc [PROMPT] len=${systemPrompt.length} | first300='${systemPrompt.substring(0, 300).replace(/\n/g, ' ')}'`);
+
   // 4. Cascade through models
   let lastError = '';
   for (const model of MODELS) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        console.log(`🤖 [OPENROUTER] Trying ${model.id} (attempt ${attempt}/2) for ${ctx.leadName}`);
+        console.log(`\ud83e\udd16 [OPENROUTER] Trying ${model.id} (attempt ${attempt}/2) for ${ctx.leadName}`);
         
         const { raw, usage } = await callModel(model, systemPrompt, ctx.recentMessages, attempt);
         
