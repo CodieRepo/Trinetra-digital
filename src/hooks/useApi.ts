@@ -45,7 +45,7 @@ export function useDashboard() {
   
   // Realtime Active Lead detail & Chat Timeline
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const [leadDetail, setLeadDetail] = useState<{ lead: Lead; chats: ChatMessage[] } | null>(null);
+  const [leadDetail, setLeadDetail] = useState<{ lead: Lead; chats: ChatMessage[]; followup: any | null } | null>(null);
   
   // Futuristic SaaS Mock Sections
   const [campaigns, setCampaigns] = useState<Campaign[]>(MOCK_CAMPAIGNS);
@@ -164,6 +164,24 @@ export function useDashboard() {
     }
   };
 
+  // Toggle AI Automation ON/OFF
+  const toggleAI = async (leadId: string, enabled: boolean): Promise<boolean> => {
+    if (!token) return false;
+    const finalEnabledVal = enabled ? 1 : 0;
+    try {
+      await apiService.leads.update(leadId, { ai_enabled: finalEnabledVal });
+      // Update local states immediately for responsiveness
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, ai_enabled: finalEnabledVal } : l));
+      if (leadDetail && leadDetail.lead.id === leadId) {
+        setLeadDetail(prev => prev ? { ...prev, lead: { ...prev.lead, ai_enabled: finalEnabledVal } } : null);
+      }
+      return true;
+    } catch (err: any) {
+      setLatestApiError(`[DATABASE] ${err.message || 'Failed toggling AI automation status'}`);
+      return false;
+    }
+  };
+
   // SQLite Database Backup trigger
   const triggerDatabaseBackup = async (): Promise<boolean> => {
     if (!token) return false;
@@ -267,6 +285,7 @@ export function useDashboard() {
     // Operations
     sendManualMessage,
     updateLeadStatus,
+    toggleAI,
     triggerDatabaseBackup,
     triggerRefresh
   };

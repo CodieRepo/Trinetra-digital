@@ -46,6 +46,71 @@ export const LeadsController = {
         }
       }
 
+      // Enforce strict duplicate phone lead prevention
+      let existingLead = await LeadModel.findByPhone(formattedPhone);
+      if (existingLead) {
+        console.log(`👤 Lead already exists with phone: ${formattedPhone} (ID: ${existingLead.id}). Updating details instead of creating a duplicate!`);
+        await LeadModel.update(existingLead.id, {
+          name: name.trim(),
+          email: email ? email.trim() : existingLead.email,
+          company: company ? company.trim() : existingLead.company,
+          service: service ? service.trim() : existingLead.service,
+          source: source || existingLead.source,
+          ai_enabled: 1 // Re-enable AI
+        });
+        
+        // Audit Logging
+        await logAuditAction('LEAD_UPDATE', `Merged/Updated existing lead "${name}" (${formattedPhone}) from ${source || 'website'}`);
+
+        // Trigger AI Re-qualification asynchronously
+        setImmediate(async () => {
+          try {
+            const aiStart = performance.now();
+            console.log(`🤖 Triggering Gemini AI qualification loop for existing lead: ${name}...`);
+            
+            let aiResult;
+            try {
+              aiResult = await qualifyLead(name, service || 'AI Automation', source || 'website', []);
+            } catch (err) {
+              console.error(`❌ AI qualification error for existing lead ${name}:`, err);
+              aiResult = {
+                ai_score: 50,
+                ai_budget: false,
+                ai_summary: "Intake evaluation in progress. Awaiting further customer responses.",
+                suggested_reply: `Thank you for contacting Trinetra Digital Solution.\n\nWe've received your inquiry and our team will review it shortly.\n\nPlease share:\n• Business Name\n• Industry\n• Approximate monthly leads\n\nWe will get back to you as soon as possible.`
+              };
+            }
+            const aiDuration = (performance.now() - aiStart).toFixed(2);
+            console.log(`🤖 AI Qualification completed in: ${aiDuration}ms. Score: ${aiResult.ai_score}`);
+
+            await LeadModel.update(existingLead!.id, {
+              ai_score: aiResult.ai_score,
+              ai_budget: aiResult.ai_budget,
+              ai_summary: aiResult.ai_summary,
+              status: 'ai_qualifying'
+            });
+
+            console.log(`📤 Sending initial WhatsApp message to ${name} (${formattedPhone})...`);
+            const sent = await sendWhatsAppMessage(formattedPhone, aiResult.suggested_reply);
+            if (sent) {
+              await LeadModel.update(existingLead!.id, { status: 'qualified' });
+              await logAuditAction('WHATSAPP_SEND', `Sent automated initial qualification response to ${name}`);
+              await scheduleNurtureSequence(existingLead!.id);
+            }
+          } catch (err) {
+            console.error(`❌ Background existing lead processor error for ${name}:`, err);
+          }
+        });
+
+        const apiDuration = (performance.now() - apiStart).toFixed(2);
+        console.log(`⏱️ API POST /api/leads response completed in: ${apiDuration}ms`);
+        return res.status(200).json({
+          success: true,
+          message: 'Lead already exists. Details merged and queued for qualification.',
+          leadId: existingLead.id
+        });
+      }
+
       console.log(`💾 Attempting to insert lead ${name} (${formattedPhone}) into SQLite DB...`);
 
       const insertStart = performance.now();
@@ -213,7 +278,13 @@ export const LeadsController = {
 
       const chats = await MessageModel.findByLeadId(id);
 
-      return res.json({ lead, chats });
+      const db = getDb();
+      const followup = await db.get(
+        'SELECT * FROM followup_sequences WHERE lead_id = ? ORDER BY created_at DESC LIMIT 1',
+        [id]
+      );
+
+      return res.json({ lead, chats, followup: followup || null });
     } catch (error) {
       console.error('Get lead details error:', error);
       return res.status(500).json({ error: 'Internal server error fetching lead details' });

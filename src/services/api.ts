@@ -182,7 +182,7 @@ export const apiService = {
   // Leads CRM Operations
   leads: {
     list: async () => request<Lead[]>("/leads"),
-    get: async (id: string) => request<{ lead: Lead; chats: ChatMessage[] }>(`/leads/${id}`),
+    get: async (id: string) => request<{ lead: Lead; chats: ChatMessage[]; followup: any | null }>(`/leads/${id}`),
     create: async (data: Partial<Lead>) => request<{ success: boolean; leadId: string }>("/leads", {
       method: "POST",
       body: JSON.stringify(data)

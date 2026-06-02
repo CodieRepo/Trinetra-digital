@@ -76,6 +76,7 @@ export default function AdminCrm() {
     
     sendManualMessage,
     updateLeadStatus,
+    toggleAI,
     triggerDatabaseBackup,
     triggerRefresh
   } = useDashboard();
@@ -742,32 +743,80 @@ export default function AdminCrm() {
                 <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-3xl overflow-hidden shadow-sm grid md:grid-cols-[280px_1fr_300px] h-[calc(100vh-180px)]">
                   {/* Left Column: Thread List */}
                   <div className="border-r border-slate-200 flex flex-col h-full bg-white/40">
-                    <div className="p-4 border-b border-slate-200 shrink-0">
+                    <div className="p-4 border-b border-slate-200 shrink-0 space-y-3">
                       <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center justify-between">
                         Live Threads
-                        <span className="bg-emerald-100 text-emerald-800 text-[8px] font-bold px-2 py-0.5 rounded-full">CHAT</span>
+                        <span className="bg-emerald-100 text-emerald-800 text-[8px] font-bold px-2 py-0.5 rounded-full">
+                          {leads.length} LEADS
+                        </span>
                       </h3>
+                      {/* Search Bar Input */}
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search name or phone..."
+                        className="w-full h-8 px-3 rounded-lg border border-slate-200 bg-white text-[11px] text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all"
+                      />
                     </div>
                     
-                    <div className="flex-1 overflow-y-auto space-y-1 p-2">
-                      {leads.length === 0 ? (
-                        <p className="text-[10px] text-slate-400 italic text-center py-6">No threads available</p>
+                    <div className="flex-1 overflow-y-auto space-y-1.5 p-2">
+                      {filteredLeads.length === 0 ? (
+                        <p className="text-[10px] text-slate-400 italic text-center py-6">No threads matching query</p>
                       ) : (
-                        leads.map((lead) => (
-                          <button
-                            key={lead.id}
-                            onClick={() => setSelectedLeadId(lead.id)}
-                            className={`flex flex-col w-full text-left p-3 rounded-xl transition-all ${
-                              selectedLeadId === lead.id ? 'bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200' : 'hover:bg-slate-50/50'
-                            }`}
-                          >
-                            <span className="text-xs font-bold text-slate-800 flex justify-between w-full items-center">
-                              {lead.name}
-                              <span className="text-[8px] font-mono text-slate-400">Score: {lead.ai_score}</span>
-                            </span>
-                            <span className="text-[10px] text-slate-400 mt-1 truncate max-w-[240px] font-mono">{maskPhone(lead.phone)}</span>
-                          </button>
-                        ))
+                        filteredLeads.map((lead) => {
+                          const isSelected = selectedLeadId === lead.id;
+                          return (
+                            <button
+                              key={lead.id}
+                              onClick={() => setSelectedLeadId(lead.id)}
+                              className={`flex flex-col w-full text-left p-3 rounded-xl transition-all border ${
+                                isSelected 
+                                  ? 'bg-gradient-to-br from-slate-50 to-white border-emerald-500/40 shadow-xs' 
+                                  : 'border-transparent hover:bg-slate-50/50 hover:border-slate-100'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center w-full">
+                                <span className="text-xs font-bold text-slate-800 truncate max-w-[150px]">
+                                  {lead.name}
+                                </span>
+                                {/* Score Badge */}
+                                <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${
+                                  lead.ai_score >= 80 
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                                    : lead.ai_score >= 50 
+                                      ? 'bg-amber-50 text-amber-700 border border-amber-100' 
+                                      : 'bg-slate-100 text-slate-500'
+                                }`}>
+                                  {lead.ai_score || 50}
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-slate-400 mt-1 font-mono">{maskPhone(lead.phone)}</span>
+                              
+                              {/* Pipeline Stage Badge */}
+                              <div className="flex justify-between items-center w-full mt-2">
+                                <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider ${
+                                  lead.status === 'won' 
+                                    ? 'bg-emerald-500/10 text-emerald-700' 
+                                    : lead.status === 'lost' 
+                                      ? 'bg-rose-500/10 text-rose-700' 
+                                      : lead.status === 'nurturing' 
+                                        ? 'bg-blue-500/10 text-blue-700' 
+                                        : lead.status === 'qualified' 
+                                          ? 'bg-indigo-500/10 text-indigo-700' 
+                                          : 'bg-slate-100 text-slate-500'
+                                }`}>
+                                  {lead.status.replace('_', ' ')}
+                                </span>
+                                {lead.ai_enabled === 0 && (
+                                  <span className="text-[8px] font-extrabold text-rose-600 bg-rose-50 border border-rose-100 px-1 py-0.5 rounded">
+                                    PAUSED
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })
                       )}
                     </div>
                   </div>
@@ -781,7 +830,13 @@ export default function AdminCrm() {
                             <h4 className="text-xs font-extrabold text-slate-800">{leadDetail.lead.name}</h4>
                             <p className="text-[9px] text-slate-400 font-mono mt-0.5">{leadDetail.lead.phone}</p>
                           </div>
-                          <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">AI SETTER ACTIVE</span>
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                            leadDetail.lead.ai_enabled === 0
+                              ? 'text-rose-700 bg-rose-50 border border-rose-100'
+                              : 'text-emerald-700 bg-emerald-50 border border-emerald-100'
+                          }`}>
+                            {leadDetail.lead.ai_enabled === 0 ? '⏸ AI PAUSED — HUMAN MODE' : '🤖 AI SETTER ACTIVE'}
+                          </span>
                         </div>
 
                         {/* Timeline timeline bubbles */}
@@ -841,38 +896,143 @@ export default function AdminCrm() {
                   </div>
 
                   {/* Right Column: Lead context profile */}
-                  <div className="h-full overflow-y-auto bg-white/50 p-4 space-y-4">
+                  <div className="h-full overflow-y-auto bg-slate-50/70 p-4 space-y-4 border-l border-slate-200">
                     {leadDetail ? (
                       <>
-                        <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">Context Profile</h4>
+                        <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-200/60 pb-2">
+                          Lead Intelligence Card
+                        </h4>
                         
-                        <div className="space-y-3.5 text-xs">
-                          <div className="flex gap-2">
-                            <Building size={14} className="text-slate-400 shrink-0" />
+                        <div className="space-y-4 text-xs">
+                          {/* Name & Source */}
+                          <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-3xs">
                             <div>
-                              <p className="font-bold text-slate-700">Company</p>
-                              <p className="text-[11px] text-slate-500 mt-0.5">{leadDetail.lead.company || 'Not Listed'}</p>
+                              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Client Name</p>
+                              <p className="text-sm font-extrabold text-slate-800 mt-0.5">{leadDetail.lead.name}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-2 text-[11px]">
+                              <div>
+                                <p className="text-slate-400 font-medium">Lead Source</p>
+                                <p className="font-bold text-slate-700 mt-0.5 capitalize">{leadDetail.lead.source}</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-400 font-medium">Company</p>
+                                <p className="font-bold text-slate-700 mt-0.5 truncate">{leadDetail.lead.company || '—'}</p>
+                              </div>
+                            </div>
+                            <div className="border-t border-slate-100 pt-2 text-[11px]">
+                              <p className="text-slate-400 font-medium">WhatsApp Phone</p>
+                              <p className="font-mono font-bold text-slate-700 mt-0.5">{leadDetail.lead.phone}</p>
                             </div>
                           </div>
 
-                          <div className="flex gap-2">
-                            <Mail size={14} className="text-slate-400 shrink-0" />
-                            <div>
-                              <p className="font-bold text-slate-700">Email Address</p>
-                              <p className="text-[11px] text-slate-500 mt-0.5">{maskEmail(leadDetail.lead.email)}</p>
+                          {/* ONE-CLICK AI AUTOMATION TOGGLE */}
+                          <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-3xs">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-extrabold text-slate-800">AI Sales Setter</p>
+                                <p className="text-[10px] text-slate-400 mt-0.5">Auto-reply status</p>
+                              </div>
+                              {/* Toggle Button */}
+                              <button
+                                onClick={() => toggleAI(leadDetail.lead.id, leadDetail.lead.ai_enabled === 0)}
+                                className={`h-8 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all border ${
+                                  leadDetail.lead.ai_enabled === 1
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-3xs'
+                                    : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 shadow-3xs'
+                                }`}
+                              >
+                                {leadDetail.lead.ai_enabled === 1 ? 'AI: ACTIVE (ON)' : 'AI: PAUSED (OFF)'}
+                              </button>
+                            </div>
+                            
+                            <div className="border-t border-slate-100 pt-2.5 flex justify-between items-center text-[10px]">
+                              <span className="text-slate-500 font-bold">Handoff Status:</span>
+                              <span className={`px-2 py-0.5 rounded-full font-extrabold text-[8px] uppercase ${
+                                leadDetail.lead.ai_enabled === 0
+                                  ? 'bg-rose-100 text-rose-800'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}>
+                                {leadDetail.lead.ai_enabled === 0 ? 'HUMAN TAKEOVER' : 'AI MANAGED'}
+                              </span>
                             </div>
                           </div>
 
-                          <div className="flex gap-2">
-                            <Clock size={14} className="text-slate-400 shrink-0" />
+                          {/* Lead Scoring & Pipeline */}
+                          <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-3xs">
+                            <div className="flex justify-between items-center pb-2.5 border-b border-slate-100">
+                              <div>
+                                <p className="font-extrabold text-slate-800">Qualification Score</p>
+                                <p className="text-[10px] text-slate-400 mt-0.5">Gemini Intent Assessment</p>
+                              </div>
+                              <span className={`h-9 w-9 rounded-xl flex items-center justify-center text-xs font-black border ${
+                                leadDetail.lead.ai_score >= 80 
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                  : leadDetail.lead.ai_score >= 50
+                                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                    : 'bg-slate-50 text-slate-500 border-slate-200'
+                              }`}>
+                                {leadDetail.lead.ai_score || 50}
+                              </span>
+                            </div>
+
                             <div>
-                              <p className="font-bold text-slate-700">Created Date</p>
-                              <p className="text-[11px] text-slate-500 mt-0.5">{new Date(leadDetail.lead.created_at).toLocaleString()}</p>
+                              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1.5">Pipeline Stage</p>
+                              <select
+                                value={leadDetail.lead.status}
+                                onChange={(e) => updateLeadStatus(leadDetail.lead.id, e.target.value as Lead['status'])}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-8 text-[11px] font-bold text-slate-700 focus:outline-none"
+                              >
+                                <option value="new">New</option>
+                                <option value="ai_qualifying">AI Qualifying</option>
+                                <option value="qualified">Qualified</option>
+                                <option value="nurturing">Nurturing</option>
+                                <option value="won">Won</option>
+                                <option value="lost">Lost</option>
+                              </select>
                             </div>
                           </div>
 
-                          {/* AI BANT evaluation summary */}
-                          <div className="bg-gradient-to-r from-emerald-50 to-teal-50/50 border border-emerald-100 rounded-2xl p-4 space-y-2 mt-4 shadow-3xs">
+                          {/* Follow-up Drip Status */}
+                          <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-3xs">
+                            <p className="font-extrabold text-slate-800">Nurture Follow-up Timeline</p>
+                            
+                            {leadDetail.followup ? (
+                              <div className="space-y-2 text-[11px]">
+                                <div className="flex justify-between items-center text-slate-600">
+                                  <span>Scheduler Mode:</span>
+                                  <span className="font-bold text-slate-800 capitalize">{leadDetail.followup.sequence_name.replace('_', ' ')}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-slate-600">
+                                  <span>Current Nurture Step:</span>
+                                  <span className="font-bold text-slate-800">Step {leadDetail.followup.current_step} of 3</span>
+                                </div>
+                                <div className="flex justify-between items-center text-slate-600">
+                                  <span>Scheduler Status:</span>
+                                  <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${
+                                    leadDetail.followup.status === 'active' && leadDetail.lead.ai_enabled === 1
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : 'bg-amber-100 text-amber-800'
+                                  }`}>
+                                    {leadDetail.lead.ai_enabled === 0 ? 'PAUSED (TAKEOVER)' : leadDetail.followup.status}
+                                  </span>
+                                </div>
+                                {leadDetail.followup.status === 'active' && leadDetail.lead.ai_enabled === 1 && (
+                                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 mt-2 space-y-1 font-mono text-[9px]">
+                                    <p className="text-slate-400 uppercase font-bold tracking-wider">Next Auto Message Date</p>
+                                    <p className="font-bold text-slate-600 mt-0.5">
+                                      {new Date(leadDetail.followup.next_run_at).toLocaleString()}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-[10px] text-slate-400 italic">No automated follow-up sequences scheduled. Leads are added upon qualification touchpoint.</p>
+                            )}
+                          </div>
+
+                          {/* AI BANT Evaluation Summary */}
+                          <div className="bg-gradient-to-r from-emerald-50 to-teal-50/50 border border-emerald-100 rounded-2xl p-4 space-y-2 shadow-3xs">
                             <span className="text-[9px] font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
                               <Sparkles size={11} /> Gemini BANT Assessment
                             </span>
@@ -880,9 +1040,9 @@ export default function AdminCrm() {
                               "{leadDetail.lead.ai_summary || 'Conversational intake currently processing intent...'}"
                             </p>
                             <div className="flex justify-between items-center pt-2 border-t border-emerald-100/50 text-[10px] text-emerald-800 font-bold">
-                              <span>Confidence Score: {leadDetail.lead.ai_score}</span>
-                              <span className="bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded text-[8px]">
-                                {leadDetail.lead.ai_budget ? 'BUDGET: MATCH' : 'BUDGET: EVAL'}
+                              <span>Recommended Next Action:</span>
+                              <span className="bg-emerald-100 text-emerald-950 px-2 py-0.5 rounded text-[8px]">
+                                {leadDetail.lead.ai_score >= 80 ? 'SCHEDULE DEMO' : 'Discovery Qs'}
                               </span>
                             </div>
                           </div>
