@@ -52,6 +52,7 @@ export async function initDb(): Promise<Database<sqlite3.Database, sqlite3.State
       ai_budget BOOLEAN DEFAULT 0,
       ai_summary TEXT,
       notes TEXT,
+      ai_enabled INTEGER DEFAULT 1,
       created_at TEXT DEFAULT (CURRENT_TIMESTAMP),
       updated_at TEXT DEFAULT (CURRENT_TIMESTAMP)
     );
@@ -135,6 +136,13 @@ export async function initDb(): Promise<Database<sqlite3.Database, sqlite3.State
     CREATE INDEX IF NOT EXISTS idx_conversations_lead ON conversations(lead_id);
   `);
 
+  try {
+    await db.exec('ALTER TABLE leads ADD COLUMN ai_enabled INTEGER DEFAULT 1;');
+    console.log('⚡ Schema Migrated: Added ai_enabled column to leads table');
+  } catch (e) {
+    // Ignore: Column already exists
+  }
+
   // Create default admin credentials if table is fresh
   const adminExists = await db.get('SELECT id FROM users WHERE username = ?', ['admin']);
   if (!adminExists) {
@@ -145,99 +153,6 @@ export async function initDb(): Promise<Database<sqlite3.Database, sqlite3.State
       ['admin-uuid-1', 'admin', hash, 'admin']
     );
     console.log('🌱 Default admin credentials initialized: admin / trinetra123');
-  }
-
-  // Preload Mock Leads if fresh
-  const leadsCount = await db.get('SELECT COUNT(*) as count FROM leads');
-  if (leadsCount && leadsCount.count === 0) {
-    console.log('🌱 Databases tables empty. Seeding mock leads for E2E tests...');
-    
-    // Seed 3 realistic Leads
-    const demoLeads = [
-      {
-        id: 'demo-lead-1',
-        name: 'Aarav Sharma',
-        email: 'aarav.sharma@gmail.com',
-        phone: '+919988776655',
-        company: 'Sharma Medicos',
-        service: 'WhatsApp Automation',
-        source: 'website',
-        status: 'qualified',
-        ai_score: 94,
-        ai_budget: 1,
-        ai_summary: 'Pharmacy retail manager wanting refill triggers.',
-        notes: 'Requested scheduling.'
-      },
-      {
-        id: 'demo-lead-2',
-        name: 'Priya Verma',
-        email: 'priya.verma@outlook.com',
-        phone: '+918877665544',
-        company: 'Verma coaching Academy',
-        service: 'AI CRM Solutions',
-        source: 'referral',
-        status: 'nurturing',
-        ai_score: 82,
-        ai_budget: 1,
-        ai_summary: 'Educational partner inquiring on student workflows.',
-        notes: 'Emailed portfolio details.'
-      },
-      {
-        id: 'demo-lead-3',
-        name: 'Rohan Gupta',
-        email: null,
-        phone: '+917766554433',
-        company: 'Gupta Builders Group',
-        service: 'Smart Follow-up Client',
-        source: 'website',
-        status: 'new',
-        ai_score: 65,
-        ai_budget: 0,
-        ai_summary: 'Real estate developer looking for auto setter sequence.',
-        notes: 'Needs live workflow demo.'
-      }
-    ];
-
-    for (const lead of demoLeads) {
-      await db.run(
-        `INSERT INTO leads (id, name, email, phone, company, service, source, status, ai_score, ai_budget, ai_summary, notes) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          lead.id, lead.name, lead.email, lead.phone, lead.company,
-          lead.service, lead.source, lead.status, lead.ai_score,
-          lead.ai_budget, lead.ai_summary, lead.notes
-        ]
-      );
-
-      // Seed conversation threads for CRM dashboard compatibility
-      let lastMsg = 'No conversations started yet.';
-      if (lead.id === 'demo-lead-1') {
-        lastMsg = 'Hello Aarav! 🚀 We can set up automated refill triggers for Sharma Medicos in under 2 hours. When are you free?';
-      } else if (lead.id === 'demo-lead-2') {
-        lastMsg = 'Educational partner inquiring on student workflows.';
-      } else if (lead.id === 'demo-lead-3') {
-        lastMsg = 'Real estate developer looking for auto setter sequence.';
-      }
-
-      await db.run(
-        `INSERT INTO conversations (id, lead_id, phone, unread_count, last_message) 
-         VALUES (?, ?, ?, ?, ?)`,
-        [`conv-${lead.id}`, lead.id, lead.phone, 0, lastMsg]
-      );
-
-      // Seed chat bubbles
-      if (lead.id === 'demo-lead-1') {
-        await db.run(
-          `INSERT INTO whatsapp_chats (id, lead_id, direction, body, status) VALUES (?, ?, ?, ?, ?)`,
-          ['chat-1', lead.id, 'inbound', 'Hi Trinetra, I saw your WhatsApp CRM, I want to deploy this.', 'read']
-        );
-        await db.run(
-          `INSERT INTO whatsapp_chats (id, lead_id, direction, body, status) VALUES (?, ?, ?, ?, ?)`,
-          ['chat-2', lead.id, 'outbound', 'Hello Aarav! 🚀 We can set up automated refill triggers for Sharma Medicos in under 2 hours. When are you free?', 'sent']
-        );
-      }
-    }
-    console.log('✅ SQLite database pre-seeded with 3 mock entities.');
   }
 
   console.log(`SQLite database successfully connected at: ${resolvedDbPath}`);

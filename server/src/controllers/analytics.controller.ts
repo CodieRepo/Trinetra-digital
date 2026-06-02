@@ -68,5 +68,16 @@ export const AnalyticsController = {
       console.error('Analytics query error:', error);
       return res.status(500).json({ error: 'Internal server error calculating metrics' });
     }
+  },
+
+  async getAuditLogs(req: Request, res: Response) {
+    try {
+      const db = getDb();
+      const logs = await db.all("SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 20");
+      return res.json(logs);
+    } catch (error) {
+      console.error('Audit logs query error:', error);
+      return res.status(500).json({ error: 'Internal server error fetching audit logs' });
+    }
   }
 };

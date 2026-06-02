@@ -212,7 +212,7 @@ export const LeadsController = {
   // Protected: Modify lead
   async updateLead(req: AuthenticatedRequest, res: Response) {
     const { id } = req.params;
-    const { status, ai_score, notes, name, email, company } = req.body;
+    const { status, ai_score, notes, name, email, company, ai_enabled } = req.body;
 
     try {
       const lead = await LeadModel.findById(id);
@@ -229,12 +229,21 @@ export const LeadsController = {
       if (name !== undefined) updates.name = name;
       if (email !== undefined) updates.email = email;
       if (company !== undefined) updates.company = company;
+      if (ai_enabled !== undefined) updates.ai_enabled = ai_enabled;
 
       if (Object.keys(updates).length === 0) {
         return res.status(400).json({ error: 'No fields provided for modification' });
       }
 
       await LeadModel.update(id, updates);
+
+      // Audit Log for AI pause/resume
+      if (ai_enabled !== undefined) {
+        await logAuditAction(
+          ai_enabled === 1 ? 'AI_RESUME' : 'AI_PAUSE',
+          `AI automation status updated to ${ai_enabled === 1 ? 'ENABLED' : 'PAUSED'} for lead "${lead.name}"`
+        );
+      }
 
       return res.json({ success: true, message: 'Lead updated successfully' });
     } catch (error) {
@@ -263,7 +272,17 @@ export const LeadsController = {
       const sent = await sendWhatsAppMessage(lead.phone, body);
 
       if (sent) {
+        // Automatic human takeover logic:
+        await LeadModel.update(id, { ai_enabled: 0 });
+        const db = getDb();
+        await db.run(
+          "UPDATE followup_sequences SET status = 'paused' WHERE lead_id = ? AND status = 'active'",
+          [id]
+        );
+
         await logAuditAction('WHATSAPP_SEND', `Sent manual WhatsApp response to ${lead.name}`);
+        await logAuditAction('HUMAN_TAKEOVER', `AI automatically paused (ai_enabled=0) and follow-up sequences paused for ${lead.name} due to manual human message intervention.`);
+        
         return res.json({ success: true, message: 'WhatsApp message sent successfully' });
       } else {
         return res.status(502).json({ error: 'Failed to send WhatsApp message. Client is disconnected.' });

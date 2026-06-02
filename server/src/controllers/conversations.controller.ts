@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { ConversationModel, MessageModel } from '../models/message.model';
 import { LeadModel } from '../models/lead.model';
 import { sendWhatsAppMessage } from '../whatsapp/gateway';
-import { logAuditAction } from '../database/connection';
+import { logAuditAction, getDb } from '../database/connection';
 
 export const ConversationsController = {
   // GET /api/conversations
@@ -52,6 +52,17 @@ export const ConversationsController = {
       const sent = await sendWhatsAppMessage(phone, body);
 
       if (sent) {
+        // Automatic human takeover logic:
+        const lead = await LeadModel.findByPhone(phone);
+        if (lead) {
+          await LeadModel.update(lead.id, { ai_enabled: 0 });
+          const db = getDb();
+          await db.run(
+            "UPDATE followup_sequences SET status = 'paused' WHERE lead_id = ? AND status = 'active'",
+            [lead.id]
+          );
+          await logAuditAction('HUMAN_TAKEOVER', `AI automatically paused (ai_enabled=0) and follow-up sequences paused for ${lead.name} due to manual human message intervention.`);
+        }
         await logAuditAction('WHATSAPP_SEND', `Sent general WhatsApp message to ${phone}`);
         return res.json({ success: true, message: 'WhatsApp message sent successfully' });
       } else {

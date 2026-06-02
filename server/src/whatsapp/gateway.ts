@@ -182,6 +182,8 @@ export async function initWhatsApp() {
 
     sock.ev.on('messages.upsert', async (m) => {
       const msg = m.messages[0];
+      if (!msg) return;
+      
       if (!msg.key.fromMe && m.type === 'notify') {
         await handleInboundMessage(msg);
       }
@@ -232,8 +234,33 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
   console.log(`✉️ Incoming WhatsApp message from ${senderName} (${jid}): "${textContent}"`);
 
   // Search for the lead in database by phone matching
-  const cleanPhone = cleanJidToPhone(jid);
+  let cleanPhone = cleanJidToPhone(jid);
   let lead = await LeadModel.findByPhone(cleanPhone);
+
+  // LID Mitigation Strategy:
+  // If the JID is an LID, try to resolve its actual phone JID from Baileys contacts cache
+  if (jid.endsWith('@lid') && sock) {
+    const cachedContact = (sock as any).contacts?.[jid];
+    if (cachedContact?.id && !cachedContact.id.endsWith('@lid')) {
+      const resolvedPhone = cleanJidToPhone(cachedContact.id);
+      console.log(`ℹ️ [LID RESOLUTION] Successfully mapped LID ${jid} to phone JID ${cachedContact.id} via contact cache.`);
+      cleanPhone = resolvedPhone;
+      // Re-lookup by resolved phone
+      lead = await LeadModel.findByPhone(cleanPhone);
+    } else {
+      // Fallback name matching: Check if there is an existing lead with the exact same pushName to prevent duplication
+      const existingLeads = await LeadModel.findAll();
+      const duplicateLead = existingLeads.find(
+        l => l.name.toLowerCase() === senderName.toLowerCase() && 
+        !l.phone.includes('lid') && 
+        !l.phone.startsWith('+2224')
+      );
+      if (duplicateLead) {
+        console.log(`ℹ️ [LID MITIGATION] Found existing lead "${duplicateLead.name}" with real phone "${duplicateLead.phone}". Reusing lead ID ${duplicateLead.id} for LID ${jid} to prevent duplication!`);
+        lead = duplicateLead;
+      }
+    }
+  }
 
   // 1. AUTO LEAD CREATION if lead does not exist in CRM
   if (!lead) {
@@ -251,7 +278,8 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
       ai_score: 0,
       ai_budget: false,
       ai_summary: null,
-      notes: null
+      notes: null,
+      ai_enabled: 1
     });
     
     await logAuditAction('LEAD_CREATION', `Automatically created new lead "${senderName}" (${cleanPhone}) via inbound WhatsApp gateway.`);
@@ -298,6 +326,12 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
     role: row.direction === 'inbound' ? 'user' as const : 'model' as const,
     text: row.body
   }));
+
+  // 4b. Human Handoff Interlock: Check if AI auto-reply is disabled for this lead
+  if (lead.ai_enabled === 0) {
+    console.log(`ℹ️ [HUMAN HANDOFF INTERLOCK] AI auto-reply is paused (ai_enabled = 0) for lead "${lead.name}". Skipping qualification & response.`);
+    return;
+  }
 
   // 5. Trigger AI Re-qualification
   console.log(`🤖 Re-qualifying lead: ${lead.name} via Gemini with new chat context...`);

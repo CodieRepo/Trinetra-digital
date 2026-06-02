@@ -1,4 +1,4 @@
-import { getDb } from '../database/connection';
+import { getDb, logAuditAction } from '../database/connection';
 import { sendWhatsAppMessage } from '../whatsapp/gateway';
 
 export function startCronService() {
@@ -12,7 +12,7 @@ export function startCronService() {
 
       // Find all active follow-up sequences past their execution deadline
       const activeSequences = await db.all(
-        `SELECT f.*, l.phone, l.name 
+        `SELECT f.*, l.phone, l.name, l.ai_enabled 
          FROM followup_sequences f 
          JOIN leads l ON f.lead_id = l.id
          WHERE f.status = 'active' AND f.next_run_at <= ?`,
@@ -20,6 +20,14 @@ export function startCronService() {
       );
 
       for (const seq of activeSequences) {
+        // Human Takeover Handoff Safety: If human has taken over, pause automated nurture
+        if (seq.ai_enabled === 0) {
+          console.log(`ℹ️ [CRON HANDOFF SAFETY] Skipping and pausing follow-up sequence for ${seq.name} due to active human takeover (ai_enabled=0)`);
+          await db.run("UPDATE followup_sequences SET status = 'paused' WHERE id = ?", [seq.id]);
+          await logAuditAction('CRON_PAUSE', `Paused automated nurture sequence for ${seq.name} due to active human takeover.`);
+          continue;
+        }
+
         console.log(`⏰ Executing follow-up step ${seq.current_step} for ${seq.name} (${seq.phone})`);
         
         let message = '';
@@ -27,16 +35,22 @@ export function startCronService() {
         let nextRunAt: string | null = null;
         let nextStatus = 'active';
 
-        // simple 2-step nurture sequence
+        // 4-step nurture sequence (including initial instant touchpoint)
         if (seq.sequence_name === 'default_nurture') {
           if (seq.current_step === 1) {
-            message = `Hi ${seq.name}! 🚀 Just checking in to see if you had a chance to look at our AI Automation workflows. What did you think? Let me know if you'd like to check a live custom demo!`;
-            // Schedule step 2 for 24 hours later (or 5 minutes for demo testing)
+            message = `Hi ${seq.name}! 🚀 Just checking in to see if you had a chance to look at our custom AI Automation workflows. What did you think? Let me know if you'd like to check a live demo!`;
+            // Step 2 scheduled for 2 minutes from now in accelerated test mode
             const nextDate = new Date();
-            nextDate.setMinutes(nextDate.getMinutes() + 5); // 5 mins in demo
+            nextDate.setMinutes(nextDate.getMinutes() + 2);
             nextRunAt = nextDate.toISOString();
           } else if (seq.current_step === 2) {
             message = `Hey ${seq.name}, hope your week is going great! I wanted to share this short case study of how we automated lead capture and saved 12 hours/week for a similar business: https://trinetradigitalsolution.com/blog. Would you be open to a quick call tomorrow?`;
+            // Step 3 scheduled for 2 minutes from now in accelerated test mode
+            const nextDate = new Date();
+            nextDate.setMinutes(nextDate.getMinutes() + 2);
+            nextRunAt = nextDate.toISOString();
+          } else if (seq.current_step === 3) {
+            message = `Hi ${seq.name}, since we haven't connected, I'll close this thread for now. If you ever want to automate your manual lead bottlenecks or integrate WhatsApp with a custom CRM, feel free to book a slot here: https://calendly.com/trinetra-demo. Wish you the best!`;
             nextStatus = 'completed'; // Sequence ends
           }
         }
@@ -52,6 +66,7 @@ export function startCronService() {
                 "UPDATE followup_sequences SET status = 'completed' WHERE id = ?",
                 [seq.id]
               );
+              await logAuditAction('CRON_COMPLETE', `Follow-up nurture sequence successfully completed for ${seq.name}`);
             } else {
               await db.run(
                 `UPDATE followup_sequences 
@@ -59,6 +74,7 @@ export function startCronService() {
                  WHERE id = ?`,
                 [nextStep, nextRunAt, seq.id]
               );
+              await logAuditAction('CRON_STEP_DISPATCH', `Dispatched follow-up Step ${seq.current_step} message to ${seq.name}. Scheduled next step.`);
             }
           }
         }

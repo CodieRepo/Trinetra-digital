@@ -55,6 +55,7 @@ export async function initDb(): Promise<Database<sqlite3.Database, sqlite3.State
       ai_budget BOOLEAN DEFAULT 0,
       ai_summary TEXT,
       notes TEXT,
+      ai_enabled INTEGER DEFAULT 1,
       created_at TEXT DEFAULT (CURRENT_TIMESTAMP),
       updated_at TEXT DEFAULT (CURRENT_TIMESTAMP)
     );
@@ -88,6 +89,13 @@ export async function initDb(): Promise<Database<sqlite3.Database, sqlite3.State
     );
   `);
 
+  try {
+    await db.exec('ALTER TABLE leads ADD COLUMN ai_enabled INTEGER DEFAULT 1;');
+    console.log('⚡ Schema Migrated: Added ai_enabled column to leads table in db.ts');
+  } catch (e) {
+    // Ignore: Column already exists
+  }
+
   // Insert default admin if users table is empty
   const adminExists = await db.get('SELECT id FROM users WHERE username = ?', ['admin']);
   if (!adminExists) {
@@ -98,90 +106,6 @@ export async function initDb(): Promise<Database<sqlite3.Database, sqlite3.State
       ['admin-uuid-1', 'admin', hash, 'admin']
     );
     console.log('Default admin user created: admin / trinetra123');
-  }
-
-  // Seed default demo leads if leads table is empty
-  const leadsCount = await db.get('SELECT COUNT(*) as count FROM leads');
-  if (leadsCount && leadsCount.count === 0) {
-    console.log('🌱 Database is empty. Seeding mock demo leads for testing...');
-    const demoLeads = [
-      {
-        id: 'demo-lead-1',
-        name: 'Aarav Sharma',
-        email: 'aarav.sharma@gmail.com',
-        phone: '+919988776655',
-        company: 'Sharma Medicos',
-        service: 'WhatsApp Automation',
-        source: 'website',
-        status: 'qualified',
-        ai_score: 94,
-        ai_budget: 1,
-        ai_summary: 'Owner of a chain of retail pharmacies. Wants to automate batch refill reminders and lead follow-ups. Budget is verified.',
-        notes: 'Highly motivated to get started. Scheduled live demo for tomorrow.'
-      },
-      {
-        id: 'demo-lead-2',
-        name: 'Priya Verma',
-        email: 'priya.verma@outlook.com',
-        phone: '+918877665544',
-        company: 'Verma Coaching Academy',
-        service: 'AI CRM',
-        source: 'facebook',
-        status: 'nurturing',
-        ai_score: 82,
-        ai_budget: 1,
-        ai_summary: 'Director of an IAS coaching centre. Interested in self-updating AI CRM to capture student enquirers from Meta ads.',
-        notes: 'Requested case studies of similar setups in educational sector.'
-      },
-      {
-        id: 'demo-lead-3',
-        name: 'Rohan Gupta',
-        email: null,
-        phone: '+917766554433',
-        company: 'Gupta Developers & Builders',
-        service: 'Smart Follow-Up',
-        source: 'google',
-        status: 'new',
-        ai_score: 65,
-        ai_budget: 0,
-        ai_summary: 'Real estate partner looking for automated follow-up sequences for prospective home buyers. Budget intent not yet fully qualified.',
-        notes: 'Just captured. AI qualification sequence active.'
-      }
-    ];
-
-    for (const lead of demoLeads) {
-      await db.run(
-        `INSERT INTO leads (id, name, email, phone, company, service, source, status, ai_score, ai_budget, ai_summary, notes) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          lead.id,
-          lead.name,
-          lead.email,
-          lead.phone,
-          lead.company,
-          lead.service,
-          lead.source,
-          lead.status,
-          lead.ai_score,
-          lead.ai_budget,
-          lead.ai_summary,
-          lead.notes
-        ]
-      );
-      
-      // Seed a few initial chats for Aarav to make the history look realistic!
-      if (lead.id === 'demo-lead-1') {
-        await db.run(
-          `INSERT INTO whatsapp_chats (id, lead_id, direction, body, status) VALUES (?, ?, ?, ?, ?)`,
-          ['chat-1', lead.id, 'inbound', 'Hi Trinetra, I saw your WhatsApp automation demo. I want this for Sharma Medicos.', 'read']
-        );
-        await db.run(
-          `INSERT INTO whatsapp_chats (id, lead_id, direction, body, status) VALUES (?, ?, ?, ?, ?)`,
-          ['chat-2', lead.id, 'outbound', 'Hello Aarav! 🚀 Thanks for reaching out. We can easily automate your refill notifications. What is the average number of daily prescriptions you process?', 'sent']
-        );
-      }
-    }
-    console.log('✅ SQLite database seeded with 3 realistic demo leads & initial chat history.');
   }
 
   console.log(`SQLite database successfully initialized at: ${resolvedDbPath}`);

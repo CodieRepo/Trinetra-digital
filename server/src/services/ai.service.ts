@@ -43,7 +43,7 @@ export async function qualifyLead(
 
   try {
     const ai = new GoogleGenerativeAI(apiKey);
-    const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = ai.getGenerativeModel({ model: 'gemini-flash-latest' });
 
     // Construct history presentation
     const historyText = chatHistory.map(h => `${h.role === 'user' ? 'Client' : 'AI Assistant'}: ${h.text}`).join('\n');

@@ -13,107 +13,20 @@ import {
 
 // ── 1. Mock Data Generators for Futuristic Sections ───────────────────────
 
-const MOCK_CAMPAIGNS: Campaign[] = [
-  {
-    id: "camp-1",
-    name: "Automated Pharmacy Batch Refill Reminder",
-    targetGroup: "Active Prescription Leads",
-    status: "completed",
-    sentCount: 145,
-    deliveredCount: 142,
-    readCount: 134,
-    scheduledAt: "2026-05-28T09:00:00.000Z",
-    body: "Hi Aarav! This is Sharma Medicos. Your recurring batch pharmacy refill is ready for dispatch. Confirm by replying YES!"
-  },
-  {
-    id: "camp-2",
-    name: "Real Estate VIP Lead Nurture Broadcast",
-    targetGroup: "Property Inquiries Gorakhpur",
-    status: "sending",
-    sentCount: 98,
-    deliveredCount: 92,
-    readCount: 45,
-    scheduledAt: "2026-05-28T16:30:00.000Z",
-    body: "Hello! We just launched a premium residential wing in Gupta Builders. Real-time digital brochures are attached. Reply for details!"
-  },
-  {
-    id: "camp-3",
-    name: "Vite AI-CRM Software Trial Upgrade Alert",
-    targetGroup: "14-Day Nurturing Sequence",
-    status: "draft",
-    sentCount: 0,
-    deliveredCount: 0,
-    readCount: 0,
-    scheduledAt: "2026-05-29T10:00:00.000Z",
-    body: "Hi Priya! Your AI automation command trial expires in 3 days. Unlock next-gen workflow nodes now with premium credits!"
-  }
-];
+const MOCK_CAMPAIGNS: Campaign[] = [];
 
-const MOCK_WORKFLOWS: AutomationWorkflow[] = [
-  {
-    id: "flow-1",
-    name: "Web Capture Lead Autopilot Sequence",
-    trigger: "Contact Form Submit",
-    status: "active",
-    nodesCount: 5,
-    connectionsCount: 4,
-    lastTriggeredAt: "2026-05-28T16:40:00Z"
-  },
-  {
-    id: "flow-2",
-    name: "Conversational Intent Qualification Loop",
-    trigger: "WhatsApp Message Inbound",
-    status: "active",
-    nodesCount: 7,
-    connectionsCount: 6,
-    lastTriggeredAt: "2026-05-28T17:15:00Z"
-  },
-  {
-    id: "flow-3",
-    name: "Offline Recovery Alarm Handler",
-    trigger: "GET /health offline status",
-    status: "paused",
-    nodesCount: 3,
-    connectionsCount: 2,
-    lastTriggeredAt: "2026-05-27T12:00:00Z"
-  }
-];
+const MOCK_WORKFLOWS: AutomationWorkflow[] = [];
 
-const MOCK_AGENTS: AIAgent[] = [
-  {
-    id: "agent-1",
-    name: "Gemini qualification Core",
-    role: "Lead Scoring & Budget Verification",
-    status: "active",
-    confidenceThreshold: 80,
-    totalConversations: 124,
-    accuracyRate: 94.2,
-    prompt: "You are the head AI analyst at Trinetra. Assess lead details, calculate budget parameters, assign score out of 100, and generate suggested followups."
-  },
-  {
-    id: "agent-2",
-    name: "Conversational Setter Bot",
-    role: "Meeting Scheduler & Lead Intake",
-    status: "learning",
-    confidenceThreshold: 65,
-    totalConversations: 54,
-    accuracyRate: 88.5,
-    prompt: "Coordinate pharmacy demo calls. Secure dates, match timing guidelines, and hand off to human executive on anomalies."
-  }
-];
+const MOCK_AGENTS: AIAgent[] = [];
 
 const MOCK_BILLING: BillingData = {
   planName: "SaaS Enterprise Scale",
   price: "$149/mo",
   status: "active",
-  creditsUsed: 4620,
+  creditsUsed: 0,
   creditsMax: 10000,
   renewalDate: "2026-06-25T00:00:00.000Z",
-  invoices: [
-    { id: "inv-903", date: "May 25, 2026", amount: "$149.00", status: "paid" },
-    { id: "inv-802", date: "Apr 25, 2026", amount: "$149.00", status: "paid" },
-    { id: "inv-701", date: "Mar 25, 2026", amount: "$149.00", status: "paid" }
-  ]
+  invoices: []
 };
 
 // ── 2. Master Dashboard Hook ────────────────────────────────────────────────
@@ -128,6 +41,7 @@ export function useDashboard() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [waStatus, setWaStatus] = useState<{ status: 'disconnected' | 'connecting' | 'connected'; qr: string | null; qrImage: string | null } | null>(null);
   const [healthTelemetry, setHealthTelemetry] = useState<SystemHealth | null>(null);
+  const [auditLogs, setAuditLogs] = useState<Array<{ id: string; action: string; details: string | null; timestamp: string }>>([]);
   
   // Realtime Active Lead detail & Chat Timeline
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -194,6 +108,14 @@ export function useDashboard() {
       // 3. Fetch CRM Analytics graphs
       const analyticsData = await apiService.analytics.get();
       setAnalytics(analyticsData);
+
+      // Fetch Live Audit Logs
+      try {
+        const audits = await apiService.analytics.getAuditLogs();
+        setAuditLogs(audits);
+      } catch (auditErr) {
+        // Safe fallback if endpoint is not loaded yet
+      }
 
       // 4. Fetch WhatsApp Gateway Pairing
       const wa = await apiService.whatsapp.status();
@@ -320,6 +242,7 @@ export function useDashboard() {
     analytics,
     waStatus,
     healthTelemetry,
+    auditLogs,
     selectedLeadId,
     setSelectedLeadId,
     leadDetail,

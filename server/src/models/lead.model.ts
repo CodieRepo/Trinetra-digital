@@ -13,6 +13,7 @@ export interface LeadDTO {
   ai_budget: boolean;
   ai_summary: string | null;
   notes: string | null;
+  ai_enabled?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -40,12 +41,13 @@ export const LeadModel = {
   async create(lead: LeadDTO): Promise<void> {
     const db = getDb();
     await db.run(
-      `INSERT INTO leads (id, name, email, phone, company, service, source, status, ai_score, ai_budget, ai_summary, notes) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO leads (id, name, email, phone, company, service, source, status, ai_score, ai_budget, ai_summary, notes, ai_enabled) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         lead.id, lead.name, lead.email, lead.phone, lead.company,
         lead.service, lead.source, lead.status, lead.ai_score,
-        lead.ai_budget ? 1 : 0, lead.ai_summary, lead.notes
+        lead.ai_budget ? 1 : 0, lead.ai_summary, lead.notes,
+        lead.ai_enabled !== undefined ? lead.ai_enabled : 1
       ]
     );
   },

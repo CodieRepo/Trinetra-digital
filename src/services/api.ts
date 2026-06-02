@@ -207,7 +207,8 @@ export const apiService = {
 
   // Analytics Operations
   analytics: {
-    get: async () => request<AnalyticsData>("/analytics")
+    get: async () => request<AnalyticsData>("/analytics"),
+    getAuditLogs: async () => request<Array<{ id: string; action: string; details: string | null; timestamp: string }>>("/analytics/audit")
   },
 
   // Health and Telemetry

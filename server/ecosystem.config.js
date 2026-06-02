@@ -14,9 +14,7 @@ module.exports = {
         NODE_ENV: "production",
         PORT: 5000,
         DATABASE_PATH: "./data/trinetra.db",
-        WHATSAPP_SESSION_PATH: "./data/wa-session",
-        JWT_SECRET: "YOUR_PRODUCTION_JWT_SECRET_HASH",
-        GEMINI_API_KEY: "YOUR_SECURE_GEMINI_API_KEY"
+        WHATSAPP_SESSION_PATH: "./data/wa-session"
       },
       error_file: "logs/err.log",
       out_file: "logs/out.log",
