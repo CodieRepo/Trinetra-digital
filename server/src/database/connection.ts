@@ -134,11 +134,52 @@ export async function initDb(): Promise<Database<sqlite3.Database, sqlite3.State
 
     CREATE INDEX IF NOT EXISTS idx_conversations_phone ON conversations(phone);
     CREATE INDEX IF NOT EXISTS idx_conversations_lead ON conversations(lead_id);
+
+    -- Rolling conversation memory (compressed summaries)
+    CREATE TABLE IF NOT EXISTS ai_memory (
+      id TEXT PRIMARY KEY,
+      lead_id TEXT NOT NULL UNIQUE,
+      summary TEXT NOT NULL,
+      message_count INTEGER DEFAULT 0,
+      last_updated TEXT DEFAULT (CURRENT_TIMESTAMP),
+      FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE
+    );
+
+    -- Token usage and cost tracking per AI call
+    CREATE TABLE IF NOT EXISTS token_usage (
+      id TEXT PRIMARY KEY,
+      lead_id TEXT,
+      model TEXT NOT NULL,
+      input_tokens INTEGER DEFAULT 0,
+      output_tokens INTEGER DEFAULT 0,
+      cost_usd REAL DEFAULT 0,
+      timestamp TEXT DEFAULT (CURRENT_TIMESTAMP)
+    );
+
+    -- Human handoff alert queue
+    CREATE TABLE IF NOT EXISTS handoff_alerts (
+      id TEXT PRIMARY KEY,
+      lead_id TEXT NOT NULL,
+      reason TEXT,
+      status TEXT DEFAULT 'pending',
+      created_at TEXT DEFAULT (CURRENT_TIMESTAMP),
+      FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_token_usage_date ON token_usage(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_handoff_lead ON handoff_alerts(lead_id, status);
   `);
 
   try {
     await db.exec('ALTER TABLE leads ADD COLUMN ai_enabled INTEGER DEFAULT 1;');
     console.log('⚡ Schema Migrated: Added ai_enabled column to leads table');
+  } catch (e) {
+    // Ignore: Column already exists
+  }
+
+  try {
+    await db.exec('ALTER TABLE leads ADD COLUMN city TEXT;');
+    console.log('⚡ Schema Migrated: Added city column to leads table');
   } catch (e) {
     // Ignore: Column already exists
   }

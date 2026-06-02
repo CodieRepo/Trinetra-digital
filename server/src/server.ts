@@ -6,6 +6,7 @@ import { envConfig } from './config/env';
 import { initDb, getDb } from './database/connection';
 import { initWhatsApp, getWhatsAppStatus } from './whatsapp/gateway';
 import { startCronService } from './services/cron.service';
+import { startCostMonitor, getDailyStats } from './services/cost-monitor.service';
 import { errorMiddleware } from './middleware/error.middleware';
 
 // Routes
@@ -71,6 +72,17 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/conversations', conversationsRoutes);
 app.post('/api/send-message', authenticateJWT, ConversationsController.sendGeneralMessage);
 
+// Token + cost analytics endpoints
+app.get('/api/analytics/tokens', authenticateJWT, async (req, res) => {
+  try {
+    const date = req.query.date as string | undefined;
+    const stats = await getDailyStats(date);
+    res.json({ success: true, data: stats });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Simple health endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
@@ -133,6 +145,9 @@ async function main() {
 
     // 2. Start schedule cron nurtures
     startCronService();
+
+    // 3. Start cost monitor (daily token + spend tracking)
+    startCostMonitor();
 
     // 3. Bind app listener
     app.listen(PORT, () => {

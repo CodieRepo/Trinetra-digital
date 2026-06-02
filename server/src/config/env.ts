@@ -8,7 +8,7 @@ export interface Config {
   DATABASE_PATH: string;
   WHATSAPP_SESSION_PATH: string;
   JWT_SECRET: string;
-  GEMINI_API_KEY: string | null;
+  OPENROUTER_API_KEY: string | null;
   NODE_ENV: string;
 }
 
@@ -26,9 +26,11 @@ function validateAndLoadConfig(): Config {
     console.warn('⚠️ Security Warning: Running in production with default JWT_SECRET. Override in .env!');
   }
 
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (!geminiKey || geminiKey === 'YOUR_GEMINI_API_KEY') {
-    console.warn('⚠️ AI Warning: GEMINI_API_KEY is not configured or using default template value. Qualification will mock responses.');
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
+  if (!openrouterKey || openrouterKey.length < 20) {
+    console.warn('⚠️ AI Warning: OPENROUTER_API_KEY is not configured. AI replies will use emergency template.');
+  } else {
+    console.log('✅ OpenRouter API key loaded successfully.');
   }
 
   return {
@@ -36,7 +38,7 @@ function validateAndLoadConfig(): Config {
     DATABASE_PATH: process.env.DATABASE_PATH || './data/trinetra.db',
     WHATSAPP_SESSION_PATH: process.env.WHATSAPP_SESSION_PATH || './data/wa-session',
     JWT_SECRET: jwtSecret,
-    GEMINI_API_KEY: geminiKey && geminiKey !== 'YOUR_GEMINI_API_KEY' ? geminiKey : null,
+    OPENROUTER_API_KEY: openrouterKey && openrouterKey.length >= 20 ? openrouterKey : null,
     NODE_ENV: nodeEnv
   };
 }

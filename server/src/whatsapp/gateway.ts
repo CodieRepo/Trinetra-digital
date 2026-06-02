@@ -15,7 +15,7 @@ import qrcodeTerminal from 'qrcode-terminal';
 import QRCode from 'qrcode';
 import { getDb, logAuditAction } from '../database/connection';
 import { envConfig } from '../config/env';
-import { qualifyLead } from '../services/ai.service';
+import { processInboundMessage } from '../services/conversation.service';
 import { LeadModel } from '../models/lead.model';
 import { MessageModel, ConversationModel } from '../models/message.model';
 import { scheduleNurtureSequence } from '../services/cron.service';
@@ -239,49 +239,42 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
 
   console.log(`✉️ Incoming WhatsApp message from ${senderName} (${jid}): "${textContent}"`);
 
-  // ── CRITICAL: Track the actual JID to reply to ────────────────────────────
-  // We ALWAYS reply to the exact JID the message came FROM (not the stored phone)
-  // This correctly handles LIDs, international numbers, and linked devices.
-  let replyJid = jid; // Default: reply to the same JID that sent the message
-
-  // Search for the lead in database by phone matching
+  // ── Track the actual JID to reply to ─────────────────────────────────
+  // Always reply to the exact JID the message arrived from (handles LIDs correctly)
+  let replyJid = jid;
   let cleanPhone = cleanJidToPhone(jid);
   let lead = await LeadModel.findByPhone(cleanPhone);
 
-  // LID Mitigation Strategy:
-  // If the JID is an LID, try to resolve its actual phone JID from Baileys contacts cache
+  // LID resolution via Baileys contacts cache
   if (jid.endsWith('@lid') && sock) {
     const cachedContact = (sock as any).contacts?.[jid];
     if (cachedContact?.id && !cachedContact.id.endsWith('@lid')) {
-      const resolvedPhone = cleanJidToPhone(cachedContact.id);
-      console.log(`ℹ️ [LID RESOLUTION] Successfully mapped LID ${jid} to real phone JID ${cachedContact.id} via contact cache.`);
-      cleanPhone = resolvedPhone;
-      replyJid = cachedContact.id; // Use the real phone JID for reply
+      cleanPhone = cleanJidToPhone(cachedContact.id);
+      replyJid = cachedContact.id;
       lead = await LeadModel.findByPhone(cleanPhone);
+      console.log(`ℹ️ [LID] Resolved to real JID: ${cachedContact.id}`);
     } else {
-      console.log(`ℹ️ [LID] JID ${jid} is an LID. Will reply directly to the LID (Baileys will route it correctly).`);
-      // Do NOT change replyJid — Baileys can send to LID JIDs directly in newer versions
-      // Fallback name matching to avoid creating duplicate leads
-      const existingLeads = await LeadModel.findAll();
-      const duplicateLead = existingLeads.find(
-        l => l.name.toLowerCase() === senderName.toLowerCase() && 
-        !l.phone.includes('lid') && 
-        !l.phone.startsWith('+2224')
+      // Fallback: match by pushName to avoid duplicate lead creation
+      const allLeads = await LeadModel.findAll();
+      const nameMatch = allLeads.find(
+        l => l.name.toLowerCase() === senderName.toLowerCase() &&
+             !l.phone.startsWith('+2224')
       );
-      if (duplicateLead) {
-        console.log(`ℹ️ [LID MITIGATION] Found existing lead "${duplicateLead.name}" with real phone "${duplicateLead.phone}". Reusing lead ID ${duplicateLead.id}.`);
-        lead = duplicateLead;
-        // Use the real phone JID stored in the lead for reply
-        const realPhoneDigits = duplicateLead.phone.replace(/\D/g, '');
-        replyJid = `${realPhoneDigits}@s.whatsapp.net`;
-        console.log(`📍 [LID MITIGATION] Reply will target real JID: ${replyJid}`);
+      if (nameMatch) {
+        lead = nameMatch;
+        const digits = nameMatch.phone.replace(/\D/g, '');
+        replyJid = digits.length > 8 ? `${digits}@s.whatsapp.net` : jid;
+        console.log(`ℹ️ [LID] Matched by name to lead ${nameMatch.id}. ReplyJid: ${replyJid}`);
+      } else {
+        console.log(`ℹ️ [LID] No name match found. Will reply directly to LID.`);
       }
     }
   }
 
-  // 1. AUTO LEAD CREATION if lead does not exist in CRM
+  // ── Auto-create lead if first contact ───────────────────────────────────
+  let isNewLead = false;
   if (!lead) {
-    console.log(`👤 Unknown contact (${cleanPhone}). Automatically creating lead record...`);
+    console.log(`👤 New contact (${cleanPhone}). Auto-creating lead...`);
     const leadId = 'lead-' + Date.now();
     await LeadModel.create({
       id: leadId,
@@ -296,21 +289,19 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
       ai_budget: false,
       ai_summary: null,
       notes: null,
-      ai_enabled: 1
+      ai_enabled: 1,
     });
-    
-    await logAuditAction('LEAD_CREATION', `Automatically created new lead "${senderName}" (${cleanPhone}) via inbound WhatsApp gateway.`);
-    
-    // Fetch newly created lead
     lead = await LeadModel.findById(leadId);
+    isNewLead = true;
+    await logAuditAction('LEAD_CREATION', `New lead "${senderName}" (${cleanPhone}) created via WhatsApp.`);
   }
 
   if (!lead) {
-    console.error('❌ Critical: Failed to retrieve or create lead instance for phone:', cleanPhone);
+    console.error('❌ [GATEWAY] Failed to create/find lead for:', cleanPhone);
     return;
   }
 
-  // 2. AUTO CONVERSATION THREAD SYNC
+  // ── Sync conversation thread ──────────────────────────────────────────
   const conversation = await ConversationModel.findByLeadId(lead.id);
   if (!conversation) {
     await ConversationModel.create({
@@ -318,64 +309,40 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
       lead_id: lead.id,
       phone: lead.phone,
       unread_count: 1,
-      last_message: textContent
+      last_message: textContent,
     });
   } else {
     await ConversationModel.updateThread(lead.id, textContent, true);
   }
 
-  // 3. Save Message in Database (whatsapp_chats)
+  // ── Save inbound message to DB ───────────────────────────────────────
   const messageId = msg.key.id || `in-${Date.now()}`;
   await MessageModel.create({
     id: messageId,
     lead_id: lead.id,
     direction: 'inbound',
     body: textContent,
-    status: 'read'
+    status: 'read',
   });
 
-  // 4. Fetch Conversation History
-  const rawHistory = await MessageModel.findByLeadId(lead.id);
-  // Get last 10 chats
-  const slicedHistory = rawHistory.slice(-10);
-  
-  const chatHistory = slicedHistory.map(row => ({
-    role: row.direction === 'inbound' ? 'user' as const : 'model' as const,
-    text: row.body
-  }));
+  // ── Delegate to conversation pipeline (OpenRouter + memory + anti-spam) ───
+  const result = await processInboundMessage(lead.id, messageId, textContent, jid);
 
-  // 4b. Human Handoff Interlock: Check if AI auto-reply is disabled for this lead
-  if (lead.ai_enabled === 0) {
-    console.log(`ℹ️ [HUMAN HANDOFF INTERLOCK] AI auto-reply is paused (ai_enabled = 0) for lead "${lead.name}". Skipping qualification & response.`);
+  if (result.skipped) {
+    console.log(`⏩ [GATEWAY] Message skipped: ${result.skipReason}`);
     return;
   }
 
-  // 5. Trigger AI Re-qualification
-  console.log(`🤖 Re-qualifying lead: ${lead.name} via Gemini with new chat context...`);
-  let aiResult;
-  try {
-    aiResult = await qualifyLead(lead.name, lead.service || 'AI Automation', lead.source, chatHistory);
-  } catch (err: any) {
-    console.error(`❌ [AI FAILURE] Failed to qualify lead ${lead.name}:`, err);
-    aiResult = {
-      ai_score: lead.ai_score || 50,
-      ai_budget: lead.ai_budget || false,
-      ai_summary: "Intake evaluation in progress. Awaiting further customer responses.",
-      suggested_reply: `Thank you for contacting Trinetra Digital Solution.\n\nWe've received your inquiry and our team will review it shortly.\n\nPlease share:\n• Business Name\n• Industry\n• Approximate monthly leads\n\nWe will get back to you as soon as possible.`
-    };
+  // ── Send AI reply back to WhatsApp ───────────────────────────────────
+  if (result.reply) {
+    console.log(`📤 [GATEWAY] Sending reply to ${lead.name} via [${replyJid}]`);
+    await sendWhatsAppMessage(lead.phone, result.reply, replyJid);
   }
 
-  // 6. Update Lead with new score and summary
-  await LeadModel.update(lead.id, {
-    ai_score: aiResult.ai_score,
-    ai_budget: aiResult.ai_budget,
-    ai_summary: aiResult.ai_summary,
-    status: 'nurturing'
-  });
-
-  // 7. Send suggested AI reply — ALWAYS reply to the actual inbound JID, not the stored phone
-  console.log(`📤 Sending AI reply to ${lead.name} via JID [${replyJid}]: "${aiResult.suggested_reply.substring(0, 60)}..."`);
-  await sendWhatsAppMessage(lead.phone, aiResult.suggested_reply, replyJid);
+  // ── Schedule nurture sequence for brand-new leads ─────────────────────
+  if (isNewLead) {
+    await scheduleNurtureSequence(lead.id);
+  }
 }
 
 export async function sendWhatsAppMessage(phone: string, text: string, overrideJid?: string): Promise<boolean> {
