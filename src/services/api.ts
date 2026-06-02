@@ -3,7 +3,6 @@
 
 export const API_BASE_URL = 
   (import.meta as any).env?.VITE_API_BASE_URL || 
-  "http://187.127.170.222:3000/api" || 
   "/api";
 
 // ── 1. High-Fidelity Type Definitions ──────────────────────────────────────
