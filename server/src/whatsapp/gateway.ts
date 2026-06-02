@@ -239,6 +239,11 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
 
   console.log(`✉️ Incoming WhatsApp message from ${senderName} (${jid}): "${textContent}"`);
 
+  // ── CRITICAL: Track the actual JID to reply to ────────────────────────────
+  // We ALWAYS reply to the exact JID the message came FROM (not the stored phone)
+  // This correctly handles LIDs, international numbers, and linked devices.
+  let replyJid = jid; // Default: reply to the same JID that sent the message
+
   // Search for the lead in database by phone matching
   let cleanPhone = cleanJidToPhone(jid);
   let lead = await LeadModel.findByPhone(cleanPhone);
@@ -249,12 +254,14 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
     const cachedContact = (sock as any).contacts?.[jid];
     if (cachedContact?.id && !cachedContact.id.endsWith('@lid')) {
       const resolvedPhone = cleanJidToPhone(cachedContact.id);
-      console.log(`ℹ️ [LID RESOLUTION] Successfully mapped LID ${jid} to phone JID ${cachedContact.id} via contact cache.`);
+      console.log(`ℹ️ [LID RESOLUTION] Successfully mapped LID ${jid} to real phone JID ${cachedContact.id} via contact cache.`);
       cleanPhone = resolvedPhone;
-      // Re-lookup by resolved phone
+      replyJid = cachedContact.id; // Use the real phone JID for reply
       lead = await LeadModel.findByPhone(cleanPhone);
     } else {
-      // Fallback name matching: Check if there is an existing lead with the exact same pushName to prevent duplication
+      console.log(`ℹ️ [LID] JID ${jid} is an LID. Will reply directly to the LID (Baileys will route it correctly).`);
+      // Do NOT change replyJid — Baileys can send to LID JIDs directly in newer versions
+      // Fallback name matching to avoid creating duplicate leads
       const existingLeads = await LeadModel.findAll();
       const duplicateLead = existingLeads.find(
         l => l.name.toLowerCase() === senderName.toLowerCase() && 
@@ -262,8 +269,12 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
         !l.phone.startsWith('+2224')
       );
       if (duplicateLead) {
-        console.log(`ℹ️ [LID MITIGATION] Found existing lead "${duplicateLead.name}" with real phone "${duplicateLead.phone}". Reusing lead ID ${duplicateLead.id} for LID ${jid} to prevent duplication!`);
+        console.log(`ℹ️ [LID MITIGATION] Found existing lead "${duplicateLead.name}" with real phone "${duplicateLead.phone}". Reusing lead ID ${duplicateLead.id}.`);
         lead = duplicateLead;
+        // Use the real phone JID stored in the lead for reply
+        const realPhoneDigits = duplicateLead.phone.replace(/\D/g, '');
+        replyJid = `${realPhoneDigits}@s.whatsapp.net`;
+        console.log(`📍 [LID MITIGATION] Reply will target real JID: ${replyJid}`);
       }
     }
   }
@@ -362,12 +373,12 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
     status: 'nurturing'
   });
 
-  // 7. Send suggested AI reply automatically to establish instant responsive feedback loop
-  console.log(`📤 Sending AI conversational follow-up to ${lead.name}: "${aiResult.suggested_reply}"`);
-  await sendWhatsAppMessage(lead.phone, aiResult.suggested_reply);
+  // 7. Send suggested AI reply — ALWAYS reply to the actual inbound JID, not the stored phone
+  console.log(`📤 Sending AI reply to ${lead.name} via JID [${replyJid}]: "${aiResult.suggested_reply.substring(0, 60)}..."`);
+  await sendWhatsAppMessage(lead.phone, aiResult.suggested_reply, replyJid);
 }
 
-export async function sendWhatsAppMessage(phone: string, text: string): Promise<boolean> {
+export async function sendWhatsAppMessage(phone: string, text: string, overrideJid?: string): Promise<boolean> {
   let lead = await LeadModel.findByPhone(phone);
 
   // Auto-create lead for outbound messages if none exists
@@ -427,13 +438,15 @@ export async function sendWhatsAppMessage(phone: string, text: string): Promise<
   }
 
   try {
-    const formatted = formatJid(phone);
+    // Use the override JID if provided (for LID-based replies), otherwise format from phone
+    const targetJid = overrideJid || formatJid(phone);
+    console.log(`📡 [SEND] Targeting JID: ${targetJid}`);
     
     // Smart throttling: simulate human typing offset delay (1.5s to 3s)
     const delay = Math.floor(Math.random() * 1500) + 1500;
     await new Promise(resolve => setTimeout(resolve, delay));
 
-    const sentMsg = await sock.sendMessage(formatted, { text });
+    const sentMsg = await sock.sendMessage(targetJid, { text });
     const msgId = sentMsg?.key?.id || `out-${Date.now()}`;
 
     await MessageModel.create({
