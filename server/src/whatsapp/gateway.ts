@@ -181,8 +181,14 @@ export async function initWhatsApp() {
     });
 
     sock.ev.on('messages.upsert', async (m) => {
+      console.log(`📡 [RAW MESSAGES.UPSERT] Received event type: "${m.type}". Total messages: ${m.messages?.length}`);
       const msg = m.messages[0];
       if (!msg) return;
+      
+      console.log(`📡 [RAW MESSAGE KEY] ID: "${msg.key?.id}", JID: "${msg.key?.remoteJid}", fromMe: ${msg.key?.fromMe}`);
+      if (msg.message) {
+        console.log(`📡 [RAW MESSAGE BODY] Keys: ${Object.keys(msg.message).join(', ')}`);
+      }
       
       if (!msg.key.fromMe && m.type === 'notify') {
         await handleInboundMessage(msg);
