@@ -362,8 +362,15 @@ export const LeadsController = {
           [id]
         );
 
+        // Create a handoff alert so the CRM shows it
+        const alertId = `alert-${Date.now()}`;
+        await db.run(
+          "INSERT OR IGNORE INTO handoff_alerts (id, lead_id, reason, status) VALUES (?, ?, ?, 'pending')",
+          [alertId, id, 'Manual operator message sent — AI auto-paused']
+        );
+
         await logAuditAction('WHATSAPP_SEND', `Sent manual WhatsApp response to ${lead.name}`);
-        await logAuditAction('HUMAN_TAKEOVER', `AI automatically paused (ai_enabled=0) and follow-up sequences paused for ${lead.name} due to manual human message intervention.`);
+        await logAuditAction('HUMAN_TAKEOVER', `AI paused for ${lead.name} after manual message.`);
         
         return res.json({ success: true, message: 'WhatsApp message sent successfully' });
       } else {
@@ -373,5 +380,111 @@ export const LeadsController = {
       console.error('Manual message error:', error);
       return res.status(500).json({ error: 'Internal server error dispatching message' });
     }
-  }
+  },
+
+  // ── GET /api/leads/handoffs — List all handoff alerts (pending + recent resolved)
+  async listHandoffs(req: Request, res: Response) {
+    try {
+      const db = getDb();
+      const rows = await db.all(`
+        SELECT 
+          h.id, h.lead_id, h.reason, h.status, h.created_at,
+          l.name AS lead_name, l.phone AS lead_phone,
+          l.ai_enabled, l.ai_score, l.company
+        FROM handoff_alerts h
+        LEFT JOIN leads l ON l.id = h.lead_id
+        ORDER BY h.created_at DESC
+        LIMIT 50
+      `);
+      return res.json({ success: true, data: rows });
+    } catch (err: any) {
+      console.error('listHandoffs error:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
+  // ── POST /api/leads/:id/resolve-handoff — Resolve alert + re-enable AI
+  async resolveHandoff(req: Request, res: Response) {
+    const { id } = req.params;
+    try {
+      const db = getDb();
+      const lead = await db.get('SELECT id, name FROM leads WHERE id = ?', [id]);
+      if (!lead) return res.status(404).json({ error: 'Lead not found' });
+
+      // Resolve all pending handoff alerts for this lead
+      await db.run(
+        "UPDATE handoff_alerts SET status = 'resolved' WHERE lead_id = ? AND status = 'pending'",
+        [id]
+      );
+
+      // Re-enable AI auto-reply
+      await db.run(
+        'UPDATE leads SET ai_enabled = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [id]
+      );
+
+      // Resume any paused follow-up sequences
+      await db.run(
+        "UPDATE followup_sequences SET status = 'active' WHERE lead_id = ? AND status = 'paused'",
+        [id]
+      );
+
+      await logAuditAction('HANDOFF_RESOLVED',
+        `Handoff resolved for ${lead.name} (${id}). AI re-enabled by operator.`
+      );
+
+      console.log(`✅ [HANDOFF] AI re-enabled for lead ${lead.name} (${id})`);
+      return res.json({
+        success: true,
+        message: `AI re-enabled for ${lead.name}. Conversation will resume automatically.`,
+      });
+    } catch (err: any) {
+      console.error('resolveHandoff error:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
+  // ── PATCH /api/leads/:id/toggle-ai — Manually enable or disable AI for a lead
+  async toggleAI(req: Request, res: Response) {
+    const { id } = req.params;
+    const { ai_enabled } = req.body;
+
+    if (ai_enabled === undefined) {
+      return res.status(400).json({ error: 'ai_enabled (true/false) is required in request body' });
+    }
+
+    try {
+      const db = getDb();
+      const lead = await db.get('SELECT id, name FROM leads WHERE id = ?', [id]);
+      if (!lead) return res.status(404).json({ error: 'Lead not found' });
+
+      const value = ai_enabled ? 1 : 0;
+      await db.run(
+        'UPDATE leads SET ai_enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [value, id]
+      );
+
+      if (ai_enabled) {
+        // Also resolve any pending handoffs when manually enabling
+        await db.run(
+          "UPDATE handoff_alerts SET status = 'resolved' WHERE lead_id = ? AND status = 'pending'",
+          [id]
+        );
+      }
+
+      await logAuditAction('AI_TOGGLE',
+        `AI ${ai_enabled ? 'enabled' : 'disabled'} manually for ${lead.name} (${id})`
+      );
+
+      return res.json({
+        success: true,
+        ai_enabled: value,
+        message: `AI ${ai_enabled ? 'enabled' : 'disabled'} for ${lead.name}`,
+      });
+    } catch (err: any) {
+      console.error('toggleAI error:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  },
 };
+

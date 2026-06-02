@@ -11,8 +11,17 @@ router.post('/', leadRateLimiter, LeadsController.captureLead);
 // PROTECTED: List, details, update, backup, and manual messages
 router.get('/', authenticateJWT, LeadsController.listLeads);
 router.post('/backup', authenticateJWT, LeadsController.createBackup);
+
+// ── Handoff management (must come BEFORE /:id to avoid param conflict)
+router.get('/handoffs', authenticateJWT, LeadsController.listHandoffs);
+
 router.get('/:id', authenticateJWT, LeadsController.getLeadDetails);
 router.patch('/:id', authenticateJWT, LeadsController.updateLead);
 router.post('/:id/message', authenticateJWT, LeadsController.sendManualMessage);
 
+// ── Handoff resolution + AI toggle
+router.post('/:id/resolve-handoff', authenticateJWT, LeadsController.resolveHandoff);
+router.patch('/:id/toggle-ai', authenticateJWT, LeadsController.toggleAI);
+
 export default router;
+

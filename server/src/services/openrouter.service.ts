@@ -80,26 +80,63 @@ function getCacheKey(ctx: AIContext): string {
   return `${ctx.leadId}:${lastMsg.substring(0, 80)}`;
 }
 
-// ─── Human handoff detection keywords ────────────────────────────────────────
+// ─── Human handoff detection ──────────────────────────────────────────────────
+// RULE: Only trigger handoff for genuine distress/escalation signals.
+// NEVER trigger for normal service inquiries or valid Trinetra service names.
 
+// Patterns that ALWAYS suppress handoff regardless of other keywords:
+// These are Trinetra's own services — no service inquiry can be a handoff trigger.
+const SAFE_SERVICE_PATTERNS = [
+  /website/i, /web site/i, /landing page/i, /portfolio/i,
+  /whatsapp automation/i, /whatsapp/i,
+  /\bcrm\b/i, /lead management/i,
+  /chatbot/i, /chat bot/i, /ai bot/i,
+  /digital marketing/i, /social media/i, /marketing/i,
+  /follow.?up/i, /automation/i,
+  /ai system/i, /business automation/i,
+];
+
+// Patterns that trigger human handoff — genuine escalation only
 const HANDOFF_PATTERNS = [
-  /\binsaan\b/i, /\bbanda\b/i, /\bhuman\b/i, /\bmanager\b/i,
-  /\bowner\b/i,  /\breal person\b/i, /\bactual person\b/i,
-  /\bgusse\b/i,  /\bangry\b/i, /\bfed up\b/i, /\bhate\b/i,
-  /\brefund\b/i, /\bcancel\b/i, /\bscam\b/i, /\bfraud\b/i,
-  /\bcustom price\b/i, /\bquotation\b/i, /\bquote\b/i,
-  /\btalklive\b/i, /\btalk to someone\b/i, /\bspeak to\b/i,
-  /paisa wapas/i, /\bpaisa wapis\b/i, /\bpaise wapas\b/i,
+  /\binsaan chahiye\b/i,         // "I want a human" in Hindi (specific phrase)
+  /\breal person\b/i,
+  /\bactual person\b/i,
+  /\btalk to someone\b/i,
+  /\bspeak to (?:a )?human\b/i,
+  /\bconnect me to\b/i,
+  /\bhuman agent\b/i,
+  /\bcustomer care\b/i,
+  /\bgusse\b.*\bhoon\b/i,        // "I am angry" — requires both words
+  /\bfed up\b/i,
+  /\bpaisa wapas\b/i,
+  /\bpaise wapas\b/i,
+  /\bpaisa wapis\b/i,
+  /\brefund\b/i,
+  /\bscam\b/i, /\bfraud\b/i,
+  /\bfake\b/i,
+  /\bcheat\b/i, /\bcheating\b/i,
+  /final (?:price|pricing|quote)/i,    // "final quote/price" — explicit closing request
+  /\bsign contract\b/i,
+  /\bpayment terms\b/i,
 ];
 
 function detectHandoff(text: string): { trigger: boolean; reason: string } {
+  // SAFE GUARD: If message is about a known Trinetra service, never handoff
+  for (const safe of SAFE_SERVICE_PATTERNS) {
+    if (safe.test(text)) {
+      return { trigger: false, reason: '' };
+    }
+  }
+
+  // Check actual escalation patterns
   for (const pattern of HANDOFF_PATTERNS) {
     if (pattern.test(text)) {
-      return { trigger: true, reason: `Keyword match: ${pattern.source}` };
+      return { trigger: true, reason: `Escalation keyword: "${pattern.source}"` };
     }
   }
   return { trigger: false, reason: '' };
 }
+
 
 // ─── Token cost estimator ─────────────────────────────────────────────────────
 
