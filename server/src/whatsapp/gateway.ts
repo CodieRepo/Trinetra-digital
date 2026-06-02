@@ -335,7 +335,18 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
 
   // 5. Trigger AI Re-qualification
   console.log(`🤖 Re-qualifying lead: ${lead.name} via Gemini with new chat context...`);
-  const aiResult = await qualifyLead(lead.name, lead.service || 'AI Automation', lead.source, chatHistory);
+  let aiResult;
+  try {
+    aiResult = await qualifyLead(lead.name, lead.service || 'AI Automation', lead.source, chatHistory);
+  } catch (err: any) {
+    console.error(`❌ [AI FAILURE] Failed to qualify lead ${lead.name}:`, err);
+    aiResult = {
+      ai_score: lead.ai_score || 50,
+      ai_budget: lead.ai_budget || false,
+      ai_summary: "Intake evaluation in progress. Awaiting further customer responses.",
+      suggested_reply: `Thank you for contacting Trinetra Digital Solution.\n\nWe've received your inquiry and our team will review it shortly.\n\nPlease share:\n• Business Name\n• Industry\n• Approximate monthly leads\n\nWe will get back to you as soon as possible.`
+    };
+  }
 
   // 6. Update Lead with new score and summary
   await LeadModel.update(lead.id, {
@@ -416,10 +427,11 @@ export async function sendWhatsAppMessage(phone: string, text: string): Promise<
     const delay = Math.floor(Math.random() * 1500) + 1500;
     await new Promise(resolve => setTimeout(resolve, delay));
 
-    await sock.sendMessage(formatted, { text });
+    const sentMsg = await sock.sendMessage(formatted, { text });
+    const msgId = sentMsg?.key?.id || `out-${Date.now()}`;
 
     await MessageModel.create({
-      id: `out-${Date.now()}`,
+      id: msgId,
       lead_id: lead.id,
       direction: 'outbound',
       body: text,

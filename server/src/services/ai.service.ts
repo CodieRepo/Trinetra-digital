@@ -13,12 +13,9 @@ interface AIQualificationResult {
   suggested_reply: string;
 }
 
-// Resilient Model Priority Queue
+// Resilient Model Priority Queue - Simplified for Gemini 2.5 Flash only
 const MODELS_QUEUE = [
-  'google/gemini-2.5-flash',
-  'qwen/qwen3-32b',
-  'deepseek/deepseek-chat-v3',
-  'meta-llama/llama-4-maverick'
+  'google/gemini-2.5-flash'
 ];
 
 // Circuit Breaker State Memory
@@ -247,14 +244,14 @@ JSON Schema:
   }
 
   // ── 3. Emergency Response Mode (All Models Failed) ──────────────────────
-  console.error('🚨 [EMERGENCY RESPONSE MODE] All OpenRouter AI models failed or were bypassed. Activating fallback template.');
+  console.error('🚨 [EMERGENCY RESPONSE MODE] Gemini Flash failed. Activating fallback template.');
   
-  await logAuditAction('AI_EMERGENCY', `Critical failover. All models failed. Emergency response template active.`);
+  await logAuditAction('AI_EMERGENCY', `Critical failover. Gemini failed. Emergency response template active.`);
 
   return {
     ai_score: 50,
     ai_budget: false,
-    ai_summary: "All OpenRouter AI models returned errors or timeouts. Emergency Response Mode activated automatically.",
+    ai_summary: "Intake evaluation in progress. Awaiting further customer responses.",
     suggested_reply: `Thank you for contacting Trinetra Digital Solution.\n\nWe've received your inquiry and our team will review it shortly.\n\nPlease share:\n• Business Name\n• Industry\n• Approximate monthly leads\n\nWe will get back to you as soon as possible.`
   };
 }

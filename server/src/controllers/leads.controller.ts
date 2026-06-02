@@ -77,7 +77,18 @@ export const LeadsController = {
           const aiStart = performance.now();
           console.log(`🤖 Triggering Gemini AI qualification loop for lead: ${name}...`);
           
-          const aiResult = await qualifyLead(name, service || 'AI Automation', source || 'website', []);
+          let aiResult;
+          try {
+            aiResult = await qualifyLead(name, service || 'AI Automation', source || 'website', []);
+          } catch (err) {
+            console.error(`❌ AI qualification error for lead ${name}:`, err);
+            aiResult = {
+              ai_score: 50,
+              ai_budget: false,
+              ai_summary: "Intake evaluation in progress. Awaiting further customer responses.",
+              suggested_reply: `Thank you for contacting Trinetra Digital Solution.\n\nWe've received your inquiry and our team will review it shortly.\n\nPlease share:\n• Business Name\n• Industry\n• Approximate monthly leads\n\nWe will get back to you as soon as possible.`
+            };
+          }
           const aiDuration = (performance.now() - aiStart).toFixed(2);
           console.log(`🤖 AI Qualification completed in: ${aiDuration}ms. Score: ${aiResult.ai_score}`);
 
