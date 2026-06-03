@@ -14,6 +14,22 @@ export interface LeadDTO {
   ai_summary: string | null;
   notes: string | null;
   ai_enabled?: number;
+  city?: string | null;
+  business_type?: string | null;
+  business_name?: string | null;
+  monthly_lead_volume?: string | null;
+  team_size?: string | null;
+  has_website?: number;
+  has_crm?: number;
+  current_problems?: string | null;
+  budget_range?: string | null;
+  urgency_level?: string | null;
+  is_decision_maker?: number;
+  lead_tags?: string;
+  recommended_package?: string | null;
+  lead_stage?: string;
+  opt_out?: number;
+  appointment_requested?: number;
   created_at?: string;
   updated_at?: string;
 }

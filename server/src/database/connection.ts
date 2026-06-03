@@ -166,22 +166,64 @@ export async function initDb(): Promise<Database<sqlite3.Database, sqlite3.State
       FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE
     );
 
+    -- Appointment booking requests from WhatsApp conversations
+    CREATE TABLE IF NOT EXISTS appointments (
+      id TEXT PRIMARY KEY,
+      lead_id TEXT NOT NULL,
+      requested_at TEXT DEFAULT (CURRENT_TIMESTAMP),
+      preferred_date TEXT,
+      preferred_time TEXT,
+      call_type TEXT DEFAULT 'call', -- 'call', 'video', 'in_person'
+      status TEXT DEFAULT 'pending', -- 'pending', 'confirmed', 'completed', 'cancelled'
+      notes TEXT,
+      admin_notes TEXT,
+      created_at TEXT DEFAULT (CURRENT_TIMESTAMP),
+      FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE
+    );
+
+    -- Lead tag history log (one row per tag per lead)
+    CREATE TABLE IF NOT EXISTS lead_tags_log (
+      id TEXT PRIMARY KEY,
+      lead_id TEXT NOT NULL,
+      tag TEXT NOT NULL,
+      added_at TEXT DEFAULT (CURRENT_TIMESTAMP),
+      FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_token_usage_date ON token_usage(timestamp);
     CREATE INDEX IF NOT EXISTS idx_handoff_lead ON handoff_alerts(lead_id, status);
+    CREATE INDEX IF NOT EXISTS idx_appointments_lead ON appointments(lead_id, status);
+    CREATE INDEX IF NOT EXISTS idx_lead_tags_lead ON lead_tags_log(lead_id);
   `);
 
-  try {
-    await db.exec('ALTER TABLE leads ADD COLUMN ai_enabled INTEGER DEFAULT 1;');
-    console.log('⚡ Schema Migrated: Added ai_enabled column to leads table');
-  } catch (e) {
-    // Ignore: Column already exists
-  }
+  // ─── Safe incremental schema migrations (additive only — never destructive) ──
+  const migrations: Array<{ sql: string; label: string }> = [
+    { sql: 'ALTER TABLE leads ADD COLUMN ai_enabled INTEGER DEFAULT 1;',            label: 'ai_enabled' },
+    { sql: 'ALTER TABLE leads ADD COLUMN city TEXT;',                               label: 'city' },
+    { sql: 'ALTER TABLE leads ADD COLUMN business_type TEXT;',                      label: 'business_type' },
+    { sql: 'ALTER TABLE leads ADD COLUMN business_name TEXT;',                      label: 'business_name' },
+    { sql: 'ALTER TABLE leads ADD COLUMN monthly_lead_volume TEXT;',                label: 'monthly_lead_volume' },
+    { sql: 'ALTER TABLE leads ADD COLUMN team_size TEXT;',                          label: 'team_size' },
+    { sql: 'ALTER TABLE leads ADD COLUMN has_website INTEGER DEFAULT 0;',           label: 'has_website' },
+    { sql: 'ALTER TABLE leads ADD COLUMN has_crm INTEGER DEFAULT 0;',               label: 'has_crm' },
+    { sql: 'ALTER TABLE leads ADD COLUMN current_problems TEXT;',                   label: 'current_problems' },
+    { sql: 'ALTER TABLE leads ADD COLUMN budget_range TEXT;',                       label: 'budget_range' },
+    { sql: 'ALTER TABLE leads ADD COLUMN urgency_level TEXT;',                      label: 'urgency_level' },
+    { sql: 'ALTER TABLE leads ADD COLUMN is_decision_maker INTEGER DEFAULT 0;',     label: 'is_decision_maker' },
+    { sql: 'ALTER TABLE leads ADD COLUMN lead_tags TEXT DEFAULT "[]";',             label: 'lead_tags' },
+    { sql: 'ALTER TABLE leads ADD COLUMN recommended_package TEXT;',                label: 'recommended_package' },
+    { sql: 'ALTER TABLE leads ADD COLUMN lead_stage TEXT DEFAULT "greeting";',      label: 'lead_stage' },
+    { sql: 'ALTER TABLE leads ADD COLUMN opt_out INTEGER DEFAULT 0;',               label: 'opt_out' },
+    { sql: 'ALTER TABLE leads ADD COLUMN appointment_requested INTEGER DEFAULT 0;', label: 'appointment_requested' },
+  ];
 
-  try {
-    await db.exec('ALTER TABLE leads ADD COLUMN city TEXT;');
-    console.log('⚡ Schema Migrated: Added city column to leads table');
-  } catch (e) {
-    // Ignore: Column already exists
+  for (const migration of migrations) {
+    try {
+      await db.exec(migration.sql);
+      console.log(`⚡ Schema Migrated: Added column '${migration.label}' to leads table`);
+    } catch (e) {
+      // Column already exists — safe to ignore
+    }
   }
 
   // Create default admin credentials if table is fresh

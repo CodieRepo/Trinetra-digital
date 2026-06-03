@@ -1,10 +1,108 @@
 import { getDb, logAuditAction } from '../database/connection';
 import { sendWhatsAppMessage } from '../whatsapp/gateway';
 
-export function startCronService() {
-  console.log('⏰ Starting lightweight background scheduler (Cron Service)...');
+// ─── Production timing constants (milliseconds) ───────────────────────────────
+const STEP_DELAYS_MS = {
+  1: 5 * 60 * 1000,              // Step 1: 5 minutes after opt-in (warm welcome)
+  2: 2 * 24 * 60 * 60 * 1000,   // Step 2: Day 3 (case study / benefits)
+  3: 4 * 24 * 60 * 60 * 1000,   // Step 3: Day 7 (ROI / service spotlight)
+  4: 7 * 24 * 60 * 60 * 1000,   // Step 4: Day 14 (final consultation offer)
+};
 
-  // Run scheduler loop every 30 seconds
+// ─── Trinetra-branded follow-up message templates ─────────────────────────────
+function getNurtureMessage(step: number, name: string, service?: string): string {
+  const firstName = name.split(' ')[0];
+  const serviceRef = service && service !== 'WhatsApp Automation Intake' 
+    ? service 
+    : 'business automation';
+
+  if (step === 1) {
+    return `Namaste ${firstName} ji! 🙏
+
+*Trinetra Digital Solution* mein aapka swagat hai!
+
+Hamari team businesses ke liye build karti hai:
+✅ WhatsApp Automation & AI Chatbots
+✅ Websites & Landing Pages
+✅ CRM & Lead Management Systems
+✅ Digital Marketing & SEO
+
+Kya aap apne business ke liye koi specific solution dhundh rahe hain?
+
+Main aapki requirement samajhkar sahi package suggest kar sakta hoon 😊
+
+📞 +91 9334757759
+🌐 trinetradigitalsolution.com`;
+  }
+
+  if (step === 2) {
+    return `Hi ${firstName}! 📊
+
+Maine notice kiya aapne recently hamare ${serviceRef} ke baare mein inquiry ki thi.
+
+Ek interesting fact share karna chahta hoon:
+
+*WhatsApp automation lagane ke baad hamare clients typically:*
+✅ 60-70% manual follow-up time bachate hain
+✅ Leads miss hone ki probability kaafi kam ho jaati hai
+✅ Response time 24 ghante se 2 minute ho jaata hai
+
+Aapka business bhi yeh achieve kar sakta hai.
+
+Kya main 10 minute ka quick call arrange kar sakta hoon aapke saath? 🤝
+
+*Final pricing scope ke hisab se vary kar sakti hai.*
+
+📞 +91 9334757759`;
+  }
+
+  if (step === 3) {
+    return `Namaste ${firstName} ji! 💡
+
+Ek important question \u2014 kya aap jaanna chahenge ki hamare system aapke business mein practically kaise kaam kar sakte hain?
+
+Hum offer karte hain:
+🔹 *Website Development* \u2014 \u20b97,999 se start
+🔹 *WhatsApp Automation* \u2014 \u20b97,999 setup + \u20b91,499/month
+🔹 *AI Chatbot + CRM* \u2014 \u20b914,999 se start
+🔹 *Full AI Sales System* \u2014 \u20b929,999 se start
+
+*Final pricing aapki requirement aur scope ke hisab se vary kar sakti hai.*
+
+Kya aap ek free 15-minute consultation book karna chahenge?
+
+🔗 https://calendly.com/trinetra-demo
+📞 +91 9334757759`;
+  }
+
+  if (step === 4) {
+    return `Hi ${firstName}! 🎯
+
+Yeh haara final follow-up message hai taaki aapko unnecessarily disturb na karein.
+
+Agar aap kabhi bhi apne business ke liye:
+\u2022 Website banana chahein
+\u2022 WhatsApp automation setup karna chahein
+\u2022 Leads ko better manage karna chahein
+\u2022 CRM ya AI system chahein
+
+Toh Trinetra Digital Solution hamesha available hai.
+
+📞 +91 9334757759
+📧 info@trinetradigitalsolution.com
+🌐 trinetradigitalsolution.com
+
+Aapke business ke liye shubhkamnayein! 🙏`;
+  }
+
+  return '';
+}
+
+// ─── Main cron service ────────────────────────────────────────────────────────
+
+export function startCronService() {
+  console.log('⏰ Starting production follow-up scheduler (Cron Service)...');
+
   setInterval(async () => {
     try {
       const db = getDb();
@@ -12,102 +110,124 @@ export function startCronService() {
 
       // Find all active follow-up sequences past their execution deadline
       const activeSequences = await db.all(
-        `SELECT f.*, l.phone, l.name, l.ai_enabled 
-         FROM followup_sequences f 
+        `SELECT f.*, l.phone, l.name, l.ai_enabled, l.opt_out, l.service
+         FROM followup_sequences f
          JOIN leads l ON f.lead_id = l.id
          WHERE f.status = 'active' AND f.next_run_at <= ?`,
         [now]
       );
 
       for (const seq of activeSequences) {
-        // Human Takeover Handoff Safety: If human has taken over, pause automated nurture
-        if (seq.ai_enabled === 0) {
-          console.log(`ℹ️ [CRON HANDOFF SAFETY] Skipping and pausing follow-up sequence for ${seq.name} due to active human takeover (ai_enabled=0)`);
-          await db.run("UPDATE followup_sequences SET status = 'paused' WHERE id = ?", [seq.id]);
-          await logAuditAction('CRON_PAUSE', `Paused automated nurture sequence for ${seq.name} due to active human takeover.`);
+
+        // ── Compliance: Skip opted-out leads ────────────────────────────────
+        if (seq.opt_out === 1) {
+          console.log(`🚫 [CRON OPT-OUT] Skipping ${seq.name} — opted out. Completing sequence.`);
+          await db.run("UPDATE followup_sequences SET status = 'cancelled' WHERE id = ?", [seq.id]);
+          await logAuditAction('CRON_OPT_OUT_SKIP', `Cancelled sequence for opted-out lead: ${seq.name}`);
           continue;
         }
 
-        console.log(`⏰ Executing follow-up step ${seq.current_step} for ${seq.name} (${seq.phone})`);
-        
-        let message = '';
-        let nextStep = seq.current_step + 1;
-        let nextRunAt: string | null = null;
-        let nextStatus = 'active';
-
-        // 4-step nurture sequence (including initial instant touchpoint)
-        if (seq.sequence_name === 'default_nurture') {
-          if (seq.current_step === 1) {
-            message = `Hi ${seq.name}! 🚀 Just checking in to see if you had a chance to look at our custom AI Automation workflows. What did you think? Let me know if you'd like to check a live demo!`;
-            // Step 2 scheduled for 2 minutes from now in accelerated test mode
-            const nextDate = new Date();
-            nextDate.setMinutes(nextDate.getMinutes() + 2);
-            nextRunAt = nextDate.toISOString();
-          } else if (seq.current_step === 2) {
-            message = `Hey ${seq.name}, hope your week is going great! I wanted to share this short case study of how we automated lead capture and saved 12 hours/week for a similar business: https://trinetradigitalsolution.com/blog. Would you be open to a quick call tomorrow?`;
-            // Step 3 scheduled for 2 minutes from now in accelerated test mode
-            const nextDate = new Date();
-            nextDate.setMinutes(nextDate.getMinutes() + 2);
-            nextRunAt = nextDate.toISOString();
-          } else if (seq.current_step === 3) {
-            message = `Hi ${seq.name}, since we haven't connected, I'll close this thread for now. If you ever want to automate your manual lead bottlenecks or integrate WhatsApp with a custom CRM, feel free to book a slot here: https://calendly.com/trinetra-demo. Wish you the best!`;
-            nextStatus = 'completed'; // Sequence ends
-          }
+        // ── Compliance: Skip if human has taken over ────────────────────────
+        if (seq.ai_enabled === 0) {
+          console.log(`ℹ️ [CRON HANDOFF] Skipping ${seq.name} — human takeover active. Pausing sequence.`);
+          await db.run("UPDATE followup_sequences SET status = 'paused' WHERE id = ?", [seq.id]);
+          await logAuditAction('CRON_PAUSE', `Paused sequence for ${seq.name} — human handoff active.`);
+          continue;
         }
 
-        if (message) {
-          // Send message
-          const sent = await sendWhatsAppMessage(seq.phone, message);
-          
-          if (sent) {
-            // Update sequence status
-            if (nextStatus === 'completed') {
-              await db.run(
-                "UPDATE followup_sequences SET status = 'completed' WHERE id = ?",
-                [seq.id]
-              );
-              await logAuditAction('CRON_COMPLETE', `Follow-up nurture sequence successfully completed for ${seq.name}`);
-            } else {
-              await db.run(
-                `UPDATE followup_sequences 
-                 SET current_step = ?, next_run_at = ? 
-                 WHERE id = ?`,
-                [nextStep, nextRunAt, seq.id]
-              );
-              await logAuditAction('CRON_STEP_DISPATCH', `Dispatched follow-up Step ${seq.current_step} message to ${seq.name}. Scheduled next step.`);
-            }
+        console.log(`⏰ [CRON] Executing follow-up step ${seq.current_step} for ${seq.name} (${seq.phone})`);
+
+        const message = getNurtureMessage(seq.current_step, seq.name, seq.service);
+        const isLastStep = seq.current_step >= 4;
+
+        if (!message) {
+          // Unexpected step number — complete the sequence
+          await db.run("UPDATE followup_sequences SET status = 'completed' WHERE id = ?", [seq.id]);
+          continue;
+        }
+
+        // ── Send message ────────────────────────────────────────────────────
+        const sent = await sendWhatsAppMessage(seq.phone, message);
+
+        if (sent) {
+          if (isLastStep) {
+            await db.run("UPDATE followup_sequences SET status = 'completed' WHERE id = ?", [seq.id]);
+            await logAuditAction('CRON_COMPLETE', `Follow-up sequence completed for ${seq.name} after Step ${seq.current_step}.`);
+          } else {
+            const nextStep = seq.current_step + 1;
+            const delayMs = STEP_DELAYS_MS[nextStep as keyof typeof STEP_DELAYS_MS] || (7 * 24 * 60 * 60 * 1000);
+            const nextRunAt = new Date(Date.now() + delayMs).toISOString();
+            await db.run(
+              `UPDATE followup_sequences SET current_step = ?, next_run_at = ? WHERE id = ?`,
+              [nextStep, nextRunAt, seq.id]
+            );
+            await logAuditAction('CRON_STEP', `Step ${seq.current_step} sent to ${seq.name}. Next step ${nextStep} at ${nextRunAt}.`);
           }
+        } else {
+          // Failed to send — retry next cycle (do not advance step)
+          console.warn(`⚠️ [CRON] Message send failed for ${seq.name}. Will retry next cycle.`);
+          await logAuditAction('CRON_SEND_FAIL', `Failed to send Step ${seq.current_step} to ${seq.name} (${seq.phone}).`);
         }
       }
 
     } catch (error) {
-      console.error('❌ Scheduler error in cron loop:', error);
+      console.error('❌ [CRON] Scheduler loop error:', error);
     }
-  }, 30000);
+  }, 30_000); // Check every 30 seconds
 }
 
-// Function to schedule a new default nurture sequence for a lead
+// ─── Schedule new nurture sequence for a lead ─────────────────────────────────
+
 export async function scheduleNurtureSequence(leadId: string) {
   try {
     const db = getDb();
-    
-    // Check if a sequence already exists
+
+    // Check if a sequence already exists (avoid duplicates)
     const exists = await db.get('SELECT id FROM followup_sequences WHERE lead_id = ?', [leadId]);
     if (exists) return;
 
     const seqId = 'seq-' + Date.now();
-    // Schedule Step 1 for 2 minutes from now (for active demo visualization!)
-    const nextDate = new Date();
-    nextDate.setMinutes(nextDate.getMinutes() + 2);
-    const nextRunAt = nextDate.toISOString();
+    // Step 1 scheduled 5 minutes from now (warm welcome timing)
+    const nextRunAt = new Date(Date.now() + STEP_DELAYS_MS[1]).toISOString();
 
     await db.run(
       `INSERT INTO followup_sequences (id, lead_id, sequence_name, current_step, status, next_run_at)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [seqId, leadId, 'default_nurture', 1, 'active', nextRunAt]
     );
-    console.log(`⏰ Scheduled automated follow-up sequence 'default_nurture' for Lead ID ${leadId} starting at ${nextRunAt}`);
+
+    console.log(`⏰ [CRON] Nurture sequence scheduled for Lead ID ${leadId}. Step 1 at ${nextRunAt}`);
   } catch (error) {
-    console.error('❌ Failed to schedule follow-up sequence:', error);
+    console.error('❌ [CRON] Failed to schedule nurture sequence:', error);
+  }
+}
+
+// ─── Pause sequence for a lead (human handoff) ────────────────────────────────
+
+export async function pauseNurtureSequence(leadId: string) {
+  try {
+    const db = getDb();
+    await db.run(
+      "UPDATE followup_sequences SET status = 'paused' WHERE lead_id = ? AND status = 'active'",
+      [leadId]
+    );
+    console.log(`⏸️ [CRON] Paused nurture sequence for Lead ID ${leadId}`);
+  } catch (error) {
+    console.error('❌ [CRON] Failed to pause nurture sequence:', error);
+  }
+}
+
+// ─── Resume sequence for a lead (AI re-enabled after handoff) ─────────────────
+
+export async function resumeNurtureSequence(leadId: string) {
+  try {
+    const db = getDb();
+    await db.run(
+      "UPDATE followup_sequences SET status = 'active' WHERE lead_id = ? AND status = 'paused'",
+      [leadId]
+    );
+    console.log(`▶️ [CRON] Resumed nurture sequence for Lead ID ${leadId}`);
+  } catch (error) {
+    console.error('❌ [CRON] Failed to resume nurture sequence:', error);
   }
 }

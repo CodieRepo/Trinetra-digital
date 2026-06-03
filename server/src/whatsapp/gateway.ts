@@ -20,6 +20,148 @@ import { LeadModel } from '../models/lead.model';
 import { MessageModel, ConversationModel } from '../models/message.model';
 import { scheduleNurtureSequence } from '../services/cron.service';
 
+// ─── Opt-out detection — Meta compliance requirement ───────────────────────────────────────────
+const OPT_OUT_PATTERN = /^(STOP|CANCEL|UNSUBSCRIBE|BAND KARO|NAHI CHAHIYE|NAI CHAHIYE|ROKEIN|BAND KRO|OPT.?OUT)$/i;
+
+// ─── Immediate human-request patterns (no AI round-trip needed) ────────────────────
+const HUMAN_REQUEST_PATTERN = /\b(insaan chahiye|real person|actual person|talk to (a |an )?human|talk to (a |an )?person|speak to (a |an )?(human|person|agent|someone)|connect me to|human agent|team se baat|baat karni hai|agent chahiye|koi insaan|manager se baat|owner se baat|sales team|expert se baat|consultant chahiye|call me|call karo|call back|call kar|mujhe call)\b/i;
+
+// ─── WhatsApp numbered menu responses ───────────────────────────────────────────────────
+const MENU_RESPONSE: Record<string, string> = {
+  MAIN: `🏢 *TRINETRA DIGITAL SOLUTION*
+Your Business Automation & Digital Growth Partner
+
+────────────────────────
+Reply karo number se:
+
+1️⃣ Website Development
+2️⃣ WhatsApp Automation
+3️⃣ AI Chatbot & CRM System
+4️⃣ Digital Marketing & SEO
+5️⃣ Packages & Pricing
+6️⃣ Free Consultation Book Karein
+7️⃣ Team Se Baat Karein
+────────────────────────
+🌐 trinetradigitalsolution.com
+📞 +91 9334757759`,
+
+  '1': `💻 *WEBSITE DEVELOPMENT*
+
+Hum build karte hain:
+• Business Websites (₹7,999 – ₹35,000)
+• Premium Websites (₹35,000 – ₹75,000+)
+• E-Commerce Stores (₹25,000 – ₹1,50,000+)
+• Landing Pages & Lead Funnels
+• Mobile Responsive Design
+• SEO-Ready Structure
+
+*Final pricing scope ke hisab se vary kar sakti hai.*
+
+Aap kis type ka business run karte hain? Main aapke liye best option suggest karunga 😊`,
+
+  '2': `📱 *WHATSAPP AUTOMATION*
+
+Hum automate karte hain:
+• Auto-replies & Welcome Messages
+• Lead Capture & Contact Management
+• Follow-up Automation (Day 1/3/7/14)
+• Missed Lead Recovery
+• CRM Integration
+• Broadcast Management
+
+Packages:
+🟢 Launch: ₹7,999 setup + ₹1,499/month
+🟡 Growth: ₹14,999 setup + ₹3,999/month
+🔴 AI Sales: ₹29,999+ setup + ₹7,999+/month
+
+*Final pricing scope ke hisab se vary kar sakti hai.*
+
+Abhi aap WhatsApp par daily kitni inquiries handle karte hain?`,
+
+  '3': `🤖 *AI CHATBOT & CRM SYSTEM*
+
+Hum provide karte hain:
+• AI-Powered WhatsApp Chatbot
+• Lead Qualification & Scoring
+• CRM Dashboard & Pipeline
+• Appointment Booking
+• Smart Follow-up Automation
+• Team Assignment & Routing
+
+AI Sales System: ₹29,999 – ₹75,000 setup + ₹7,999 – ₹24,999/month
+Custom CRM: ₹50,000 – ₹3,00,000+ setup
+
+*Final pricing scope ke hisab se vary kar sakti hai.*
+
+Aapki team abhi leads ko Excel, WhatsApp ya kisi CRM mein manage karti hai?`,
+
+  '4': `📈 *DIGITAL MARKETING & SEO*
+
+Hum handle karte hain:
+• Social Media Marketing
+• Lead Generation Campaigns
+• Google Business Profile Optimization
+• SEO (Local / Business / Advanced)
+• Content Planning & Scheduling
+
+Pricing:
+🔵 Local SEO: ₹5,000/month
+🔵 Business SEO: ₹10,000/month
+🔵 Marketing Starter: ₹5,000/month
+🔵 Marketing Growth: ₹10,000/month
+
+*Ad spend alag se hoga. Final pricing vary kar sakti hai.*
+
+Aapka business kis city ko target karta hai?`,
+
+  '5': `📊 *PACKAGES & PRICING OVERVIEW*
+
+🟢 *Launch Package*
+Setup: ₹7,999 | Monthly: ₹1,499
+Best for: Small businesses, shops
+
+🟡 *Growth Package*
+Setup: ₹14,999 | Monthly: ₹3,999
+Best for: Clinics, coaching, agencies
+
+🔴 *AI Sales System*
+Setup: ₹29,999–₹75,000 | Monthly: ₹7,999–₹24,999
+Best for: Real estate, education, high volume
+
+⚫ *Custom CRM / SaaS*
+Setup: ₹50,000–₹3,00,000+ | Monthly: varies
+Best for: Enterprise, internal software
+
+*Final pricing scope aur customization ke hisab se vary kar sakti hai.*
+
+Kaunsa package aapke business ke liye suitable lagta hai? Main help karunga 😊`,
+
+  '6': `📅 *FREE CONSULTATION BOOK KAREIN*
+
+Hamari team se ek free 15-minute consultation schedule karein.
+
+Please batayein:
+1️⃣ Preferred date (kal / parso / koi weekday)
+2️⃣ Preferred time (Morning 10-12 / Afternoon 2-5 / Evening 6-8)
+3️⃣ Call ya Video call?
+
+Ya directly book karein:
+🔗 https://calendly.com/trinetra-demo
+
+📞 +91 9334757759
+📧 info@trinetradigitalsolution.com`,
+
+  '7': `👤 *TEAM SE CONNECT KAREIN*
+
+Hamari team aapki detail se help karne ke liye available hai.
+
+📞 WhatsApp / Call: +91 9334757759
+📧 Email: info@trinetradigitalsolution.com
+🌐 Website: https://trinetradigitalsolution.com
+
+Main abhi aapki inquiry hamare senior consultant tak forward kar raha hoon. Wo aapko jaldi connect karenge.`,
+};
+
 const resolvedSessionPath = path.resolve(process.cwd(), envConfig.WHATSAPP_SESSION_PATH);
 
 // Ensure the directory exists
@@ -315,7 +457,7 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
     await ConversationModel.updateThread(lead.id, textContent, true);
   }
 
-  // ── Save inbound message to DB ───────────────────────────────────────
+  // ── Save inbound message to DB ────────────────────────────────────────────
   const messageId = msg.key.id || `in-${Date.now()}`;
   await MessageModel.create({
     id: messageId,
@@ -324,6 +466,119 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
     body: textContent,
     status: 'read',
   });
+
+  // ── OPT-OUT COMPLIANCE CHECK ──────────────────────────────────────────
+  // Must run BEFORE AI processing — Meta WhatsApp Business Policy requirement
+  if (OPT_OUT_PATTERN.test(textContent.trim())) {
+    console.log(`🚫 [OPT-OUT] ${lead.name} (${cleanPhone}) opted out. Cancelling all sequences.`);
+    const db = getDb();
+    // Mark lead as opted out
+    await db.run(
+      'UPDATE leads SET opt_out = 1, ai_enabled = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [lead.id]
+    );
+    // Cancel all active follow-up sequences
+    await db.run(
+      "UPDATE followup_sequences SET status = 'cancelled' WHERE lead_id = ?",
+      [lead.id]
+    );
+    // Send compliance acknowledgment
+    const optOutMsg = `✅ Aapka opt-out request receive ho gaya hai.\n\nAapko ab koi automated follow-up message nahi bheja jayega.\n\nAgar kabhi bhi hum se contact karna ho:\n📞 +91 9334757759\n🌐 trinetradigitalsolution.com`;
+    await sendWhatsAppMessage(lead.phone, optOutMsg, replyJid);
+    await logAuditAction('OPT_OUT', `${lead.name} (${cleanPhone}) opted out. All sequences cancelled.`);
+    return; // Stop all further processing
+  }
+
+  // ── IMMEDIATE HUMAN HANDOFF SHORTCUT ──────────────────────────────────────────
+  // Bypass AI entirely — serve instantly for any human-connection request
+  if (HUMAN_REQUEST_PATTERN.test(textContent.trim())) {
+    console.log(`🤝 [HANDOFF SHORTCUT] ${lead.name} requested human. Instant handoff without AI.`);
+    const db = getDb();
+
+    // Only create alert if none is already pending (deduplication)
+    const existingAlert = await db.get(
+      "SELECT id FROM handoff_alerts WHERE lead_id = ? AND status = 'pending'",
+      [lead.id]
+    );
+    if (!existingAlert) {
+      await db.run('UPDATE leads SET ai_enabled = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [lead.id]);
+      const alertId = `alert-${Date.now()}`;
+      await db.run(
+        "INSERT INTO handoff_alerts (id, lead_id, reason, status) VALUES (?, ?, ?, 'pending')",
+        [alertId, lead.id, 'Customer explicitly requested to speak with a team member']
+      );
+      await logAuditAction('HUMAN_HANDOFF', `Instant handoff for ${lead.name} (${lead.phone}) — human request phrase detected.`);
+      // Admin alert (fire and forget)
+      import('../services/notification.service').then(({ notifyHandoff }) => {
+        notifyHandoff({
+          name: lead.name,
+          phone: lead.phone,
+          ai_score: lead.ai_score || 0,
+          company: lead.company || undefined,
+          service: lead.service || undefined,
+          city: lead.city || undefined,
+          budget_range: lead.budget_range || undefined,
+        }, 'Customer explicitly requested to speak with a team member').catch(() => {});
+      }).catch(() => {});
+    }
+    await sendWhatsAppMessage(lead.phone, MENU_RESPONSE['7'], replyJid);
+    return;
+  }
+
+  // ── KEYWORD MENU ROUTER ─────────────────────────────────────────────────────
+  // Numbered menu shortcuts AND natural language keywords — no AI token spent
+  const trimmedMsg = textContent.trim();
+
+  // Map natural language phrases to menu keys
+  let menuKey: string | null = null;
+
+  if (/^[1-7]$/.test(trimmedMsg)) {
+    menuKey = trimmedMsg;
+  } else if (/^(menu|help|hi|hello|namaste|helo|start|hey|hii|helo|hy|hye|नमस्ते|नमस्ता|good morning|good evening|good afternoon|gm|gmrng)$/i.test(trimmedMsg)) {
+    menuKey = 'MAIN';
+  } else if (/^(website|web site|website banani hai|website chahiye|website ka price|website kitne mein|landing page|portfolio|ecommerce|e-commerce|online store)$/i.test(trimmedMsg)) {
+    menuKey = '1';
+  } else if (/^(whatsapp|whatsapp automation|whatsapp bot|chatbot|automation|auto reply|automate|crm|lead management|ai bot|ai chatbot|ai system|leads manage|lead system)$/i.test(trimmedMsg)) {
+    menuKey = '2';
+  } else if (/^(ai|crm system|ai crm|sales system|lead qualify|lead scoring|appointment|booking|chatgpt bot|gpt bot)$/i.test(trimmedMsg)) {
+    menuKey = '3';
+  } else if (/^(seo|digital marketing|social media|marketing|google|google ads|facebook ads|instagram ads|lead generation|ads|campaign|google business)$/i.test(trimmedMsg)) {
+    menuKey = '4';
+  } else if (/^(pricing|price|rates|cost|kitna|kitne|charges|fee|fees|paisa|package|packages|plans|plan|pricelist|price list|rate list|how much|rate card|budget|kharcha)$/i.test(trimmedMsg)) {
+    menuKey = '5';
+  } else if (/^(services|service|kya karte ho|kya karte hain|kya milega|what do you offer|what you offer|what services|tell me|all services|list|service list|details|batao|bataiye)$/i.test(trimmedMsg)) {
+    menuKey = 'MAIN';
+  } else if (/^(demo|consultation|free demo|book|appointment book|call schedule|meeting|call karna|baat karna|discuss|free call|free consultation)$/i.test(trimmedMsg)) {
+    menuKey = '6';
+  }
+
+  if (menuKey && MENU_RESPONSE[menuKey]) {
+    console.log(`📍 [MENU] Serving menu option '${menuKey}' to ${lead.name} (trigger: "${trimmedMsg}")`);
+    const menuMsg = MENU_RESPONSE[menuKey];
+
+    // Option 7 = connect to team — trigger human handoff (with dedup)
+    if (menuKey === '7') {
+      const db = getDb();
+      const existingAlert = await db.get(
+        "SELECT id FROM handoff_alerts WHERE lead_id = ? AND status = 'pending'",
+        [lead.id]
+      );
+      if (!existingAlert) {
+        await db.run('UPDATE leads SET ai_enabled = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [lead.id]);
+        const alertId = `alert-${Date.now()}`;
+        await db.run(
+          "INSERT INTO handoff_alerts (id, lead_id, reason, status) VALUES (?, ?, ?, 'pending')",
+          [alertId, lead.id, 'Customer selected menu option 7 — Connect to Team']
+        );
+        await logAuditAction('HUMAN_HANDOFF', `Menu Option 7 — ${lead.name} (${lead.phone}) requested team connection.`);
+      }
+    }
+
+    await sendWhatsAppMessage(lead.phone, menuMsg, replyJid);
+    // ⚠️ DO NOT schedule nurture sequence on menu-only interactions.
+    // Nurture is only for leads who have engaged in a real conversation (AI pipeline).
+    return;
+  }
 
   // ── Delegate to conversation pipeline (OpenRouter + memory + anti-spam) ───
   const result = await processInboundMessage(lead.id, messageId, textContent, jid);
@@ -339,8 +594,9 @@ async function handleInboundMessage(msg: proto.IWebMessageInfo) {
     await sendWhatsAppMessage(lead.phone, result.reply, replyJid);
   }
 
-  // ── Schedule nurture sequence for brand-new leads ─────────────────────
-  if (isNewLead) {
+  // ── Schedule nurture sequence ONLY for leads who had a real AI conversation ──
+  // NOT for menu-only visitors. Genuine engagement = AI responded (not skipped).
+  if (isNewLead && !result.skipped && result.reply) {
     await scheduleNurtureSequence(lead.id);
   }
 }

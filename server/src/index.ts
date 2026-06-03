@@ -1,48 +1,28 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
-import { initDb, getDb } from './database/db';
-import { initWhatsApp, getWhatsAppStatus } from './services/wa.service';
+import { envConfig } from './config/env';
+import { initDb, getDb } from './database/connection';
+import { initWhatsApp, getWhatsAppStatus } from './whatsapp/gateway';
 import { startCronService } from './services/cron.service';
+import { startCostMonitor, getDailyStats } from './services/cost-monitor.service';
+import { errorMiddleware } from './middleware/error.middleware';
 
-// Route imports
+// Routes
 import authRoutes from './routes/auth.routes';
 import leadsRoutes from './routes/leads.routes';
 import whatsappRoutes from './routes/whatsapp.routes';
 import analyticsRoutes from './routes/analytics.routes';
-
-dotenv.config();
-
-// ── 1. Validate Environment Variables on Startup ───────────────────────────
-function validateEnv() {
-  const requiredEnv = ['JWT_SECRET', 'PORT'];
-  const missing = requiredEnv.filter(key => !process.env[key]);
-  
-  if (missing.length > 0) {
-    console.error(`❌ Critical Startup Error: Missing required environment variables: ${missing.join(', ')}`);
-    process.exit(1);
-  }
-
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (!geminiKey || geminiKey === 'YOUR_GEMINI_API_KEY') {
-    console.warn('⚠️ Startup Warning: GEMINI_API_KEY is not configured or using default template value. Lead qualifying will fall back to mock AI.');
-  }
-
-  const port = Number(process.env.PORT);
-  if (isNaN(port) || port <= 0 || port > 65535) {
-    console.error(`❌ Critical Startup Error: Invalid PORT specified: ${process.env.PORT}`);
-    process.exit(1);
-  }
-}
-
-validateEnv();
+import conversationsRoutes from './routes/conversations.routes';
+import appointmentsRoutes from './routes/appointments.routes';
+import { ConversationsController } from './controllers/conversations.controller';
+import { authenticateJWT } from './middleware/auth';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = envConfig.PORT;
 
-// Dynamic production CORS validation rules
+// CORS Mappings
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
@@ -61,7 +41,9 @@ const corsOptions = {
     // Check if origin is explicitly allowed or is a subdomain of our target production platform
     if (
       allowedOrigins.includes(origin) || 
-      origin.endsWith('.trinetradigitalsolution.com')
+      origin.endsWith('.trinetradigitalsolution.com') ||
+      origin.startsWith('http://localhost:') ||
+      origin.startsWith('http://127.0.0.1:')
     ) {
       return callback(null, true);
     }
@@ -77,24 +59,38 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Log basic requests in clean format
+// Standard logger middleware
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
 
-// Register REST Routes
+// REST Endpoint mounts
 app.use('/api/auth', authRoutes);
 app.use('/api/leads', leadsRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/conversations', conversationsRoutes);
+app.use('/api/appointments', appointmentsRoutes);
+app.post('/api/send-message', authenticateJWT, ConversationsController.sendGeneralMessage);
 
-// Expose health status for VPS monitoring
+// Token + cost analytics endpoints
+app.get('/api/analytics/tokens', authenticateJWT, async (req, res) => {
+  try {
+    const date = req.query.date as string | undefined;
+    const stats = await getDailyStats(date);
+    res.json({ success: true, data: stats });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Simple health endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// ── 2. Expose Advanced /api/health Endpoint with Stats ──────────────────────
+// Advanced health check with memory usage and service links
 app.get('/api/health', async (req, res) => {
   let dbStatus = 'disconnected';
   try {
@@ -129,7 +125,7 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
-// Serving production build static frontend assets directly if compiled
+// Serve frontend dist assets if present
 const clientBuildPath = path.resolve(__dirname, '../../dist');
 if (fs.existsSync(clientBuildPath)) {
   console.log(`📁 Bundled client assets found at: ${clientBuildPath}. Binding web server gateway.`);
@@ -138,29 +134,29 @@ if (fs.existsSync(clientBuildPath)) {
     res.sendFile(path.join(clientBuildPath, 'index.html'));
   });
 } else {
-  console.log('💡 Run "npm run build" in frontend workspace to serve client files directly from this server.');
+  console.log('💡 Static client folders not found at server root. Frontend Dashboard runs separately.');
 }
 
-// Global Error Handler
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('🔥 Server unhandled exception:', err);
-  res.status(500).json({ error: 'Internal Server Error', message: err.message });
-});
+// Global enterprise error interceptor
+app.use(errorMiddleware);
 
 async function main() {
   try {
-    // 1. Initialize SQLite Database
+    // 1. Initialize SQLite connection with high-performance configurations
     await initDb();
 
-    // 2. Start Cron Service for automated follow-ups
+    // 2. Start schedule cron nurtures
     startCronService();
 
-    // 3. Start Web Server
+    // 3. Start cost monitor (daily token + spend tracking)
+    startCostMonitor();
+
+    // 3. Bind app listener
     app.listen(PORT, () => {
-      console.log(`🚀 Trinetra API automation backend running live on port ${PORT}`);
+      console.log(`🚀 Trinetra enterprise API backend running live on port ${PORT}`);
     });
 
-    // 4. Initialize WhatsApp connection (runs asynchronously in background)
+    // 4. Fire WhatsApp Baileys gateway in the background
     await initWhatsApp();
 
   } catch (error) {
@@ -169,7 +165,7 @@ async function main() {
   }
 }
 
-// ── 3. Graceful Shutdown Handlers ──────────────────────────────────────────
+// Graceful restart and teardown handlers
 async function gracefulShutdown(signal: string) {
   console.log(`\n🛑 Graceful shutdown signal received (${signal}). Terminating services...`);
   
