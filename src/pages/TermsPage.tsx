@@ -19,9 +19,9 @@ export default function TermsPage() {
           animate={{ opacity: 1, y: 0 }} 
           className="main-container max-w-[760px] mx-auto px-4"
         >
-          <span className="text-xs font-bold tracking-widest text-[#2563EB] uppercase block mb-2">Legal Compliance</span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Terms &amp; Conditions</h1>
-          <p className="text-xs font-bold text-slate-400 mb-10">Last updated: May 31, 2026</p>
+          <span className="text-xs font-bold tracking-widest text-[#2A4A3E] uppercase block mb-2">Legal Compliance</span>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-2 font-display italic text-[#BF7340]">Terms &amp; Conditions</h1>
+          <p className="text-xs font-bold text-slate-400 mb-10">Last updated: June 3, 2026</p>
 
           <div className="flex flex-col gap-8 text-xs sm:text-sm text-slate-600 leading-relaxed text-left">
             <div>
@@ -62,7 +62,7 @@ export default function TermsPage() {
             <div>
               <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">8. Corporate Information &amp; Entity</h2>
               <p>Trinetra Digital Solution is the technology and service brand operated and legally owned by the registered parent entity <strong>Charulata Enterprises</strong>. All agreements, commercial covenants, and transactions are legally executed under <strong>Charulata Enterprises</strong>.</p>
-              <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 font-semibold space-y-1">
+              <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 font-semibold space-y-1 font-mono">
                 <p>Legal Entity: Charulata Enterprises</p>
                 <p>Office Location: Gorakhpur, Uttar Pradesh, India — 273001</p>
                 <p>Official Contact: info@trinetradigitalsolution.com · +91 9334757759</p>

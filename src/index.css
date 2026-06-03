@@ -510,3 +510,33 @@ body {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Premium SaaS Redesign Additions */
+.grid-pattern {
+  background-image: radial-gradient(var(--color-border) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.saas-card-glow {
+  transition: all 300ms var(--ease-out);
+}
+.saas-card-glow:hover {
+  box-shadow: 0 20px 40px -15px rgba(24, 23, 15, 0.05), 0 0 0 1px var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--color-surface-1);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-surface-3);
+  border-radius: var(--radius-full);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-4);
+}
+

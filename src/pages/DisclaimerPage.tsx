@@ -19,9 +19,9 @@ export default function DisclaimerPage() {
           animate={{ opacity: 1, y: 0 }} 
           className="main-container max-w-[760px] mx-auto px-4"
         >
-          <span className="text-xs font-bold tracking-widest text-[#2563EB] uppercase block mb-2">Legal Compliance</span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Legal &amp; Earnings Disclaimer</h1>
-          <p className="text-xs font-bold text-slate-400 mb-10">Last updated: May 31, 2026</p>
+          <span className="text-xs font-bold tracking-widest text-[#2A4A3E] uppercase block mb-2">Legal Compliance</span>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-2 font-display italic text-[#BF7340]">Legal Disclaimer</h1>
+          <p className="text-xs font-bold text-slate-400 mb-10">Last updated: June 3, 2026</p>
 
           <div className="flex flex-col gap-8 text-xs sm:text-sm text-slate-600 leading-relaxed text-left">
             <div>
@@ -31,7 +31,7 @@ export default function DisclaimerPage() {
             </div>
             
             <div>
-              <h2 className="text-sm font-bold text-[#2563EB] mb-3 uppercase tracking-wider font-semibold">2. Realistic Positioning &amp; Professional Copy</h2>
+              <h2 className="text-sm font-bold text-[#BF7340] mb-3 uppercase tracking-wider font-semibold">2. Realistic Positioning &amp; Professional Copy</h2>
               <p>We help businesses improve their online presence and generate qualified enquiries through strategic digital marketing. We explicitly reject spammy, deceptive, or misleading marketing claims, "get-rich-quick" schemes, fake counters, fake client testimonials, or exaggerated "AI magic" statements. Our software solutions and websites are constructed as professional business tools to improve operational efficiency and pipeline management.</p>
             </div>
 

@@ -107,7 +107,7 @@ export function FinalCTAFooter() {
           </div>
 
           {/* Footer Links Grid */}
-          <div className="grid grid-cols-2 gap-x-16 gap-y-6 text-xs text-left">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-8 text-xs text-left">
             <div>
               <p className="text-[#FAF5EF]/30 font-semibold uppercase tracking-widest text-[10px] mb-3">Services</p>
               <div className="flex flex-col gap-2.5">
@@ -125,9 +125,19 @@ export function FinalCTAFooter() {
                 <Link to="/pricing" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Pricing</Link>
                 <Link to="/contact" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Contact</Link>
                 <Link to="/blog" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Blog</Link>
-                <Link to="/gorakhpur" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Gorakhpur</Link>
-                <Link to="/uttar-pradesh" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Uttar Pradesh</Link>
+                <Link to="/gorakhpur" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Gorakhpur SEO</Link>
+                <Link to="/uttar-pradesh" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">UP SEO</Link>
+              </div>
+            </div>
+            <div className="col-span-2 md:col-span-1">
+              <p className="text-[#FAF5EF]/30 font-semibold uppercase tracking-widest text-[10px] mb-3">Legal & Compliance</p>
+              <div className="flex flex-col gap-2.5">
                 <Link to="/privacy-policy" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Privacy Policy</Link>
+                <Link to="/terms-and-conditions" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Terms & Conditions</Link>
+                <Link to="/refund-policy" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Refund Policy</Link>
+                <Link to="/disclaimer" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Legal Disclaimer</Link>
+                <Link to="/cookie-policy" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Cookie Policy</Link>
+                <Link to="/data-usage-notice" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Data Usage Notice</Link>
               </div>
             </div>
           </div>

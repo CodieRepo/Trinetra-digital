@@ -17,6 +17,8 @@ const PrivacyPage      = lazy(() => import("@/pages/PrivacyPage"));
 const TermsPage        = lazy(() => import("@/pages/TermsPage"));
 const RefundPage       = lazy(() => import("@/pages/RefundPage"));
 const DisclaimerPage   = lazy(() => import("@/pages/DisclaimerPage"));
+const CookiePolicy     = lazy(() => import("@/pages/CookiePolicy"));
+const DataUsageNotice  = lazy(() => import("@/pages/DataUsageNotice"));
 const NotFoundPage     = lazy(() => import("@/pages/NotFoundPage"));
 const AdminCrm         = lazy(() => import("@/pages/admin/AdminCrm"));
 
@@ -64,6 +66,8 @@ function AnimatedRoutes() {
           <Route path="/terms-and-conditions"     element={<TermsPage />} />
           <Route path="/refund-policy"            element={<RefundPage />} />
           <Route path="/disclaimer"               element={<DisclaimerPage />} />
+          <Route path="/cookie-policy"            element={<CookiePolicy />} />
+          <Route path="/data-usage-notice"        element={<DataUsageNotice />} />
           <Route path="/admin"                    element={<AdminCrm />} />
 
           {/* Service Sub-pages */}
