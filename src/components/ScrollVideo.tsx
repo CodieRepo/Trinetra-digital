@@ -1,8 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { useScroll, useMotionValueEvent } from "framer-motion";
 
-const DEBUG_VIDEO = false; // Set to true to show debug overlay
-
 interface ScrollVideoProps {
   src: string;
   className?: string;
@@ -23,7 +21,6 @@ export default function ScrollVideo({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [debugLoaded, setDebugLoaded] = useState(false);
 
   const lastProgressRef = useRef(0);
   const lastTimeRef = useRef(0);
@@ -86,31 +83,25 @@ export default function ScrollVideo({
     });
   });
 
-  // Load video + debug logging
+  // Load video and set initial frame
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    console.log("[VIDEO] VIDEO_ELEMENT_FOUND", src);
-
     const handleLoaded = () => {
       setIsLoaded(true);
-      setDebugLoaded(true);
-      console.log("[VIDEO] VIDEO_SOURCE_LOADED", src);
       if (!isMobile) {
         video.pause();
         video.currentTime = 0.01;
       } else {
-        video.play().then(() => {
-          console.log("[VIDEO] VIDEO_PLAYING", src);
-        }).catch((err) => {
-          console.warn("[VIDEO] Autoplay blocked:", err);
+        video.play().catch(() => {
+          // Autoplay blocked silently — video will stay on poster frame
         });
       }
     };
 
-    const handleError = (e: Event) => {
-      console.error("[VIDEO] VIDEO_LOAD_ERROR", src, (e as ErrorEvent).message);
+    const handleError = () => {
+      // Silent: video not critical to page structure
     };
 
     video.addEventListener("loadedmetadata", handleLoaded);
@@ -126,10 +117,9 @@ export default function ScrollVideo({
   }, [src, isMobile]);
 
   return (
-    <div
-      className={`relative overflow-hidden w-full h-full ${className}`}
-      style={DEBUG_VIDEO ? { border: "3px solid red", boxSizing: "border-box" } : undefined}
-    >
+    // FIX: Use absolute inset-0 positioning so this fills the parent's
+    // aspect-ratio box completely — resolves h-full collapse on mobile.
+    <div className={`absolute inset-0 overflow-hidden ${className}`}>
       <video
         ref={videoRef}
         muted
@@ -138,38 +128,17 @@ export default function ScrollVideo({
         autoPlay={isMobile}
         preload="auto"
         poster={poster}
-        className="w-full h-full object-cover"
+        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
       >
         <source src={src} type="video/mp4" />
       </video>
 
-      {/* Debug overlay */}
-      {DEBUG_VIDEO && debugLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span
-            style={{
-              background: "rgba(0,200,0,0.85)",
-              color: "#fff",
-              fontFamily: "monospace",
-              fontSize: "11px",
-              fontWeight: "bold",
-              padding: "4px 10px",
-              borderRadius: "4px",
-              letterSpacing: "0.05em",
-            }}
-          >
-            VIDEO LOADED SUCCESSFULLY
-          </span>
-        </div>
-      )}
-
-      {/* Loading placeholder */}
+      {/* Skeleton while video buffers */}
       {!isLoaded && (
-        <div className="absolute inset-0 bg-slate-50 animate-pulse flex items-center justify-center border border-slate-100 rounded-lg">
-          <span className="text-[10px] font-mono text-slate-400 font-semibold uppercase tracking-wider">
-            Initializing media...
-          </span>
-        </div>
+        <div
+          className="absolute inset-0 bg-slate-100 animate-pulse"
+          aria-hidden="true"
+        />
       )}
     </div>
   );

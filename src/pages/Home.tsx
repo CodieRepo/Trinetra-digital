@@ -219,15 +219,16 @@ export default function Home() {
               </motion.div>
             </div>
 
-            {/* Right Side: Interactive Browser Mockup with Scroll-Synced Video */}
+            {/* Right Side: Browser Mockup with Scroll-Synced Video */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.15 }}
-              className="bg-white border border-border rounded-xl overflow-hidden shadow-md relative group aspect-video w-full"
+              className="relative w-full rounded-xl overflow-hidden shadow-md border border-border bg-white"
+              style={{ aspectRatio: "16/9" }}
             >
               {/* Browser Address Bar Mockup */}
-              <div className="bg-slate-50 border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between shrink-0">
+              <div className="absolute top-0 left-0 right-0 z-10 bg-slate-50 border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
                   <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
