@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Sparkles, Plus } from "lucide-react";
+import { Check, Sparkles, Plus, ArrowRight } from "lucide-react";
 
 const WA_NUMBER = "919334757759";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'd like to learn more about Trinetra Digital Solution's packages and pricing.")}`;
@@ -148,31 +148,33 @@ export default function Pricing() {
   ];
 
   return (
-    <section id="pricing" aria-label="Pricing Plans — Software and Growth Staged Packages" className="relative overflow-hidden bg-[#F4F2ED] py-20 md:py-28 border-b border-[#E2DDD5]">
-      <div className="main-container relative z-10">
+    <section id="pricing" aria-label="Pricing Plans — Software and Growth Staged Packages" className="relative overflow-hidden bg-[#F8FAFC] py-24 md:py-32 border-b border-border/80">
+      <div className="absolute inset-0 grid-pattern opacity-[0.01] pointer-events-none" />
+
+      <div className="max-w-[1200px] mx-auto px-4 md:px-10 relative z-10">
         
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-16">
           <span className="mixed-headline-eyebrow">
             Pricing & Project Packages
           </span>
-          <h2 className="display-lg text-[#18170F] tracking-tight mb-4">
+          <h2 className="display-lg text-ink-1 tracking-tight mb-4 font-display font-bold">
             Transparent pricing. Clear project scope.
           </h2>
-          <p className="body-lg text-[#5C5A52] max-w-[580px] mx-auto mb-8">
+          <p className="body-lg text-[#5C5A52] max-w-[580px] mx-auto mb-10 font-medium">
             Choose a solution suited to your current business stage. Honest prices, no hidden charges, no unrealistic claims.
           </p>
 
           {/* Tab Switcher */}
-          <div className="inline-flex items-center gap-2 bg-[#EEEAE3] border border-[#E2DDD5] p-1 rounded-lg z-10 max-w-full overflow-x-auto">
+          <div className="inline-flex items-center gap-1 bg-slate-100/85 border border-slate-200/80 p-1.5 rounded-xl z-10 max-w-full overflow-x-auto shadow-xs backdrop-blur-xs">
             {(["packages", "addons"] as ServiceCategory[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-1.5 text-xs font-semibold tracking-wide rounded transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                className={`px-5 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap ${
                   activeTab === tab
-                    ? "bg-[#FFFFFF] text-[#18170F] shadow-xs"
-                    : "text-[#5C5A52] hover:text-[#18170F]"
+                    ? "bg-white text-slate-900 border border-slate-200/85 shadow-xs"
+                    : "text-slate-500 hover:text-slate-900"
                 }`}
               >
                 {tab === "packages" ? "Growth Packages" : "Add-On Services"}
@@ -194,46 +196,46 @@ export default function Pricing() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -16 }}
                       transition={{ duration: 0.3 }}
-                      className="flex flex-col justify-between rounded-xl border-2 border-[#BF7340] bg-[#131210] p-6 md:p-8 shadow-md ring-1 ring-[#BF7340]/25 text-left relative overflow-hidden"
+                      className="flex flex-col justify-between rounded-xl border-2 border-accent bg-slate-950 p-6 md:p-8 shadow-md text-left relative overflow-hidden"
                     >
-                      <div className="absolute top-0 inset-x-0 h-[3px] bg-[#BF7340]" />
+                      <div className="absolute top-0 inset-x-0 h-[3px] bg-accent" />
                       <div>
                         <div className="flex justify-between items-center">
-                          <span className="text-[10px] uppercase font-bold tracking-widest text-[#FAF5EF]/60">{plan.name}</span>
-                          <span className="text-[9px] bg-[#BF7340] text-[#FAF5EF] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                          <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 font-mono">{plan.name}</span>
+                          <span className="text-[9px] bg-accent text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-sm">
                             <Sparkles size={8} /> Recommended
                           </span>
                         </div>
-                        <p className="text-[11px] font-semibold text-[#BF7340] mt-1.5">{plan.bestFor}</p>
+                        <p className="text-[11px] font-semibold text-accent mt-2">{plan.bestFor}</p>
                         <div className="mt-4 space-y-4">
                           <div>
-                            <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#BF7340]">{plan.setupLabel}</p>
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-accent font-mono">{plan.setupLabel}</p>
                             <div className="flex items-baseline gap-1.5 mt-1">
-                              <span className="font-display text-[28px] font-bold text-[#F9F8F5]">{plan.price}</span>
+                              <span className="font-display text-[28px] font-bold text-white tracking-tight">{plan.price}</span>
                             </div>
                           </div>
-                          <div className="h-px bg-white/10" />
+                          <div className="h-px bg-slate-800" />
                           <div>
-                            <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#FAF5EF]/60">Monthly</p>
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400 font-mono">Monthly</p>
                             <div className="flex items-baseline gap-1.5 mt-1">
-                              <span className="font-display text-[22px] font-bold text-[#F9F8F5]">{plan.monthlyPrice}</span>
+                              <span className="font-display text-[22px] font-bold text-white tracking-tight">{plan.monthlyPrice}</span>
                             </div>
                           </div>
                         </div>
-                        <div className="w-full h-px bg-white/10 my-5" />
-                        <p className="text-[11px] text-[#FAF5EF]/50 mb-4 leading-relaxed">{plan.desc}</p>
-                        <ul className="space-y-3 text-xs text-[#FAF5EF]/80">
+                        <div className="w-full h-px bg-slate-800 my-5" />
+                        <p className="text-[11px] text-slate-400 mb-6 leading-relaxed font-semibold">{plan.desc}</p>
+                        <ul className="space-y-3.5 text-[11.5px] text-slate-300">
                           {plan.features.map((feat, f) => (
                             <li key={f} className="flex items-start gap-3">
-                              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#E8F0ED] text-[#2A4A3E] mt-0.5">
+                              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-accent-light text-accent mt-0.5 border border-accent/20">
                                 <Check size={10} strokeWidth={3} />
                               </span>
-                              <span>{feat}</span>
+                              <span className="font-semibold">{feat}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
-                      <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="btn-primary-forest mt-8 w-full text-xs font-bold uppercase tracking-wider bg-[#2A4A3E] text-[#F9F8F5] hover:bg-[#1E3630] border-0 h-11 flex items-center justify-center rounded-lg">
+                      <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="mt-8 w-full text-xs font-bold uppercase tracking-wider bg-accent text-white hover:bg-accent-hover transition-colors h-11 flex items-center justify-center rounded-lg shadow-sm">
                         {plan.cta}
                       </a>
                     </motion.div>
@@ -246,40 +248,40 @@ export default function Pricing() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -16 }}
                     transition={{ duration: 0.3, delay: i * 0.05 }}
-                    className="flex flex-col justify-between rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-6 md:p-8 shadow-xs hover:shadow-md transition-shadow duration-300 text-left"
+                    className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 md:p-8 shadow-xs hover:shadow-md transition-all duration-300 text-left"
                   >
                     <div>
-                      <span className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82]">{plan.name}</span>
-                      <p className="text-[11px] font-semibold text-[#BF7340] mt-1.5">{plan.bestFor}</p>
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 font-mono">{plan.name}</span>
+                      <p className="text-[11px] font-semibold text-accent mt-2">{plan.bestFor}</p>
                       <div className="mt-4 space-y-4">
                         <div>
-                          <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#BF7340]">{plan.setupLabel}</p>
+                          <p className="text-[9px] uppercase tracking-widest font-bold text-accent font-mono">{plan.setupLabel}</p>
                           <div className="flex items-baseline gap-1.5 mt-1">
-                            <span className="font-display text-[28px] font-bold text-[#18170F]">{plan.price}</span>
+                            <span className="font-display text-[28px] font-bold text-slate-900 tracking-tight">{plan.price}</span>
                           </div>
                         </div>
-                        <div className="h-px bg-[#E2DDD5]/60" />
+                        <div className="h-px bg-slate-100" />
                         <div>
-                          <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#5C5A52]">Monthly</p>
+                          <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400 font-mono">Monthly</p>
                           <div className="flex items-baseline gap-1.5 mt-1">
-                            <span className="font-display text-[22px] font-bold text-[#18170F]">{plan.monthlyPrice}</span>
+                            <span className="font-display text-[22px] font-bold text-slate-900 tracking-tight">{plan.monthlyPrice}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="w-full h-px bg-[#E2DDD5] my-5" />
-                      <p className="text-[11px] text-[#5C5A52] mb-4 leading-relaxed">{plan.desc}</p>
-                      <ul className="space-y-3 text-xs text-[#5C5A52]">
+                      <div className="w-full h-px bg-slate-100 my-5" />
+                      <p className="text-[11px] text-slate-500 mb-6 leading-relaxed font-semibold">{plan.desc}</p>
+                      <ul className="space-y-3.5 text-[11.5px] text-slate-600">
                         {plan.features.map((feat, f) => (
                           <li key={f} className="flex items-start gap-3">
-                            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#E8F0ED] text-[#2A4A3E] mt-0.5">
+                            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#E2F2E9] text-[#137A3E] mt-0.5 border border-[#A3E0BA]">
                               <Check size={10} strokeWidth={3} />
                             </span>
-                            <span>{feat}</span>
+                            <span className="font-semibold">{feat}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
-                    <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="btn-secondary-outlined mt-8 w-full text-xs font-bold uppercase tracking-wider h-11 flex items-center justify-center rounded-lg">
+                    <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="mt-8 w-full text-xs font-bold uppercase tracking-wider border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors h-11 flex items-center justify-center rounded-lg shadow-xs">
                       {plan.cta}
                     </a>
                   </motion.div>
@@ -298,20 +300,22 @@ export default function Pricing() {
             className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto"
           >
             {addonGroups.map((group, gi) => (
-              <div key={gi} className="bg-white border border-[#E2DDD5] rounded-xl p-6 shadow-xs">
-                <div className="flex items-center gap-2 mb-4">
-                  <Plus size={14} className="text-[#BF7340]" />
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-[#BF7340]">{group.category}</span>
+              <div key={gi} className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Plus size={13} className="text-accent" />
+                    <span className="text-[9.5px] uppercase font-bold tracking-widest text-accent font-mono">{group.category}</span>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {group.items.map((item, ii) => (
+                      <div key={ii} className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0">
+                        <span className="text-[11.5px] font-semibold text-slate-800">{item.name}</span>
+                        <span className="text-[11px] font-bold text-accent font-mono shrink-0 ml-3">{item.price}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-col gap-3">
-                  {group.items.map((item, ii) => (
-                    <div key={ii} className="flex items-center justify-between border-b border-[#F4F2ED] pb-2 last:border-0 last:pb-0">
-                      <span className="text-xs font-medium text-[#18170F]">{item.name}</span>
-                      <span className="text-xs font-bold text-[#BF7340] shrink-0 ml-3">{item.price}</span>
-                    </div>
-                  ))}
-                </div>
-                <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="mt-5 flex items-center justify-center gap-2 h-9 rounded-lg border border-[#E2DDD5] bg-[#F4F2ED] text-xs font-semibold text-[#18170F] hover:bg-[#EEEAE3] transition-colors">
+                <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="mt-6 flex items-center justify-center gap-2 h-9 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors uppercase tracking-wider font-mono">
                   Enquire About {group.category}
                 </a>
               </div>
@@ -320,8 +324,8 @@ export default function Pricing() {
         )}
 
         {/* Compliant Disclaimer Box */}
-        <div className="mt-8 text-center max-w-[650px] mx-auto p-5 bg-[#FAF5EF] border border-[#BF7340]/20 rounded-xl">
-          <p className="text-[11px] leading-relaxed text-[#5C5A52]">
+        <div className="mt-12 text-center max-w-[680px] mx-auto p-6 bg-slate-50 border border-slate-200 rounded-xl">
+          <p className="text-[10px] leading-relaxed text-slate-500 font-mono font-semibold">
             <strong>Important Notice:</strong> Monthly fees cover ongoing support, maintenance and management services. Advertising budgets spent on Google Ads, Meta Ads (Facebook/Instagram), or other platforms are paid directly to those networks and are <strong>separate and not included</strong> in our fees. We do not guarantee specific business results, rankings, leads or revenue figures. We present capabilities, features and potential service benefits only.
           </p>
         </div>

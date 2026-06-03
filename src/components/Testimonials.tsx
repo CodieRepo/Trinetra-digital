@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import { Sparkles, Calendar, Tag, ArrowRight } from "lucide-react";
 
 // Count Up Helper Component
 function MetricCounter({ value, duration = 1.2 }: { value: string; duration?: number }) {
@@ -73,10 +74,9 @@ const PORTFOLIO = [
 ];
 
 export default function Testimonials() {
-
   return (
-    <section id="portfolio" className="relative overflow-hidden bg-[#F9F8F5] py-20 md:py-28 border-b border-[#E2DDD5]">
-      <div className="main-container relative z-10">
+    <section id="portfolio" className="relative overflow-hidden bg-white py-12">
+      <div className="max-w-[1200px] mx-auto px-4 md:px-10 relative z-10">
 
         {/* Subsection A: Honest Capability Stats */}
         <div className="grid gap-6 md:grid-cols-3 mb-24 text-center">
@@ -87,35 +87,35 @@ export default function Testimonials() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.5, delay: i * 0.12 }}
-              className="flex flex-col items-center justify-center p-6 border-r border-[#E2DDD5] last:border-r-0 md:border-r-1 md:border-b-0 border-b pb-8 last:pb-6 md:pb-6"
+              className="flex flex-col items-center justify-center p-6 border-slate-100 last:border-r-0 md:border-r border-b md:border-b-0 pb-8 last:pb-6 md:pb-6"
             >
-              <span className="font-display text-[56px] leading-none text-[#18170F] font-semibold mb-2">
+              <span className="font-display text-[56px] leading-none text-slate-900 font-semibold mb-2.5 tracking-tight">
                 <MetricCounter value={cap.value.replace(/[^0-9.]/g, '') || '0'} />
                 {cap.value.replace(/[0-9.]/g, '')}
               </span>
-              <span className="text-xs font-semibold tracking-wider text-[#5C5A52] uppercase font-interface mb-1">
+              <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase font-mono mb-1.5">
                 {cap.label}
               </span>
-              <span className="text-[10px] text-[#8C8A82] font-medium">{cap.note}</span>
+              <span className="text-[10.5px] text-slate-400 font-semibold font-mono">{cap.note}</span>
             </motion.div>
           ))}
         </div>
 
         {/* Subsection B: Verified Portfolio */}
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
+        <div className="max-w-[1000px] mx-auto">
+          <div className="text-center mb-16 space-y-3">
             <span className="mixed-headline-eyebrow">
               Our Work
             </span>
-            <h2 className="display-lg text-[#18170F] tracking-tight max-w-[620px] mx-auto">
+            <h2 className="display-lg text-ink-1 tracking-tight max-w-[620px] mx-auto font-display font-bold">
               Verified portfolio projects.
             </h2>
-            <p className="body-md text-[#5C5A52] max-w-[500px] mx-auto mt-4">
+            <p className="body-md text-ink-2 max-w-[500px] mx-auto font-medium">
               We only present projects we have actually delivered. No inflated numbers, no fabricated results.
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-8 md:grid-cols-2">
             <AnimatePresence>
               {PORTFOLIO.map((item, i) => (
                 <motion.div
@@ -124,53 +124,56 @@ export default function Testimonials() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.4 }}
                   transition={{ duration: 0.4, delay: i * 0.1 }}
-                  className="relative rounded-2xl border border-[#E2DDD5] bg-[#F4F2ED] p-8 shadow-xs text-left flex flex-col justify-between"
+                  className="relative rounded-2xl border border-border/80 bg-[#F8FAFC] p-6 md:p-8 shadow-xs text-left flex flex-col justify-between hover:border-accent/40 transition-colors"
                 >
                   <div>
-                    <div className="flex items-start justify-between mb-5">
+                    <div className="flex items-start justify-between mb-6">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#BF7340]/10 text-sm font-bold text-[#BF7340]">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-light text-sm font-mono font-bold text-accent border border-accent/15">
                           {item.avatar}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-[#18170F]">{item.project}</p>
-                          <p className="text-xs text-[#5C5A52]">{item.category}</p>
+                          <p className="text-xs font-bold text-slate-900 font-mono uppercase tracking-wider">{item.project}</p>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <Tag size={10} className="text-slate-400" />
+                            <p className="text-[10px] text-slate-500 font-semibold">{item.category}</p>
+                          </div>
                         </div>
                       </div>
-                      <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E8F0ED] text-[#2A4A3E] border border-[#2A4A3E]/10">
+                      <span className="text-[8px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#E2F2E9] text-[#137A3E] border border-[#A3E0BA]">
                         {item.status}
                       </span>
                     </div>
 
-                    <p className="text-sm text-[#5C5A52] leading-relaxed mb-5">
+                    <p className="text-xs text-slate-600 leading-relaxed font-semibold mb-6">
                       {item.description}
                     </p>
 
-                    <div className="w-full h-px bg-[#E2DDD5] mb-4" />
+                    <div className="w-full h-px bg-slate-200/80 mb-5" />
 
-                    <div className="mb-4">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#8C8A82] mb-2">Services Delivered</p>
-                      <ul className="space-y-1.5">
+                    <div className="mb-6">
+                      <p className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-3">Services Delivered</p>
+                      <ul className="space-y-2">
                         {item.services.map((svc, si) => (
-                          <li key={si} className="flex items-center gap-2 text-xs text-[#5C5A52]">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#BF7340] shrink-0" />
-                            {svc}
+                          <li key={si} className="flex items-start gap-2.5 text-[11px] font-semibold text-slate-600">
+                            <span className="h-1.5 w-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
+                            <span>{svc}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[#E2DDD5]/60 mt-4">
+                  <div className="pt-4 border-t border-slate-200/80 mt-4">
                     <Link
                       to={`/contact?service=${encodeURIComponent(
                         item.project === "Vaastu Infra" 
                           ? "Website Development" 
                           : "Custom Software Development"
                       )}`}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[#BF7340] hover:text-[#A6612E] transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-accent hover:underline transition-colors cursor-pointer"
                     >
-                      Enquire about a similar system &rarr;
+                      Enquire about a similar system <ArrowRight size={12} />
                     </Link>
                   </div>
                 </motion.div>
@@ -183,10 +186,10 @@ export default function Testimonials() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="mt-10 text-center p-6 rounded-xl border border-[#E2DDD5] bg-[#F4F2ED]"
+            className="mt-12 text-center p-6 md:p-8 rounded-xl border border-border/80 bg-[#F8FAFC]"
           >
-            <p className="text-sm font-semibold text-[#18170F] mb-1">Building our portfolio, one honest project at a time.</p>
-            <p className="text-xs text-[#5C5A52] max-w-[460px] mx-auto">
+            <p className="text-xs font-bold text-slate-900 font-mono uppercase tracking-wider mb-2">Building our portfolio, one honest project at a time.</p>
+            <p className="text-xs text-slate-500 max-w-[460px] mx-auto leading-relaxed font-medium">
               We are a growing team committed to delivering quality work. Every project listed here represents a real engagement with a real business.
             </p>
           </motion.div>

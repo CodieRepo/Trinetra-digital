@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, Globe, Layout, Layers, Database, ArrowUpRight, ShieldCheck } from "lucide-react";
 
 const TABS = [
   { id: "digital", label: "Digital Presence" },
@@ -12,36 +12,37 @@ export default function TheSystem() {
   const [activeTab, setActiveTab] = useState("digital");
 
   return (
-    <section id="system" aria-label="Trinetra AI Automation System — WhatsApp Automation, AI CRM, Smart Follow-Up" className="relative overflow-hidden bg-[#FAF5EF] py-20 md:py-28 border-b border-[#E2DDD5]">
+    <section id="system" aria-label="Trinetra AI Automation System — WhatsApp Automation, AI CRM, Smart Follow-Up" className="relative overflow-hidden bg-white py-24 md:py-32 border-b border-border/80">
+      <div className="absolute inset-0 grid-pattern opacity-[0.01] pointer-events-none" />
 
-      <div className="main-container relative z-10">
+      <div className="max-w-[1200px] mx-auto px-4 md:px-10 relative z-10">
         
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-16">
           <span className="mixed-headline-eyebrow">
             The Trinetra System
           </span>
-          <h2 className="display-lg text-[#18170F] tracking-tight max-w-[720px] mx-auto mb-4">
+          <h2 className="display-lg text-ink-1 tracking-tight max-w-[720px] mx-auto mb-4 font-display font-bold">
             One partner. Every capability. <br />Zero corners cut.
           </h2>
-          <p className="body-lg text-[#5C5A52] max-w-[540px] mx-auto">
+          <p className="body-lg text-ink-2 max-w-[540px] mx-auto font-medium">
             From building your online presence to automating operations and driving growth — we handle every layer of your digital business.
           </p>
         </div>
 
-        {/* Tab Switcher Wrapper */}
-        <div className="flex justify-center mb-10 overflow-x-auto pb-1">
-          <div className="inline-flex gap-1 bg-[#EEEAE3] p-1 rounded-lg border border-[#E2DDD5] z-10 shrink-0">
+        {/* Tab Switcher Wrapper (Toolbar style) */}
+        <div className="flex justify-center mb-12 overflow-x-auto pb-1">
+          <div className="inline-flex gap-1 bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/80 z-10 shrink-0 shadow-sm backdrop-blur-xs">
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 text-xs font-semibold tracking-wide rounded transition-all duration-200 ${
+                  className={`px-5 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all duration-200 cursor-pointer ${
                     isActive
-                      ? "bg-[#FFFFFF] text-[#18170F] shadow-sm"
-                      : "text-[#5C5A52] hover:text-[#18170F]"
+                      ? "bg-white text-slate-900 border border-slate-200/80 shadow-xs"
+                      : "text-slate-500 hover:text-slate-900"
                   }`}
                 >
                   {tab.label}
@@ -59,28 +60,30 @@ export default function TheSystem() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.3 }}
-            className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center bg-[#F4F2ED] border border-[#E2DDD5] rounded-2xl p-5 md:p-8 lg:p-10 shadow-xs"
+            className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center bg-[#F8FAFC] border border-border/80 rounded-2xl p-6 md:p-10 lg:p-12 shadow-xs"
           >
             
             {/* Left Column: Description & Bullet Points */}
-            <div className="flex flex-col text-left">
+            <div className="flex flex-col text-left space-y-6">
               {activeTab === "digital" && (
                 <>
-                  <span className="mono-sm text-[#BF7340] uppercase tracking-wider font-semibold mb-2">WEBSITE & DIGITAL PRESENCE</span>
-                  <h3 className="heading-lg text-[#18170F] mb-4">Professional websites that build credibility and capture inquiries.</h3>
-                  <p className="body-md text-[#5C5A52] mb-6">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-mono font-bold tracking-widest text-accent uppercase bg-accent-light px-2.5 py-1 rounded border border-accent/15 inline-block">WEBSITE & DIGITAL PRESENCE</span>
+                    <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-ink-1 leading-tight font-display">Professional websites that build credibility and capture inquiries.</h3>
+                  </div>
+                  <p className="text-xs sm:text-sm text-ink-2 leading-relaxed font-semibold">
                     We design and develop mobile-responsive, SEO-ready business websites that establish trust, communicate your services clearly and convert visitors into inquiries 24/7.
                   </p>
-                  <ul className="space-y-3.5">
+                  <ul className="space-y-3">
                     {[
                       "Mobile-responsive design across all devices and screen sizes.",
                       "Landing pages, multi-page business sites, e-commerce and custom web apps.",
                       "Integrated contact forms and WhatsApp inquiry buttons.",
                       "SEO-structured to improve local search visibility from day one."
                     ].map((bullet, i) => (
-                      <li key={i} className="flex items-start gap-3 text-xs text-[#5C5A52]">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E8F0ED] text-[#2A4A3E]">
-                          <Check size={12} />
+                      <li key={i} className="flex items-start gap-3 text-[11px] font-semibold text-ink-2">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E2F2E9] text-[#137A3E] border border-[#A3E0BA]">
+                          <Check size={11} />
                         </span>
                         <span>{bullet}</span>
                       </li>
@@ -91,21 +94,23 @@ export default function TheSystem() {
 
               {activeTab === "crm" && (
                 <>
-                  <span className="mono-sm text-[#BF7340] uppercase tracking-wider font-semibold mb-2">AUTOMATION & CRM</span>
-                  <h3 className="heading-lg text-[#18170F] mb-4">Automate lead capture, follow-ups and customer management.</h3>
-                  <p className="body-md text-[#5C5A52] mb-6">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-mono font-bold tracking-widest text-accent uppercase bg-accent-light px-2.5 py-1 rounded border border-accent/15 inline-block">AUTOMATION & CRM</span>
+                    <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-ink-1 leading-tight font-display">Automate lead capture, follow-ups and customer management.</h3>
+                  </div>
+                  <p className="text-xs sm:text-sm text-ink-2 leading-relaxed font-semibold">
                     Stop managing leads on spreadsheets and chat logs. We set up CRM systems, WhatsApp automation and follow-up workflows so your team focuses on serving customers, not chasing them.
                   </p>
-                  <ul className="space-y-3.5">
+                  <ul className="space-y-3">
                     {[
                       "WhatsApp, Instagram and Facebook automation flows.",
                       "Lead pipeline management with status tracking.",
                       "Automated follow-up reminders and appointment booking.",
                       "Custom CRM dashboards with team access and reporting."
                     ].map((bullet, i) => (
-                      <li key={i} className="flex items-start gap-3 text-xs text-[#5C5A52]">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E8F0ED] text-[#2A4A3E]">
-                          <Check size={12} />
+                      <li key={i} className="flex items-start gap-3 text-[11px] font-semibold text-ink-2">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E2F2E9] text-[#137A3E] border border-[#A3E0BA]">
+                          <Check size={11} />
                         </span>
                         <span>{bullet}</span>
                       </li>
@@ -116,21 +121,23 @@ export default function TheSystem() {
 
               {activeTab === "growth" && (
                 <>
-                  <span className="mono-sm text-[#BF7340] uppercase tracking-wider font-semibold mb-2">SEO & DIGITAL MARKETING</span>
-                  <h3 className="heading-lg text-[#18170F] mb-4">Improve search visibility and build a consistent online presence.</h3>
-                  <p className="body-md text-[#5C5A52] mb-6">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-mono font-bold tracking-widest text-accent uppercase bg-accent-light px-2.5 py-1 rounded border border-accent/15 inline-block">SEO & DIGITAL MARKETING</span>
+                    <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-ink-1 leading-tight font-display">Improve search visibility and build a consistent online presence.</h3>
+                  </div>
+                  <p className="text-xs sm:text-sm text-ink-2 leading-relaxed font-semibold">
                     We work on local SEO, Google Business Profile optimization, social media management and paid advertising to help your business be found by the right people at the right time.
                   </p>
-                  <ul className="space-y-3.5">
+                  <ul className="space-y-3">
                     {[
                       "Local SEO and Google Business Profile optimization.",
                       "On-page SEO, technical SEO and content strategy.",
                       "Google Ads and Meta Ads management for qualified inquiries.",
                       "Monthly social media content creation and posting."
                     ].map((bullet, i) => (
-                      <li key={i} className="flex items-start gap-3 text-xs text-[#5C5A52]">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E8F0ED] text-[#2A4A3E]">
-                          <Check size={12} />
+                      <li key={i} className="flex items-start gap-3 text-[11px] font-semibold text-ink-2">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E2F2E9] text-[#137A3E] border border-[#A3E0BA]">
+                          <Check size={11} />
                         </span>
                         <span>{bullet}</span>
                       </li>
@@ -142,29 +149,32 @@ export default function TheSystem() {
 
             {/* Right Column: High Fidelity Operational Visual Flow Diagram */}
             <div className="flex items-center justify-center">
-              <div className="w-full max-w-[480px] rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-4 md:p-6 shadow-sm min-h-[260px] flex flex-col justify-center">
+              <div className="w-full max-w-[440px] rounded-xl border border-slate-200 bg-white p-4 md:p-6 shadow-sm min-h-[280px] flex flex-col justify-center text-left">
                 
                 {/* Visual 1: Website & Digital Presence */}
                 {activeTab === "digital" && (
                   <div className="space-y-4">
-                    <span className="mono-sm text-[#8C8A82] block text-center uppercase tracking-widest font-semibold border-b border-[#E2DDD5] pb-2">Website Preview</span>
+                    <span className="text-[9px] font-mono font-bold text-slate-400 block text-center uppercase tracking-widest border-b border-slate-100 pb-3">Website Preview</span>
                     <div className="flex flex-col gap-3 text-xs">
-                      <div className="bg-[#18170F] rounded-lg px-4 py-2.5 flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-[#2D6A4F]" />
-                        <span className="text-[#FAF5EF]/60 mono-sm text-[10px]">yourwebsite.com</span>
+                      <div className="bg-slate-900 rounded-lg px-3 py-2 flex items-center justify-between border border-slate-800">
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]" />
+                          <span className="text-slate-400 font-mono text-[9px] tracking-wide">yourwebsite.com</span>
+                        </div>
+                        <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <div className="bg-[#F4F2ED] rounded-lg p-3 border border-[#E2DDD5]">
-                        <div className="h-1.5 w-20 bg-[#BF7340]/40 rounded mb-2" />
-                        <div className="h-2.5 w-36 bg-[#18170F]/20 rounded mb-3" />
-                        <div className="h-1 w-28 bg-[#5C5A52]/20 rounded mb-1" />
-                        <div className="h-1 w-24 bg-[#5C5A52]/20 rounded mb-3" />
+                      <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200">
+                        <div className="h-1.5 w-14 bg-accent/40 rounded mb-2.5" />
+                        <div className="h-3.5 w-44 bg-slate-950/20 rounded mb-3" />
+                        <div className="h-1 w-32 bg-slate-400/20 rounded mb-1.5" />
+                        <div className="h-1 w-24 bg-slate-400/20 rounded mb-4" />
                         <div className="flex gap-2">
-                          <div className="h-7 w-24 bg-[#2A4A3E] rounded-md" />
-                          <div className="h-7 w-20 bg-transparent border border-[#E2DDD5] rounded-md" />
+                          <div className="h-7 w-20 bg-accent rounded-md" />
+                          <div className="h-7 w-16 bg-transparent border border-slate-200 rounded-md" />
                         </div>
                       </div>
                       <div className="flex justify-center mt-1">
-                        <span className="text-[10px] bg-[#F2E8DC] border border-[#BF7340]/25 text-[#BF7340] px-2.5 py-1 rounded-full font-semibold">
+                        <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
                           Mobile Responsive ✓ SEO Ready ✓
                         </span>
                       </div>
@@ -175,25 +185,25 @@ export default function TheSystem() {
                 {/* Visual 2: Kanban Pipeline Cards */}
                 {activeTab === "crm" && (
                   <div className="space-y-4">
-                    <span className="mono-sm text-[#8C8A82] block text-center uppercase tracking-widest font-semibold border-b border-[#E2DDD5] pb-2">Kanban Pipelines</span>
+                    <span className="text-[9px] font-mono font-bold text-slate-400 block text-center uppercase tracking-widest border-b border-slate-100 pb-3">Kanban Pipelines</span>
                     <div className="grid grid-cols-2 gap-3 text-left">
                       {/* Stage 1: Qualified */}
-                      <div className="rounded-lg bg-[#F4F2ED] border border-[#E2DDD5] p-3">
-                        <span className="text-[10px] text-[#8C8A82] uppercase font-bold tracking-wider">Qualified Leads</span>
-                        <div className="mt-2 bg-[#FFFFFF] border border-[#E2DDD5] rounded p-2.5 shadow-xs">
-                          <p className="text-xs font-semibold text-[#18170F]">Ananya Mishra</p>
-                          <p className="text-[10px] text-[#5C5A52] mt-0.5">Budget: 1.5Cr+</p>
-                          <span className="inline-block text-[8px] bg-[#E8F5EE] text-[#2D6A4F] font-bold px-1.5 py-0.5 rounded mt-1.5 uppercase">Real Estate</span>
+                      <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                        <span className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-wider block mb-2.5">Qualified Leads</span>
+                        <div className="bg-white border border-slate-200 rounded p-2.5 shadow-xs">
+                          <p className="text-[11px] font-bold text-slate-900">Ananya Mishra</p>
+                          <p className="text-[9px] font-mono text-slate-500 font-bold mt-0.5">Budget: 1.5Cr+</p>
+                          <span className="inline-block text-[8px] font-mono bg-accent-light text-accent border border-accent/15 font-bold px-1.5 py-0.5 rounded mt-2 uppercase tracking-wide">Real Estate</span>
                         </div>
                       </div>
                       
                       {/* Stage 2: Action Pending */}
-                      <div className="rounded-lg bg-[#F4F2ED] border border-[#E2DDD5] p-3">
-                        <span className="text-[10px] text-[#8C8A82] uppercase font-bold tracking-wider">Booked Demos</span>
-                        <div className="mt-2 bg-[#FFFFFF] border border-[#BF7340]/20 rounded p-2.5 shadow-xs ring-1 ring-[#BF7340]/10">
-                          <p className="text-xs font-semibold text-[#18170F]">Kabir Singh</p>
-                          <p className="text-[10px] text-[#5C5A52] mt-0.5">Fri · 11:30 AM</p>
-                          <span className="inline-block text-[8px] bg-[#F2E8DC] text-[#BF7340] font-bold px-1.5 py-0.5 rounded mt-1.5 uppercase">Coaching</span>
+                      <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                        <span className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-wider block mb-2.5">Booked Demos</span>
+                        <div className="bg-white border border-accent/20 rounded p-2.5 shadow-xs ring-1 ring-accent/10">
+                          <p className="text-[11px] font-bold text-slate-900">Kabir Singh</p>
+                          <p className="text-[9px] font-mono text-accent font-bold mt-0.5">Fri · 11:30 AM</p>
+                          <span className="inline-block text-[8px] font-mono bg-accent-light text-accent border border-accent/15 font-bold px-1.5 py-0.5 rounded mt-2 uppercase tracking-wide">Coaching</span>
                         </div>
                       </div>
                     </div>
@@ -203,26 +213,26 @@ export default function TheSystem() {
                 {/* Visual 3: SEO & Growth */}
                 {activeTab === "growth" && (
                   <div className="space-y-4">
-                    <span className="mono-sm text-[#8C8A82] block text-center uppercase tracking-widest font-semibold border-b border-[#E2DDD5] pb-2">Growth Dashboard</span>
-                    <div className="relative space-y-3 pt-2">
+                    <span className="text-[9px] font-mono font-bold text-slate-400 block text-center uppercase tracking-widest border-b border-slate-100 pb-3">Growth Dashboard</span>
+                    <div className="relative space-y-2.5 pt-1">
                       <div className="flex items-center gap-3 text-left">
-                        <span className="h-6 w-20 shrink-0 bg-[#E8F0ED] border border-[#2A4A3E]/20 text-[#2A4A3E] text-[10px] font-bold flex items-center justify-center rounded">Local SEO</span>
-                        <div className="flex-1 bg-[#F4F2ED] border border-[#E2DDD5] rounded p-2 text-[11px] text-[#5C5A52]">
-                          <span className="font-semibold text-[#18170F] block mb-0.5">Google Profile Optimized</span>
+                        <span className="h-6 w-20 shrink-0 bg-accent-light border border-accent/15 text-accent text-[9px] font-mono font-bold flex items-center justify-center rounded">Local SEO</span>
+                        <div className="flex-1 bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-[10px] font-semibold text-slate-600">
+                          <span className="font-bold text-slate-900 block text-[10.5px]">Google Profile Optimized</span>
                           Maps visibility improved
                         </div>
                       </div>
                       <div className="flex items-center gap-3 text-left">
-                        <span className="h-6 w-20 shrink-0 bg-[#F2E8DC] border border-[#BF7340]/20 text-[#BF7340] text-[10px] font-bold flex items-center justify-center rounded">Social</span>
-                        <div className="flex-1 bg-[#F4F2ED] border border-[#E2DDD5] rounded p-2 text-[11px] text-[#5C5A52]">
-                          <span className="font-semibold text-[#18170F] block mb-0.5">15 Posts This Month</span>
+                        <span className="h-6 w-20 shrink-0 bg-accent-light border border-accent/15 text-accent text-[9px] font-mono font-bold flex items-center justify-center rounded">Social</span>
+                        <div className="flex-1 bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-[10px] font-semibold text-slate-600">
+                          <span className="font-bold text-slate-900 block text-[10.5px]">15 Posts This Month</span>
                           Consistent brand presence
                         </div>
                       </div>
                       <div className="flex items-center gap-3 text-left">
-                        <span className="h-6 w-20 shrink-0 bg-[#EEEAE3] border border-[#8C8A82]/20 text-[#5C5A52] text-[10px] font-bold flex items-center justify-center rounded">Ads</span>
-                        <div className="flex-1 bg-[#F4F2ED] border border-[#E2DDD5] rounded p-2 text-[11px] text-[#5C5A52]">
-                          <span className="font-semibold text-[#18170F] block mb-0.5">Campaign Active</span>
+                        <span className="h-6 w-20 shrink-0 bg-slate-100 border border-slate-200 text-slate-600 text-[9px] font-mono font-bold flex items-center justify-center rounded">Ads</span>
+                        <div className="flex-1 bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-[10px] font-semibold text-slate-600">
+                          <span className="font-bold text-slate-900 block text-[10.5px]">Campaign Active</span>
                           Targeted reach improving
                         </div>
                       </div>

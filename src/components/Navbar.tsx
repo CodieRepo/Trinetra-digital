@@ -31,32 +31,32 @@ export default function Navbar() {
   }, []);
 
   const LogoMark = () => (
-    <Link to="/" className="flex items-center gap-3 group transition-opacity duration-200 hover:opacity-90" aria-label="Trinetra Home">
-      <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="16,3 3,27 29,27" stroke="#18170F" strokeWidth="2" strokeLinejoin="round" />
-        <circle cx="16" cy="11" r="2.5" fill="#BF7340" />
-        <circle cx="11.5" cy="20.5" r="2" fill="#18170F" />
-        <circle cx="20.5" cy="20.5" r="2" fill="#18170F" />
-        <line x1="16" y1="11" x2="11.5" y2="20.5" stroke="#18170F" strokeWidth="1" strokeDasharray="1 1" />
-        <line x1="16" y1="11" x2="20.5" y2="20.5" stroke="#18170F" strokeWidth="1" strokeDasharray="1 1" />
-        <line x1="11.5" y1="20.5" x2="20.5" y2="20.5" stroke="#18170F" strokeWidth="1" strokeDasharray="1 1" />
+    <Link to="/" className="flex items-center gap-2.5 group transition-opacity duration-200 hover:opacity-90" aria-label="Trinetra Home">
+      <svg viewBox="0 0 32 32" fill="none" className="h-6.5 w-6.5" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="16,3 3,27 29,27" stroke="var(--color-ink-1)" strokeWidth="2.5" strokeLinejoin="round" />
+        <circle cx="16" cy="11" r="2.5" fill="var(--color-accent)" />
+        <circle cx="11.5" cy="20.5" r="2" fill="var(--color-ink-1)" />
+        <circle cx="20.5" cy="20.5" r="2" fill="var(--color-ink-1)" />
+        <line x1="16" y1="11" x2="11.5" y2="20.5" stroke="var(--color-ink-1)" strokeWidth="1" strokeDasharray="1 1" />
+        <line x1="16" y1="11" x2="20.5" y2="20.5" stroke="var(--color-ink-1)" strokeWidth="1" strokeDasharray="1 1" />
+        <line x1="11.5" y1="20.5" x2="20.5" y2="20.5" stroke="var(--color-ink-1)" strokeWidth="1" strokeDasharray="1 1" />
       </svg>
-      <div className="flex flex-col leading-none">
-        <span className="text-[14px] font-semibold tracking-[0.2em] text-[#18170F] font-interface">TRINETRA</span>
-        <span className="text-[8px] tracking-[0.15em] text-[#5C5A52] mt-0.5 uppercase font-interface font-medium">Digital Solution</span>
+      <div className="flex flex-col leading-none text-left">
+        <span className="text-[13px] font-bold tracking-[0.25em] text-ink-1 font-display">TRINETRA</span>
+        <span className="text-[8px] tracking-[0.18em] text-ink-3 mt-0.5 uppercase font-mono font-medium">Digital Solution</span>
       </div>
     </Link>
   );
 
   return (
     <motion.header
-      initial={{ y: -12, opacity: 0 }}
+      initial={{ y: -8, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-200 ${
         scrolled
-          ? "bg-[#F9F8F5]/92 backdrop-blur-md border-b border-[#E2DDD5] shadow-sm"
-          : "bg-transparent border-b border-transparent"
+          ? "bg-white/80 backdrop-blur-md border-b border-border shadow-xs"
+          : "bg-white/50 backdrop-blur-xs border-b border-border-subtle"
       }`}
       style={{ height: "60px" }}
     >
@@ -64,12 +64,12 @@ export default function Navbar() {
         <LogoMark />
 
         {/* Desktop Nav */}
-        <div className="hidden items-center gap-6 md:flex">
+        <div className="hidden items-center gap-7 md:flex">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.label}
               to={link.href}
-              className="text-xs font-medium tracking-[0.06em] text-[#5C5A52] hover:text-[#18170F] transition-colors duration-200"
+              className="text-xs font-semibold tracking-wider text-ink-2 hover:text-accent transition-colors duration-150 animated-underline-link"
             >
               {link.label}
             </Link>
@@ -77,16 +77,16 @@ export default function Navbar() {
         </div>
 
         {/* Desktop CTA */}
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-5 md:flex">
           <a
             href={PHONE_TEL}
-            className="text-xs font-medium text-[#5C5A52] hover:text-[#18170F] transition-colors duration-200"
+            className="text-xs font-mono font-medium text-ink-2 hover:text-accent transition-colors duration-150"
           >
-            <span className="text-[#BF7340] font-semibold">{PHONE_NUMBER}</span>
+            <span>{PHONE_NUMBER}</span>
           </a>
           <Link
             to="/contact"
-            className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-[#2A4A3E] px-4 text-[#F9F8F5] transition-all hover:bg-[#1E3630]"
+            className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-cta text-white hover:bg-cta-hover transition-all"
           >
             Book Consultation
           </Link>
@@ -95,10 +95,10 @@ export default function Navbar() {
         {/* Mobile toggle */}
         <button
           onClick={() => setOpen(!open)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#18170F] md:hidden focus:outline-none"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-1 md:hidden focus:outline-none"
           aria-label="Toggle menu"
         >
-          {open ? <X size={20} /> : <Menu size={20} />}
+          {open ? <X size={18} /> : <Menu size={18} />}
         </button>
       </nav>
 
@@ -109,36 +109,36 @@ export default function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 top-[60px] z-40 bg-[#18170F]/20 backdrop-blur-sm md:hidden"
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 top-[60px] z-40 bg-slate-900/10 backdrop-blur-xs md:hidden"
             onClick={() => setOpen(false)}
           >
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-              className="absolute right-0 top-0 h-[calc(100vh-132px)] w-64 sm:w-72 bg-[#F9F8F5] border-l border-[#E2DDD5] p-5 shadow-xl overflow-y-auto"
+              transition={{ type: "spring", bounce: 0, duration: 0.25 }}
+              className="absolute right-0 top-0 h-[calc(100vh-60px)] w-64 sm:w-72 bg-white border-l border-border p-5 shadow-lg overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex flex-col gap-1">
-                <p className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82] mb-2 mt-2">Menu</p>
+              <div className="flex flex-col gap-1 text-left">
+                <p className="text-[9px] uppercase font-bold tracking-widest text-ink-4 mb-2 mt-1 font-mono">Navigation</p>
                 {NAV_LINKS.map((link) => (
                   <Link
                     key={link.label}
                     to={link.href}
                     onClick={() => setOpen(false)}
-                    className="py-2.5 text-sm font-medium text-[#5C5A52] hover:text-[#18170F] transition-colors border-b border-[#E2DDD5]/40"
+                    className="py-2.5 text-sm font-semibold text-ink-2 hover:text-accent transition-colors border-b border-border-subtle"
                   >
                     {link.label}
                   </Link>
                 ))}
 
-                <div className="mt-5 flex flex-col gap-3">
+                <div className="mt-8 flex flex-col gap-3">
                   <a
                     href={PHONE_TEL}
                     onClick={() => setOpen(false)}
-                    className="flex h-11 items-center justify-center rounded-lg border border-[#BF7340]/30 bg-[#FAF5EF] text-xs font-semibold text-[#BF7340] hover:bg-[#F2E8DC] transition-colors gap-2"
+                    className="flex h-10 items-center justify-center rounded-lg border border-border bg-surface-2 text-xs font-mono font-medium text-ink-2 hover:bg-surface-3 transition-colors gap-2"
                   >
                     📞 {PHONE_NUMBER}
                   </a>
@@ -147,14 +147,14 @@ export default function Navbar() {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setOpen(false)}
-                    className="flex h-11 items-center justify-center rounded-lg border border-[#E2DDD5] bg-[#F4F2ED] text-xs font-semibold text-[#18170F] hover:bg-[#EEEAE3] transition-colors"
+                    className="flex h-10 items-center justify-center rounded-lg border border-border bg-white text-xs font-semibold text-ink-2 hover:bg-surface-2 transition-colors"
                   >
                     💬 WhatsApp Us
                   </a>
                   <Link
                     to="/contact"
                     onClick={() => setOpen(false)}
-                    className="btn-primary-forest flex h-11 items-center justify-center rounded-lg text-xs font-semibold uppercase tracking-wider text-[#F9F8F5]"
+                    className="btn-primary-forest flex h-10 items-center justify-center rounded-lg text-xs font-semibold uppercase tracking-wider text-white"
                   >
                     Book Consultation
                   </Link>
