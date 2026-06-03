@@ -137,7 +137,7 @@ export default function ContactPage() {
       />
 
       {/* Hero */}
-      <section className="bg-[#F9F8F5] pt-20 pb-16 md:pt-28 md:pb-20 border-b border-[#E2DDD5]">
+      <section className="bg-surface-2 pt-20 pb-16 md:pt-28 md:pb-20 border-b border-border">
         <div className="main-container text-center max-w-[600px]">
           <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mixed-headline-eyebrow">
             Get In Touch
@@ -146,7 +146,7 @@ export default function ContactPage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="display-lg text-[#18170F] tracking-tight mb-4 mt-2"
+            className="display-lg text-ink-1 tracking-tight mb-4 mt-2 font-display font-bold"
           >
             Get a free business consultation
           </motion.h1>
@@ -154,7 +154,7 @@ export default function ContactPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="body-lg text-[#5C5A52]"
+            className="body-lg text-ink-2"
           >
             Tell us about your business — website, digital marketing, automation, CRM or software — and we'll walk you through how we can help, with no obligation.
           </motion.p>
@@ -162,7 +162,7 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Grid */}
-      <section className="bg-[#F4F2ED] py-20 md:py-28" aria-label="Contact Information and Form">
+      <section className="bg-surface-2 py-20 md:py-28" aria-label="Contact Information and Form">
         <div className="main-container grid gap-12 lg:grid-cols-[1fr_1.4fr] lg:items-start">
 
           {/* Left: Contact Details */}
@@ -173,71 +173,71 @@ export default function ContactPage() {
             className="flex flex-col gap-8"
           >
             <div>
-              <h2 className="heading-md text-[#18170F] mb-6">Reach us directly</h2>
+              <h2 className="heading-md text-ink-1 mb-6">Reach us directly</h2>
               <div className="flex flex-col gap-5">
                 <a
                   href={WA_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-start gap-4 p-5 bg-white border border-[#E2DDD5] rounded-xl hover:border-[#BF7340]/30 hover:shadow-sm transition-all"
+                  className="group flex items-start gap-4 p-5 bg-white border border-border/80 rounded-xl hover:border-accent/30 hover:shadow-sm transition-all"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E8F0ED] text-[#2A4A3E]">
-                    <MessageCircle size={20} />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                    <MessageCircle size={20} className="fill-emerald-600/10" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#18170F] mb-0.5">WhatsApp (Fastest)</p>
-                    <p className="text-sm text-[#5C5A52]">Chat with us for an instant reply. Usually within 15 minutes.</p>
-                    <p className="text-xs font-semibold text-[#BF7340] mt-1.5 group-hover:underline">Open WhatsApp →</p>
+                    <p className="text-xs font-bold text-ink-1 mb-0.5">WhatsApp (Fastest)</p>
+                    <p className="text-sm text-ink-2">Chat with us for an instant reply. Usually within 15 minutes.</p>
+                    <p className="text-xs font-semibold text-accent mt-1.5 group-hover:underline">Open WhatsApp →</p>
                   </div>
                 </a>
 
                 <a
                   href={PHONE_TEL}
-                  className="group flex items-start gap-4 p-5 bg-white border border-[#E2DDD5] rounded-xl hover:border-[#BF7340]/30 hover:shadow-sm transition-all"
+                  className="group flex items-start gap-4 p-5 bg-white border border-border/80 rounded-xl hover:border-accent/30 hover:shadow-sm transition-all"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F2E8DC] text-[#BF7340]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-light text-accent">
                     <Phone size={20} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#18170F] mb-0.5">Call Us</p>
-                    <p className="text-sm font-semibold text-[#5C5A52]">{PHONE_NUMBER}</p>
-                    <p className="text-xs text-[#8C8A82] mt-0.5">Mon–Sat, 9 AM – 7 PM IST</p>
+                    <p className="text-xs font-bold text-ink-1 mb-0.5">Call Us</p>
+                    <p className="text-sm font-semibold text-ink-2">{PHONE_NUMBER}</p>
+                    <p className="text-xs text-ink-4 mt-0.5">Mon–Sat, 9 AM – 7 PM IST</p>
                   </div>
                 </a>
 
                 <a
                   href={`mailto:${EMAIL}`}
-                  className="group flex items-start gap-4 p-5 bg-white border border-[#E2DDD5] rounded-xl hover:border-[#BF7340]/30 hover:shadow-sm transition-all"
+                  className="group flex items-start gap-4 p-5 bg-white border border-border/80 rounded-xl hover:border-accent/30 hover:shadow-sm transition-all"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EEEAE3] text-[#5C5A52]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-650">
                     <Mail size={20} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#18170F] mb-0.5">Email</p>
-                    <p className="text-sm text-[#5C5A52]">{EMAIL}</p>
-                    <p className="text-xs text-[#8C8A82] mt-0.5">We respond within 12 hours</p>
+                    <p className="text-xs font-bold text-ink-1 mb-0.5">Email</p>
+                    <p className="text-sm text-ink-2">{EMAIL}</p>
+                    <p className="text-xs text-ink-4 mt-0.5">We respond within 12 hours</p>
                   </div>
                 </a>
               </div>
             </div>
 
             {/* Location */}
-            <div className="flex flex-col gap-3 p-5 bg-white border border-[#E2DDD5] rounded-xl">
+            <div className="flex flex-col gap-3 p-5 bg-white border border-border/80 rounded-xl">
               <div className="flex items-center gap-3">
-                <MapPin size={16} className="text-[#BF7340] shrink-0" />
-                <p className="text-xs font-bold text-[#18170F]">Gorakhpur, Uttar Pradesh, India</p>
+                <MapPin size={16} className="text-accent shrink-0" />
+                <p className="text-xs font-bold text-ink-1">Gorakhpur, Uttar Pradesh, India</p>
               </div>
               <div className="flex items-center gap-3">
-                <Clock size={16} className="text-[#BF7340] shrink-0" />
-                <p className="text-xs text-[#5C5A52]">Mon–Sat · 9:00 AM – 7:00 PM IST</p>
+                <Clock size={16} className="text-accent shrink-0" />
+                <p className="text-xs text-ink-2">Mon–Sat · 9:00 AM – 7:00 PM IST</p>
               </div>
-              <p className="text-xs text-[#8C8A82] pl-7">We serve businesses across all of India remotely.</p>
+              <p className="text-xs text-ink-4 pl-7">We serve businesses across all of India remotely.</p>
             </div>
 
             {/* Legal Entity Notice */}
-            <div className="flex flex-col gap-2 p-5 bg-[#F9F8F5] border border-[#E2DDD5] rounded-xl">
-              <p className="text-[11px] font-bold text-[#18170F] uppercase tracking-wider">Legal Entity &amp; Operations</p>
-              <p className="text-[11px] leading-relaxed text-[#5C5A52] mb-0">
+            <div className="flex flex-col gap-2 p-5 bg-slate-50 border border-slate-200 rounded-xl">
+              <p className="text-[11px] font-bold text-ink-1 uppercase tracking-wider font-mono">Legal Entity &amp; Operations</p>
+              <p className="text-[11px] leading-relaxed text-ink-2 mb-0">
                 <strong>Trinetra Digital Solution</strong> is a brand owned and operated by <strong>Charulata Enterprises</strong>. All official contracts, invoices, payments, and legal transactions are conducted under the registered corporate name <strong>Charulata Enterprises</strong>.
               </p>
             </div>
@@ -248,7 +248,7 @@ export default function ContactPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white border border-[#E2DDD5] rounded-2xl p-8 md:p-10 shadow-xs"
+            className="bg-white border border-border/80 rounded-2xl p-8 md:p-10 shadow-xs"
           >
             {succeeded ? (
               /* ── Success State ── */
@@ -257,18 +257,18 @@ export default function ContactPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex flex-col items-center text-center py-8 gap-4"
               >
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F0ED] text-[#2A4A3E]">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
                   <CheckCircle size={32} />
                 </div>
-                <h2 className="heading-sm text-[#18170F]">Message sent!</h2>
-                <p className="text-sm text-[#5C5A52] max-w-[320px]">
+                <h2 className="heading-sm text-ink-1">Message sent!</h2>
+                <p className="text-sm text-ink-2 max-w-[320px]">
                   Thanks for reaching out. We've captured your details and our team will get back to you with a consultation schedule shortly!
                 </p>
                 <a
                   href={WA_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center gap-2 h-10 rounded-lg bg-[#2A4A3E] px-5 text-xs font-bold uppercase tracking-wider text-[#F9F8F5] hover:bg-[#1E3630] transition-colors"
+                  className="mt-2 inline-flex items-center gap-2 h-10 rounded-lg bg-slate-900 px-5 text-xs font-bold uppercase tracking-wider text-white hover:bg-slate-800 transition-colors"
                 >
                   Chat on WhatsApp too
                 </a>
@@ -276,8 +276,8 @@ export default function ContactPage() {
             ) : (
               /* ── Form ── */
               <>
-                <h2 className="heading-sm text-[#18170F] mb-2">Tell us about your business</h2>
-                <p className="text-xs text-[#5C5A52] mb-8">We'll get back within 2 hours on WhatsApp or email.</p>
+                <h2 className="heading-sm text-ink-1 mb-2">Tell us about your business</h2>
+                <p className="text-xs text-ink-3 mb-8">We'll get back within 2 hours on WhatsApp or email.</p>
 
                 <form
                   onSubmit={handleSubmit}
@@ -286,7 +286,7 @@ export default function ContactPage() {
                 >
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="flex flex-col gap-1.5">
-                      <label htmlFor="contact-name" className="text-[11px] font-semibold text-[#5C5A52] uppercase tracking-wider">Full Name *</label>
+                      <label htmlFor="contact-name" className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">Full Name *</label>
                       <input
                         id="contact-name"
                         type="text"
@@ -294,11 +294,11 @@ export default function ContactPage() {
                         required
                         autoComplete="name"
                         placeholder="Rajesh Kumar"
-                        className="h-11 rounded-lg border border-[#E2DDD5] bg-[#F9F8F5] px-3.5 text-sm text-[#18170F] placeholder-[#B8B5AE] focus:outline-none focus:ring-2 focus:ring-[#BF7340]/30 focus:border-[#BF7340] transition-all"
+                        className="h-11 rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label htmlFor="contact-phone" className="text-[11px] font-semibold text-[#5C5A52] uppercase tracking-wider">WhatsApp / Phone Number *</label>
+                      <label htmlFor="contact-phone" className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">WhatsApp / Phone Number *</label>
                       <input
                         id="contact-phone"
                         type="tel"
@@ -306,31 +306,31 @@ export default function ContactPage() {
                         required
                         autoComplete="tel"
                         placeholder="+91 98765 43210"
-                        className="h-11 rounded-lg border border-[#E2DDD5] bg-[#F9F8F5] px-3.5 text-sm text-[#18170F] placeholder-[#B8B5AE] focus:outline-none focus:ring-2 focus:ring-[#BF7340]/30 focus:border-[#BF7340] transition-all"
+                        className="h-11 rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                       />
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="contact-business" className="text-[11px] font-semibold text-[#5C5A52] uppercase tracking-wider">Business Name</label>
+                    <label htmlFor="contact-business" className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">Business Name</label>
                     <input
                       id="contact-business"
                       type="text"
                       name="business"
                       autoComplete="organization"
                       placeholder="Your Business Name"
-                      className="h-11 rounded-lg border border-[#E2DDD5] bg-[#F9F8F5] px-3.5 text-sm text-[#18170F] placeholder-[#B8B5AE] focus:outline-none focus:ring-2 focus:ring-[#BF7340]/30 focus:border-[#BF7340] transition-all"
+                      className="h-11 rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="contact-service" className="text-[11px] font-semibold text-[#5C5A52] uppercase tracking-wider">Service Interested In *</label>
+                    <label htmlFor="contact-service" className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">Service Interested In *</label>
                     <select
                       id="contact-service"
                       name="service"
                       required
                       defaultValue={presetService}
-                      className="h-11 rounded-lg border border-[#E2DDD5] bg-[#F9F8F5] px-3.5 text-sm text-[#18170F] focus:outline-none focus:ring-2 focus:ring-[#BF7340]/30 focus:border-[#BF7340] transition-all cursor-pointer"
+                      className="h-11 rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all cursor-pointer font-semibold"
                     >
                       <option value="">Select a service…</option>
                       <option value="Website Development">Website Development</option>
@@ -345,13 +345,13 @@ export default function ContactPage() {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="contact-message" className="text-[11px] font-semibold text-[#5C5A52] uppercase tracking-wider">Tell us about your business</label>
+                    <label htmlFor="contact-message" className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">Tell us about your business</label>
                     <textarea
                       id="contact-message"
                       name="message"
                       rows={4}
                       placeholder="What does your business do? How many leads do you get per day? What's your biggest challenge?"
-                      className="rounded-lg border border-[#E2DDD5] bg-[#F9F8F5] px-3.5 py-3 text-sm text-[#18170F] placeholder-[#B8B5AE] focus:outline-none focus:ring-2 focus:ring-[#BF7340]/30 focus:border-[#BF7340] transition-all resize-none"
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none"
                     />
                   </div>
 
@@ -361,7 +361,7 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="mt-2 btn-primary-forest w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="mt-2 btn-primary-forest w-full disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {submitting ? (
                       <><Loader2 size={15} className="animate-spin" /> Sending…</>
@@ -370,9 +370,9 @@ export default function ContactPage() {
                     )}
                   </button>
 
-                  <p className="text-center text-[11px] text-[#8C8A82]">
+                  <p className="text-center text-[11px] text-ink-4">
                     Or reach us instantly on{" "}
-                    <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="text-[#BF7340] font-semibold hover:underline">
+                    <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="text-accent font-semibold hover:underline">
                       WhatsApp
                     </a>{" "}
                     · {PHONE_NUMBER}
@@ -388,16 +388,16 @@ export default function ContactPage() {
       <LocationMap variant="full" />
 
       {/* Related links */}
-      <section className="bg-[#F9F8F5] py-12 border-t border-[#E2DDD5]">
+      <section className="bg-surface-2 py-12 border-t border-border">
         <div className="main-container text-center">
-          <p className="text-xs text-[#8C8A82] mb-4">Explore what we can build for you</p>
+          <p className="text-xs text-slate-450 mb-4">Explore what we can build for you</p>
           <div className="flex flex-wrap gap-3 justify-center">
             {[
               { label: "Website Development", href: "/services/website-development" },
               { label: "SEO & Digital Marketing", href: "/services/digital-marketing" },
               { label: "View All Packages", href: "/pricing" },
             ].map((l) => (
-              <Link key={l.href} to={l.href} className="text-xs font-semibold text-[#BF7340] border border-[#BF7340]/20 bg-[#F2E8DC] px-4 py-2 rounded-full hover:bg-[#F2E8DC]/80 transition-colors">
+              <Link key={l.href} to={l.href} className="text-xs font-semibold text-accent border border-accent/20 bg-accent-light px-4 py-2 rounded-full hover:bg-accent-light/80 transition-colors">
                 {l.label} →
               </Link>
             ))}
@@ -414,7 +414,7 @@ export default function ContactPage() {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl px-5 py-4 shadow-xl backdrop-blur-md border ${
               toast.type === 'success'
-                ? 'bg-[#E8F0ED]/90 text-[#2A4A3E] border-emerald-300'
+                ? 'bg-emerald-50/95 text-emerald-800 border-emerald-250'
                 : 'bg-red-50/90 text-red-800 border-red-200'
             }`}
           >

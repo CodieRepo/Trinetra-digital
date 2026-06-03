@@ -29,11 +29,11 @@ export default function WhatsAppFloat() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] px-4 py-2.5 text-xs text-[#18170F] shadow-lg text-left"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-800 shadow-lg text-left"
                 style={{ minWidth: "180px" }}
               >
-                <p className="font-bold text-[#18170F]">Operational Consult</p>
-                <p className="text-[#5C5A52] mt-0.5">Ask about the 7-day build</p>
+                <p className="font-bold text-slate-900">Operational Consult</p>
+                <p className="text-slate-500 mt-0.5">Ask about the 7-day build</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -49,12 +49,12 @@ export default function WhatsAppFloat() {
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
             onClick={() => setShowTooltip(false)}
-            className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#2A4A3E] text-[#F9F8F5] shadow-md border border-[#E2DDD5]/20"
+            className="relative flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-md border border-white/10"
           >
-            {/* Glowing Copper Pulse Ring */}
-            <span className="absolute inset-0 rounded-full border border-[#BF7340] opacity-40 animate-ping" />
+            {/* Glowing Accent Pulse Ring */}
+            <span className="absolute inset-0 rounded-full border border-accent opacity-40 animate-ping" />
             
-            <MessageCircle size={20} className="fill-[#F9F8F5]/10" />
+            <MessageCircle size={20} className="fill-white/10" />
           </motion.a>
 
         </div>

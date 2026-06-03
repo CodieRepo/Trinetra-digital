@@ -15,29 +15,29 @@ export default function NotFoundPage() {
         canonical="https://trinetradigitalsolution.com/404"
         noindex={true}
       />
-      <section className="min-h-screen bg-[#F9F8F5] flex items-center justify-center py-20">
+      <section className="min-h-screen bg-surface-2 flex items-center justify-center py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-[480px] mx-auto px-6"
         >
-          <span className="font-display text-[120px] leading-none text-[#BF7340] opacity-15 select-none block font-semibold mb-4">
+          <span className="font-display text-[120px] leading-none text-accent opacity-15 select-none block font-semibold mb-4">
             404
           </span>
-          <h1 className="display-md text-[#18170F] mb-4 -mt-6">Page not found</h1>
-          <p className="body-md text-[#5C5A52] mb-10">
+          <h1 className="display-md text-ink-1 mb-4 -mt-6 font-display font-bold">Page not found</h1>
+          <p className="body-md text-ink-2 mb-10 font-semibold">
             The page you're looking for doesn't exist or has been moved. Let's get you back on track.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link
               to="/"
-              className="inline-flex items-center gap-2 h-11 rounded-lg bg-[#2A4A3E] px-6 text-xs font-bold uppercase tracking-wider text-[#F9F8F5] hover:bg-[#1E3630] transition-colors"
+              className="inline-flex items-center gap-2 h-11 rounded-lg bg-cta px-6 text-xs font-bold uppercase tracking-wider text-white hover:bg-cta-hover transition-colors cursor-pointer"
             >
               <Home size={14} /> Go Home
             </Link>
             <Link
               to="/contact"
-              className="inline-flex items-center gap-2 h-11 rounded-lg border border-[#E2DDD5] bg-white px-6 text-xs font-semibold text-[#18170F] hover:bg-[#F4F2ED] transition-colors"
+              className="inline-flex items-center gap-2 h-11 rounded-lg border border-border bg-white px-6 text-xs font-semibold text-ink-1 hover:bg-surface-2 transition-colors"
             >
               Contact Us <ArrowRight size={14} />
             </Link>

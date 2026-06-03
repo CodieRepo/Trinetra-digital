@@ -32,13 +32,13 @@ export default function Hero() {
     <section
       id="main-content"
       aria-label="Hero — Trinetra Digital Solution — Business Growth & Automation Partner"
-      className="relative overflow-hidden bg-[#F9F8F5] pt-[100px] pb-16 md:pt-[160px] md:pb-24"
+      className="relative overflow-hidden bg-surface-2 pt-[100px] pb-16 md:pt-[160px] md:pb-24"
       itemScope
       itemType="https://schema.org/WebPageElement"
     >
       {/* Structural visual quiet backdrop */}
       <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style={{
-        backgroundImage: `radial-gradient(#BF7340 1px, transparent 1px)`,
+        backgroundImage: `radial-gradient(var(--color-accent) 1px, transparent 1px)`,
         backgroundSize: "24px 24px"
       }} />
 
@@ -60,10 +60,10 @@ export default function Hero() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-            className="display-xl text-[#18170F] tracking-tight mb-6 font-display"
+            className="display-xl text-ink-1 tracking-tight mb-6 font-display"
           >
             Build, Grow, <br />
-            <span className="italic text-[#BF7340]">Automate</span> & Scale <br />
+            <span className="italic text-accent">Automate</span> & Scale <br />
             Your Business.
           </motion.h1>
 
@@ -72,7 +72,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-            className="body-xl text-[#5C5A52] mb-10 max-w-[620px]"
+            className="body-xl text-ink-3 mb-10 max-w-[620px]"
           >
             Professional Websites, SEO, Social Media Management, CRM Systems, Business Automation and Custom Software Solutions — everything your business needs to establish a strong digital presence, manage operations and grow efficiently.
           </motion.p>
@@ -97,7 +97,7 @@ export default function Hero() {
               href={WA_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-semibold text-[#BF7340] hover:text-[#A6612E] transition-colors flex items-center gap-1.5"
+              className="text-sm font-semibold text-accent hover:text-accent-hover transition-colors flex items-center gap-1.5"
             >
               💬 WhatsApp Us
             </a>
@@ -113,21 +113,21 @@ export default function Hero() {
             {/* Minimal harmonized avatar stack */}
             <div className="flex -space-x-2">
               {[
-                { text: "R", bg: "bg-[#BF7340]/10 text-[#BF7340]" },
-                { text: "A", bg: "bg-[#2A4A3E]/10 text-[#2A4A3E]" },
-                { text: "K", bg: "bg-[#18170F]/10 text-[#18170F]" },
-                { text: "D", bg: "bg-[#BF7340]/20 text-[#8F5226]" },
+                { text: "R", bg: "bg-accent/10 text-accent" },
+                { text: "A", bg: "bg-emerald-500/10 text-emerald-600" },
+                { text: "K", bg: "bg-ink-1/10 text-ink-1" },
+                { text: "D", bg: "bg-indigo-600/10 text-indigo-700" },
               ].map((av, i) => (
                 <div
                   key={i}
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#F9F8F5] text-[10px] font-semibold ${av.bg}`}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface-2 text-[10px] font-semibold ${av.bg}`}
                 >
                   {av.text}
                 </div>
               ))}
             </div>
-            <span className="text-xs font-medium text-[#5C5A52] font-interface tracking-[0.02em]">
-              <span className="font-semibold text-[#18170F]">Gorakhpur, UP</span> — serving businesses across India
+            <span className="text-xs font-medium text-ink-3 font-interface tracking-[0.02em]">
+              <span className="font-semibold text-ink-1">Gorakhpur, UP</span> — serving businesses across India
             </span>
           </motion.div>
         </div>
@@ -139,19 +139,19 @@ export default function Hero() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-            className="relative w-full max-w-[440px] rounded-2xl border border-[#E2DDD5] bg-[#F4F2ED] p-5 md:p-6 shadow-sm overflow-hidden"
+            className="relative w-full max-w-[440px] rounded-2xl border border-border bg-surface-1 p-5 md:p-6 shadow-sm overflow-hidden"
             style={{ minHeight: "380px" }}
           >
             <div className="absolute top-3 left-4 flex gap-1.5 opacity-60">
-              <span className="h-2 w-2 rounded-full bg-[#18170F]/10" />
-              <span className="h-2 w-2 rounded-full bg-[#18170F]/10" />
-              <span className="h-2 w-2 rounded-full bg-[#18170F]/10" />
+              <span className="h-2 w-2 rounded-full bg-ink-1/10" />
+              <span className="h-2 w-2 rounded-full bg-ink-1/10" />
+              <span className="h-2 w-2 rounded-full bg-ink-1/10" />
             </div>
             
-            <div className="mb-6 mt-1 flex justify-between items-center border-b border-[#E2DDD5] pb-3">
-              <span className="mono-sm text-[#8C8A82] tracking-wider uppercase font-semibold">BUSINESS WORKFLOW</span>
-              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2D6A4F] bg-[#E8F5EE] px-2 py-0.5 rounded-full pulse-success-dot">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#2D6A4F]" />
+            <div className="mb-6 mt-1 flex justify-between items-center border-b border-border pb-3">
+              <span className="mono-sm text-ink-4 tracking-wider uppercase font-semibold">BUSINESS WORKFLOW</span>
+              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-success bg-success-light px-2 py-0.5 rounded-full pulse-success-dot">
+                <span className="h-1.5 w-1.5 rounded-full bg-success" />
                 Active System
               </span>
             </div>
@@ -166,17 +166,17 @@ export default function Hero() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.4 }}
-                  className="flex items-start gap-3 rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-3 shadow-xs"
+                  className="flex items-start gap-3 rounded-xl border border-border bg-base p-3 shadow-xs"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E8F5EE] text-[#2D6A4F] shrink-0 pulse-success-dot">
-                    <MessageSquare size={14} className="fill-[#2D6A4F]/10" />
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-success-light text-success shrink-0 pulse-success-dot">
+                    <MessageSquare size={14} className="fill-success/10" />
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center">
-                      <span className="text-[11px] font-semibold text-[#18170F]">New Lead Inquiry</span>
-                      <span className="text-[9px] text-[#8C8A82] mono-sm">11:02 AM</span>
+                      <span className="text-[11px] font-semibold text-ink-1">New Lead Inquiry</span>
+                      <span className="text-[9px] text-ink-4 mono-sm">11:02 AM</span>
                     </div>
-                    <p className="text-[12px] text-[#5C5A52] mt-0.5 truncate italic">"Hi, I need a website and lead management system for my clinic..."</p>
+                    <p className="text-[12px] text-ink-3 mt-0.5 truncate italic">"Hi, I need a website and lead management system for my clinic..."</p>
                   </div>
                 </motion.div>
               )}
@@ -196,19 +196,19 @@ export default function Hero() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4 }}
-                  className="flex items-start gap-3 rounded-xl border border-[#BF7340]/30 bg-[#FFFFFF] p-3 shadow-xs ring-1 ring-[#BF7340]/10"
+                  className="flex items-start gap-3 rounded-xl border border-accent/30 bg-base p-3 shadow-xs ring-1 ring-accent/10"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F2E8DC] text-[#BF7340] shrink-0">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-light text-accent shrink-0">
                     <Sparkles size={14} />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-semibold text-[#18170F]">AI Qualification</span>
-                    <p className="text-[12px] text-[#BF7340] font-medium mono-sm mt-0.5">
+                    <span className="text-[11px] font-semibold text-ink-1">AI Qualification</span>
+                    <p className="text-[12px] text-accent font-medium mono-sm mt-0.5">
                       Matching services to requirements...
                     </p>
                     <div className="flex gap-1.5 mt-1.5">
-                      <span className="text-[9px] bg-[#FAF5EF] text-[#BF7340] px-1.5 py-0.5 rounded border border-[#E2DDD5]">Website ✓</span>
-                      <span className="text-[9px] bg-[#FAF5EF] text-[#BF7340] px-1.5 py-0.5 rounded border border-[#E2DDD5]">CRM Setup ✓</span>
+                      <span className="text-[9px] bg-accent-light text-accent px-1.5 py-0.5 rounded border border-border-subtle">Website ✓</span>
+                      <span className="text-[9px] bg-accent-light text-accent px-1.5 py-0.5 rounded border border-border-subtle">CRM Setup ✓</span>
                     </div>
                   </div>
                 </motion.div>
@@ -229,16 +229,16 @@ export default function Hero() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4 }}
-                  className="flex items-start gap-3 rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-3 shadow-xs"
+                  className="flex items-start gap-3 rounded-xl border border-border bg-base p-3 shadow-xs"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#EEEAE3] text-[#18170F] shrink-0">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-surface-3 text-ink-1 shrink-0">
                     <FolderKanban size={14} />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-semibold text-[#18170F]">Lead Captured in CRM</span>
-                    <div className="flex items-center justify-between mt-1 text-[12px] text-[#5C5A52]">
-                      <span className="font-medium text-[#18170F]">Dr. Sharma's Clinic</span>
-                      <span className="text-[#8C8A82]">Healthcare</span>
+                    <span className="text-[11px] font-semibold text-ink-1">Lead Captured in CRM</span>
+                    <div className="flex items-center justify-between mt-1 text-[12px] text-ink-3">
+                      <span className="font-medium text-ink-1">Dr. Sharma's Clinic</span>
+                      <span className="text-ink-4">Healthcare</span>
                     </div>
                   </div>
                 </motion.div>
@@ -259,14 +259,14 @@ export default function Hero() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4 }}
-                  className="flex items-start gap-3 rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-3 shadow-xs"
+                  className="flex items-start gap-3 rounded-xl border border-border bg-base p-3 shadow-xs"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E8F0ED] text-[#2A4A3E] shrink-0">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-success-light text-success shrink-0">
                     <CheckCircle2 size={14} />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-semibold text-[#18170F]">Proposal & Follow-up Sent</span>
-                    <p className="text-[11px] text-[#2D6A4F] bg-[#E8F5EE] border border-[#2D6A4F]/10 rounded px-2 py-1 mt-1 font-medium">
+                    <span className="text-[11px] font-semibold text-ink-1">Proposal & Follow-up Sent</span>
+                    <p className="text-[11px] text-success bg-success-light border border-success/10 rounded px-2 py-1 mt-1 font-medium">
                       "Consultation scheduled ✓ Growth Package proposal sent"
                     </p>
                   </div>
@@ -288,14 +288,14 @@ export default function Hero() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4 }}
-                  className="flex items-start gap-3 rounded-xl border border-[#2D6A4F]/20 bg-[#E8F5EE] p-3 shadow-sm"
+                  className="flex items-start gap-3 rounded-xl border border-success/20 bg-success-light p-3 shadow-sm"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#2D6A4F] text-[#F9F8F5] shrink-0">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-success text-base shrink-0">
                     <TrendingUp size={14} />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-semibold text-[#2D6A4F]">Project Onboarded</span>
-                    <p className="text-[13px] font-bold text-[#18170F] mt-0.5">Website + CRM + SEO Setup</p>
+                    <span className="text-[11px] font-semibold text-success">Project Onboarded</span>
+                    <p className="text-[13px] font-bold text-ink-1 mt-0.5">Website + CRM + SEO Setup</p>
                   </div>
                 </motion.div>
               )}

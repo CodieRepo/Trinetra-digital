@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Phone, MessageCircle, ArrowRight, MapPin, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
+import LazyVideo from "./LazyVideo";
 
 const WA_NUMBER = "919334757759";
 const PHONE_TEL = "tel:+919334757759";
@@ -15,50 +16,96 @@ export function FinalCTAFooter() {
       {/* Structural visual quiet backdrop */}
       <div className="absolute inset-0 z-0 grid-pattern opacity-[0.02] pointer-events-none" />
 
+      {/* Floating abstract decorative gradient blobs for premium tech feel */}
+      <motion.div
+        animate={{
+          y: [0, -15, 0],
+          x: [0, 10, 0]
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        className="absolute top-24 left-[10%] w-72 h-72 rounded-full bg-accent-light/10 blur-[80px] pointer-events-none z-0"
+      />
+      <motion.div
+        animate={{
+          y: [0, 20, 0],
+          x: [0, -10, 0]
+        }}
+        transition={{
+          duration: 10,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        className="absolute bottom-12 right-[15%] w-96 h-96 rounded-full bg-emerald-100/10 blur-[100px] pointer-events-none z-0"
+      />
+
       {/* CTA Block */}
-      <div className="main-container max-w-[680px] mx-auto text-center pt-16 md:pt-24 pb-16 md:pb-24 border-b border-border relative z-10">
-        <span className="text-[10px] font-mono font-bold tracking-[0.25em] text-accent uppercase mb-4 block">
-          Your Complete Digital Growth Partner
-        </span>
-        <h2 className="text-[32px] sm:text-[44px] md:text-[54px] font-bold leading-[1.1] text-ink-1 tracking-tight mb-5 md:mb-6">
-          Build. Grow. <br />
-          <span className="font-editorial italic text-accent">Automate</span> &amp; Scale.
-        </h2>
-        <p className="text-sm sm:text-base leading-relaxed text-ink-2 max-w-[500px] mx-auto mb-10 font-medium">
-          Professional websites, SEO, social media, CRM systems, automation and custom software — everything your business needs to establish a strong online presence and operate more efficiently.
-        </p>
+      <div className="main-container max-w-[1100px] mx-auto pt-16 md:pt-24 pb-16 md:pb-24 border-b border-border relative z-10">
+        <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-16 items-center">
+          
+          {/* Left Column: Text & Buttons */}
+          <div className="text-left space-y-6">
+            <span className="text-[10px] font-mono font-bold tracking-[0.25em] text-accent uppercase block">
+              Your Complete Digital Growth Partner
+            </span>
+            <h2 className="text-[32px] sm:text-[44px] md:text-[52px] font-bold leading-[1.1] text-ink-1 tracking-tight">
+              Build. Grow. <br />
+              <span className="font-editorial italic text-accent">Automate</span> &amp; Scale.
+            </h2>
+            <p className="text-xs sm:text-sm leading-relaxed text-ink-2 max-w-xl font-semibold">
+              Professional websites, SEO, social media, CRM systems, automation and custom software — everything your business needs to establish a strong online presence and operate more efficiently.
+            </p>
 
-        <div className="max-w-[440px] mx-auto" role="group" aria-label="Contact Trinetra Digital Solution">
-          <motion.a
-            href={WA_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            id="final-cta-whatsapp"
-            aria-label="Chat with Trinetra Digital Solution on WhatsApp"
-            whileHover={{ scale: 1.01, y: -0.5 }}
-            whileTap={{ scale: 0.99 }}
-            className="flex w-full items-center justify-center gap-3 h-12 rounded-lg bg-accent text-white font-semibold text-xs tracking-wider uppercase hover:bg-accent-hover transition-colors mb-3 shadow-sm cursor-pointer"
-          >
-            <MessageCircle size={15} className="fill-white/10" />
-            WhatsApp Us for a Consultation
-            <ArrowRight size={13} />
-          </motion.a>
+            <div className="max-w-[400px] pt-4" role="group" aria-label="Contact Trinetra Digital Solution">
+              <motion.a
+                href={WA_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                id="final-cta-whatsapp"
+                aria-label="Chat with Trinetra Digital Solution on WhatsApp"
+                whileHover={{ scale: 1.01, y: -0.5 }}
+                whileTap={{ scale: 0.99 }}
+                className="flex w-full items-center justify-center gap-3 h-12 rounded-lg bg-accent text-white font-semibold text-xs tracking-wider uppercase hover:bg-accent-hover transition-colors mb-3 shadow-sm cursor-pointer text-center"
+              >
+                <MessageCircle size={15} className="fill-white/10" />
+                WhatsApp Us for a Consultation
+                <ArrowRight size={13} />
+              </motion.a>
 
-          <motion.a
-            href={PHONE_TEL}
-            id="final-cta-call"
-            aria-label="Call Trinetra Digital Solution"
-            whileHover={{ scale: 1.01, y: -0.5 }}
-            whileTap={{ scale: 0.99 }}
-            className="flex w-full items-center justify-center gap-3 h-11 rounded-lg border border-border text-ink-2 font-mono font-medium text-xs tracking-wider hover:bg-slate-50 transition-colors mb-6 cursor-pointer"
-          >
-            <Phone size={13} />
-            {PHONE_NUMBER} — Call Now
-          </motion.a>
+              <motion.a
+                href={PHONE_TEL}
+                id="final-cta-call"
+                aria-label="Call Trinetra Digital Solution"
+                whileHover={{ scale: 1.01, y: -0.5 }}
+                whileTap={{ scale: 0.99 }}
+                className="flex w-full items-center justify-center gap-3 h-11 rounded-lg border border-border text-ink-2 font-mono font-medium text-xs tracking-wider hover:bg-slate-50 transition-colors mb-6 cursor-pointer text-center"
+              >
+                <Phone size={13} />
+                {PHONE_NUMBER} — Call Now
+              </motion.a>
 
-          <p className="text-[10px] text-ink-4 font-mono font-medium tracking-wide">
-            We respond within 30 minutes
-          </p>
+              <p className="text-[10px] text-ink-4 font-mono font-medium tracking-wide">
+                We respond within 30 minutes
+              </p>
+            </div>
+          </div>
+
+          {/* Right Column: Split transformation visual panel */}
+          <div className="w-full max-w-[440px] mx-auto lg:mr-0 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm relative group transition-all duration-300 hover:border-slate-300 hover:shadow-md">
+            <div className="flex items-center justify-between border-b border-slate-150 pb-2 mb-3">
+              <span className="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-widest">Active Scale Integration</span>
+              <div className="flex gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-200" />
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-200" />
+              </div>
+            </div>
+            <div className="relative rounded-lg overflow-hidden border border-slate-150 aspect-video shadow-inner">
+              <LazyVideo src="/Build Growth Automate.mp4" className="w-full h-full" />
+            </div>
+          </div>
         </div>
       </div>
 

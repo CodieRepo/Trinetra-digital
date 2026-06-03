@@ -24,8 +24,8 @@ export default function PricingPage() {
         schema={SCHEMA}
       />
 
-      {/* Page Hero - Original UI Style */}
-      <section className="bg-[#F9F8F5] pt-20 pb-6 md:pt-28 md:pb-10 border-b border-[#E2DDD5]">
+      {/* Page Hero */}
+      <section className="bg-white pt-20 pb-6 md:pt-28 md:pb-10 border-b border-border">
         <div className="main-container text-center max-w-[600px]">
           <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mixed-headline-eyebrow">
             Simple, Transparent Pricing
@@ -34,7 +34,7 @@ export default function PricingPage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="display-lg text-[#18170F] tracking-tight mt-2 mb-4"
+            className="display-lg text-ink-1 tracking-tight mt-2 mb-4 font-display font-bold"
           >
             Growth packages &amp; add-on services pricing
           </motion.h1>
@@ -42,20 +42,20 @@ export default function PricingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="body-lg text-[#5C5A52]"
+            className="body-lg text-ink-2 font-medium"
           >
             Transparent pricing across all services. Choose a complete package or individual add-on services — no hidden fees and no unrealistic promises.
           </motion.p>
         </div>
       </section>
 
-      {/* Reuse the custom tabbed Pricing component (updated to old UI style) */}
+      {/* Reuse the custom tabbed Pricing component */}
       <Pricing />
 
-      {/* FAQ Strip - Original UI Style */}
-      <section className="bg-[#F9F8F5] py-16 border-t border-[#E2DDD5]">
+      {/* FAQ Strip */}
+      <section className="bg-surface-2 py-16 border-t border-border">
         <div className="main-container max-w-[680px]">
-          <h2 className="heading-md text-[#18170F] mb-8 text-center">Common questions about pricing</h2>
+          <h2 className="heading-md text-ink-1 mb-8 text-center font-semibold">Common questions about pricing</h2>
           <div className="flex flex-col gap-6 text-left">
             {[
               { q: "What does the one-time website setup include?", a: "It includes custom wireframing, professional layout design, high-speed coding, secure contact form triggers, basic search engine setups, and complete domain/hosting configurations guidance." },
@@ -63,14 +63,14 @@ export default function PricingPage() {
               { q: "How are milestone payments structured?", a: "For custom developments, we bill 50% upfront to commit server staging and initial design resources, and 50% upon final client sign-off, prior to actual live domain launching." },
               { q: "Is there a long-term contract commitment?", a: "No contract locks. Monthly support options operate on simple month-to-month upfront retainer cycles. You can cancel at any point with a 7-day written notice." },
             ].map((faq, i) => (
-              <div key={i} className="border-b border-[#E2DDD5] pb-6">
-                <h3 className="text-sm font-semibold text-[#18170F] mb-2">{faq.q}</h3>
-                <p className="text-sm text-[#5C5A52]">{faq.a}</p>
+              <div key={i} className="border-b border-border/80 pb-6">
+                <h3 className="text-sm font-semibold text-ink-1 mb-2">{faq.q}</h3>
+                <p className="text-sm text-ink-2 font-semibold leading-relaxed">{faq.a}</p>
               </div>
             ))}
           </div>
           <div className="mt-10 text-center">
-            <Link to="/contact" className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-[#2A4A3E] px-6 text-[#F9F8F5] hover:bg-[#1E3630] transition-colors">
+            <Link to="/contact" className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-cta px-6 text-white hover:bg-cta-hover transition-colors cursor-pointer">
               Book Free Consultation — No Commitment
             </Link>
           </div>

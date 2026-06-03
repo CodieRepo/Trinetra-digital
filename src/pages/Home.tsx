@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -29,10 +29,14 @@ import Pricing from "../components/Pricing";
 import TheProblem from "../components/TheProblem";
 import TheSystem from "../components/TheSystem";
 import Testimonials from "../components/Testimonials";
+import LazyVideo from "../components/LazyVideo";
+import ScrollVideo from "../components/ScrollVideo";
 
 export default function Home() {
   const location = useLocation();
   const [demoStep, setDemoStep] = useState(0);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const whyTrinetraRef = useRef<HTMLDivElement>(null);
 
   // Auto-cycle the live lead qualification product demo in hero
   useEffect(() => {
@@ -104,7 +108,7 @@ export default function Home() {
         <div className="absolute inset-0 grid-pattern opacity-[0.02] pointer-events-none" />
         
         {/* ── 1. HIGH-TRUST HERO ── */}
-        <section className="relative z-10 max-w-[1200px] mx-auto px-4 md:px-10 pt-20 pb-24 border-b border-border/80">
+        <section ref={heroRef} className="relative z-10 max-w-[1200px] mx-auto px-4 md:px-10 pt-20 pb-24 border-b border-border/80">
           <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-16 items-center">
             
             {/* Left side positioning */}
@@ -215,110 +219,32 @@ export default function Home() {
               </motion.div>
             </div>
 
-            {/* Right Side: Interactive Business Ecosystem Flow Diagram (High-Trust Value Preview) */}
+            {/* Right Side: Interactive Browser Mockup with Scroll-Synced Video */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-white border border-border rounded-xl p-5 md:p-6 shadow-sm relative overflow-hidden"
+              transition={{ duration: 0.6, delay: 0.15 }}
+              className="bg-white border border-border rounded-xl overflow-hidden shadow-md relative group aspect-video w-full"
             >
-              <div className="absolute top-3 left-4 flex gap-1.5 opacity-60">
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-              </div>
-
-              <div className="mb-6 mt-1 flex justify-between items-center border-b border-slate-150 pb-3 text-left">
-                <span className="text-[9px] font-mono font-bold text-ink-4 uppercase tracking-widest">Business Ecosystem Flow</span>
-                <span className="flex items-center gap-1 text-[10px] font-bold text-success bg-success-light px-2.5 py-0.5 rounded-full shadow-xs">
-                  <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                  Active System
-                </span>
-              </div>
-
-              {/* Simulated Live System Flow Diagram (Website -> Leads -> CRM -> Follow-up -> Conversion) */}
-              <div className="space-y-4 text-left">
-                
-                {/* Node 1: Website Inbound */}
-                <div className="bg-white border border-border p-3.5 rounded-lg shadow-xs flex items-start gap-3">
-                  <span className="h-7 w-7 rounded bg-accent-light text-accent flex items-center justify-center shrink-0"><Globe size={13} /></span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center w-full">
-                      <span className="text-[10px] font-bold text-ink-1">Inbound Enquiry captured</span>
-                      <span className="text-[8px] text-ink-4 font-mono">11:02 AM</span>
-                    </div>
-                    <p className="text-[11px] text-ink-2 italic mt-0.5 truncate">"Looking for a custom CRM dashboard and website. Let's schedule a call."</p>
-                  </div>
+              {/* Browser Address Bar Mockup */}
+              <div className="bg-slate-50 border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
                 </div>
-
-                {/* Dotted Flow connector */}
-                <div className="flex justify-center h-2">
-                  <div className="w-[1.5px] h-full border-r border-dashed border-accent" />
+                <div className="bg-white border border-slate-200/60 rounded px-6 py-0.5 text-[9px] font-mono text-slate-400 font-semibold tracking-wide">
+                  trinetradigital.com/dashboard
                 </div>
-
-                {/* Node 2: Requirement Parsing & Database */}
-                {demoStep >= 1 && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-surface-2 border border-accent/20 p-3.5 rounded-lg shadow-xs flex items-start gap-3"
-                  >
-                    <span className="h-7 w-7 rounded bg-white text-accent border border-accent/10 flex items-center justify-center shrink-0"><Sparkles size={13} /></span>
-                    <div className="flex-1 text-left">
-                      <span className="text-[10px] font-bold text-ink-1">Requirement Parsing</span>
-                      <p className="text-[11px] text-accent font-mono mt-0.5 font-bold">Staging milestones...</p>
-                      <div className="flex gap-2 mt-2">
-                        <span className="text-[9px] font-mono bg-white border border-border text-ink-3 px-2 py-0.5 rounded shadow-xs">Scope: Custom CRM ✓</span>
-                        <span className="text-[9px] font-mono bg-white border border-border text-ink-3 px-2 py-0.5 rounded shadow-xs">Type: Web Portal ✓</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Dotted Flow connector */}
-                {demoStep >= 1 && (
-                  <div className="flex justify-center h-2">
-                    <div className="w-[1.5px] h-full border-r border-dashed border-accent" />
-                  </div>
-                )}
-
-                {/* Node 3: CRM Record */}
-                {demoStep >= 2 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white border border-border p-3.5 rounded-lg shadow-xs flex items-start gap-3"
-                  >
-                    <span className="h-7 w-7 rounded bg-slate-50 text-slate-700 flex items-center justify-center shrink-0"><Database size={13} /></span>
-                    <div>
-                      <span className="text-[10px] font-bold text-ink-1">CRM Record Generated</span>
-                      <p className="text-[11px] text-ink-2 mt-0.5 font-bold">Enquiry captured · Gorakhpur, UP</p>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Dotted Flow connector */}
-                {demoStep >= 2 && (
-                  <div className="flex justify-center h-2">
-                    <div className="w-[1.5px] h-full border-r border-dashed border-accent" />
-                  </div>
-                )}
-
-                {/* Node 4: WhatsApp follow-up & Consultation Booked */}
-                {demoStep >= 3 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-accent border border-accent/10 p-3.5 rounded-lg shadow-sm text-white flex items-start gap-3"
-                  >
-                    <span className="h-7 w-7 rounded bg-white/10 text-white flex items-center justify-center shrink-0"><Check size={13} /></span>
-                    <div>
-                      <span className="text-[10px] font-mono font-bold">Consultation Booked</span>
-                      <p className="text-[11px] opacity-90 italic mt-0.5">"Confirmation details dispatched to team and client. Setup complete ✓"</p>
-                    </div>
-                  </motion.div>
-                )}
+                <ArrowRight size={10} className="text-slate-400" />
               </div>
+              <ScrollVideo
+                src="/Trinetra Hero Video.mp4"
+                containerRef={heroRef}
+                startOffset="start start"
+                endOffset="end start"
+                poster="/dashboard-poster.svg"
+              />
             </motion.div>
           </div>
         </section>
@@ -511,30 +437,48 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── 7. TRUST SECTION (BENEFITS) ── */}
-        <section className="py-24 relative z-10 bg-white border-b border-border/80">
-          <div className="max-w-[1200px] mx-auto px-4 md:px-10 space-y-16">
-            <div className="text-center max-w-xl mx-auto space-y-3">
-              <span className="mixed-headline-eyebrow">Institutional Integrity</span>
-              <h2 className="mixed-headline-title">Designed for long-term trust</h2>
-              <p className="body-md text-ink-2">
-                Bypass exaggerated promises. Upgraded technology and marketing services designed with compliance, transparency, and structure.
-              </p>
-            </div>
+         {/* ── 7. TRUST SECTION (BENEFITS) ── */}
+         <section ref={whyTrinetraRef} className="py-24 relative z-10 bg-white border-b border-border/80">
+           <div className="max-w-[1200px] mx-auto px-4 md:px-10 space-y-16">
+             <div className="text-center max-w-xl mx-auto space-y-3">
+               <span className="mixed-headline-eyebrow">Institutional Integrity</span>
+               <h2 className="mixed-headline-title">Designed for long-term trust</h2>
+               <p className="body-md text-ink-2">
+                 Bypass exaggerated promises. Upgraded technology and marketing services designed with compliance, transparency, and structure.
+               </p>
+             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 max-w-5xl mx-auto">
-              {trustItems.map((item, i) => (
-                <div key={i} className="bg-surface-2 border border-border p-6 rounded-xl space-y-3 text-left transition-all duration-150 hover:bg-white hover:shadow-xs">
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-accent border border-border shadow-xs">
-                    <item.icon size={14} />
-                  </span>
-                  <h3 className="text-xs font-bold text-ink-1 font-mono uppercase tracking-wider">{item.title}</h3>
-                  <p className="text-[11px] text-ink-2 leading-relaxed font-semibold">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+             <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-12 items-start max-w-5xl mx-auto">
+               {/* Left Column: 6 Benefits Grid */}
+               <div className="grid gap-4 sm:grid-cols-2 w-full">
+                 {trustItems.map((item, i) => (
+                   <div key={i} className="bg-surface-2 border border-border p-6 rounded-xl space-y-3 text-left transition-all duration-150 hover:bg-white hover:shadow-xs animate-reveal">
+                     <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-accent border border-border shadow-xs">
+                       <item.icon size={14} />
+                     </span>
+                     <h3 className="text-xs font-bold text-ink-1 font-mono uppercase tracking-wider">{item.title}</h3>
+                     <p className="text-[11px] text-ink-2 leading-relaxed font-semibold">{item.desc}</p>
+                   </div>
+                 ))}
+               </div>
+
+               {/* Right Column: Sticky connected ecosystem loop */}
+               <div className="bg-[#F8FAFC] border border-slate-200 rounded-2xl p-4 md:p-5 shadow-xs text-left h-fit lg:sticky lg:top-28 w-full max-w-[380px] mx-auto lg:mr-0">
+                 <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+                   <span className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest">Ecosystem Integration</span>
+                   <span className="flex items-center gap-1.5 text-[8px] font-mono font-bold text-[#137A3E] bg-[#E2F2E9] border border-[#A3E0BA] px-2.5 py-0.5 rounded-full">
+                     <span className="h-1 w-1 rounded-full bg-[#137A3E] animate-pulse" />
+                     Synced Database
+                   </span>
+                 </div>
+                 <LazyVideo src="/WhyTinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner mb-4" />
+                 <p className="text-[9.5px] text-slate-400 font-mono text-center leading-relaxed font-semibold">
+                   Continuous data replication checks active.
+                 </p>
+               </div>
+             </div>
+           </div>
+         </section>
 
         {/* ── 8. DEVELOPMENT PROCESS ── */}
         <section className="py-24 relative z-10 bg-[#F8FAFC] border-b border-border/80">

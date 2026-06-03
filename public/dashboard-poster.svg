@@ -1,0 +1,73 @@
+<svg viewBox="0 0 800 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="450" fill="#F8FAFC"/>
+  
+  <!-- Sidebar -->
+  <rect x="0" y="0" width="180" height="450" fill="#FFFFFF"/>
+  <line x1="180" y1="0" x2="180" y2="450" stroke="#E2E8F0"/>
+  
+  <!-- Sidebar Logo -->
+  <rect x="20" y="25" width="24" height="24" rx="6" fill="#4F46E5"/>
+  <circle cx="32" cy="37" r="4" fill="#FFFFFF"/>
+  <rect x="54" y="30" width="70" height="8" rx="2" fill="#0F172A"/>
+  <rect x="54" y="42" width="40" height="5" rx="1.5" fill="#64748B"/>
+  
+  <!-- Sidebar Menu Items -->
+  <rect x="20" y="80" width="140" height="28" rx="6" fill="#EEF2FF"/>
+  <circle cx="36" cy="94" r="4" fill="#4F46E5"/>
+  <rect x="50" y="90" width="60" height="8" rx="2" fill="#4F46E5"/>
+  
+  <!-- Other menu items -->
+  <circle cx="36" cy="134" r="4" fill="#94A3B8"/>
+  <rect x="50" y="130" width="50" height="8" rx="2" fill="#94A3B8"/>
+  
+  <circle cx="36" cy="168" r="4" fill="#94A3B8"/>
+  <rect x="50" y="164" width="70" height="8" rx="2" fill="#94A3B8"/>
+  
+  <circle cx="36" cy="202" r="4" fill="#94A3B8"/>
+  <rect x="50" y="198" width="55" height="8" rx="2" fill="#94A3B8"/>
+
+  <!-- Main Content Header -->
+  <rect x="210" y="25" width="250" height="18" rx="4" fill="#0F172A"/>
+  <rect x="210" y="50" width="180" height="10" rx="3" fill="#64748B"/>
+  
+  <!-- Header Right Search & Button -->
+  <rect x="630" y="25" width="140" height="30" rx="8" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <circle cx="645" cy="40" r="4" stroke="#94A3B8" stroke-width="1.5"/>
+  <line x1="648" y1="43" x2="653" y2="48" stroke="#94A3B8" stroke-width="1.5"/>
+  <rect x="660" y="36" width="60" height="8" rx="2" fill="#94A3B8"/>
+  
+  <!-- Grid Cards -->
+  <!-- Card 1 -->
+  <rect x="210" y="85" width="170" height="85" rx="12" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="230" y="105" width="80" height="8" rx="2" fill="#94A3B8"/>
+  <rect x="230" y="123" width="60" height="18" rx="3" fill="#0F172A"/>
+  <rect x="230" y="148" width="100" height="6" rx="2" fill="#10B981"/>
+  
+  <!-- Card 2 -->
+  <rect x="395" y="85" width="170" height="85" rx="12" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="415" y="105" width="80" height="8" rx="2" fill="#94A3B8"/>
+  <rect x="415" y="123" width="90" height="18" rx="3" fill="#0F172A"/>
+  <rect x="415" y="148" width="80" height="6" rx="2" fill="#4F46E5"/>
+  
+  <!-- Card 3 -->
+  <rect x="580" y="85" width="190" height="85" rx="12" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="600" y="105" width="80" height="8" rx="2" fill="#94A3B8"/>
+  <rect x="600" y="123" width="70" height="18" rx="3" fill="#0F172A"/>
+  <rect x="600" y="148" width="110" height="6" rx="2" fill="#3B82F6"/>
+  
+  <!-- Large Chart Card -->
+  <rect x="210" y="185" width="560" height="235" rx="16" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="235" y="210" width="140" height="12" rx="3" fill="#0F172A"/>
+  
+  <!-- Chart lines -->
+  <path d="M 235 380 Q 300 320 360 340 T 480 270 T 600 290 T 720 230" fill="none" stroke="#4F46E5" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 235 380 Q 300 350 360 360 T 480 320 T 600 310 T 720 280" fill="none" stroke="#10B981" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"/>
+  
+  <!-- Chart grid lines -->
+  <line x1="235" y1="250" x2="745" y2="250" stroke="#F1F5F9" stroke-width="1"/>
+  <line x1="235" y1="290" x2="745" y2="290" stroke="#F1F5F9" stroke-width="1"/>
+  <line x1="235" y1="330" x2="745" y2="330" stroke="#F1F5F9" stroke-width="1"/>
+  <line x1="235" y1="370" x2="745" y2="370" stroke="#F1F5F9" stroke-width="1"/>
+  <line x1="235" y1="400" x2="745" y2="400" stroke="#E2E8F0" stroke-width="1"/>
+</svg>

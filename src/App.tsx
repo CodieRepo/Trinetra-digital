@@ -39,8 +39,8 @@ const UttarPradesh  = lazy(() => import("@/pages/UttarPradeshPage"));
 // Loading fallback
 function PageSpinner() {
   return (
-    <div className="min-h-screen bg-[#F9F8F5] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#BF7340]/30 border-t-[#BF7340] rounded-full animate-spin" />
+    <div className="min-h-screen bg-surface-2 flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
     </div>
   );
 }

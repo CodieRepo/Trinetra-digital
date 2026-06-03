@@ -7,9 +7,9 @@ import { BLOG_POSTS } from "../data/blogPosts";
 
 // Tag colour mapping
 const TAG_STYLES: Record<string, string> = {
-  copper: "bg-[#F2E8DC] text-[#BF7340]",
-  green:  "bg-[#E8F0ED] text-[#2A4A3E]",
-  slate:  "bg-[#EEEAE3] text-[#5C5A52]",
+  copper: "bg-accent-light text-accent",
+  green:  "bg-emerald-50 text-emerald-700",
+  slate:  "bg-slate-100 text-slate-700",
 };
 
 // Schema — built dynamically from central data
@@ -44,7 +44,7 @@ export default function BlogPage() {
       />
 
       {/* Hero */}
-      <section className="bg-[#F9F8F5] pt-20 pb-16 md:pt-28 md:pb-20 border-b border-[#E2DDD5]">
+      <section className="bg-white pt-20 pb-16 md:pt-28 md:pb-20 border-b border-border">
         <div className="main-container text-center max-w-[600px]">
           <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mixed-headline-eyebrow">
             The Trinetra Blog
@@ -53,7 +53,7 @@ export default function BlogPage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="display-lg text-[#18170F] tracking-tight mt-2 mb-4"
+            className="display-lg text-ink-1 tracking-tight mt-2 mb-4 font-display font-bold"
           >
             Digital growth &amp; software insights for Indian businesses
           </motion.h1>
@@ -61,7 +61,7 @@ export default function BlogPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="body-lg text-[#5C5A52]"
+            className="body-lg text-ink-2 font-medium"
           >
             Practical guides, case studies, and operational intelligence — from the team that builds custom websites and software for Indian SMBs.
           </motion.p>
@@ -69,7 +69,7 @@ export default function BlogPage() {
       </section>
 
       {/* Blog Grid */}
-      <section className="bg-[#F4F2ED] py-20 md:py-28" aria-label="Blog posts">
+      <section className="bg-surface-2 py-20 md:py-28" aria-label="Blog posts">
         <div className="main-container">
           <div className="grid gap-6 md:grid-cols-2">
             {BLOG_POSTS.map((post, i) => (
@@ -79,37 +79,37 @@ export default function BlogPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.07 }}
-                className="group flex flex-col bg-white border border-[#BF7340]/20 rounded-2xl p-8 hover:shadow-md hover:border-[#BF7340]/40 transition-all duration-300"
+                className="group flex flex-col bg-white border border-border/85 rounded-2xl p-8 hover:shadow-md hover:border-accent/40 transition-all duration-300"
               >
                 {/* Tags + meta */}
                 <div className="flex flex-wrap items-center gap-2 mb-4">
                   <span className={`text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${TAG_STYLES[post.tagColor]}`}>
                     {post.tag}
                   </span>
-                  <span className="text-[9px] font-bold uppercase tracking-widest bg-[#E8F0ED] text-[#2A4A3E] px-2.5 py-1 rounded-full">
+                  <span className="text-[9px] font-bold uppercase tracking-widest bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full">
                     Published
                   </span>
-                  <span className="ml-auto flex items-center gap-1 text-[10px] text-[#8C8A82]">
+                  <span className="ml-auto flex items-center gap-1 text-[10px] text-ink-4">
                     <Calendar size={10} />{post.date}
                   </span>
-                  <span className="flex items-center gap-1 text-[10px] text-[#8C8A82]">
+                  <span className="flex items-center gap-1 text-[10px] text-ink-4">
                     <Clock size={10} />{post.readTime}
                   </span>
                 </div>
 
                 {/* Title */}
-                <h2 className="heading-sm text-[#18170F] mb-3 group-hover:text-[#BF7340] transition-colors">
+                <h2 className="heading-sm text-ink-1 mb-3 group-hover:text-accent transition-colors font-semibold">
                   {post.title}
                 </h2>
 
                 {/* Excerpt */}
-                <p className="body-sm text-[#5C5A52] leading-relaxed flex-1">{post.excerpt}</p>
+                <p className="body-sm text-ink-2 leading-relaxed flex-1 font-semibold">{post.excerpt}</p>
 
                 {/* Read link */}
                 <div className="mt-6">
                   <Link
                     to={`/blog/${post.slug}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#BF7340] hover:underline group-hover:gap-2.5 transition-all"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-accent hover:underline group-hover:gap-2.5 transition-all"
                   >
                     <BookOpen size={13} /> Read Article <ArrowRight size={12} />
                   </Link>
@@ -119,14 +119,14 @@ export default function BlogPage() {
           </div>
 
           {/* Newsletter / CTA strip */}
-          <div className="mt-16 text-center bg-white border border-[#E2DDD5] rounded-2xl p-10 max-w-[560px] mx-auto">
-            <h2 className="heading-md text-[#18170F] mb-3">Want us to build this for your business?</h2>
-            <p className="body-sm text-[#5C5A52] mb-6">
+          <div className="mt-16 text-center bg-white border border-border/80 rounded-2xl p-10 max-w-[560px] mx-auto shadow-3xs">
+            <h2 className="heading-md text-ink-1 mb-3 font-semibold">Want us to build this for your business?</h2>
+            <p className="body-sm text-ink-2 mb-6 font-semibold">
               Everything we write about, we build. Book a free 30-minute demo and see exactly how these systems work for your industry.
             </p>
             <Link
               to="/contact"
-              className="inline-flex items-center gap-2 h-11 rounded-lg bg-[#2A4A3E] px-6 text-xs font-bold uppercase tracking-wider text-[#F9F8F5] hover:bg-[#1E3630] transition-colors"
+              className="inline-flex items-center gap-2 h-11 rounded-lg bg-cta px-6 text-xs font-bold uppercase tracking-wider text-white hover:bg-cta-hover transition-colors cursor-pointer"
             >
               Book Free Demo <ArrowRight size={14} />
             </Link>

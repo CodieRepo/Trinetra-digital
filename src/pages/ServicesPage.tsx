@@ -77,8 +77,8 @@ export default function ServicesPage() {
         schema={SCHEMA}
       />
 
-      {/* Hero Header - Old UI Style */}
-      <section className="relative bg-[#F9F8F5] pt-20 pb-16 md:pt-28 md:pb-20 border-b border-[#E2DDD5]">
+      {/* Hero Header - Unified Theme */}
+      <section className="relative bg-surface-2 pt-20 pb-16 md:pt-28 md:pb-20 border-b border-border">
         <div className="main-container text-center">
           <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mixed-headline-eyebrow">
             What We Build
@@ -87,7 +87,7 @@ export default function ServicesPage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="display-lg text-[#18170F] tracking-tight max-w-[680px] mx-auto mb-5 mt-2"
+            className="display-lg text-ink-1 tracking-tight max-w-[680px] mx-auto mb-5 mt-2 font-display font-bold"
           >
             Complete digital &amp; software solutions for growing businesses
           </motion.h1>
@@ -95,23 +95,23 @@ export default function ServicesPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="body-lg text-[#5C5A52] max-w-[520px] mx-auto mb-8 font-medium"
+            className="body-lg text-ink-2 max-w-[520px] mx-auto mb-8 font-medium"
           >
             From your first website to a complete business operating system — we build, grow, automate and scale businesses through practical digital solutions with clear processes and honest pricing.
           </motion.p>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex flex-wrap gap-3 justify-center">
-            <Link to="/contact" className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-[#2A4A3E] px-6 text-[#F9F8F5] transition-all hover:bg-[#1E3630]">
+            <Link to="/contact" className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-cta text-white transition-all hover:bg-cta-hover">
               Book Consultation <ArrowRight size={14} />
             </Link>
-            <Link to="/pricing" className="inline-flex items-center gap-2 h-9 rounded-lg border border-[#E2DDD5] bg-white px-6 text-xs font-semibold text-[#18170F] hover:bg-[#F4F2ED] transition-colors">
+            <Link to="/pricing" className="inline-flex items-center gap-2 h-9 rounded-lg border border-border bg-white px-6 text-xs font-semibold text-ink-1 hover:bg-surface-2 transition-colors">
               See Pricing
             </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* Services Grid - Old UI Style */}
-      <section className="bg-[#F4F2ED] py-20 md:py-28" aria-label="All Services">
+      {/* Services Grid - Unified Theme */}
+      <section className="bg-surface-2 py-20 md:py-28" aria-label="All Services">
         <div className="main-container max-w-[1200px] mx-auto px-4 space-y-12">
           
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -123,29 +123,29 @@ export default function ServicesPage() {
                 initial="hidden"
                 whileInView="show"
                 viewport={{ once: true, amount: 0.2 }}
-                className="group relative flex flex-col justify-between bg-white border border-[#E2DDD5] rounded-2xl p-8 hover:shadow-md transition-all duration-300 overflow-hidden text-left"
+                className="group relative flex flex-col justify-between bg-white border border-border/80 rounded-2xl p-8 hover:shadow-md transition-all duration-300 overflow-hidden text-left"
                 style={{ minHeight: "280px" }}
               >
                 {/* Top accent line on hover */}
-                <div className="absolute top-0 inset-x-0 h-[3px] bg-[#BF7340] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+                <div className="absolute top-0 inset-x-0 h-[3px] bg-accent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
 
                 {service.tag && (
-                  <span className="absolute top-4 right-4 text-[9px] font-bold uppercase tracking-widest bg-[#FAF5EF] text-[#BF7340] border border-[#E2DDD5] px-2.5 py-1 rounded-full">
+                  <span className="absolute top-4 right-4 text-[9px] font-bold uppercase tracking-widest bg-accent-light text-accent border border-accent/15 px-2.5 py-1 rounded-full">
                     {service.tag}
                   </span>
                 )}
 
                 <div>
-                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF5EF] text-[#BF7340] border border-[#E2DDD5]">
+                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-accent-light text-accent border border-accent/15">
                     {service.icon}
                   </div>
-                  <h2 className="heading-sm text-[#18170F] mb-3">{service.title}</h2>
-                  <p className="body-sm text-[#5C5A52] leading-relaxed font-semibold">{service.description}</p>
+                  <h2 className="heading-sm text-ink-1 mb-3 font-semibold">{service.title}</h2>
+                  <p className="body-sm text-ink-2 leading-relaxed font-semibold">{service.description}</p>
                 </div>
 
                 <Link
                   to="/contact"
-                  className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-[#8C8A82] group-hover:text-[#BF7340] transition-colors"
+                  className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-slate-400 group-hover:text-accent transition-colors"
                 >
                   Request Consultation <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
@@ -154,18 +154,18 @@ export default function ServicesPage() {
           </div>
 
           {/* Coming Soon Block - Classic Card design */}
-          <div className="max-w-4xl mx-auto bg-white border border-[#E2DDD5] p-6 md:p-8 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between text-left gap-6 shadow-3xs mt-12">
+          <div className="max-w-4xl mx-auto bg-white border border-border/80 p-6 md:p-8 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between text-left gap-6 shadow-3xs mt-12">
             <div className="space-y-2">
-              <span className="inline-flex items-center gap-1.5 text-[9px] bg-[#FAF5EF] border border-[#BF7340]/30 text-[#BF7340] px-2 py-0.5 rounded-full uppercase font-bold">
+              <span className="inline-flex items-center gap-1.5 text-[9px] bg-accent-light border border-accent/15 text-accent px-2 py-0.5 rounded-full uppercase font-bold">
                 <Clock size={10} /> Future Solutions (Coming Soon)
               </span>
-              <h3 className="text-sm font-bold text-[#18170F] mt-1">Staging Innovation Lab</h3>
-              <p className="text-xs text-[#5C5A52] leading-relaxed font-semibold max-w-xl">
+              <h3 className="text-sm font-bold text-ink-1 mt-1">Staging Innovation Lab</h3>
+              <p className="text-xs text-ink-2 leading-relaxed font-semibold max-w-xl">
                 Advanced automation and AI-powered solutions are currently under development and will be announced in the future.
               </p>
             </div>
             <div className="shrink-0">
-              <span className="text-xs font-bold text-[#8C8A82] uppercase tracking-widest border border-[#E2DDD5] bg-[#F4F2ED] rounded-lg px-4 py-2">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest border border-slate-200 bg-slate-50 rounded-lg px-4 py-2 font-mono">
                 Dev Stage
               </span>
             </div>

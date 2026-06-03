@@ -555,7 +555,7 @@ export default function AdminCrm() {
                           <button
                             onClick={() => setActivityTab('chats')}
                             className={`px-3 py-1 rounded-lg text-[9px] font-bold tracking-wide transition-all ${
-                              activityTab === 'chats' ? 'bg-[#BF7340] text-white shadow-3xs' : 'text-slate-400 hover:text-slate-200'
+                              activityTab === 'chats' ? 'bg-emerald-600 text-white shadow-3xs' : 'text-slate-400 hover:text-slate-200'
                             }`}
                           >
                             Messaging stream
@@ -563,7 +563,7 @@ export default function AdminCrm() {
                           <button
                             onClick={() => setActivityTab('audit')}
                             className={`px-3 py-1 rounded-lg text-[9px] font-bold tracking-wide transition-all ${
-                              activityTab === 'audit' ? 'bg-[#BF7340] text-white shadow-3xs' : 'text-slate-400 hover:text-slate-200'
+                              activityTab === 'audit' ? 'bg-emerald-600 text-white shadow-3xs' : 'text-slate-400 hover:text-slate-200'
                             }`}
                           >
                             System Audit Logs

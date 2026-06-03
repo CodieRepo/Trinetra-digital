@@ -36,7 +36,7 @@ const INDUSTRIES = [
 
 export default function Services() {
   return (
-    <section id="industries" aria-label="Industries Trinetra Serves — Healthcare, Real Estate, Coaching, Solar, Local Business" className="relative overflow-hidden bg-[#F4F2ED] py-20 md:py-28 border-b border-[#E2DDD5]">
+    <section id="industries" aria-label="Industries Trinetra Serves — Healthcare, Real Estate, Coaching, Solar, Local Business" className="relative overflow-hidden bg-surface-2 py-20 md:py-28 border-b border-border">
 
       <div className="main-container relative z-10">
         
@@ -55,7 +55,7 @@ export default function Services() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.5 }}
             transition={{ delay: 0.1 }}
-            className="display-lg text-[#18170F] tracking-tight mb-4"
+            className="display-lg text-ink-1 tracking-tight mb-4"
           >
             We understand your industry. <br />Your solution will too.
           </motion.h2>
@@ -64,7 +64,7 @@ export default function Services() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, amount: 0.5 }}
             transition={{ delay: 0.2 }}
-            className="body-lg text-[#5C5A52] max-w-[540px] mx-auto"
+            className="body-lg text-ink-3 max-w-[540px] mx-auto"
           >
             We work with local businesses, service providers, startups and growing companies across industries to build websites, automate processes and strengthen digital presence.
           </motion.p>
@@ -79,29 +79,29 @@ export default function Services() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.25 }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="group relative flex flex-col justify-between items-start rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-8 shadow-xs hover:shadow-md transition-all duration-300 overflow-hidden"
+              className="group relative flex flex-col justify-between items-start rounded-xl border border-border bg-base p-8 shadow-xs hover:shadow-md transition-all duration-300 overflow-hidden"
               style={{ minHeight: "260px" }}
             >
-              {/* Animated 3px copper border at the top, shown on hover only */}
-              <div className="absolute top-0 inset-x-0 h-[3px] bg-[#BF7340] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+              {/* Animated 3px accent border at the top, shown on hover only */}
+              <div className="absolute top-0 inset-x-0 h-[3px] bg-accent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
 
               <div className="w-full text-left">
                 {/* Icon container */}
-                <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#F2E8DC] text-[#BF7340] transition-colors duration-300">
+                <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-[10px] bg-accent-light text-accent transition-colors duration-300">
                   {ind.icon}
                 </div>
 
                 {/* Title */}
-                <h3 className="heading-sm text-[#18170F] mb-3">{ind.title}</h3>
+                <h3 className="heading-sm text-ink-1 mb-3">{ind.title}</h3>
 
                 {/* Description */}
-                <p className="body-sm text-[#5C5A52] leading-relaxed">
+                <p className="body-sm text-ink-3 leading-relaxed">
                   {ind.description}
                 </p>
               </div>
 
               {/* Small Ghost button at bottom */}
-              <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-[#8C8A82] group-hover:text-[#BF7340] transition-colors duration-200">
+              <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-ink-4 group-hover:text-accent transition-colors duration-200">
                 <span>{ind.link}</span>
                 <ArrowRight size={14} className="transform group-hover:translate-x-0.5 transition-transform duration-200" />
               </div>
@@ -114,14 +114,14 @@ export default function Services() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.25 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-col justify-center items-center rounded-xl border border-dashed border-[#E2DDD5] p-8 text-center bg-[#F4F2ED]"
+            className="flex flex-col justify-center items-center rounded-xl border border-dashed border-border p-8 text-center bg-surface-2"
             style={{ minHeight: "260px" }}
           >
-            <p className="text-sm font-semibold text-[#18170F] mb-1 font-interface">Don't see your industry?</p>
-            <p className="text-xs text-[#5C5A52] max-w-[200px] mb-4">We build tailored digital solutions for any business type and workflow requirement.</p>
+            <p className="text-sm font-semibold text-ink-1 mb-1 font-interface">Don't see your industry?</p>
+            <p className="text-xs text-ink-3 max-w-[200px] mb-4">We build tailored digital solutions for any business type and workflow requirement.</p>
             <a
               href="#contact"
-              className="text-xs font-bold text-[#BF7340] hover:text-[#A6612E] animated-underline-link"
+              className="text-xs font-bold text-accent hover:text-accent-hover animated-underline-link"
             >
               Book a Free Consultation →
             </a>

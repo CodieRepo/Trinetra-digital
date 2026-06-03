@@ -19,8 +19,8 @@ export default function PrivacyPage() {
           animate={{ opacity: 1, y: 0 }} 
           className="main-container max-w-[760px] mx-auto px-4"
         >
-          <span className="text-xs font-bold tracking-widest text-[#2A4A3E] uppercase block mb-2">Legal Compliance</span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-2 font-display italic text-[#BF7340]">Privacy Policy</h1>
+          <span className="text-xs font-bold tracking-widest text-accent uppercase block mb-2">Legal Compliance</span>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-ink-1 mb-2 font-display">Privacy Policy</h1>
           <p className="text-xs font-bold text-slate-400 mb-10">Last updated: June 3, 2026</p>
 
           <div className="flex flex-col gap-8 text-xs sm:text-sm text-slate-600 leading-relaxed text-left">
@@ -46,7 +46,7 @@ export default function PrivacyPage() {
             
             <div>
               <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">5. Your Data Rights</h2>
-              <p>Under local laws, you have full rights to request correction, amendment, or total deletion of your business contact information from our databases. To initiate a database deletion request, kindly email our data compliance desk at: <a href="mailto:info@trinetradigitalsolution.com" className="text-[#BF7340] hover:underline font-semibold">info@trinetradigitalsolution.com</a>. We will process your deletion request within 48 hours.</p>
+              <p>Under local laws, you have full rights to request correction, amendment, or total deletion of your business contact information from our databases. To initiate a database deletion request, kindly email our data compliance desk at: <a href="mailto:info@trinetradigitalsolution.com" className="text-accent hover:underline font-semibold">info@trinetradigitalsolution.com</a>. We will process your deletion request within 48 hours.</p>
             </div>
 
             <div>
@@ -62,7 +62,7 @@ export default function PrivacyPage() {
             
             <div className="mt-6 pt-8 border-t border-slate-200">
               <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">7. Corporate Transparency &amp; Brand Ownership</h2>
-              <div className="p-5 bg-[#FAF5EF] border border-[#E2DDD5] rounded-2xl text-xs leading-relaxed text-slate-600 flex flex-col gap-3">
+              <div className="p-5 bg-surface-2 border border-border rounded-2xl text-xs leading-relaxed text-slate-600 flex flex-col gap-3">
                 <p>
                   <strong>Trinetra Digital Solution</strong> is the official services, technology, and software development brand operated and legally owned by the registered parent entity <strong>Charulata Enterprises</strong>. Any reference on this website to "Trinetra", "Trinetra Digital Solution", "we", "our", or "us" in relation to agreements, billing, proposals, or software operations refers to the business activities of <strong>Charulata Enterprises</strong>.
                 </p>

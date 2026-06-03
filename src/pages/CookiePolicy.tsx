@@ -19,8 +19,8 @@ export default function CookiePolicy() {
           animate={{ opacity: 1, y: 0 }} 
           className="main-container max-w-[760px] mx-auto px-4"
         >
-          <span className="text-xs font-bold tracking-widest text-[#2A4A3E] uppercase block mb-2">Legal Compliance</span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-2 font-display italic text-[#BF7340]">Cookie Policy</h1>
+          <span className="text-xs font-bold tracking-widest text-accent uppercase block mb-2">Legal Compliance</span>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-ink-1 mb-2 font-display">Cookie Policy</h1>
           <p className="text-xs font-bold text-slate-400 mb-10">Last updated: June 3, 2026</p>
 
           <div className="flex flex-col gap-8 text-xs sm:text-sm text-slate-600 leading-relaxed text-left">

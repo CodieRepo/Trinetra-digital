@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Sparkles, Calendar, Tag, ArrowRight } from "lucide-react";
+import { Sparkles, Tag, ArrowRight } from "lucide-react";
+import LazyVideo from "./LazyVideo";
 
 // Count Up Helper Component
 function MetricCounter({ value, duration = 1.2 }: { value: string; duration?: number }) {
@@ -62,6 +63,8 @@ const PORTFOLIO = [
     description: "Developed a professional business website for Vaastu Infra with integrated WhatsApp contact flow and a structured lead inquiry form to capture and organize incoming property inquiries.",
     avatar: "V",
     status: "Live",
+    video: "/VASTUPROJECT.mp4",
+    url: "vaastuinfra.in"
   },
   {
     project: "Akuafi",
@@ -70,6 +73,8 @@ const PORTFOLIO = [
     description: "Handled complete website architecture planning, frontend and backend development, multi-page implementation, and system structure design for Akuafi — a technology-focused business requiring a well-structured digital presence.",
     avatar: "A",
     status: "Completed",
+    video: "/AkuafiPROJECT.mp4",
+    url: "akuafi.com"
   },
 ];
 
@@ -120,13 +125,31 @@ export default function Testimonials() {
               {PORTFOLIO.map((item, i) => (
                 <motion.div
                   key={item.project}
-                  initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.4 }}
-                  transition={{ duration: 0.4, delay: i * 0.1 }}
-                  className="relative rounded-2xl border border-border/80 bg-[#F8FAFC] p-6 md:p-8 shadow-xs text-left flex flex-col justify-between hover:border-accent/40 transition-colors"
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.5, delay: i * 0.15 }}
+                  className="relative rounded-2xl border border-border/80 bg-[#F8FAFC] p-6 md:p-8 shadow-xs text-left flex flex-col justify-between hover:border-accent/40 hover:shadow-md transition-all duration-300 group"
                 >
                   <div>
+                    {/* Browser Mockup Frame for Video Showcase */}
+                    <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-xs relative aspect-video w-full mb-6 transition-transform duration-300 group-hover:scale-[1.01] group-hover:shadow-sm">
+                      {/* Browser Header Bar */}
+                      <div className="bg-slate-50 border-b border-slate-200/60 px-4 py-2 flex items-center justify-between shrink-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                        </div>
+                        <div className="bg-white border border-slate-200/60 rounded px-4 py-0.5 text-[8px] font-mono text-slate-400 font-semibold tracking-wide">
+                          {item.url}
+                        </div>
+                        <div className="w-[18px]" /> {/* Empty placeholder for visual balancing */}
+                      </div>
+                      {/* Video Walkthrough Player */}
+                      <LazyVideo src={item.video} className="w-full h-full" />
+                    </div>
+
                     <div className="flex items-start justify-between mb-6">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-light text-sm font-mono font-bold text-accent border border-accent/15">
@@ -155,10 +178,17 @@ export default function Testimonials() {
                       <p className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-3">Services Delivered</p>
                       <ul className="space-y-2">
                         {item.services.map((svc, si) => (
-                          <li key={si} className="flex items-start gap-2.5 text-[11px] font-semibold text-slate-600">
+                          <motion.li
+                            key={si}
+                            initial={{ opacity: 0, x: -4 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.3, delay: 0.1 + si * 0.05 }}
+                            className="flex items-start gap-2.5 text-[11px] font-semibold text-slate-600"
+                          >
                             <span className="h-1.5 w-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
                             <span>{svc}</span>
-                          </li>
+                          </motion.li>
                         ))}
                       </ul>
                     </div>
@@ -173,7 +203,7 @@ export default function Testimonials() {
                       )}`}
                       className="inline-flex items-center gap-1.5 text-xs font-bold text-accent hover:underline transition-colors cursor-pointer"
                     >
-                      Enquire about a similar system <ArrowRight size={12} />
+                      Enquire about a similar system <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform duration-200" />
                     </Link>
                   </div>
                 </motion.div>

@@ -128,7 +128,7 @@ export default function Navbar() {
                     key={link.label}
                     to={link.href}
                     onClick={() => setOpen(false)}
-                    className="py-2.5 text-sm font-semibold text-ink-2 hover:text-accent transition-colors border-b border-border-subtle"
+                    className="py-4 text-sm font-semibold text-ink-2 hover:text-accent transition-colors border-b border-border-subtle"
                   >
                     {link.label}
                   </Link>
@@ -138,7 +138,7 @@ export default function Navbar() {
                   <a
                     href={PHONE_TEL}
                     onClick={() => setOpen(false)}
-                    className="flex h-10 items-center justify-center rounded-lg border border-border bg-surface-2 text-xs font-mono font-medium text-ink-2 hover:bg-surface-3 transition-colors gap-2"
+                    className="flex h-11 items-center justify-center rounded-lg border border-border bg-surface-2 text-xs font-mono font-medium text-ink-2 hover:bg-surface-3 transition-colors gap-2"
                   >
                     📞 {PHONE_NUMBER}
                   </a>
@@ -147,14 +147,14 @@ export default function Navbar() {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setOpen(false)}
-                    className="flex h-10 items-center justify-center rounded-lg border border-border bg-white text-xs font-semibold text-ink-2 hover:bg-surface-2 transition-colors"
+                    className="flex h-11 items-center justify-center rounded-lg border border-border bg-white text-xs font-semibold text-ink-2 hover:bg-surface-2 transition-colors"
                   >
                     💬 WhatsApp Us
                   </a>
                   <Link
                     to="/contact"
                     onClick={() => setOpen(false)}
-                    className="btn-primary-forest flex h-10 items-center justify-center rounded-lg text-xs font-semibold uppercase tracking-wider text-white"
+                    className="btn-primary-forest flex h-11 items-center justify-center rounded-lg text-xs font-semibold uppercase tracking-wider text-white"
                   >
                     Book Consultation
                   </Link>

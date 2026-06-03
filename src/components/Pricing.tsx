@@ -1,14 +1,68 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Sparkles, Plus, ArrowRight } from "lucide-react";
+import LazyVideo from "./LazyVideo";
 
 const WA_NUMBER = "919334757759";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'd like to learn more about Trinetra Digital Solution's packages and pricing.")}`;
 
 type ServiceCategory = "packages" | "addons";
 
+const MATRIX_ROWS = [
+  {
+    feature: "Website Deliverable",
+    starter: "Landing Page Website",
+    growth: "Multi-Page Business Website",
+    sales: "Optional Add-on",
+    businessOs: "Custom Software & Systems"
+  },
+  {
+    feature: "Local SEO & Google Maps",
+    starter: "Basic Assistance",
+    growth: "Local SEO Foundation",
+    sales: "Included Assistance",
+    businessOs: "Premium SEO Support"
+  },
+  {
+    feature: "Social Content posts",
+    starter: "8 Posts / month",
+    growth: "15 Posts / month",
+    sales: "20 Posts / month",
+    businessOs: "Custom / Ongoing Support"
+  },
+  {
+    feature: "Lead Capture Form",
+    starter: "Yes (Standard Form)",
+    growth: "Yes (Optimized Pipeline)",
+    sales: "Included (Kanban CRM)",
+    businessOs: "Yes (Advanced Dashboards)"
+  },
+  {
+    feature: "WhatsApp Automation",
+    starter: "Direct Link Integration",
+    growth: "Auto Reply Configured",
+    sales: "Full Automation Setup",
+    businessOs: "Custom CRM API / Bots"
+  },
+  {
+    feature: "Support & Maintenance",
+    starter: "Standard Support",
+    growth: "Technical Maintenance",
+    sales: "Priority Support Review",
+    businessOs: "Dedicated Support Team"
+  },
+  {
+    feature: "Reporting & Insights",
+    starter: "On Request",
+    growth: "Monthly Reporting",
+    sales: "Monthly Optimization",
+    businessOs: "Real-time Analytics"
+  }
+];
+
 export default function Pricing() {
   const [activeTab, setActiveTab] = useState<ServiceCategory>("packages");
+  const [showMatrix, setShowMatrix] = useState(false);
 
   const packages = [
     {
@@ -153,33 +207,54 @@ export default function Pricing() {
 
       <div className="max-w-[1200px] mx-auto px-4 md:px-10 relative z-10">
         
-        {/* Header */}
-        <div className="text-center mb-16">
-          <span className="mixed-headline-eyebrow">
-            Pricing & Project Packages
-          </span>
-          <h2 className="display-lg text-ink-1 tracking-tight mb-4 font-display font-bold">
-            Transparent pricing. Clear project scope.
-          </h2>
-          <p className="body-lg text-[#5C5A52] max-w-[580px] mx-auto mb-10 font-medium">
-            Choose a solution suited to your current business stage. Honest prices, no hidden charges, no unrealistic claims.
-          </p>
+        {/* Header Grid split for Desktop */}
+        <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-12 items-center mb-16 text-left">
+          <div className="space-y-4">
+            <span className="mixed-headline-eyebrow inline-block">
+              Pricing & Project Packages
+            </span>
+            <h2 className="display-lg text-ink-1 tracking-tight font-display font-bold">
+              Transparent pricing. Clear project scope.
+            </h2>
+            <p className="body-lg text-[#5C5A52] font-medium max-w-xl">
+              Choose a solution suited to your current business stage. Honest prices, no hidden charges, no unrealistic claims.
+            </p>
+            
+            {/* Tab Switcher on the left */}
+            <div className="pt-2">
+              <div className="inline-flex items-center gap-1 bg-slate-100/85 border border-slate-200/80 p-1.5 rounded-xl z-10 max-w-full overflow-x-auto shadow-xs backdrop-blur-xs">
+                {(["packages", "addons"] as ServiceCategory[]).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-5 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                      activeTab === tab
+                        ? "bg-white text-slate-900 border border-slate-200/85 shadow-xs"
+                        : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    {tab === "packages" ? "Growth Packages" : "Add-On Services"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
 
-          {/* Tab Switcher */}
-          <div className="inline-flex items-center gap-1 bg-slate-100/85 border border-slate-200/80 p-1.5 rounded-xl z-10 max-w-full overflow-x-auto shadow-xs backdrop-blur-xs">
-            {(["packages", "addons"] as ServiceCategory[]).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-5 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap ${
-                  activeTab === tab
-                    ? "bg-white text-slate-900 border border-slate-200/85 shadow-xs"
-                    : "text-slate-500 hover:text-slate-900"
-                }`}
-              >
-                {tab === "packages" ? "Growth Packages" : "Add-On Services"}
-              </button>
-            ))}
+          {/* Grayscale Video Container */}
+          <div className="w-full max-w-[380px] mx-auto lg:mr-0 bg-white border border-slate-200 rounded-2xl p-4 shadow-xs relative group transition-all duration-300 hover:border-slate-300">
+            <div className="flex items-center justify-between border-b border-slate-150 pb-2 mb-3">
+              <span className="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-widest">Pricing Infrastructure</span>
+              <div className="flex gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-200" />
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-200" />
+              </div>
+            </div>
+            <div className="relative rounded-lg overflow-hidden border border-slate-150 aspect-video grayscale opacity-75 hover:grayscale-0 hover:opacity-100 transition-all duration-500 ease-out shadow-inner">
+              <LazyVideo src="/Pricing.mp4" className="w-full h-full" />
+            </div>
+            <div className="mt-2.5 text-center">
+              <span className="text-[8.5px] font-mono font-semibold text-slate-400 uppercase tracking-wider">Hover to activate telemetry review</span>
+            </div>
           </div>
         </div>
 
@@ -322,6 +397,60 @@ export default function Pricing() {
             ))}
           </motion.div>
         )}
+
+        {/* Collapsible Detailed Comparison Matrix */}
+        <div className="mt-12 text-center">
+          <button
+            onClick={() => setShowMatrix(!showMatrix)}
+            className="inline-flex items-center gap-2 px-6 py-3 border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:border-slate-350 transition-colors font-semibold rounded-xl text-xs uppercase tracking-wider cursor-pointer shadow-xs"
+          >
+            <span>{showMatrix ? "Hide Detailed Comparison" : "Show Detailed Comparison"}</span>
+            <motion.span animate={{ rotate: showMatrix ? 180 : 0 }} className="inline-block text-[9px] text-slate-500">
+              ▼
+            </motion.span>
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {showMatrix && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="mt-8 border border-slate-200 rounded-2xl bg-white shadow-xs overflow-x-auto custom-scrollbar relative">
+                {/* Visual fading scroll mask gradient overlay */}
+                <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none md:hidden" />
+                <div className="absolute top-0 left-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none md:hidden" />
+                
+                <table className="w-full text-left border-collapse text-xs md:text-sm" style={{ minWidth: "760px" }}>
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-900 font-semibold font-mono">
+                      <th className="px-6 py-4 font-bold">Deliverables &amp; Features</th>
+                      <th className="px-4 py-4 font-bold">Starter Presence</th>
+                      <th className="px-4 py-4 font-bold text-accent">Growth Engine</th>
+                      <th className="px-4 py-4 font-bold">Sales System</th>
+                      <th className="px-4 py-4 font-bold">Business OS</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-650 font-semibold">
+                    {MATRIX_ROWS.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-slate-900">{row.feature}</td>
+                        <td className="px-4 py-4">{row.starter}</td>
+                        <td className="px-4 py-4 text-accent">{row.growth}</td>
+                        <td className="px-4 py-4">{row.sales}</td>
+                        <td className="px-4 py-4">{row.businessOs}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Compliant Disclaimer Box */}
         <div className="mt-12 text-center max-w-[680px] mx-auto p-6 bg-slate-50 border border-slate-200 rounded-xl">

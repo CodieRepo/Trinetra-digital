@@ -15,14 +15,14 @@ export default function PageLayout({ children, hideFooter = false }: PageLayoutP
 
   if (isAdmin) {
     return (
-      <div className="bg-[#0B0A05] text-[#F3F4F6] antialiased selection:bg-[#BF7340]/25 selection:text-[#F3F4F6] min-h-screen">
+      <div className="bg-[#09090B] text-slate-100 antialiased selection:bg-accent/25 selection:text-slate-100 min-h-screen">
         {children}
       </div>
     );
   }
 
   return (
-    <div className="bg-[#F9F8F5] text-[#18170F] antialiased selection:bg-[#BF7340]/25 selection:text-[#18170F]">
+    <div className="bg-base text-ink-1 antialiased selection:bg-accent/20 selection:text-ink-1">
       <Navbar />
       <main className="pt-[60px]">
         {children}

@@ -33,17 +33,17 @@ function LazyMap() {
   return (
     <div
       ref={containerRef}
-      className="relative w-full overflow-hidden rounded-xl bg-[#EEEAE3]"
+      className="relative w-full overflow-hidden rounded-xl bg-slate-100"
       style={{ aspectRatio: "16/9", minHeight: "260px" }}
       aria-label="Google Maps showing Trinetra Digital Solution location in Gorakhpur"
     >
       {/* Placeholder skeleton while not loaded */}
       {!loaded && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F2E8DC] text-[#BF7340]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-light text-accent">
             <MapPin size={20} />
           </div>
-          <p className="text-xs font-semibold text-[#5C5A52]">Loading map…</p>
+          <p className="text-xs font-semibold text-slate-500">Loading map…</p>
         </div>
       )}
       {/* Lazy-loaded Google Maps iframe */}
@@ -68,7 +68,7 @@ const INFO_CARDS = [
   {
     id: "location",
     icon: <MapPin size={18} />,
-    iconBg: "bg-[#F2E8DC] text-[#BF7340]",
+    iconBg: "bg-accent-light text-accent",
     label: "Office Location",
     primary: "Gorakhpur, Uttar Pradesh",
     secondary: "India — 273001",
@@ -79,7 +79,7 @@ const INFO_CARDS = [
   {
     id: "whatsapp",
     icon: <MessageCircle size={18} />,
-    iconBg: "bg-[#E8F0ED] text-[#2A4A3E]",
+    iconBg: "bg-emerald-50 text-emerald-700",
     label: "WhatsApp (Fastest)",
     primary: PHONE_NUMBER,
     secondary: "Usually replies within 15 min",
@@ -90,7 +90,7 @@ const INFO_CARDS = [
   {
     id: "phone",
     icon: <Phone size={18} />,
-    iconBg: "bg-[#F2E8DC] text-[#BF7340]",
+    iconBg: "bg-accent-light text-accent",
     label: "Phone",
     primary: PHONE_NUMBER,
     secondary: "Mon–Sat, 9 AM – 7 PM IST",
@@ -101,7 +101,7 @@ const INFO_CARDS = [
   {
     id: "email",
     icon: <Mail size={18} />,
-    iconBg: "bg-[#EEEAE3] text-[#5C5A52]",
+    iconBg: "bg-slate-100 text-slate-650",
     label: "Email",
     primary: EMAIL,
     secondary: "We respond within 12 hours",
@@ -112,7 +112,7 @@ const INFO_CARDS = [
   {
     id: "hours",
     icon: <Clock size={18} />,
-    iconBg: "bg-[#EEEAE3] text-[#5C5A52]",
+    iconBg: "bg-slate-100 text-slate-650",
     label: "Working Hours",
     primary: "Mon – Saturday",
     secondary: "9:00 AM – 7:00 PM IST",
@@ -135,7 +135,7 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
     <section
       id="location"
       aria-label="Trinetra Digital Solution office location — Gorakhpur, UP"
-      className={`relative bg-[#F4F2ED] ${isMini ? "py-14" : "py-20 md:py-28"} border-b border-[#E2DDD5]`}
+      className={`relative bg-surface-2 ${isMini ? "py-14" : "py-20 md:py-28"} border-b border-border`}
       itemScope
       itemType="https://schema.org/LocalBusiness"
     >
@@ -174,17 +174,17 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
               transition={{ delay: 0.1 }}
-              className="display-lg text-[#18170F] tracking-tight mb-4"
+              className="display-lg text-ink-1 tracking-tight mb-4 font-display font-bold"
             >
               We're based in Gorakhpur,<br />
-              <span className="italic text-[#BF7340]">serving India remotely.</span>
+              <span className="text-accent font-semibold">serving India remotely.</span>
             </motion.h2>
             <motion.p
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true, amount: 0.4 }}
               transition={{ delay: 0.2 }}
-              className="body-lg text-[#5C5A52] max-w-[540px] mx-auto"
+              className="body-lg text-ink-2 max-w-[540px] mx-auto font-medium"
             >
               Trinetra Digital Solution is headquartered in Gorakhpur, UP. We provide AI automation, WhatsApp CRM, and digital marketing services to businesses across India through remote delivery.
             </motion.p>
@@ -194,7 +194,7 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
         {isMini && (
           <div className="mb-8">
             <span className="mixed-headline-eyebrow">Our Location</span>
-            <h2 className="display-md text-[#18170F] tracking-tight">
+            <h2 className="display-md text-ink-1 tracking-tight font-display font-bold">
               Based in Gorakhpur, UP
             </h2>
           </div>
@@ -211,19 +211,34 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
 
           {/* Left: Map Container */}
           <div className="flex flex-col gap-4">
-            {/* Map Shell */}
-            <div className="rounded-2xl border border-[#E2DDD5] bg-white p-2 shadow-sm overflow-hidden">
-              <LazyMap />
+            {/* Elegant Browser Frame Mockup */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm relative w-full hover:border-accent/40 transition-all duration-300 group">
+              {/* Browser Header Bar */}
+              <div className="bg-slate-50 border-b border-slate-200/60 px-4 py-2.5 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                </div>
+                <div className="bg-white border border-slate-200/60 rounded px-4 py-0.5 text-[8px] font-mono text-slate-400 font-semibold tracking-wide">
+                  maps.google.com/trinetra-digital
+                </div>
+                <div className="w-[18px]" /> {/* Balancing spacer */}
+              </div>
+
+              <div className="p-2">
+                <LazyMap />
+              </div>
 
               {/* Map Action Bar */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 pt-2.5">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-4 pt-2.5 border-t border-slate-100">
                 <a
                   href={MAPS_DIRECTIONS}
                   target="_blank"
                   rel="noopener noreferrer"
                   id="map-get-directions"
                   aria-label="Get directions to Trinetra Digital Solution on Google Maps"
-                  className="flex flex-1 items-center justify-center gap-2 h-10 rounded-lg bg-[#2A4A3E] text-[#F9F8F5] text-xs font-bold uppercase tracking-wider hover:bg-[#1E3630] transition-colors"
+                  className="flex flex-1 items-center justify-center gap-2 h-10 rounded-lg bg-cta text-white text-xs font-bold uppercase tracking-wider hover:bg-cta-hover transition-colors cursor-pointer"
                 >
                   <Navigation size={13} /> Get Directions
                 </a>
@@ -233,7 +248,7 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
                   rel="noopener noreferrer"
                   id="map-open-google-maps"
                   aria-label="Open Trinetra Digital Solution in Google Maps"
-                  className="flex flex-1 items-center justify-center gap-2 h-10 rounded-lg border border-[#E2DDD5] bg-[#F4F2ED] text-xs font-semibold text-[#18170F] hover:bg-[#EEEAE3] transition-colors"
+                  className="flex flex-1 items-center justify-center gap-2 h-10 rounded-lg border border-border bg-slate-50 text-xs font-semibold text-ink-1 hover:bg-slate-100 transition-colors"
                 >
                   <ExternalLink size={13} /> Open in Google Maps
                 </a>
@@ -242,13 +257,13 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
 
             {/* Serve radius label */}
             <div className="flex items-start gap-3 px-1">
-              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#BF7340]/10 text-[#BF7340] mt-0.5">
+              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-light text-accent mt-0.5 border border-accent/15">
                 <MapPin size={11} />
               </div>
-              <p className="text-xs text-[#5C5A52] leading-relaxed">
-                <strong className="text-[#18170F]">AI Automation · CRM Solutions · WhatsApp Automation · Digital Marketing</strong>
+              <p className="text-xs text-ink-2 leading-relaxed font-semibold">
+                <strong className="text-ink-1">AI Automation · CRM Solutions · WhatsApp Automation · Digital Marketing</strong>
                 {" "}— serving businesses across{" "}
-                <span className="font-semibold text-[#BF7340]">Gorakhpur, Lucknow, Varanasi, Kanpur</span> and all of India via remote delivery.
+                <span className="font-semibold text-accent">Gorakhpur, Lucknow, Varanasi, Kanpur</span> and all of India via remote delivery.
               </p>
             </div>
           </div>
@@ -268,32 +283,32 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
                     href={card.href}
                     target={card.external ? "_blank" : undefined}
                     rel={card.external ? "noopener noreferrer" : undefined}
-                    className="group flex items-start gap-4 p-4 bg-white border border-[#E2DDD5] rounded-xl hover:border-[#BF7340]/30 hover:shadow-sm transition-all duration-200"
+                    className="group flex items-start gap-4 p-4 bg-white border border-border/80 rounded-xl hover:border-accent/30 hover:shadow-sm transition-all duration-200"
                     aria-label={card.label}
                   >
                     <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${card.iconBg}`}>
                       {card.icon}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#8C8A82] mb-0.5">{card.label}</p>
-                      <p className="text-sm font-semibold text-[#18170F] truncate">{card.primary}</p>
-                      <p className="text-xs text-[#5C5A52]">{card.secondary}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-ink-4 mb-0.5 font-mono">{card.label}</p>
+                      <p className="text-sm font-semibold text-ink-1 truncate">{card.primary}</p>
+                      <p className="text-xs text-ink-2">{card.secondary}</p>
                       {card.cta && (
-                        <p className="text-[10.5px] font-bold text-[#BF7340] mt-1.5 group-hover:underline flex items-center gap-1">
+                        <p className="text-[10.5px] font-bold text-accent mt-1.5 group-hover:underline flex items-center gap-1">
                           {card.cta} <ArrowRight size={10} />
                         </p>
                       )}
                     </div>
                   </a>
                 ) : (
-                  <div className="flex items-start gap-4 p-4 bg-white border border-[#E2DDD5] rounded-xl">
+                  <div className="flex items-start gap-4 p-4 bg-white border border-border/80 rounded-xl">
                     <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${card.iconBg}`}>
                       {card.icon}
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#8C8A82] mb-0.5">{card.label}</p>
-                      <p className="text-sm font-semibold text-[#18170F]">{card.primary}</p>
-                      <p className="text-xs text-[#5C5A52]">{card.secondary}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-ink-4 mb-0.5 font-mono">{card.label}</p>
+                      <p className="text-sm font-semibold text-ink-1">{card.primary}</p>
+                      <p className="text-xs text-ink-2">{card.secondary}</p>
                     </div>
                   </div>
                 )}
@@ -312,14 +327,14 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
               transition={{ delay: 0.35 }}
-              className="flex items-center justify-center gap-3 h-12 rounded-xl bg-[#131210] text-[#F9F8F5] text-xs font-bold uppercase tracking-wider border border-[#131210]/10 hover:bg-[#18170F] transition-colors mt-1"
+              className="flex items-center justify-center gap-3 h-12 rounded-xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition-colors mt-1 cursor-pointer shadow-sm"
             >
-              <MessageCircle size={16} className="fill-[#F9F8F5]/10" />
+              <MessageCircle size={16} className="fill-white/10" />
               WhatsApp for a Free Demo
               <ArrowRight size={13} />
             </motion.a>
 
-            <p className="text-center text-[10.5px] text-[#8C8A82] font-medium">
+            <p className="text-center text-[10.5px] text-ink-4 font-semibold font-mono">
               📍 Gorakhpur, UP · Serving all of India
             </p>
           </div>

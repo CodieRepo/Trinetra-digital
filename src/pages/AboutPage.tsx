@@ -1,8 +1,53 @@
-import { useEffect } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Target, Lightbulb, Users, ShieldCheck, ArrowRight, MapPin } from "lucide-react";
+import { Target, Lightbulb, Users, ShieldCheck, ArrowRight } from "lucide-react";
 import SEO from "../components/seo/SEO";
+
+// Count Up Helper Component
+function MetricCounter({ value, duration = 1.2 }: { value: string; duration?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, amount: 0.5 });
+  const [displayValue, setDisplayValue] = useState("0");
+
+  useEffect(() => {
+    if (!isInView) return;
+
+    // Parse the numbers and symbols
+    const numPart = parseFloat(value.replace(/[^0-9.]/g, "")) || 0;
+    const prefix = value.match(/^[^\d]*/)?.[0] || "";
+    const suffix = value.match(/[^\d.]*$/)?.[0] || "";
+    
+    let start = 0;
+    const end = numPart;
+    const isFloat = value.includes(".");
+    
+    let startTime: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+      
+      // easeOutExpo
+      const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      const current = start + easeProgress * (end - start);
+      
+      const formattedNumber = isFloat 
+        ? current.toFixed(1) 
+        : Math.floor(current).toString();
+
+      setDisplayValue(`${prefix}${formattedNumber}${suffix}`);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [isInView, value, duration]);
+
+  return <span ref={ref}>{displayValue}</span>;
+}
 
 const SCHEMA = {
   "@context": "https://schema.org",
@@ -128,7 +173,16 @@ export default function AboutPage() {
               { value: "Gorakhpur", label: "Based In", sub: "Uttar Pradesh, India" },
             ].map((s, i) => (
               <div key={i} className="flex flex-col items-center justify-center p-6 border-slate-100 last:border-r-0 md:border-r border-b md:border-b-0 pb-8 last:pb-6 md:pb-6">
-                <span className="font-display text-[52px] leading-none text-slate-900 font-semibold mb-2.5 tracking-tight">{s.value}</span>
+                <span className="font-display text-[52px] leading-none text-slate-900 font-semibold mb-2.5 tracking-tight">
+                  {/^\d/.test(s.value) ? (
+                    <>
+                      <MetricCounter value={s.value.replace(/[^0-9.]/g, '') || '0'} />
+                      {s.value.replace(/[0-9.]/g, '')}
+                    </>
+                  ) : (
+                    s.value
+                  )}
+                </span>
                 <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase font-mono mb-1.5">{s.label}</span>
                 {"sub" in s && <span className="text-[10.5px] text-slate-400 font-semibold font-mono">{(s as {sub: string}).sub}</span>}
               </div>
