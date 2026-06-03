@@ -63,7 +63,7 @@ const PORTFOLIO = [
     description: "Developed a professional business website for Vaastu Infra with integrated WhatsApp contact flow and a structured lead inquiry form to capture and organize incoming property inquiries.",
     avatar: "V",
     status: "Live",
-    video: "/VASTUPROJECT.mp4",
+    video: "/vastuproject.mp4",
     url: "vaastuinfra.in"
   },
   {
@@ -73,7 +73,7 @@ const PORTFOLIO = [
     description: "Handled complete website architecture planning, frontend and backend development, multi-page implementation, and system structure design for Akuafi — a technology-focused business requiring a well-structured digital presence.",
     avatar: "A",
     status: "Completed",
-    video: "/AkuafiPROJECT.mp4",
+    video: "/akuafiproject.mp4",
     url: "akuafi.com"
   },
 ];

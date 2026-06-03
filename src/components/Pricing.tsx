@@ -250,7 +250,7 @@ export default function Pricing() {
               </div>
             </div>
             <div className="relative rounded-lg overflow-hidden border border-slate-150 aspect-video grayscale opacity-75 hover:grayscale-0 hover:opacity-100 transition-all duration-500 ease-out shadow-inner">
-              <LazyVideo src="/Pricing.mp4" className="w-full h-full" />
+              <LazyVideo src="/pricing.mp4" className="w-full h-full" />
             </div>
             <div className="mt-2.5 text-center">
               <span className="text-[8.5px] font-mono font-semibold text-slate-400 uppercase tracking-wider">Hover to activate telemetry review</span>

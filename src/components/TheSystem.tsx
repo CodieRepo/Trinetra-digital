@@ -163,7 +163,7 @@ export default function TheSystem() {
                         <span className="text-slate-400 font-mono text-[9px]">yourwebsite.com</span>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/Build Growth Automate.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <LazyVideo src="/build-growth-automate.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
                     </div>
                   )}
 
@@ -173,7 +173,7 @@ export default function TheSystem() {
                         <span className="text-slate-400 font-mono text-[9px]">crm.yourwebsite.com</span>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/WhyTinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <LazyVideo src="/why-tinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
                     </div>
                   )}
 
@@ -183,7 +183,7 @@ export default function TheSystem() {
                         <span className="text-slate-400 font-mono text-[9px]">analytics.yourwebsite.com</span>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/Pricing.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <LazyVideo src="/pricing.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
                     </div>
                   )}
                 </div>
@@ -315,7 +315,7 @@ export default function TheSystem() {
                         </div>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/Build Growth Automate.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <LazyVideo src="/build-growth-automate.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
                       <div className="flex justify-center mt-1">
                         <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
                           Mobile Responsive ✓ SEO Ready ✓
@@ -343,7 +343,7 @@ export default function TheSystem() {
                         </div>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/WhyTinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <LazyVideo src="/why-tinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
                       <div className="flex justify-center mt-1">
                         <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
                           WhatsApp Auto-Alerts Active ✓
@@ -371,7 +371,7 @@ export default function TheSystem() {
                         </div>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/Pricing.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <LazyVideo src="/pricing.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
                       <div className="flex justify-center mt-1">
                         <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
                           SEO Crawler Tracked ✓
