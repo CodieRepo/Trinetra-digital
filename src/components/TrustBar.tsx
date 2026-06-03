@@ -1,11 +1,11 @@
 import { Activity, Home, GraduationCap, Sun, ShoppingBag } from "lucide-react";
 
 const INDUSTRIES = [
-  { label: "Healthcare & OPD", icon: <Activity size={16} /> },
+  { label: "Clinics & Hospitals", icon: <Activity size={16} /> },
   { label: "Real Estate & Builders", icon: <Home size={16} /> },
-  { label: "Coaching & Institutes", icon: <GraduationCap size={16} /> },
-  { label: "Solar & EPC Contractors", icon: <Sun size={16} /> },
-  { label: "Local Retail & Business", icon: <ShoppingBag size={16} /> },
+  { label: "Schools & Coaching", icon: <GraduationCap size={16} /> },
+  { label: "Salons, Gyms & Retail", icon: <Sun size={16} /> },
+  { label: "Restaurants & SMBs", icon: <ShoppingBag size={16} /> },
 ];
 
 export default function TrustBar() {

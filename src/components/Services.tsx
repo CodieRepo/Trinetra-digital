@@ -3,34 +3,34 @@ import { Activity, Home, GraduationCap, Sun, ShoppingBag, ArrowRight } from "luc
 
 const INDUSTRIES = [
   {
-    title: "Healthcare",
-    description: "Manage patient OPD booking, coordinate report dispatch, send appointment reminders, and handle patient feedback follow-ups seamlessly.",
+    title: "Healthcare & Clinics",
+    description: "Manage patient appointment booking, send appointment reminders, coordinate report dispatch, automate follow-ups and establish a professional digital presence for your clinic or hospital.",
     icon: <Activity size={20} />,
-    link: "See Healthcare",
+    link: "See Healthcare Solutions",
   },
   {
     title: "Real Estate",
-    description: "Organize high-value buyers, gather budget and locality match data, coordinate site visits, and nurture leads with digital media packages.",
+    description: "Capture property inquiry leads, organize buyer data by budget and location preference, automate site visit scheduling and maintain consistent follow-up with potential buyers.",
     icon: <Home size={20} />,
-    link: "See Real Estate",
+    link: "See Real Estate Solutions",
   },
   {
-    title: "Coaching",
-    description: "Manage high inbound program interest, capture student records, distribute syllabus assets digitally, and schedule admissions slots.",
+    title: "Coaching & Education",
+    description: "Manage high inbound student inquiries, capture admission records, distribute course materials digitally, automate fee reminders and schedule counselling or demo sessions.",
     icon: <GraduationCap size={20} />,
-    link: "See Coaching",
+    link: "See Education Solutions",
   },
   {
-    title: "Solar",
-    description: "Collect geographic details and roof metrics, compute estimated cost savings, qualify grid capacities, and schedule engineering site surveys.",
+    title: "Salons & Gyms",
+    description: "Enable online appointment booking, send automated reminders, manage member records and build social media presence to attract and retain local customers consistently.",
     icon: <Sun size={20} />,
-    link: "See Solar",
+    link: "See Wellness Solutions",
   },
   {
-    title: "Local Business",
-    description: "Reply promptly to Google/Instagram map leads, share operating hours and catalogues, organize customer support, and collect review ratings.",
+    title: "Restaurants & Retail",
+    description: "Display your menu or catalogue online, collect pre-orders or reservations, respond to inquiries promptly and manage customer reviews and digital reputation.",
     icon: <ShoppingBag size={20} />,
-    link: "See Local Business",
+    link: "See Retail Solutions",
   },
 ];
 
@@ -57,7 +57,7 @@ export default function Services() {
             transition={{ delay: 0.1 }}
             className="display-lg text-[#18170F] tracking-tight mb-4"
           >
-            Every business is different. <br />Your systems should be too.
+            We understand your industry. <br />Your solution will too.
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -66,7 +66,7 @@ export default function Services() {
             transition={{ delay: 0.2 }}
             className="body-lg text-[#5C5A52] max-w-[540px] mx-auto"
           >
-            Custom software and digital strategies designed specifically around your operational structure, products, and target client dynamics.
+            We work with local businesses, service providers, startups and growing companies across industries to build websites, automate processes and strengthen digital presence.
           </motion.p>
         </div>
 
@@ -117,13 +117,13 @@ export default function Services() {
             className="flex flex-col justify-center items-center rounded-xl border border-dashed border-[#E2DDD5] p-8 text-center bg-[#F4F2ED]"
             style={{ minHeight: "260px" }}
           >
-            <p className="text-sm font-semibold text-[#18170F] mb-1 font-interface">Don't see your sector?</p>
-            <p className="text-xs text-[#5C5A52] max-w-[200px] mb-4">We construct bespoke systems for any custom business workflow.</p>
+            <p className="text-sm font-semibold text-[#18170F] mb-1 font-interface">Don't see your industry?</p>
+            <p className="text-xs text-[#5C5A52] max-w-[200px] mb-4">We build tailored digital solutions for any business type and workflow requirement.</p>
             <a
               href="#contact"
               className="text-xs font-bold text-[#BF7340] hover:text-[#A6612E] animated-underline-link"
             >
-              Consult with our Architect →
+              Book a Free Consultation →
             </a>
           </motion.div>
         </div>

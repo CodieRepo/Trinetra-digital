@@ -9,7 +9,7 @@ const SCHEMA = {
   "@type": "AboutPage",
   "url": "https://trinetradigitalsolution.com/about",
   "name": "About Trinetra Digital Solution",
-  "description": "Trinetra Digital Solution is a premium website development, CRM development, and digital marketing agency based in Gorakhpur, Uttar Pradesh. We build custom websites, tailored CRM systems, and performance marketing campaigns for growing businesses.",
+  "description": "Trinetra Digital Solution is a business growth and digital transformation partner based in Gorakhpur, Uttar Pradesh. We help startups, local businesses and growing companies build websites, manage digital marketing, automate workflows and develop custom software.",
   "mainEntity": {
     "@id": "https://trinetradigitalsolution.com/#organization",
   },
@@ -18,23 +18,23 @@ const SCHEMA = {
 const VALUES = [
   {
     icon: <Target size={20} />,
-    title: "Outcome-Driven",
-    desc: "We measure success by what actually happens — leads qualified, deals closed, hours saved. Not vanity metrics.",
+    title: "Process-Driven",
+    desc: "Every engagement follows a clear process — from consultation and planning to implementation and review. No guesswork, just structured execution.",
   },
   {
     icon: <Lightbulb size={20} />,
-    title: "Built for India",
-    desc: "Our AI understands Hinglish, local business contexts, and Indian market dynamics. No off-the-shelf Western solutions.",
+    title: "Business-Focused Solutions",
+    desc: "We build digital systems around your actual business goals — whether that's improving lead management, establishing online visibility or streamlining operations.",
   },
   {
     icon: <Users size={20} />,
-    title: "Human-Centric Design",
-    desc: "We build intuitive software systems so your team can focus on building real relationships and closing deals.",
+    title: "Long-Term Partnerships",
+    desc: "We work as a committed partner, not a one-off vendor. Our goal is to help your business improve and evolve over time through ongoing support and optimization.",
   },
   {
     icon: <ShieldCheck size={20} />,
-    title: "Trusted Infrastructure",
-    desc: "Enterprise-grade reliability for businesses of all sizes. We build systems that run reliably, 24/7, without babysitting.",
+    title: "Transparent & Compliant",
+    desc: "We communicate clearly, set realistic expectations and ensure all our services follow platform policies including Google, Meta and WhatsApp Business guidelines.",
   },
 ];
 
@@ -44,8 +44,8 @@ export default function AboutPage() {
   return (
     <>
       <SEO
-        title="About Trinetra Digital Solution — Custom Web & CRM Agency in Gorakhpur, UP"
-        description="Trinetra Digital Solution is a premium custom website development, CRM development, and digital marketing agency based in Gorakhpur, Uttar Pradesh. We help businesses scale and organize their sales operations."
+        title="About Trinetra Digital Solution — Business Growth & Digital Transformation Partner"
+        description="Trinetra Digital Solution is a complete business growth partner based in Gorakhpur, UP. We help local businesses, startups and SMBs build websites, run digital marketing, automate workflows and develop custom software solutions."
         canonical="https://trinetradigitalsolution.com/about"
         schema={SCHEMA}
       />
@@ -62,7 +62,7 @@ export default function AboutPage() {
             transition={{ delay: 0.1 }}
             className="display-lg text-[#18170F] tracking-tight mt-2 mb-6"
           >
-            Built to solve the lead problem every Indian business faces
+            Your complete digital growth and automation partner
           </motion.h1>
           <motion.div
             initial={{ opacity: 0 }}
@@ -71,16 +71,16 @@ export default function AboutPage() {
             className="flex flex-col gap-4 body-md text-[#5C5A52]"
           >
             <p>
-              Trinetra Digital Solution was founded with a single observation: Indian businesses — especially SMBs — struggle to manage lead generation and organize customer data without structured software systems.
+              Trinetra Digital Solution was founded with a clear purpose: to help Indian businesses — especially local businesses, service providers and SMBs — establish a strong digital presence, manage customer inquiries more effectively and operate more efficiently through the right technology.
             </p>
             <p>
-              Leads came in across multiple channels. Sales teams forgot to follow up. Customer data got lost in messy Excel sheets and unorganized chat logs. Valuable customers moved on because of operational friction.
+              Most businesses we worked with were running on spreadsheets, unorganized chat logs and missed callbacks. They had no professional website, no structured follow-up system, no online visibility and no software to manage their operations. They were hardworking but lacked the digital foundation to grow.
             </p>
             <p>
-              We built Trinetra to fix this. Starting in Gorakhpur, Uttar Pradesh, we developed high-performance digital systems that integrate custom business websites with secure CRM databases — capturing every inquiry instantly, organizing client requirements, and scaling growth through compliant search and social ads campaigns.
+              We built Trinetra to change that. Starting in Gorakhpur, Uttar Pradesh, we began helping local businesses build professional websites, set up CRM systems, run local SEO campaigns and automate their customer communication workflows — all under one roof with transparent processes.
             </p>
             <p>
-              Today, we serve businesses across India in healthcare, real estate, education, solar, and local retail — helping them scale their operations without scaling their headcount.
+              Today, we serve startups, local businesses, clinics, coaching institutes, real estate agencies, salons, restaurants and growing companies across India — helping them build a stronger digital presence, manage their operations better and serve their customers more effectively.
             </p>
           </motion.div>
         </div>
@@ -92,7 +92,7 @@ export default function AboutPage() {
           <div className="text-center mb-14">
             <span className="mixed-headline-eyebrow">What We Stand For</span>
             <h2 className="display-md text-[#18170F] tracking-tight mt-2 max-w-[520px] mx-auto">
-              Principles that guide every system we build
+              Principles that guide every project we deliver
             </h2>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -121,13 +121,14 @@ export default function AboutPage() {
         <div className="main-container">
           <div className="grid gap-6 md:grid-cols-3 text-center">
             {[
-              { value: "50+", label: "Systems Deployed" },
-              { value: "100%", label: "Client Commitment" },
-              { value: "India-wide", label: "Clients Served" },
+              { value: "2", label: "Verified Projects", sub: "Vaastu Infra & Akuafi" },
+              { value: "5+", label: "Services Offered", sub: "Website, SEO, Social, CRM, Software" },
+              { value: "Gorakhpur", label: "Based In", sub: "Uttar Pradesh, India" },
             ].map((s, i) => (
               <div key={i} className="flex flex-col items-center p-6">
                 <span className="font-display text-[52px] leading-none text-[#18170F] font-semibold mb-2">{s.value}</span>
-                <span className="text-xs font-semibold uppercase tracking-widest text-[#5C5A52]">{s.label}</span>
+                <span className="text-xs font-semibold tracking-wider text-[#8C8A82] uppercase font-interface">{s.label}</span>
+                {"sub" in s && <span className="text-[10px] text-[#8C8A82] mt-1">{(s as {sub: string}).sub}</span>}
               </div>
             ))}
           </div>
@@ -158,14 +159,14 @@ export default function AboutPage() {
         <div className="main-container text-center">
           <h2 className="display-md text-[#18170F] tracking-tight mb-4">Ready to grow your business?</h2>
           <p className="body-md text-[#5C5A52] mb-8 max-w-[480px] mx-auto">
-            Book a free 30-minute consultation and see exactly how Trinetra can scale and organize your operations.
+            Book a free consultation and see exactly how Trinetra can help build your online presence, manage your operations and grow your business systematically.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link to="/contact" className="inline-flex items-center gap-2 h-11 rounded-lg bg-[#2A4A3E] px-6 text-xs font-bold uppercase tracking-wider text-[#F9F8F5] hover:bg-[#1E3630] transition-colors">
-              Book Free Demo <ArrowRight size={14} />
+              Book Free Consultation <ArrowRight size={14} />
             </Link>
             <Link to="/services" className="inline-flex items-center gap-2 h-11 rounded-lg border border-[#E2DDD5] bg-white px-6 text-xs font-semibold text-[#18170F] hover:bg-[#F4F2ED] transition-colors">
-              Explore Services
+              Explore Our Services
             </Link>
           </div>
         </div>

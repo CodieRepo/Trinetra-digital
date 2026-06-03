@@ -10,14 +10,14 @@ const PHONE_TEL = "tel:+919334757759";
 const PHONE_NUMBER = "+91 9334757759";
 const EMAIL = "info@trinetradigitalsolution.com";
 const FORMSPREE_ID = "mbdbqbwy";
-const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'd like to book a free demo with Trinetra Digital Solution.")}`;
+const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'd like to book a free consultation with Trinetra Digital Solution.")}`;
 
 const SCHEMA = {
   "@context": "https://schema.org",
   "@type": "ContactPage",
   "url": "https://trinetradigitalsolution.com/contact",
   "name": "Contact Trinetra Digital Solution",
-  "description": "Get in touch with Trinetra Digital Solution for website development, CRM development, and digital marketing services in Gorakhpur and across India.",
+  "description": "Get in touch with Trinetra Digital Solution for website development, SEO, social media management, CRM systems, business automation and custom software services across India.",
   "mainEntity": {
     "@id": "https://trinetradigitalsolution.com/#localbusiness",
     "@type": "LocalBusiness",
@@ -127,8 +127,8 @@ export default function ContactPage() {
   return (
     <>
       <SEO
-        title="Contact Trinetra Digital Solution — Book a Free Consultation"
-        description="Get in touch with Trinetra Digital Solution. Book a free consultation for website development, CRM systems, or digital marketing services. Based in Gorakhpur, UP — serving businesses across India."
+        title="Contact Trinetra Digital Solution — Book a Free Business Consultation"
+        description="Get in touch with Trinetra Digital Solution. Book a free consultation for website development, SEO, social media management, CRM systems, business automation or custom software. Based in Gorakhpur, UP — serving businesses across India."
         canonical="https://trinetradigitalsolution.com/contact"
         schema={SCHEMA}
       />
@@ -145,7 +145,7 @@ export default function ContactPage() {
             transition={{ delay: 0.1 }}
             className="display-lg text-[#18170F] tracking-tight mb-4 mt-2"
           >
-            Book your free consultation
+            Get a free business consultation
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -153,7 +153,7 @@ export default function ContactPage() {
             transition={{ delay: 0.2 }}
             className="body-lg text-[#5C5A52]"
           >
-            Tell us about your business and we'll design a customized software and digital growth strategy — in a free 30-minute consultation.
+            Tell us about your business — website, digital marketing, automation, CRM or software — and we'll walk you through how we can help, with no obligation.
           </motion.p>
         </div>
       </section>
@@ -330,9 +330,13 @@ export default function ContactPage() {
                     >
                       <option value="">Select a service…</option>
                       <option value="Website Development">Website Development</option>
-                      <option value="CRM Development">CRM Development</option>
-                      <option value="Digital Marketing">Digital Marketing</option>
-                      <option value="Custom Project">Custom Project</option>
+                      <option value="SEO & Digital Marketing">SEO & Digital Marketing</option>
+                      <option value="Social Media Management">Social Media Management</option>
+                      <option value="Automation & CRM">Automation & CRM</option>
+                      <option value="Custom Software Development">Custom Software Development</option>
+                      <option value="Google Ads / Meta Ads Management">Google Ads / Meta Ads Management</option>
+                      <option value="Growth Package">Growth Package</option>
+                      <option value="Custom Requirement">Custom Requirement</option>
                     </select>
                   </div>
 
@@ -386,8 +390,8 @@ export default function ContactPage() {
           <div className="flex flex-wrap gap-3 justify-center">
             {[
               { label: "Website Development", href: "/services/website-development" },
-              { label: "CRM Development", href: "/services/crm-development" },
-              { label: "See Pricing", href: "/pricing" },
+              { label: "SEO & Digital Marketing", href: "/services/digital-marketing" },
+              { label: "View All Packages", href: "/pricing" },
             ].map((l) => (
               <Link key={l.href} to={l.href} className="text-xs font-semibold text-[#BF7340] border border-[#BF7340]/20 bg-[#F2E8DC] px-4 py-2 rounded-full hover:bg-[#F2E8DC]/80 transition-colors">
                 {l.label} →

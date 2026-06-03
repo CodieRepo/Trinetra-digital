@@ -158,7 +158,7 @@ export default function Home() {
                   <span key={i} className="h-7 w-7 rounded-full border border-[#E2DDD5] bg-[#FAF5EF] flex items-center justify-center text-[9px] font-bold text-[#5C5A52] shadow-3xs">{char}</span>
                 ))}
               </div>
-              <p className="text-[11px] text-[#8C8A82] font-semibold">Configured with 100% Meta & Google ad platforms compliance.</p>
+              <p className="text-[11px] text-[#8C8A82] font-semibold">Built with Meta & Google Ads platform compliance in mind.</p>
             </motion.div>
           </div>
 
@@ -178,8 +178,8 @@ export default function Home() {
             <div className="mb-6 mt-1 flex justify-between items-center border-b border-slate-100 pb-3">
               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-mono">Operations Timeline</span>
               <span className="flex items-center gap-1.5 text-[10px] font-bold text-[#2A4A3E] bg-emerald-50 px-2 py-0.5 rounded-full shadow-3xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
-                Live Staging
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Demo Preview
               </span>
             </div>
 
@@ -220,7 +220,7 @@ export default function Home() {
                   <span className="h-7 w-7 rounded-lg bg-slate-50 text-slate-700 flex items-center justify-center shrink-0"><Database size={13} /></span>
                   <div>
                     <span className="text-[10px] font-bold text-[#18170F]">CRM Record Generated</span>
-                    <p className="text-[11px] text-[#5C5A52] mt-0.5 font-bold">Client Name: Rajesh Kumar · India</p>
+                    <p className="text-[11px] text-[#5C5A52] mt-0.5 font-bold">Sample enquiry · India</p>
                   </div>
                 </motion.div>
               )}

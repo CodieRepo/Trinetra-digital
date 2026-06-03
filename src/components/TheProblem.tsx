@@ -3,18 +3,18 @@ import { motion } from "framer-motion";
 
 const PROBLEMS = [
   {
-    title: "Leads fall through cracks",
-    description: "Handling customer requests on spreadsheets with no system. Valuable enquiries get buried under chat logs.",
+    title: "No structured digital presence",
+    description: "Businesses lose potential customers daily by lacking a professional website, consistent social media or local search visibility. First impressions are digital.",
     icon: <AlertTriangle size={20} />,
   },
   {
-    title: "No follow-up system",
-    description: "Hot leads go cold in 24 hours without structured CRM records and timely follow-up.",
+    title: "Inquiries without a follow-up system",
+    description: "Leads arrive through WhatsApp, calls or forms — but without a CRM or automation, follow-ups are missed and opportunities go cold.",
     icon: <Clock size={20} />,
   },
   {
-    title: "Zero visibility into pipelines",
-    description: "You don't know which message, representative, or campaign converts. Operations run on guesswork rather than clean data.",
+    title: "Operations running on guesswork",
+    description: "Without dashboards, reports or organized workflows, business owners struggle to track performance, manage teams or make data-informed decisions.",
     icon: <BarChart3 size={20} />,
   },
 ];
@@ -41,7 +41,7 @@ export default function TheProblem() {
             transition={{ delay: 0.1 }}
             className="display-lg text-[#18170F] tracking-tight max-w-[720px] mx-auto mb-4"
           >
-            Operating without structured digital systems is quietly costing you.
+            Operating without structured digital systems quietly holds your business back.
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -50,7 +50,7 @@ export default function TheProblem() {
             transition={{ delay: 0.2 }}
             className="body-lg text-[#5C5A52] max-w-[540px] mx-auto"
           >
-            Every missed reply. Every forgotten follow-up. Every lead that went cold. It adds up to lost revenue.
+            Every missed inquiry. Every forgotten follow-up. Every customer who didn't find you online. It adds up to lost opportunities and stalled growth.
           </motion.p>
         </div>
 

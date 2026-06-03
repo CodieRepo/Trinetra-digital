@@ -15,14 +15,14 @@ export function FinalCTAFooter() {
       {/* CTA Block */}
       <div className="main-container max-w-[680px] mx-auto text-center pt-14 md:pt-24 pb-16 md:pb-24 border-b border-[#FAF5EF]/10">
         <span className="text-[11px] font-semibold tracking-[0.25em] text-[#BF7340] uppercase font-interface mb-4 block">
-          Scale Your Business Today
+          Your Complete Digital Growth Partner
         </span>
         <h2 className="font-display text-[36px] sm:text-[44px] md:text-[56px] leading-[1.1] text-[#F9F8F5] tracking-tight mb-5 md:mb-6">
-          Stop losing leads. <br />
-          <span className="italic text-[#BF7340]">Grow</span> your business.
+          Build. Grow. <br />
+          <span className="italic text-[#BF7340]">Automate</span> & Scale.
         </h2>
         <p className="text-sm sm:text-base leading-relaxed text-[#F9F8F5]/70 max-w-[500px] mx-auto mb-10">
-          We design and develop custom websites, bespoke CRM systems, and high-performance digital marketing campaigns to scale your online enquiries.
+          Professional websites, SEO, social media, CRM systems, automation and custom software — everything your business needs to establish a strong online presence and operate more efficiently.
         </p>
 
         <div className="max-w-[480px] mx-auto" role="group" aria-label="Contact Trinetra Digital Solution">
@@ -112,9 +112,10 @@ export function FinalCTAFooter() {
               <p className="text-[#FAF5EF]/30 font-semibold uppercase tracking-widest text-[10px] mb-3">Services</p>
               <div className="flex flex-col gap-2.5">
                 <Link to="/services/website-development" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Website Development</Link>
-                <Link to="/services/crm-development" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">CRM Development</Link>
-                <Link to="/services/digital-marketing" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Digital Marketing</Link>
-                <Link to="/services/future-solutions" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Future Solutions</Link>
+                <Link to="/services/digital-marketing" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">SEO & Digital Marketing</Link>
+                <Link to="/services/digital-marketing" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Social Media Management</Link>
+                <Link to="/services/crm-development" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Automation & CRM</Link>
+                <Link to="/services/crm-development" className="text-[#FAF5EF]/60 hover:text-[#F9F8F5] transition-colors">Custom Software</Link>
               </div>
             </div>
             <div>

@@ -19,6 +19,7 @@ export interface Lead {
   ai_score: number;
   ai_budget: boolean;
   ai_summary: string | null;
+  ai_enabled: number; // 0 = disabled, 1 = enabled
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -65,6 +66,7 @@ export interface AnalyticsData {
   summary: AnalyticsSummary;
   pipeline: PipelineStage[];
   monthlyPerformances?: Array<{ month: string; leadsCount: number; conversion: number }>;
+  recentActivity?: Array<{ id: string; action: string; details: string | null; timestamp: string }>;
 }
 
 export interface Campaign {

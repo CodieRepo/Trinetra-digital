@@ -3,8 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, ArrowRight, CheckCircle2, MessageSquare, Sparkles, FolderKanban, TrendingUp } from "lucide-react";
 
 const WA_NUMBER = "919334757759";
-const PHONE_TEL = "tel:+919334757759";
-const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's AI automation services.")}`;
+const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'd like to get a free consultation from Trinetra Digital Solution.")}`;
 
 export default function Hero() {
   const [pipelineStep, setPipelineStep] = useState(0);
@@ -32,7 +31,7 @@ export default function Hero() {
   return (
     <section
       id="main-content"
-      aria-label="Hero — Trinetra AI WhatsApp Automation for Indian Businesses"
+      aria-label="Hero — Trinetra Digital Solution — Business Growth & Automation Partner"
       className="relative overflow-hidden bg-[#F9F8F5] pt-[100px] pb-16 md:pt-[160px] md:pb-24"
       itemScope
       itemType="https://schema.org/WebPageElement"
@@ -53,7 +52,7 @@ export default function Hero() {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="mixed-headline-eyebrow"
           >
-            AI Infrastructure for Indian Business
+            Complete Digital Growth Partner for Indian Business
           </motion.span>
 
           {/* Mixed Headline */}
@@ -63,9 +62,9 @@ export default function Hero() {
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
             className="display-xl text-[#18170F] tracking-tight mb-6 font-display"
           >
-            Your business runs on <br />
-            <span className="italic text-[#BF7340]">conversations</span>. <br />
-            We make them work.
+            Build, Grow, <br />
+            <span className="italic text-[#BF7340]">Automate</span> & Scale <br />
+            Your Business.
           </motion.h1>
 
           {/* Secondary body explanation */}
@@ -75,7 +74,7 @@ export default function Hero() {
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
             className="body-xl text-[#5C5A52] mb-10 max-w-[620px]"
           >
-            Trinetra builds AI-powered automation infrastructure that turns raw WhatsApp chats into qualified pipelines, instant leads, and closed deals—running silently in the background without adding headcount.
+            Professional Websites, SEO, Social Media Management, CRM Systems, Business Automation and Custom Software Solutions — everything your business needs to establish a strong digital presence, manage operations and grow efficiently.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -86,21 +85,21 @@ export default function Hero() {
             className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 mb-8"
           >
             <a href="#contact" className="btn-primary-forest text-sm font-semibold tracking-wide gap-2 w-full sm:w-auto">
-              Book a Free Demo <ArrowUpRight size={16} />
+              Get Free Consultation <ArrowUpRight size={16} />
+            </a>
+            <a
+              href="#pricing"
+              className="btn-secondary-outlined text-sm font-semibold tracking-wide gap-2 w-full sm:w-auto"
+            >
+              View Packages <ArrowRight size={16} />
             </a>
             <a
               href={WA_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-secondary-outlined text-sm font-semibold tracking-wide gap-2 w-full sm:w-auto"
-            >
-              💬 WhatsApp Us <ArrowRight size={16} />
-            </a>
-            <a
-              href={PHONE_TEL}
               className="text-sm font-semibold text-[#BF7340] hover:text-[#A6612E] transition-colors flex items-center gap-1.5"
             >
-              📞 Call Now
+              💬 WhatsApp Us
             </a>
           </motion.div>
 
@@ -128,7 +127,7 @@ export default function Hero() {
               ))}
             </div>
             <span className="text-xs font-medium text-[#5C5A52] font-interface tracking-[0.02em]">
-              Trusted by <span className="font-semibold text-[#18170F]">50+ scaling businesses</span> across India
+              <span className="font-semibold text-[#18170F]">Gorakhpur, UP</span> — serving businesses across India
             </span>
           </motion.div>
         </div>
@@ -150,10 +149,10 @@ export default function Hero() {
             </div>
             
             <div className="mb-6 mt-1 flex justify-between items-center border-b border-[#E2DDD5] pb-3">
-              <span className="mono-sm text-[#8C8A82] tracking-wider uppercase font-semibold">TRINETRA PIPELINE</span>
+              <span className="mono-sm text-[#8C8A82] tracking-wider uppercase font-semibold">BUSINESS WORKFLOW</span>
               <span className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2D6A4F] bg-[#E8F5EE] px-2 py-0.5 rounded-full pulse-success-dot">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#2D6A4F]" />
-                Live Engine
+                Active System
               </span>
             </div>
 
@@ -174,10 +173,10 @@ export default function Hero() {
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center">
-                      <span className="text-[11px] font-semibold text-[#18170F]">WhatsApp Inquiry</span>
+                      <span className="text-[11px] font-semibold text-[#18170F]">New Lead Inquiry</span>
                       <span className="text-[9px] text-[#8C8A82] mono-sm">11:02 AM</span>
                     </div>
-                    <p className="text-[12px] text-[#5C5A52] mt-0.5 truncate italic">"Hi, looking for real estate lead booking setup on WhatsApp..."</p>
+                    <p className="text-[12px] text-[#5C5A52] mt-0.5 truncate italic">"Hi, I need a website and lead management system for my clinic..."</p>
                   </div>
                 </motion.div>
               )}
@@ -205,11 +204,11 @@ export default function Hero() {
                   <div className="flex-1 min-w-0">
                     <span className="text-[11px] font-semibold text-[#18170F]">AI Qualification</span>
                     <p className="text-[12px] text-[#BF7340] font-medium mono-sm mt-0.5">
-                      Analyzing intent & budget...
+                      Matching services to requirements...
                     </p>
                     <div className="flex gap-1.5 mt-1.5">
-                      <span className="text-[9px] bg-[#FAF5EF] text-[#BF7340] px-1.5 py-0.5 rounded border border-[#E2DDD5]">Budget Match ✓</span>
-                      <span className="text-[9px] bg-[#FAF5EF] text-[#BF7340] px-1.5 py-0.5 rounded border border-[#E2DDD5]">Score: 92/100</span>
+                      <span className="text-[9px] bg-[#FAF5EF] text-[#BF7340] px-1.5 py-0.5 rounded border border-[#E2DDD5]">Website ✓</span>
+                      <span className="text-[9px] bg-[#FAF5EF] text-[#BF7340] px-1.5 py-0.5 rounded border border-[#E2DDD5]">CRM Setup ✓</span>
                     </div>
                   </div>
                 </motion.div>
@@ -236,10 +235,10 @@ export default function Hero() {
                     <FolderKanban size={14} />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-semibold text-[#18170F]">Lead Created in CRM</span>
+                    <span className="text-[11px] font-semibold text-[#18170F]">Lead Captured in CRM</span>
                     <div className="flex items-center justify-between mt-1 text-[12px] text-[#5C5A52]">
-                      <span className="font-medium text-[#18170F]">Raja S.</span>
-                      <span className="text-[#8C8A82]">Category: Real Estate</span>
+                      <span className="font-medium text-[#18170F]">Dr. Sharma's Clinic</span>
+                      <span className="text-[#8C8A82]">Healthcare</span>
                     </div>
                   </div>
                 </motion.div>
@@ -266,9 +265,9 @@ export default function Hero() {
                     <CheckCircle2 size={14} />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-semibold text-[#18170F]">Auto Follow-up Dispatched</span>
+                    <span className="text-[11px] font-semibold text-[#18170F]">Proposal & Follow-up Sent</span>
                     <p className="text-[11px] text-[#2D6A4F] bg-[#E8F5EE] border border-[#2D6A4F]/10 rounded px-2 py-1 mt-1 font-medium">
-                      "Site visit confirmed ✓ Rajasthan Apts"
+                      "Consultation scheduled ✓ Growth Package proposal sent"
                     </p>
                   </div>
                 </motion.div>
@@ -295,8 +294,8 @@ export default function Hero() {
                     <TrendingUp size={14} />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-semibold text-[#2D6A4F]">Pipeline Closed</span>
-                    <p className="text-[13px] font-bold text-[#18170F] mt-0.5">₹2.4L revenue logged</p>
+                    <span className="text-[11px] font-semibold text-[#2D6A4F]">Project Onboarded</span>
+                    <p className="text-[13px] font-bold text-[#18170F] mt-0.5">Website + CRM + SEO Setup</p>
                   </div>
                 </motion.div>
               )}

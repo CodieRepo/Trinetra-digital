@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
 
 const TABS = [
-  { id: "whatsapp", label: "WhatsApp Automation" },
-  { id: "crm", label: "AI Lead CRM" },
-  { id: "followup", label: "Smart Follow-Up" },
+  { id: "digital", label: "Digital Presence" },
+  { id: "crm", label: "Automation & CRM" },
+  { id: "growth", label: "SEO & Growth" },
 ];
 
 export default function TheSystem() {
-  const [activeTab, setActiveTab] = useState("whatsapp");
+  const [activeTab, setActiveTab] = useState("digital");
 
   return (
     <section id="system" aria-label="Trinetra AI Automation System — WhatsApp Automation, AI CRM, Smart Follow-Up" className="relative overflow-hidden bg-[#FAF5EF] py-20 md:py-28 border-b border-[#E2DDD5]">
@@ -22,10 +22,10 @@ export default function TheSystem() {
             The Trinetra System
           </span>
           <h2 className="display-lg text-[#18170F] tracking-tight max-w-[720px] mx-auto mb-4">
-            One platform. Every conversation. <br />Zero missed opportunities.
+            One partner. Every capability. <br />Zero corners cut.
           </h2>
           <p className="body-lg text-[#5C5A52] max-w-[540px] mx-auto">
-            Built on top of your existing WhatsApp business number. No complex training or heavy software migrations required.
+            From building your online presence to automating operations and driving growth — we handle every layer of your digital business.
           </p>
         </div>
 
@@ -64,19 +64,19 @@ export default function TheSystem() {
             
             {/* Left Column: Description & Bullet Points */}
             <div className="flex flex-col text-left">
-              {activeTab === "whatsapp" && (
+              {activeTab === "digital" && (
                 <>
-                  <span className="mono-sm text-[#BF7340] uppercase tracking-wider font-semibold mb-2">INTELLIGENT ROUTING</span>
-                  <h3 className="heading-lg text-[#18170F] mb-4">Instant response, fully automated qualification.</h3>
+                  <span className="mono-sm text-[#BF7340] uppercase tracking-wider font-semibold mb-2">WEBSITE & DIGITAL PRESENCE</span>
+                  <h3 className="heading-lg text-[#18170F] mb-4">Professional websites that build credibility and capture inquiries.</h3>
                   <p className="body-md text-[#5C5A52] mb-6">
-                    Our AI instantly replies to incoming WhatsApp inquiries, questions, and advertisements. It scans intent, profiles budgets, and captures email/phone records in seconds.
+                    We design and develop mobile-responsive, SEO-ready business websites that establish trust, communicate your services clearly and convert visitors into inquiries 24/7.
                   </p>
                   <ul className="space-y-3.5">
                     {[
-                      "Replies to leads under 3 minutes, 24/7.",
-                      "Qualifies buyer intent and budget automatically.",
-                      "Hands off hot leads to representatives with full chat history.",
-                      "Custom Indian contextual NLP (handles Hinglish/local terms)."
+                      "Mobile-responsive design across all devices and screen sizes.",
+                      "Landing pages, multi-page business sites, e-commerce and custom web apps.",
+                      "Integrated contact forms and WhatsApp inquiry buttons.",
+                      "SEO-structured to improve local search visibility from day one."
                     ].map((bullet, i) => (
                       <li key={i} className="flex items-start gap-3 text-xs text-[#5C5A52]">
                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E8F0ED] text-[#2A4A3E]">
@@ -91,17 +91,17 @@ export default function TheSystem() {
 
               {activeTab === "crm" && (
                 <>
-                  <span className="mono-sm text-[#BF7340] uppercase tracking-wider font-semibold mb-2">OPERATIONAL CLARITY</span>
-                  <h3 className="heading-lg text-[#18170F] mb-4">A CRM that feeds itself. No manual entry.</h3>
+                  <span className="mono-sm text-[#BF7340] uppercase tracking-wider font-semibold mb-2">AUTOMATION & CRM</span>
+                  <h3 className="heading-lg text-[#18170F] mb-4">Automate lead capture, follow-ups and customer management.</h3>
                   <p className="body-md text-[#5C5A52] mb-6">
-                    Stop forcing salespeople to type notes. Trinetra extracts lead details straight from active WhatsApp conversations, organizing them into a visual CRM pipeline.
+                    Stop managing leads on spreadsheets and chat logs. We set up CRM systems, WhatsApp automation and follow-up workflows so your team focuses on serving customers, not chasing them.
                   </p>
                   <ul className="space-y-3.5">
                     {[
-                      "Extracts customer names, requirements, and budgets dynamically.",
-                      "Kanban board displays stages (Inquiry -> Qualified -> Booked).",
-                      "Score metrics indicate high-converting buyer profiles.",
-                      "Instantly pushes qualified data into standard CRM tools if needed."
+                      "WhatsApp, Instagram and Facebook automation flows.",
+                      "Lead pipeline management with status tracking.",
+                      "Automated follow-up reminders and appointment booking.",
+                      "Custom CRM dashboards with team access and reporting."
                     ].map((bullet, i) => (
                       <li key={i} className="flex items-start gap-3 text-xs text-[#5C5A52]">
                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E8F0ED] text-[#2A4A3E]">
@@ -114,19 +114,19 @@ export default function TheSystem() {
                 </>
               )}
 
-              {activeTab === "followup" && (
+              {activeTab === "growth" && (
                 <>
-                  <span className="mono-sm text-[#BF7340] uppercase tracking-wider font-semibold mb-2">PREDICTIVE ACTION</span>
-                  <h3 className="heading-lg text-[#18170F] mb-4">Nurture pipeline automatically, never forget a lead.</h3>
+                  <span className="mono-sm text-[#BF7340] uppercase tracking-wider font-semibold mb-2">SEO & DIGITAL MARKETING</span>
+                  <h3 className="heading-lg text-[#18170F] mb-4">Improve search visibility and build a consistent online presence.</h3>
                   <p className="body-md text-[#5C5A52] mb-6">
-                    Our smart sequence scheduler sends personalized WhatsApp nudges over Days 1, 3, and 7 to keep prospects warm, prompt site visits, and coordinate demo scheduling.
+                    We work on local SEO, Google Business Profile optimization, social media management and paid advertising to help your business be found by the right people at the right time.
                   </p>
                   <ul className="space-y-3.5">
                     {[
-                      "Custom scheduling prevents messages from feeling spammy.",
-                      "Auto-stops sequences as soon as the customer schedules a call.",
-                      "Integrates personalized customer detail fields dynamically.",
-                      "Boosts manual re-engagement response rates by 3x."
+                      "Local SEO and Google Business Profile optimization.",
+                      "On-page SEO, technical SEO and content strategy.",
+                      "Google Ads and Meta Ads management for qualified inquiries.",
+                      "Monthly social media content creation and posting."
                     ].map((bullet, i) => (
                       <li key={i} className="flex items-start gap-3 text-xs text-[#5C5A52]">
                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#E8F0ED] text-[#2A4A3E]">
@@ -144,31 +144,28 @@ export default function TheSystem() {
             <div className="flex items-center justify-center">
               <div className="w-full max-w-[480px] rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-4 md:p-6 shadow-sm min-h-[260px] flex flex-col justify-center">
                 
-                {/* Visual 1: WhatsApp Automation Chat Interface */}
-                {activeTab === "whatsapp" && (
+                {/* Visual 1: Website & Digital Presence */}
+                {activeTab === "digital" && (
                   <div className="space-y-4">
-                    <span className="mono-sm text-[#8C8A82] block text-center uppercase tracking-widest font-semibold border-b border-[#E2DDD5] pb-2">Conversation Qualified</span>
+                    <span className="mono-sm text-[#8C8A82] block text-center uppercase tracking-widest font-semibold border-b border-[#E2DDD5] pb-2">Website Preview</span>
                     <div className="flex flex-col gap-3 text-xs">
-                      {/* Customer block */}
-                      <div className="flex justify-start">
-                        <div className="bg-[#EEEAE3] text-[#18170F] px-3.5 py-2.5 rounded-2xl rounded-bl-sm max-w-[85%] leading-relaxed">
-                          "I want to book an appointment for Dr. Verma this Friday. Do you have slots in the evening?"
+                      <div className="bg-[#18170F] rounded-lg px-4 py-2.5 flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-[#2D6A4F]" />
+                        <span className="text-[#FAF5EF]/60 mono-sm text-[10px]">yourwebsite.com</span>
+                      </div>
+                      <div className="bg-[#F4F2ED] rounded-lg p-3 border border-[#E2DDD5]">
+                        <div className="h-1.5 w-20 bg-[#BF7340]/40 rounded mb-2" />
+                        <div className="h-2.5 w-36 bg-[#18170F]/20 rounded mb-3" />
+                        <div className="h-1 w-28 bg-[#5C5A52]/20 rounded mb-1" />
+                        <div className="h-1 w-24 bg-[#5C5A52]/20 rounded mb-3" />
+                        <div className="flex gap-2">
+                          <div className="h-7 w-24 bg-[#2A4A3E] rounded-md" />
+                          <div className="h-7 w-20 bg-transparent border border-[#E2DDD5] rounded-md" />
                         </div>
                       </div>
-                      {/* AI Response block */}
-                      <div className="flex justify-end">
-                        <div className="bg-[#E8F0ED] border border-[#2A4A3E]/10 text-[#2A4A3E] px-3.5 py-2.5 rounded-2xl rounded-br-sm max-w-[85%] leading-relaxed">
-                          <div className="flex items-center gap-1.5 font-bold mb-0.5 text-[10px] text-[#2D6A4F]">
-                            <Sparkles size={10} />
-                            Trinetra AI
-                          </div>
-                          "Yes! Dr. Verma has evening slots at 5:30 PM and 6:30 PM. Shall I confirm your spot?"
-                        </div>
-                      </div>
-                      {/* Auto Qualified Badge tag */}
-                      <div className="flex justify-center mt-2">
+                      <div className="flex justify-center mt-1">
                         <span className="text-[10px] bg-[#F2E8DC] border border-[#BF7340]/25 text-[#BF7340] px-2.5 py-1 rounded-full font-semibold">
-                          Intended Action: Appointment Booking Confirmed
+                          Mobile Responsive ✓ SEO Ready ✓
                         </span>
                       </div>
                     </div>
@@ -203,35 +200,30 @@ export default function TheSystem() {
                   </div>
                 )}
 
-                {/* Visual 3: Sequences Timeline Grid */}
-                {activeTab === "followup" && (
+                {/* Visual 3: SEO & Growth */}
+                {activeTab === "growth" && (
                   <div className="space-y-4">
-                    <span className="mono-sm text-[#8C8A82] block text-center uppercase tracking-widest font-semibold border-b border-[#E2DDD5] pb-2">Smart Sequence Map</span>
-                    <div className="relative space-y-4 pt-2">
-                      {/* Day 1 */}
-                      <div className="flex items-center gap-4 text-left">
-                        <span className="h-6 w-12 shrink-0 bg-[#E8F0ED] border border-[#2A4A3E]/20 text-[#2A4A3E] text-[10px] font-bold flex items-center justify-center rounded">Day 01</span>
+                    <span className="mono-sm text-[#8C8A82] block text-center uppercase tracking-widest font-semibold border-b border-[#E2DDD5] pb-2">Growth Dashboard</span>
+                    <div className="relative space-y-3 pt-2">
+                      <div className="flex items-center gap-3 text-left">
+                        <span className="h-6 w-20 shrink-0 bg-[#E8F0ED] border border-[#2A4A3E]/20 text-[#2A4A3E] text-[10px] font-bold flex items-center justify-center rounded">Local SEO</span>
                         <div className="flex-1 bg-[#F4F2ED] border border-[#E2DDD5] rounded p-2 text-[11px] text-[#5C5A52]">
-                          <span className="font-semibold text-[#18170F] block mb-0.5">Automated Check-in</span>
-                          "Hi {`{name}`}, just checking if you have questions..."
+                          <span className="font-semibold text-[#18170F] block mb-0.5">Google Profile Optimized</span>
+                          Maps visibility improved
                         </div>
                       </div>
-                      
-                      {/* Day 3 */}
-                      <div className="flex items-center gap-4 text-left">
-                        <span className="h-6 w-12 shrink-0 bg-[#F2E8DC] border border-[#BF7340]/20 text-[#BF7340] text-[10px] font-bold flex items-center justify-center rounded">Day 03</span>
+                      <div className="flex items-center gap-3 text-left">
+                        <span className="h-6 w-20 shrink-0 bg-[#F2E8DC] border border-[#BF7340]/20 text-[#BF7340] text-[10px] font-bold flex items-center justify-center rounded">Social</span>
                         <div className="flex-1 bg-[#F4F2ED] border border-[#E2DDD5] rounded p-2 text-[11px] text-[#5C5A52]">
-                          <span className="font-semibold text-[#18170F] block mb-0.5">Value Trigger</span>
-                          "Here is a short video walkthrough of Rajasthan Apts..."
+                          <span className="font-semibold text-[#18170F] block mb-0.5">15 Posts This Month</span>
+                          Consistent brand presence
                         </div>
                       </div>
-
-                      {/* Day 7 */}
-                      <div className="flex items-center gap-4 text-left">
-                        <span className="h-6 w-12 shrink-0 bg-[#EEEAE3] border border-[#8C8A82]/20 text-[#5C5A52] text-[10px] font-bold flex items-center justify-center rounded">Day 07</span>
-                        <div className="flex-1 bg-[#F4F2ED] border border-[#E2DDD5] rounded p-2 text-[11px] text-[#5C5A52] opacity-80">
-                          <span className="font-semibold text-[#18170F] block mb-0.5">Final Nudge</span>
-                          "Closing the slot group for doctor visits..."
+                      <div className="flex items-center gap-3 text-left">
+                        <span className="h-6 w-20 shrink-0 bg-[#EEEAE3] border border-[#8C8A82]/20 text-[#5C5A52] text-[10px] font-bold flex items-center justify-center rounded">Ads</span>
+                        <div className="flex-1 bg-[#F4F2ED] border border-[#E2DDD5] rounded p-2 text-[11px] text-[#5C5A52]">
+                          <span className="font-semibold text-[#18170F] block mb-0.5">Campaign Active</span>
+                          Targeted reach improving
                         </div>
                       </div>
                     </div>

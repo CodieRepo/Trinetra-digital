@@ -1,6 +1,5 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 
 // Count Up Helper Component
 function MetricCounter({ value, duration = 1.2 }: { value: string; duration?: number }) {
@@ -47,52 +46,40 @@ function MetricCounter({ value, duration = 1.2 }: { value: string; duration?: nu
   return <span ref={ref}>{displayValue}</span>;
 }
 
-const STATS = [
-  { value: "50+", label: "Businesses Automated" },
-  { value: "3.0x", label: "Lead Response Rate Increase" },
-  { value: "2m", label: "Average AI Reply Time" },
+const CAPABILITIES = [
+  { value: "5+", label: "Services Offered", note: "Website, SEO, Social, CRM, Software" },
+  { value: "2", label: "Verified Projects", note: "Vaastu Infra & Akuafi" },
+  { value: "100%", label: "Custom-Built", note: "No templates. Built for your workflow." },
 ];
 
-const TESTIMONIALS = [
+const PORTFOLIO = [
   {
-    quote: "We were losing 30% of leads just because nobody followed up. Trinetra fixed that in the first week. The AI now qualifies and schedules site visits autonomously.",
-    author: "Rajesh Kumar",
-    role: "Founder",
-    company: "PropFinder Realty",
-    location: "Mumbai",
-    avatar: "R",
-  },
-  {
-    quote: "OPD scheduling was causing a massive bottleneck. Connecting Trinetra to our hospital's WhatsApp number automated booking instantly and cut front-desk load in half.",
-    author: "Dr. Ananya Sen",
-    role: "Chief Medical Officer",
-    company: "Metro Care Clinics",
-    location: "Kolkata",
-    avatar: "A",
-  },
-  {
-    quote: "Our marketing spend went 2x further when we automated lead qualification. No cold lead gets skipped, and our sales reps only chat with vetted prospects.",
-    author: "Vikram Malhotra",
-    role: "Growth Director",
-    company: "Malhotra Academy",
-    location: "Delhi NCR",
+    project: "Vaastu Infra",
+    category: "Real Estate",
+    services: ["Business Website Development", "WhatsApp Integration", "Lead Inquiry Form Integration"],
+    description: "Developed a professional business website for Vaastu Infra with integrated WhatsApp contact flow and a structured lead inquiry form to capture and organize incoming property inquiries.",
     avatar: "V",
+    status: "Live",
+  },
+  {
+    project: "Akuafi",
+    category: "Technology / Software",
+    services: ["Website Architecture Planning", "Frontend Development", "Backend Development", "Multi-Page Implementation", "System Structure & Workflow Design"],
+    description: "Handled complete website architecture planning, frontend and backend development, multi-page implementation, and system structure design for Akuafi — a technology-focused business requiring a well-structured digital presence.",
+    avatar: "A",
+    status: "Completed",
   },
 ];
 
 export default function Testimonials() {
-  const [active, setActive] = useState(0);
-
-  const prev = () => setActive((a) => (a - 1 + TESTIMONIALS.length) % TESTIMONIALS.length);
-  const next = () => setActive((a) => (a + 1) % TESTIMONIALS.length);
 
   return (
-    <section id="testimonials" className="relative overflow-hidden bg-[#F9F8F5] py-20 md:py-28 border-b border-[#E2DDD5]">
+    <section id="portfolio" className="relative overflow-hidden bg-[#F9F8F5] py-20 md:py-28 border-b border-[#E2DDD5]">
       <div className="main-container relative z-10">
-        
-        {/* Subsection A: Key Metrics */}
+
+        {/* Subsection A: Honest Capability Stats */}
         <div className="grid gap-6 md:grid-cols-3 mb-24 text-center">
-          {STATS.map((stat, i) => (
+          {CAPABILITIES.map((cap, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 16 }}
@@ -101,101 +88,94 @@ export default function Testimonials() {
               transition={{ duration: 0.5, delay: i * 0.12 }}
               className="flex flex-col items-center justify-center p-6 border-r border-[#E2DDD5] last:border-r-0 md:border-r-1 md:border-b-0 border-b pb-8 last:pb-6 md:pb-6"
             >
-              {/* Stat counter */}
               <span className="font-display text-[56px] leading-none text-[#18170F] font-semibold mb-2">
-                {stat.value === "2m" ? (
-                  <>
-                    &lt; <MetricCounter value="2" /> min
-                  </>
-                ) : (
-                  <MetricCounter value={stat.value} />
-                )}
+                <MetricCounter value={cap.value.replace(/[^0-9.]/g, '') || '0'} />
+                {cap.value.replace(/[0-9.]/g, '')}
               </span>
-              <span className="text-xs font-semibold tracking-wider text-[#5C5A52] uppercase font-interface">
-                {stat.label}
+              <span className="text-xs font-semibold tracking-wider text-[#5C5A52] uppercase font-interface mb-1">
+                {cap.label}
               </span>
+              <span className="text-[10px] text-[#8C8A82] font-medium">{cap.note}</span>
             </motion.div>
           ))}
         </div>
 
-        {/* Subsection B: Testimonials */}
+        {/* Subsection B: Verified Portfolio */}
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-12">
             <span className="mixed-headline-eyebrow">
-              Proof of Impact
+              Our Work
             </span>
             <h2 className="display-lg text-[#18170F] tracking-tight max-w-[620px] mx-auto">
-              Real infrastructure results, built for scale.
+              Verified portfolio projects.
             </h2>
+            <p className="body-md text-[#5C5A52] max-w-[500px] mx-auto mt-4">
+              We only present projects we have actually delivered. No inflated numbers, no fabricated results.
+            </p>
           </div>
 
-          {/* Testimonial Card */}
-          <div className="relative">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={active}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.3 }}
-                className="relative rounded-2xl border border-[#E2DDD5] bg-[#F4F2ED] p-8 md:p-12 shadow-xs text-left"
-              >
-                {/* Large decorative quotation mark top-left */}
-                <span className="absolute top-4 left-6 font-display text-[84px] leading-none text-[#BF7340] opacity-15 select-none pointer-events-none font-semibold">
-                  “
-                </span>
-
-                {/* Quote block text */}
-                <blockquote className="display-md text-[#18170F] font-medium leading-relaxed italic mb-8 relative z-10">
-                  {TESTIMONIALS[active].quote}
-                </blockquote>
-
-                {/* Divider Line */}
-                <div className="w-full h-px bg-[#E2DDD5] mb-6" />
-
-                {/* Footer Details */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    {/* Minimal Avatar placeholder */}
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#BF7340]/10 text-sm font-bold text-[#BF7340]">
-                      {TESTIMONIALS[active].avatar}
+          <div className="grid gap-6 md:grid-cols-2">
+            <AnimatePresence>
+              {PORTFOLIO.map((item, i) => (
+                <motion.div
+                  key={item.project}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.4 }}
+                  transition={{ duration: 0.4, delay: i * 0.1 }}
+                  className="relative rounded-2xl border border-[#E2DDD5] bg-[#F4F2ED] p-8 shadow-xs text-left"
+                >
+                  <div className="flex items-start justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#BF7340]/10 text-sm font-bold text-[#BF7340]">
+                        {item.avatar}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-[#18170F]">{item.project}</p>
+                        <p className="text-xs text-[#5C5A52]">{item.category}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-[#18170F]">{TESTIMONIALS[active].author}</p>
-                      <p className="text-xs text-[#5C5A52]">
-                        {TESTIMONIALS[active].role} · {TESTIMONIALS[active].company}
-                      </p>
-                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E8F0ED] text-[#2A4A3E] border border-[#2A4A3E]/10">
+                      {item.status}
+                    </span>
                   </div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82] self-start sm:self-center">
-                    {TESTIMONIALS[active].location}
-                  </span>
-                </div>
 
-              </motion.div>
+                  <p className="text-sm text-[#5C5A52] leading-relaxed mb-5">
+                    {item.description}
+                  </p>
+
+                  <div className="w-full h-px bg-[#E2DDD5] mb-4" />
+
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#8C8A82] mb-2">Services Delivered</p>
+                    <ul className="space-y-1.5">
+                      {item.services.map((svc, si) => (
+                        <li key={si} className="flex items-center gap-2 text-xs text-[#5C5A52]">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#BF7340] shrink-0" />
+                          {svc}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </motion.div>
+              ))}
             </AnimatePresence>
-
-            {/* Slider Navigation Buttons */}
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={prev}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2DDD5] bg-[#FFFFFF] text-[#5C5A52] hover:bg-[#F4F2ED] hover:text-[#18170F] shadow-xs transition-colors duration-200"
-                aria-label="Previous testimonial"
-              >
-                <ArrowLeft size={16} />
-              </button>
-              <button
-                onClick={next}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2DDD5] bg-[#FFFFFF] text-[#5C5A52] hover:bg-[#F4F2ED] hover:text-[#18170F] shadow-xs transition-colors duration-200"
-                aria-label="Next testimonial"
-              >
-                <ArrowRight size={16} />
-              </button>
-            </div>
           </div>
-        </div>
 
+          {/* Honest CTA below portfolio */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-10 text-center p-6 rounded-xl border border-[#E2DDD5] bg-[#F4F2ED]"
+          >
+            <p className="text-sm font-semibold text-[#18170F] mb-1">Building our portfolio, one honest project at a time.</p>
+            <p className="text-xs text-[#5C5A52] max-w-[460px] mx-auto">
+              We are a growing team committed to delivering quality work. Every project listed here represents a real engagement with a real business.
+            </p>
+          </motion.div>
+
+        </div>
       </div>
     </section>
   );

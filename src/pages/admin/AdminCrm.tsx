@@ -4,8 +4,6 @@ import {
   Users,
   CheckCircle,
   TrendingUp,
-  Mail,
-  Building,
   MessageSquare,
   Send,
   RefreshCw,
@@ -21,11 +19,9 @@ import {
   ShieldAlert,
   Zap,
   Database,
-  CreditCard,
   Play,
   Menu,
   X,
-  BarChart2,
   Activity,
   Clock,
   Compass
@@ -143,17 +139,7 @@ export default function AdminCrm() {
     return `${clean.slice(0, 4)}****${clean.slice(-4)}`;
   };
 
-  const maskEmail = (email: string | null) => {
-    if (!email) return '—';
-    const parts = email.split('@');
-    if (parts.length !== 2) return '***@***';
-    const name = parts[0];
-    const domain = parts[1];
-    if (name.length <= 3) return `***@${domain}`;
-    return `${name.slice(0, 2)}***${name.slice(-1)}@${domain}`;
-  };
 
-  // Submit dynamic manual message
   const handleSendChat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualMsgText.trim() || !selectedLeadId) return;

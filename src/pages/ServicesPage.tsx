@@ -8,30 +8,44 @@ const SERVICES = [
   {
     icon: <Globe size={22} />,
     title: "Website Development",
-    description: "Fully custom, mobile responsive, and SEO-friendly websites engineered to establish instant brand credibility and convert raw visitors into enquiries.",
+    description: "Professional, mobile-responsive websites designed to establish your online presence, build credibility and convert visitors into inquiries — from landing pages to full business websites and e-commerce stores.",
     href: "/services/website-development",
     tag: null
   },
   {
     icon: <Database size={22} />,
-    title: "CRM Development",
-    description: "Tailored customer relationship databases and lead tracking pipelines built to match your operational workflows, eliminating admin overhead.",
+    title: "SEO & Digital Marketing",
+    description: "Improve your search visibility through local SEO, on-page optimization, Google Business Profile management, Google Ads and Meta Ads — helping your business get found by people actively searching for your services.",
+    href: "/services/digital-marketing",
+    tag: null
+  },
+  {
+    icon: <BarChart2 size={22} />,
+    title: "Social Media Management",
+    description: "Consistent content creation, social media posting and community engagement across Instagram, Facebook and other platforms to build brand awareness and maintain an active professional presence.",
+    href: "/services/digital-marketing",
+    tag: null
+  },
+  {
+    icon: <Clock size={22} />,
+    title: "Automation & CRM",
+    description: "WhatsApp automation, lead capture systems, follow-up workflows, appointment booking and CRM setup — helping your business manage customer communication more efficiently and reduce manual workload.",
     href: "/services/crm-development",
     tag: "Highly Requested"
   },
   {
-    icon: <BarChart2 size={22} />,
-    title: "Digital Marketing",
-    description: "We help businesses improve their online presence and generate qualified enquiries through strategic digital marketing campaigns.",
-    href: "/services/digital-marketing",
+    icon: <Globe size={22} />,
+    title: "Custom Software Development",
+    description: "Tailored CRM systems, dashboards, ERP modules, inventory management systems, booking platforms and workflow automation tools built specifically for your business requirements.",
+    href: "/services/crm-development",
     tag: null
-  }
+  },
 ];
 
 const SCHEMA = {
   "@context": "https://schema.org",
   "@type": "Service",
-  "serviceType": "Software & Digital Growth Solutions",
+  "serviceType": "Website Development, SEO, Social Media, CRM Automation & Custom Software",
   "provider": { "@id": "https://trinetradigitalsolution.com/#organization" },
   "areaServed": "IN",
   "hasOfferCatalog": {
@@ -57,8 +71,8 @@ export default function ServicesPage() {
   return (
     <>
       <SEO
-        title="Software & Digital Solutions Services — Trinetra Digital Solution"
-        description="Explore Trinetra Digital Solution's core services: Custom Website Development, CRM Systems, and Performance Digital Marketing for Indian businesses."
+        title="Our Services — Website, SEO, Social Media, Automation & Software — Trinetra Digital Solution"
+        description="Explore Trinetra Digital Solution's complete services: Website Development, SEO & Digital Marketing, Social Media Management, Automation & CRM, and Custom Software Development for Indian businesses."
         canonical="https://trinetradigitalsolution.com/services"
         schema={SCHEMA}
       />
@@ -75,7 +89,7 @@ export default function ServicesPage() {
             transition={{ delay: 0.1 }}
             className="display-lg text-[#18170F] tracking-tight max-w-[680px] mx-auto mb-5 mt-2"
           >
-            Software &amp; digital solutions engineered for growth
+            Complete digital &amp; software solutions for growing businesses
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -83,7 +97,7 @@ export default function ServicesPage() {
             transition={{ delay: 0.2 }}
             className="body-lg text-[#5C5A52] max-w-[520px] mx-auto mb-8 font-medium"
           >
-            We reject exaggerated promises and build clean operational foundations. Whether you require a credible website, custom sales software, or strategic ads management, we design to your specifications.
+            From your first website to a complete business operating system — we build, grow, automate and scale businesses through practical digital solutions with clear processes and honest pricing.
           </motion.p>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex flex-wrap gap-3 justify-center">
             <Link to="/contact" className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-[#2A4A3E] px-6 text-[#F9F8F5] transition-all hover:bg-[#1E3630]">

@@ -1,183 +1,147 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Plus } from "lucide-react";
 
 const WA_NUMBER = "919334757759";
-const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's services.")}`;
+const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'd like to learn more about Trinetra Digital Solution's packages and pricing.")}`;
 
-type ServiceCategory = "website" | "crm" | "marketing";
+type ServiceCategory = "packages" | "addons";
 
 export default function Pricing() {
-  const [activeTab, setActiveTab] = useState<ServiceCategory>("website");
+  const [activeTab, setActiveTab] = useState<ServiceCategory>("packages");
 
-  const plans = {
-    website: [
-      {
-        name: "Starter Website",
-        price: "₹9,999",
-        setupLabel: "One-Time Setup",
-        monthlyPrice: "₹999/month",
-        desc: "Ideal for small businesses and service providers establishing their initial online presence.",
-        features: [
-          "Hosting management",
-          "Basic maintenance",
-          "Security monitoring",
-          "Contact form monitoring",
-          "Minor content updates",
-          "Technical support"
-        ],
-        cta: "Get Started",
-        popular: false
-      },
-      {
-        name: "Business Website",
-        price: "₹19,999",
-        setupLabel: "One-Time Setup",
-        monthlyPrice: "₹1,999/month",
-        desc: "Designed for growing companies requiring detailed product showcases, blogging, and lead capture.",
-        features: [
-          "Everything in Starter",
-          "Priority support",
-          "Monthly backups",
-          "Performance monitoring",
-          "SEO maintenance",
-          "Content update assistance"
-        ],
-        cta: "Choose Business",
-        popular: true
-      },
-      {
-        name: "Custom Website",
-        price: "Starting ₹29,999",
-        setupLabel: "One-Time Setup",
-        monthlyPrice: "Starting ₹2,999/month",
-        desc: "Bespoke web applications, custom databases, e-commerce stores, and high-performance scaling setups.",
-        features: [
-          "Everything in Business",
-          "Advanced maintenance",
-          "Custom feature support",
-          "Server monitoring",
-          "Scalability support",
-          "Technical consultation"
-        ],
-        cta: "Schedule Consultation",
-        popular: false
-      }
-    ],
-    crm: [
-      {
-        name: "Basic CRM",
-        price: "Starting ₹24,999",
-        setupLabel: "One-Time Investment",
-        monthlyPrice: "No Monthly Fee",
-        desc: "Perfect for small business owners transitioning from manual spreadsheets to automated records.",
-        features: [
-          "Lead management database",
-          "Customer details record system",
-          "Basic sales pipeline tracking",
-          "Follow-up scheduling & logs",
-          "Up to 3 team member roles",
-          "Secure data storage ready",
-          "Email & dashboard support"
-        ],
-        cta: "Deploy Basic CRM",
-        popular: false
-      },
-      {
-        name: "Business CRM",
-        price: "Starting ₹49,999",
-        setupLabel: "One-Time Investment",
-        monthlyPrice: "No Monthly Fee",
-        desc: "A comprehensive management operating system built to coordinate teams and analyze performance.",
-        features: [
-          "Advanced sales pipeline workflows",
-          "Detailed team performance tracking",
-          "Robust analytics & custom dashboards",
-          "Automated follow-up reminders",
-          "WhatsApp notifications ready",
-          "Up to 15 active team seats",
-          "Role-based access controls",
-          "Business workflows ready"
-        ],
-        cta: "Deploy Business CRM",
-        popular: true
-      },
-      {
-        name: "Enterprise CRM",
-        price: "Starting ₹99,999",
-        setupLabel: "One-Time Investment",
-        monthlyPrice: "Custom Agreement",
-        desc: "A fully bespoke software solution engineered from the ground up to match your unique operations.",
-        features: [
-          "Fully custom modular architecture",
-          "Tailored custom workflows & database",
-          "Unlimited team accounts & roles",
-          "Proprietary ERP & software integrations",
-          "Dedicated high-speed cloud hosting",
-          "Continuous system backups & SLAs",
-          "1-on-1 dedicated engineer support"
-        ],
-        cta: "Consult Architect",
-        popular: false
-      }
-    ],
-    marketing: [
-      {
-        name: "Starter Marketing",
-        price: "₹7,999",
-        setupLabel: "One-Time Onboarding",
-        monthlyPrice: "/ month",
-        desc: "Perfect for local businesses seeking consistent visibility and monthly digital growth.",
-        features: [
-          "Meta Ads setup & management",
-          "Google Search Ads basic setup",
-          "Lead generation campaigns setup",
-          "Social media page management",
-          "Standard monthly reporting",
-          "Basic copy & creative guidance"
-        ],
-        cta: "Start Marketing",
-        popular: false
-      },
-      {
-        name: "Growth Marketing",
-        price: "₹14,999",
-        setupLabel: "One-Time Onboarding",
-        monthlyPrice: "/ month",
-        desc: "Designed for ambitious companies targeting rapid market share and scalable lead flow.",
-        features: [
-          "Comprehensive Meta Ads scale-up",
-          "Advanced Google Ads management",
-          "Conversion tracking & pixel tuning",
-          "Landing page layout optimization",
-          "Competitor keyword research",
-          "Detailed weekly analytics decks",
-          "Creative asset design support",
-          "Active budget scaling consulting"
-        ],
-        cta: "Choose Growth",
-        popular: true
-      },
-      {
-        name: "Custom Marketing",
-        price: "Custom Quote",
-        setupLabel: "Milestone Contract",
-        monthlyPrice: "Tailored Retainer",
-        desc: "Omnichannel performance marketing and brand scaling engineered for corporate digital expansion.",
-        features: [
-          "Bespoke marketing strategy",
-          "Omnichannel media buying (Google, Meta, YT)",
-          "In-depth funnel optimization audit",
-          "Advanced conversion API setup",
-          "Continuous creative content strategy",
-          "Dedicated account team",
-          "SLA-driven reporting updates"
-        ],
-        cta: "Consult Strategist",
-        popular: false
-      }
-    ]
-  };
+  const packages = [
+    {
+      name: "Starter Presence",
+      price: "₹14,999",
+      setupLabel: "One-Time Setup",
+      monthlyPrice: "₹2,999/month",
+      desc: "Ideal for local businesses and service providers establishing their initial digital presence and online credibility.",
+      features: [
+        "Professional Landing Page Website",
+        "Mobile Optimization",
+        "WhatsApp Integration",
+        "Lead Inquiry Form",
+        "Google Business Profile Assistance",
+        "Social Media Profile Setup",
+        "8 Social Media Posts Per Month",
+        "Monthly Support"
+      ],
+      cta: "Get Started",
+      popular: false
+    },
+    {
+      name: "Growth Engine",
+      price: "₹29,999",
+      setupLabel: "One-Time Setup",
+      monthlyPrice: "₹5,999/month",
+      desc: "For growing businesses that need a professional website, lead capture system and structured online visibility.",
+      features: [
+        "Multi-Page Business Website",
+        "Local SEO Foundation Setup",
+        "Google Business Profile Optimization",
+        "Lead Capture System",
+        "WhatsApp Lead Automation",
+        "Auto Reply Configuration",
+        "Follow-Up Workflow Setup",
+        "15 Social Media Posts Per Month",
+        "Monthly Reporting",
+        "Technical Maintenance"
+      ],
+      cta: "Choose Growth Engine",
+      popular: true
+    },
+    {
+      name: "Sales System",
+      price: "₹59,999",
+      setupLabel: "One-Time Setup",
+      monthlyPrice: "₹9,999/month",
+      desc: "A complete lead management and automation system for businesses ready to streamline their sales operations.",
+      features: [
+        "CRM Setup & Lead Pipeline",
+        "WhatsApp Automation",
+        "Instagram Automation",
+        "Facebook Automation",
+        "Appointment Booking System",
+        "Lead Reminder Automation",
+        "20 Social Media Posts Per Month",
+        "Monthly Optimization Review"
+      ],
+      cta: "Choose Sales System",
+      popular: false
+    },
+    {
+      name: "Business OS",
+      price: "₹1,49,999+",
+      setupLabel: "One-Time Investment",
+      monthlyPrice: "₹19,999+/month",
+      desc: "A fully custom business operating system with advanced software, dashboards and end-to-end workflow automation.",
+      features: [
+        "Custom Business Software",
+        "Advanced CRM & Pipeline",
+        "Dashboard Development",
+        "Business Workflow Automation",
+        "Reporting & Analytics Systems",
+        "SEO & Content Support",
+        "Custom Third-Party Integrations",
+        "Dedicated Support"
+      ],
+      cta: "Book Consultation",
+      popular: false
+    }
+  ];
+
+  const addonGroups = [
+    {
+      category: "Website Development",
+      items: [
+        { name: "Landing Page Website", price: "₹14,999" },
+        { name: "Business Website", price: "₹29,999" },
+        { name: "Premium Business Website", price: "₹49,999" },
+        { name: "Custom Web Application", price: "₹75,000+" },
+      ]
+    },
+    {
+      category: "SEO",
+      items: [
+        { name: "Local SEO", price: "₹7,999/month" },
+        { name: "Business SEO", price: "₹14,999/month" },
+        { name: "Advanced SEO", price: "₹24,999/month" },
+      ]
+    },
+    {
+      category: "Social Media Management",
+      items: [
+        { name: "Social Presence", price: "₹5,999/month" },
+        { name: "Growth Social", price: "₹9,999/month" },
+        { name: "Premium Social", price: "₹14,999/month" },
+      ]
+    },
+    {
+      category: "Ads Management",
+      items: [
+        { name: "Starter Ads Management", price: "₹7,999/month" },
+        { name: "Growth Ads Management", price: "₹14,999/month" },
+        { name: "Scale Ads Management", price: "₹24,999/month" },
+      ]
+    },
+    {
+      category: "Automation",
+      items: [
+        { name: "WhatsApp Automation", price: "₹14,999 Setup" },
+        { name: "Business Automation", price: "₹34,999 Setup" },
+        { name: "AI Sales Assistant", price: "₹59,999 Setup" },
+      ]
+    },
+    {
+      category: "Custom Software",
+      items: [
+        { name: "Small Business System", price: "₹49,999+" },
+        { name: "Business Management Software", price: "₹1,49,999+" },
+        { name: "Enterprise Solution", price: "Custom Quote" },
+      ]
+    },
+  ];
 
   return (
     <section id="pricing" aria-label="Pricing Plans — Software and Growth Staged Packages" className="relative overflow-hidden bg-[#F4F2ED] py-20 md:py-28 border-b border-[#E2DDD5]">
@@ -192,75 +156,113 @@ export default function Pricing() {
             Transparent pricing. Clear project scope.
           </h2>
           <p className="body-lg text-[#5C5A52] max-w-[580px] mx-auto mb-8">
-            Choose a solution calibrated to your current business scale. Upfront prices with no hidden charges or unrealistic claims.
+            Choose a solution suited to your current business stage. Honest prices, no hidden charges, no unrealistic claims.
           </p>
 
-          {/* Interactive tabbed category switcher - Styled exactly in old UI design */}
+          {/* Tab Switcher */}
           <div className="inline-flex items-center gap-2 bg-[#EEEAE3] border border-[#E2DDD5] p-1 rounded-lg z-10 max-w-full overflow-x-auto">
-            {(["website", "crm", "marketing"] as ServiceCategory[]).map((tab) => (
+            {(["packages", "addons"] as ServiceCategory[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 text-xs font-semibold tracking-wide rounded transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                className={`px-4 py-1.5 text-xs font-semibold tracking-wide rounded transition-all duration-200 cursor-pointer whitespace-nowrap ${
                   activeTab === tab
                     ? "bg-[#FFFFFF] text-[#18170F] shadow-xs"
                     : "text-[#5C5A52] hover:text-[#18170F]"
                 }`}
               >
-                {tab === "website" ? "Website Development" : tab === "crm" ? "CRM Development" : "Digital Marketing"}
+                {tab === "packages" ? "Growth Packages" : "Add-On Services"}
               </button>
             ))}
           </div>
         </div>
 
-        {/* 3 Pricing Cards Grid - Rendered in original UI style */}
-        <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto items-stretch mt-10">
-          <AnimatePresence mode="wait">
-            {plans[activeTab].map((plan, i) => {
-              // Card 2 (Popular) gets the classic dark background (#131210) and copper top accent
-              if (plan.popular) {
+        {/* Packages Tab */}
+        {activeTab === "packages" && (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto items-stretch mt-10">
+            <AnimatePresence mode="wait">
+              {packages.map((plan, i) => {
+                if (plan.popular) {
+                  return (
+                    <motion.div
+                      key={plan.name}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -16 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex flex-col justify-between rounded-xl border border-[#BF7340]/40 bg-[#131210] p-6 md:p-8 shadow-md ring-1 ring-[#BF7340]/25 text-left relative overflow-hidden"
+                    >
+                      <div className="absolute top-0 inset-x-0 h-[3px] bg-[#BF7340]" />
+                      <div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] uppercase font-bold tracking-widest text-[#FAF5EF]/60">{plan.name}</span>
+                          <span className="text-[9px] bg-[#BF7340] text-[#FAF5EF] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                            <Sparkles size={8} /> Most Popular
+                          </span>
+                        </div>
+                        <div className="mt-6 space-y-4">
+                          <div>
+                            <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#BF7340]">{plan.setupLabel}</p>
+                            <div className="flex items-baseline gap-1.5 mt-1">
+                              <span className="font-display text-[28px] font-bold text-[#F9F8F5]">{plan.price}</span>
+                            </div>
+                          </div>
+                          <div className="h-px bg-white/10" />
+                          <div>
+                            <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#FAF5EF]/60">Monthly</p>
+                            <div className="flex items-baseline gap-1.5 mt-1">
+                              <span className="font-display text-[22px] font-bold text-[#F9F8F5]">{plan.monthlyPrice}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="w-full h-px bg-white/10 my-5" />
+                        <p className="text-[11px] text-[#FAF5EF]/50 mb-4 leading-relaxed">{plan.desc}</p>
+                        <ul className="space-y-3 text-xs text-[#FAF5EF]/80">
+                          {plan.features.map((feat, f) => (
+                            <li key={f} className="flex items-start gap-3">
+                              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#E8F0ED] text-[#2A4A3E] mt-0.5">
+                                <Check size={10} strokeWidth={3} />
+                              </span>
+                              <span>{feat}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="btn-primary-forest mt-8 w-full text-xs font-bold uppercase tracking-wider bg-[#2A4A3E] text-[#F9F8F5] hover:bg-[#1E3630] border-0 h-11 flex items-center justify-center rounded-lg">
+                        {plan.cta}
+                      </a>
+                    </motion.div>
+                  );
+                }
                 return (
                   <motion.div
-                    key={plan.name + activeTab}
+                    key={plan.name}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -16 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex flex-col justify-between rounded-xl border border-[#BF7340]/40 bg-[#131210] p-6 md:p-8 shadow-md ring-1 ring-[#BF7340]/25 text-left relative overflow-hidden"
+                    transition={{ duration: 0.3, delay: i * 0.05 }}
+                    className="flex flex-col justify-between rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-6 md:p-8 shadow-xs hover:shadow-md transition-shadow duration-300 text-left"
                   >
-                    {/* Shimmer top accent */}
-                    <div className="absolute top-0 inset-x-0 h-[3px] bg-[#BF7340]" />
-
                     <div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-[#FAF5EF]/60">{plan.name}</span>
-                        <span className="text-[9px] bg-[#BF7340] text-[#FAF5EF] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-sm">
-                          <Sparkles size={8} /> Most Popular
-                        </span>
-                      </div>
-                      
-                      {/* Pricing Blocks */}
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82]">{plan.name}</span>
                       <div className="mt-6 space-y-4">
                         <div>
                           <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#BF7340]">{plan.setupLabel}</p>
                           <div className="flex items-baseline gap-1.5 mt-1">
-                            <span className="font-display text-[32px] font-bold text-[#F9F8F5]">{plan.price}</span>
+                            <span className="font-display text-[28px] font-bold text-[#18170F]">{plan.price}</span>
                           </div>
                         </div>
-                        
-                        <div className="h-px bg-white/10" />
-                        
+                        <div className="h-px bg-[#E2DDD5]/60" />
                         <div>
-                          <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#FAF5EF]/60">Recurring Fee</p>
+                          <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#5C5A52]">Monthly</p>
                           <div className="flex items-baseline gap-1.5 mt-1">
-                            <span className="font-display text-[26px] font-bold text-[#F9F8F5]">{plan.monthlyPrice}</span>
+                            <span className="font-display text-[22px] font-bold text-[#18170F]">{plan.monthlyPrice}</span>
                           </div>
                         </div>
                       </div>
-
-                      <div className="w-full h-px bg-white/10 my-6" />
-
-                      <ul className="space-y-3.5 text-xs text-[#FAF5EF]/80">
+                      <div className="w-full h-px bg-[#E2DDD5] my-5" />
+                      <p className="text-[11px] text-[#5C5A52] mb-4 leading-relaxed">{plan.desc}</p>
+                      <ul className="space-y-3 text-xs text-[#5C5A52]">
                         {plan.features.map((feat, f) => (
                           <li key={f} className="flex items-start gap-3">
                             <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#E8F0ED] text-[#2A4A3E] mt-0.5">
@@ -271,82 +273,50 @@ export default function Pricing() {
                         ))}
                       </ul>
                     </div>
-
-                    <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="btn-primary-forest mt-8 w-full text-xs font-bold uppercase tracking-wider bg-[#2A4A3E] text-[#F9F8F5] hover:bg-[#1E3630] border-0 h-11 flex items-center justify-center rounded-lg">
+                    <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="btn-secondary-outlined mt-8 w-full text-xs font-bold uppercase tracking-wider h-11 flex items-center justify-center rounded-lg">
                       {plan.cta}
                     </a>
                   </motion.div>
                 );
-              }
-
-              // Standard Cards (1 and 3) get the clean white background and copper labels
-              return (
-                <motion.div
-                  key={plan.name + activeTab}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -16 }}
-                  transition={{ duration: 0.3, delay: i * 0.05 }}
-                  className="flex flex-col justify-between rounded-xl border border-[#E2DDD5] bg-[#FFFFFF] p-6 md:p-8 shadow-xs hover:shadow-md transition-shadow duration-300 text-left"
-                >
-                  <div>
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82]">{plan.name}</span>
-                    
-                    {/* Pricing Blocks */}
-                    <div className="mt-6 space-y-4">
-                      <div>
-                        <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#BF7340]">{plan.setupLabel}</p>
-                        <div className="flex items-baseline gap-1.5 mt-1">
-                          <span className="font-display text-[32px] font-bold text-[#18170F]">{plan.price}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="h-px bg-[#E2DDD5]/60" />
-                      
-                      <div>
-                        <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#5C5A52]">Recurring Fee</p>
-                        <div className="flex items-baseline gap-1.5 mt-1">
-                          <span className="font-display text-[26px] font-bold text-[#18170F]">{plan.monthlyPrice}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="w-full h-px bg-[#E2DDD5] my-6" />
-
-                    <ul className="space-y-3.5 text-xs text-[#5C5A52]">
-                      {plan.features.map((feat, f) => (
-                        <li key={f} className="flex items-start gap-3">
-                          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#E8F0ED] text-[#2A4A3E] mt-0.5">
-                            <Check size={10} strokeWidth={3} />
-                          </span>
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="btn-secondary-outlined mt-8 w-full text-xs font-bold uppercase tracking-wider h-11 flex items-center justify-center rounded-lg">
-                    {plan.cta}
-                  </a>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-
-        {/* Monthly Maintenance Note */}
-        {activeTab === "website" && (
-          <div className="mt-8 text-center max-w-[650px] mx-auto p-4 bg-white border border-[#E2DDD5] rounded-xl shadow-3xs">
-            <p className="text-[11px] leading-relaxed text-[#5C5A52]">
-              Monthly maintenance covers hosting assistance, technical support, security updates, backups, and ongoing website maintenance. Domain registration and third-party service charges, if applicable, are separate.
-            </p>
+              })}
+            </AnimatePresence>
           </div>
         )}
 
-        {/* Compliant Disclaimer Box - Old UI Style */}
-        <div className="mt-6 text-center max-w-[650px] mx-auto p-5 bg-[#FAF5EF] border border-[#BF7340]/20 rounded-xl">
+        {/* Add-Ons Tab */}
+        {activeTab === "addons" && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto"
+          >
+            {addonGroups.map((group, gi) => (
+              <div key={gi} className="bg-white border border-[#E2DDD5] rounded-xl p-6 shadow-xs">
+                <div className="flex items-center gap-2 mb-4">
+                  <Plus size={14} className="text-[#BF7340]" />
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-[#BF7340]">{group.category}</span>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {group.items.map((item, ii) => (
+                    <div key={ii} className="flex items-center justify-between border-b border-[#F4F2ED] pb-2 last:border-0 last:pb-0">
+                      <span className="text-xs font-medium text-[#18170F]">{item.name}</span>
+                      <span className="text-xs font-bold text-[#BF7340] shrink-0 ml-3">{item.price}</span>
+                    </div>
+                  ))}
+                </div>
+                <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="mt-5 flex items-center justify-center gap-2 h-9 rounded-lg border border-[#E2DDD5] bg-[#F4F2ED] text-xs font-semibold text-[#18170F] hover:bg-[#EEEAE3] transition-colors">
+                  Enquire About {group.category}
+                </a>
+              </div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Compliant Disclaimer Box */}
+        <div className="mt-8 text-center max-w-[650px] mx-auto p-5 bg-[#FAF5EF] border border-[#BF7340]/20 rounded-xl">
           <p className="text-[11px] leading-relaxed text-[#5C5A52]">
-            <strong>Important Notice:</strong> Advertising budgets spent on Google Ads, Meta Ads (Facebook/Instagram), or other ad platforms are paid directly to those respective networks and are <strong>separate and not included</strong> in our agency management fees. We prioritize sustainable operational scaling and do not guarantee fixed sales, revenue numbers, or make unrealistic income claims.
+            <strong>Important Notice:</strong> Monthly fees cover ongoing support, maintenance and management services. Advertising budgets spent on Google Ads, Meta Ads (Facebook/Instagram), or other platforms are paid directly to those networks and are <strong>separate and not included</strong> in our fees. We do not guarantee specific business results, rankings, leads or revenue figures. We present capabilities, features and potential service benefits only.
           </p>
         </div>
 

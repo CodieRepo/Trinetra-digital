@@ -8,8 +8,8 @@ const SCHEMA = {
   "@context": "https://schema.org",
   "@type": "WebPage",
   "url": "https://trinetradigitalsolution.com/pricing",
-  "name": "Services Pricing Plans — Trinetra Digital Solution",
-  "description": "View Trinetra Digital Solution's pricing plans for Website Development, CRM infrastructure, and performance digital marketing in Indian Rupees.",
+  "name": "Business Growth Packages & Add-On Pricing — Trinetra Digital Solution",
+  "description": "View Trinetra Digital Solution's transparent pricing for Website Development, SEO, Social Media Management, CRM Automation, and Custom Software. Growth packages starting at ₹14,999.",
 };
 
 export default function PricingPage() {
@@ -18,8 +18,8 @@ export default function PricingPage() {
   return (
     <>
       <SEO
-        title="Services Pricing Plans — Trinetra Digital Solution"
-        description="View Trinetra Digital Solution's pricing plans for Website Development, CRM software systems, and digital marketing. Starter plans in Indian Rupees ₹."
+        title="Business Growth Packages & Pricing — Trinetra Digital Solution"
+        description="View Trinetra Digital Solution's transparent pricing. Growth packages from ₹14,999 setup for websites, SEO, social media, CRM automation and custom software. No hidden fees."
         canonical="https://trinetradigitalsolution.com/pricing"
         schema={SCHEMA}
       />
@@ -36,7 +36,7 @@ export default function PricingPage() {
             transition={{ delay: 0.1 }}
             className="display-lg text-[#18170F] tracking-tight mt-2 mb-4"
           >
-            Software &amp; growth packages pricing
+            Growth packages &amp; add-on services pricing
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -44,7 +44,7 @@ export default function PricingPage() {
             transition={{ delay: 0.2 }}
             className="body-lg text-[#5C5A52]"
           >
-            No hidden fees. Flat project milestones or upfront monthly retainers. Absolute integrity.
+            Transparent pricing across all services. Choose a complete package or individual add-on services — no hidden fees and no unrealistic promises.
           </motion.p>
         </div>
       </section>
