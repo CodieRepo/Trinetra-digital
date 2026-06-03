@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import SEO from "../components/seo/SEO";
 import Pricing from "../components/Pricing";
+import TheProblem from "../components/TheProblem";
+import TheSystem from "../components/TheSystem";
+import Testimonials from "../components/Testimonials";
 
 export default function Home() {
   const location = useLocation();
@@ -95,8 +98,8 @@ export default function Home() {
         <div className="absolute top-[5%] left-[-10%] w-[500px] h-[500px] bg-gradient-to-tr from-emerald-100/35 to-teal-200/25 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute top-[40%] right-[-10%] w-[600px] h-[600px] bg-gradient-to-br from-amber-100/20 to-orange-200/15 rounded-full blur-[140px] pointer-events-none" />
         
-        {/* ── 1. ORIGINAL WIDGET HERO (NEW COMPLIANT COPY) ── */}
-        <section className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
+        {/* ── 1. WIDGET HERO ── */}
+        <section className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20 grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center border-b border-[#E2DDD5]/40">
           <div className="space-y-8 text-left">
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -105,7 +108,7 @@ export default function Home() {
               className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/50 text-emerald-850 text-[10px] font-bold tracking-wider uppercase font-interface"
             >
               <Sparkles size={12} className="text-[#BF7340]" />
-              Technology & Growth Partner
+              Complete Business Growth Partner
             </motion.div>
 
             <motion.h1
@@ -114,7 +117,9 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-4xl sm:text-6xl font-black font-display tracking-tight leading-[1.08] text-slate-900"
             >
-              Custom <span className="font-display italic text-[#BF7340]">websites</span>, CRM systems, and strategic <span className="font-display italic text-[#BF7340]">growth</span>.
+              Build, Grow, <br />
+              <span className="font-display italic text-[#BF7340]">Automate</span> &amp; Scale <br />
+              Your Business.
             </motion.h1>
 
             <motion.p
@@ -123,34 +128,75 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-[#5C5A52] text-sm sm:text-base leading-relaxed max-w-xl font-medium"
             >
-              A reliable digital partner building robust corporate websites, custom sales software, and ads-compliant marketing retargets. Establish absolute credibility and generate qualified enquiries without unrealistic claims.
+              We design custom high-converting websites, build custom CRM systems, and execute strategic SEO &amp; digital marketing campaigns for local businesses, service providers, and startups across India. Build credibility, automate follow-ups, and scale your operations.
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3 }}
-              className="flex flex-col sm:flex-row gap-3.5"
+              className="flex flex-col sm:flex-row gap-3.5 items-start sm:items-center"
             >
               <Link
                 to="/contact"
-                className="btn-primary-forest h-11 px-6 rounded-xl flex items-center justify-center gap-2"
+                className="btn-primary-forest h-11 px-6 rounded-xl flex items-center justify-center gap-2 w-full sm:w-auto"
               >
                 Get Free Consultation <ArrowRight size={14} />
               </Link>
               <a
                 href="#pricing"
-                className="btn-secondary-outlined h-11 px-6 rounded-xl flex items-center justify-center gap-1.5"
+                className="btn-secondary-outlined h-11 px-6 rounded-xl flex items-center justify-center gap-1.5 w-full sm:w-auto"
               >
                 Explore Pricing
               </a>
+              <a
+                href={WA_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-semibold text-[#BF7340] hover:text-[#A6612E] transition-colors flex items-center gap-1.5 self-center sm:self-auto mt-2 sm:mt-0"
+              >
+                💬 WhatsApp Us
+              </a>
+            </motion.div>
+
+            {/* Service Discovery Shortcuts */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
+              className="border-t border-[#E2DDD5] pt-6 mt-8 text-left"
+            >
+              <p className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82] mb-3.5">What is your primary growth need today?</p>
+              <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap">
+                {[
+                  { label: "I Need A Website", anchor: "services-website" },
+                  { label: "I Need More Leads", anchor: "services-marketing" },
+                  { label: "I Need Automation", anchor: "services-crm" },
+                  { label: "I Need Custom Software", anchor: "services-software" }
+                ].map((pathway, idx) => (
+                  <a
+                    key={idx}
+                    href={`#${pathway.anchor}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const el = document.getElementById(pathway.anchor);
+                      if (el) {
+                        el.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }
+                    }}
+                    className="inline-flex items-center justify-center h-11 px-4 text-xs font-semibold text-[#18170F] bg-white border border-[#E2DDD5] rounded-xl hover:bg-[#F4F2ED] hover:border-[#BF7340] hover:text-[#BF7340] transition-all duration-200 shadow-3xs cursor-pointer text-center sm:text-left"
+                  >
+                    {pathway.label} &rarr;
+                  </a>
+                ))}
+              </div>
             </motion.div>
 
             {/* Social proof - original style */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
               className="flex items-center gap-3 border-t border-[#E2DDD5] pt-6"
             >
               <div className="flex -space-x-2">
@@ -158,7 +204,7 @@ export default function Home() {
                   <span key={i} className="h-7 w-7 rounded-full border border-[#E2DDD5] bg-[#FAF5EF] flex items-center justify-center text-[9px] font-bold text-[#5C5A52] shadow-3xs">{char}</span>
                 ))}
               </div>
-              <p className="text-[11px] text-[#8C8A82] font-semibold">Built with Meta & Google Ads platform compliance in mind.</p>
+              <p className="text-[11px] text-[#8C8A82] font-semibold">Serving professional businesses across India with compliant software tools.</p>
             </motion.div>
           </div>
 
@@ -189,7 +235,7 @@ export default function Home() {
                 <span className="h-7 w-7 rounded-lg bg-[#FAF5EF] text-[#BF7340] flex items-center justify-center shrink-0"><MessageSquare size={13} /></span>
                 <div>
                   <div className="flex justify-between items-center w-full"><span className="text-[10px] font-bold text-[#18170F]">Inbound Enquiry captured</span> <span className="text-[8px] text-slate-400 font-mono">11:02 AM</span></div>
-                  <p className="text-[11px] text-[#5C5A52] italic mt-0.5">"Looking for an institutional custom CRM setup. Budget is 1.5L..."</p>
+                  <p className="text-[11px] text-[#5C5A52] italic mt-0.5">"Looking for a custom CRM dashboard and website. Let's schedule a call."</p>
                 </div>
               </div>
 
@@ -204,8 +250,8 @@ export default function Home() {
                     <span className="text-[10px] font-bold text-[#18170F]">Requirement Parsing</span>
                     <p className="text-[11px] text-[#BF7340] font-mono mt-0.5 font-bold">Staging milestones...</p>
                     <div className="flex gap-2 mt-2">
-                      <span className="text-[9px] font-bold bg-white border border-[#E2DDD5] text-[#5C5A52] px-2 py-0.5 rounded-lg shadow-3xs">Scope: CRM dev ✓</span>
-                      <span className="text-[9px] font-bold bg-white border border-[#E2DDD5] text-[#5C5A52] px-2 py-0.5 rounded-lg shadow-3xs">Budget: Qualified ✓</span>
+                      <span className="text-[9px] font-bold bg-white border border-[#E2DDD5] text-[#5C5A52] px-2 py-0.5 rounded-lg shadow-3xs">Scope: Custom CRM ✓</span>
+                      <span className="text-[9px] font-bold bg-white border border-[#E2DDD5] text-[#5C5A52] px-2 py-0.5 rounded-lg shadow-3xs">Type: Web Portal ✓</span>
                     </div>
                   </div>
                 </motion.div>
@@ -220,7 +266,7 @@ export default function Home() {
                   <span className="h-7 w-7 rounded-lg bg-slate-50 text-slate-700 flex items-center justify-center shrink-0"><Database size={13} /></span>
                   <div>
                     <span className="text-[10px] font-bold text-[#18170F]">CRM Record Generated</span>
-                    <p className="text-[11px] text-[#5C5A52] mt-0.5 font-bold">Sample enquiry · India</p>
+                    <p className="text-[11px] text-[#5C5A52] mt-0.5 font-bold">Enquiry captured · Gorakhpur, UP</p>
                   </div>
                 </motion.div>
               )}
@@ -234,7 +280,7 @@ export default function Home() {
                   <span className="h-7 w-7 rounded-lg bg-white/20 text-white flex items-center justify-center shrink-0"><Check size={13} /></span>
                   <div>
                     <span className="text-[10px] font-bold">Consultation Booked</span>
-                    <p className="text-[11px] opacity-90 italic mt-0.5">"Confirmation details dispatched to client email &amp; mobile ✓"</p>
+                    <p className="text-[11px] opacity-90 italic mt-0.5">"Confirmation details dispatched to team and client. Setup complete ✓"</p>
                   </div>
                 </motion.div>
               )}
@@ -242,93 +288,151 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* ── 2. ORIGINAL SERVICES FEATURE GRID (INJECTED NEW CONTENT) ── */}
+        {/* ── 2. THE PROBLEM SECTION ── */}
+        <TheProblem />
+
+        {/* ── 3. THE SYSTEM (SOLUTION) SECTION ── */}
+        <TheSystem />
+
+        {/* ── 4. SERVICES DETAIL GRID (4 PILLARS) ── */}
         <section className="py-20 relative z-10 bg-[#FAF5EF] border-y border-[#E2DDD5]/60">
           <div className="max-w-7xl mx-auto px-6 space-y-12">
             <div className="text-center max-w-xl mx-auto space-y-3">
               <span className="mixed-headline-eyebrow">Our Key Pillars</span>
-              <h2 className="mixed-headline-title">Tailored Software & Growth Systems</h2>
+              <h2 className="mixed-headline-title">Tailored Software &amp; Growth Systems</h2>
               <p className="body-md text-[#5C5A52]">
                 We design and engineer solid solutions tailored according to your unique business requirements.
               </p>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               
               {/* Card 1: Website Development */}
-              <div className="bg-white border border-[#E2DDD5] p-6 rounded-3xl space-y-4 hover:shadow-md transition-all text-left">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB] shadow-3xs">
-                  <Globe size={18} />
-                </span>
-                <h3 className="text-sm font-bold text-[#18170F]">Website Development</h3>
-                <p className="text-[11px] text-[#5C5A52] leading-relaxed font-semibold">
-                  Fully responsive, highly optimized custom websites constructed from scratch. We build sites that convey legitimacy and turn traffic into leads.
-                </p>
-                <div className="h-px bg-slate-100 my-2" />
-                <ul className="space-y-1 text-[10.5px] text-[#8C8A82] font-semibold">
-                  <li>• Business &amp; Company Websites</li>
-                  <li>• Service &amp; Portfolio Sites</li>
-                  <li>• E-commerce &amp; Landing Pages</li>
-                  <li>• Mobile Responsive &amp; Fast Loading</li>
-                  <li>• Third-Party API Integrations</li>
-                </ul>
+              <div id="services-website" className="bg-white border border-[#E2DDD5] p-6 rounded-3xl space-y-4 hover:shadow-md transition-all text-left flex flex-col justify-between">
+                <div>
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB] shadow-3xs">
+                    <Globe size={18} />
+                  </span>
+                  <h3 className="text-sm font-bold text-[#18170F] mt-3">Website Development</h3>
+                  <p className="text-[11px] text-[#5C5A52] leading-relaxed font-semibold mt-2">
+                    Fully responsive, highly optimized custom websites constructed from scratch. We build sites that convey legitimacy and turn traffic into leads.
+                  </p>
+                  <div className="h-px bg-slate-100 my-2" />
+                  <ul className="space-y-1 text-[10.5px] text-[#8C8A82] font-semibold">
+                    <li>• Business &amp; Company Websites</li>
+                    <li>• Service &amp; Portfolio Sites</li>
+                    <li>• E-commerce &amp; Landing Pages</li>
+                    <li>• Mobile Responsive &amp; Fast Loading</li>
+                    <li>• Third-Party API Integrations</li>
+                  </ul>
+                </div>
+                <div className="pt-4 border-t border-slate-50 mt-auto">
+                  <Link to="/contact?service=Website%20Development" className="text-xs font-bold text-[#BF7340] hover:text-[#A6612E] inline-flex items-center gap-1">
+                    Enquire About Websites &rarr;
+                  </Link>
+                </div>
               </div>
 
-              {/* Card 2: CRM Development */}
-              <div className="bg-[#131210] border border-[#BF7340]/30 p-6 rounded-3xl space-y-4 shadow-sm text-left relative overflow-hidden">
+              {/* Card 2: SEO & Digital Marketing */}
+              <div id="services-marketing" className="bg-white border border-[#E2DDD5] p-6 rounded-3xl space-y-4 hover:shadow-md transition-all text-left flex flex-col justify-between">
+                <div>
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB] shadow-3xs">
+                    <BarChart3 size={18} />
+                  </span>
+                  <h3 className="text-sm font-bold text-[#18170F] mt-3">SEO &amp; Digital Marketing</h3>
+                  <p className="text-[11px] text-[#5C5A52] leading-relaxed font-semibold mt-2">
+                    We help businesses improve their online presence and generate qualified enquiries through strategic digital marketing. Honest copy and compliance.
+                  </p>
+                  <div className="h-px bg-slate-100 my-2" />
+                  <ul className="space-y-1 text-[10.5px] text-[#8C8A82] font-semibold">
+                    <li>• Google &amp; Meta Ads Management</li>
+                    <li>• Lead Generation Campaigns</li>
+                    <li>• Local Business SEO Setup</li>
+                    <li>• Conversion Pixel &amp; Tracking</li>
+                    <li>• Landing Page Optimization</li>
+                  </ul>
+                </div>
+                <div className="pt-4 border-t border-slate-50 mt-auto">
+                  <Link to="/contact?service=Digital%20Marketing" className="text-xs font-bold text-[#BF7340] hover:text-[#A6612E] inline-flex items-center gap-1">
+                    Enquire About Marketing &rarr;
+                  </Link>
+                </div>
+              </div>
+
+              {/* Card 3: CRM Development */}
+              <div id="services-crm" className="bg-[#131210] border border-[#BF7340]/30 p-6 rounded-3xl space-y-4 shadow-sm text-left relative overflow-hidden flex flex-col justify-between">
                 <div className="absolute top-0 inset-x-0 h-[3.5px] bg-[#BF7340]" />
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#FAF5EF]/10 text-[#BF7340] shadow-3xs">
-                  <Database size={18} />
-                </span>
-                <h3 className="text-sm font-bold text-white">CRM Development</h3>
-                <p className="text-[11px] text-[#FAF5EF]/70 leading-relaxed font-semibold">
-                  Custom-built software databases tailored exactly to your operational workflows. Streamline follow-ups, align teams, and organize raw administrative tasks.
-                </p>
-                <div className="h-px bg-white/10 my-2" />
-                <ul className="space-y-1 text-[10.5px] text-[#FAF5EF]/55 font-semibold">
-                  <li>• Lead &amp; Pipeline Tracking</li>
-                  <li>• Customer &amp; Team Management</li>
-                  <li>• Custom Dashboards &amp; Workflows</li>
-                  <li>• Role-Based Secure Access</li>
-                  <li>• Third-Party Integrations Ready</li>
-                </ul>
+                <div>
+                  <div className="flex justify-between items-start">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#FAF5EF]/10 text-[#BF7340] shadow-3xs">
+                      <Database size={18} />
+                    </span>
+                    <span className="text-[9px] bg-[#BF7340] text-[#FAF5EF] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      Most Requested
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-bold text-white mt-3">Automation &amp; CRM</h3>
+                  <p className="text-[11px] text-[#FAF5EF]/70 leading-relaxed font-semibold mt-2">
+                    Custom-built software databases tailored exactly to your operational workflows. Streamline follow-ups, align teams, and organize raw administrative tasks.
+                  </p>
+                  <div className="h-px bg-white/10 my-2" />
+                  <ul className="space-y-1 text-[10.5px] text-[#FAF5EF]/55 font-semibold">
+                    <li>• Lead &amp; Pipeline Tracking</li>
+                    <li>• Customer &amp; Team Management</li>
+                    <li>• Custom Dashboards &amp; Workflows</li>
+                    <li>• Role-Based Secure Access</li>
+                    <li>• WhatsApp Follow-up Auto Alerts</li>
+                  </ul>
+                </div>
+                <div className="pt-4 border-t border-white/5 mt-auto">
+                  <Link to="/contact?service=CRM%20Development" className="text-xs font-bold text-[#BF7340] hover:text-[#FAF5EF] inline-flex items-center gap-1 transition-colors">
+                    Enquire About Automation &rarr;
+                  </Link>
+                </div>
               </div>
 
-              {/* Card 3: Digital Marketing */}
-              <div className="bg-white border border-[#E2DDD5] p-6 rounded-3xl space-y-4 hover:shadow-md transition-all text-left">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB] shadow-3xs">
-                  <BarChart3 size={18} />
-                </span>
-                <h3 className="text-sm font-bold text-[#18170F]">Digital Marketing</h3>
-                <p className="text-[11px] text-[#5C5A52] leading-relaxed font-semibold">
-                  We help businesses improve their online presence and generate qualified enquiries through strategic digital marketing. Honest copy, conversion analysis, and compliance.
-                </p>
-                <div className="h-px bg-slate-100 my-2" />
-                <ul className="space-y-1 text-[10.5px] text-[#8C8A82] font-semibold">
-                  <li>• Google &amp; Meta Ads Management</li>
-                  <li>• Lead Generation Campaigns</li>
-                  <li>• Local Business SEO Setup</li>
-                  <li>• Conversion Pixel &amp; Tracking</li>
-                  <li>• Landing Page Optimization</li>
-                </ul>
+              {/* Card 4: Custom Software Development */}
+              <div id="services-software" className="bg-white border border-[#E2DDD5] p-6 rounded-3xl space-y-4 hover:shadow-md transition-all text-left flex flex-col justify-between">
+                <div>
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB] shadow-3xs">
+                    <Layers size={18} />
+                  </span>
+                  <h3 className="text-sm font-bold text-[#18170F] mt-3">Custom Software Dev</h3>
+                  <p className="text-[11px] text-[#5C5A52] leading-relaxed font-semibold mt-2">
+                    Tailored dashboards, ERP modules, inventory management systems, booking platforms and custom reporting built specifically for your rules.
+                  </p>
+                  <div className="h-px bg-slate-100 my-2" />
+                  <ul className="space-y-1 text-[10.5px] text-[#8C8A82] font-semibold">
+                    <li>• Custom Operations Panels</li>
+                    <li>• Legacy Software Integrations</li>
+                    <li>• Business Dashboard Creation</li>
+                    <li>• Secure Database Architecture</li>
+                    <li>• Modular Scalable Clean Code</li>
+                  </ul>
+                </div>
+                <div className="pt-4 border-t border-slate-50 mt-auto">
+                  <Link to="/contact?service=Custom%20Project" className="text-xs font-bold text-[#BF7340] hover:text-[#A6612E] inline-flex items-center gap-1">
+                    Enquire About Software &rarr;
+                  </Link>
+                </div>
               </div>
 
             </div>
 
-            {/* Coming Soon Block - Classic Card design */}
+            {/* Staging Info Box */}
             <div className="max-w-4xl mx-auto bg-white border border-[#E2DDD5] p-6 md:p-8 rounded-3xl flex flex-col md:flex-row md:items-center justify-between text-left gap-6 shadow-3xs">
               <div className="space-y-2">
                 <span className="text-[9.5px] bg-[#FAF5EF] border border-[#BF7340]/30 text-[#BF7340] px-2 py-0.5 rounded-full uppercase font-bold">
-                  Coming Soon
+                  Compliance &amp; Strategy
                 </span>
-                <h4 className="text-sm font-bold text-[#18170F] mt-1">Future Solutions</h4>
+                <h4 className="text-sm font-bold text-[#18170F] mt-1">Data Indexing &amp; Platform Guidelines</h4>
                 <p className="text-xs text-[#5C5A52] leading-relaxed font-semibold max-w-xl">
-                  Advanced automation and AI-powered solutions are currently under development and will be announced in the future.
+                  We build our CRM portals, websites, and marketing structures in alignment with Meta and Google privacy guidelines, protecting customer databases and ensuring ad-pixel integrity.
                 </p>
               </div>
               <div className="shrink-0">
                 <span className="text-xs font-bold text-[#8C8A82] uppercase tracking-widest border border-[#E2DDD5] bg-[#F4F2ED] rounded-lg px-4 py-2">
-                  Staging Mode
+                  Compliant Setup
                 </span>
               </div>
             </div>
@@ -336,8 +440,40 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── 3. TRUST SECTION (OLD UI STYLE) ── */}
-        <section className="py-20 relative z-10 bg-white">
+        {/* ── 5. BUSINESS INDUSTRIES WE SERVE ── */}
+        <section className="py-20 relative z-10 bg-white border-b border-[#E2DDD5]/60">
+          <div className="max-w-7xl mx-auto px-6 space-y-12">
+            <div className="text-center max-w-xl mx-auto space-y-3">
+              <span className="mixed-headline-eyebrow">Industries We Serve</span>
+              <h2 className="mixed-headline-title">Tailored Solutions for Your Sector</h2>
+              <p className="body-md text-[#5C5A52]">
+                We don't build generic templates. We build custom solutions designed around the specific operations of your business category.
+              </p>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+              {[
+                { title: "Healthcare & Clinics", desc: "Patient appointment scheduling, automated WhatsApp reminder follow-ups, and clinic landing pages.", icon: Activity },
+                { title: "Real Estate & Developers", desc: "Property listing architectures, lead capture workflows, and integration with CRM status dashboards.", icon: Compass },
+                { title: "Coaching & Education", desc: "Course enrollment funnels, student inquiry systems, and automated welcome follow-up alerts.", icon: Users },
+                { title: "Local Service Businesses", desc: "Google Business Profile local SEO setup, booking calendars, and WhatsApp call-to-action integrations.", icon: Zap },
+                { title: "B2B & Professional Services", desc: "Corporate website development, lead qualifying pipelines, and secure database workflows.", icon: ShieldCheck },
+                { title: "Retail & E-commerce", desc: "Digital catalog configurations, order inquiry systems, and payment gateway configurations.", icon: Globe },
+              ].map((ind, i) => (
+                <div key={i} className="bg-[#F4F2ED] border border-[#E2DDD5] p-6 rounded-2xl space-y-3 text-left transition-all duration-200 hover:bg-white hover:shadow-xs">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#BF7340] border border-[#E2DDD5]">
+                    <ind.icon size={16} />
+                  </span>
+                  <h3 className="text-xs font-bold text-[#18170F]">{ind.title}</h3>
+                  <p className="text-[11px] text-[#5C5A52] leading-relaxed font-semibold">{ind.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 6. TRUST SECTION (BENEFITS) ── */}
+        <section className="py-20 relative z-10 bg-white border-b border-[#E2DDD5]/60">
           <div className="max-w-7xl mx-auto px-6 space-y-12">
             <div className="text-center max-w-xl mx-auto space-y-3">
               <span className="mixed-headline-eyebrow">Institutional Integrity</span>
@@ -361,12 +497,51 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── 4. TRANSPARENT PRICING matrix ── */}
+        {/* ── 7. DEVELOPMENT PROCESS ── */}
+        <section className="py-20 relative z-10 bg-[#FAF5EF] border-b border-[#E2DDD5]/60">
+          <div className="max-w-6xl mx-auto px-6 space-y-12">
+            <div className="text-center max-w-xl mx-auto space-y-3">
+              <span className="mixed-headline-eyebrow">How We Work</span>
+              <h2 className="mixed-headline-title">Our Staged Process</h2>
+              <p className="body-md text-[#5C5A52]">
+                We avoid guesswork. We follow a structured, transparent process with clear milestones from the initial call to post-launch support.
+              </p>
+            </div>
+
+            <div className="relative">
+              {/* Process line for desktop */}
+              <div className="hidden lg:block absolute top-1/2 left-4 right-4 h-0.5 bg-[#E2DDD5] -translate-y-1/2 z-0" />
+              
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5 relative z-10">
+                {[
+                  { step: "01", title: "Discovery", desc: "We discuss your business needs, analyze competitors, and outline technical requirements." },
+                  { step: "02", title: "Strategy & Scope", desc: "We define precise page structures, database schemas, and milestone timelines." },
+                  { step: "03", title: "Custom Build", desc: "We write clean code (no bloated page builders) and set up custom backend configurations." },
+                  { step: "04", title: "Staging & Review", desc: "You review and test the solution on a private staging link before final delivery." },
+                  { step: "05", title: "Launch & Support", desc: "We migrate your site live, index search engines, and begin contract support." }
+                ].map((item, idx) => (
+                  <div key={idx} className="bg-white border border-[#E2DDD5] p-6 rounded-2xl text-left hover:shadow-xs transition-shadow flex flex-col justify-between min-h-[190px]">
+                    <div>
+                      <span className="text-[10px] font-bold text-[#BF7340] uppercase tracking-wider block mb-2 font-mono">Stage {item.step}</span>
+                      <h3 className="text-xs font-bold text-[#18170F] mb-2">{item.title}</h3>
+                      <p className="text-[11px] text-[#5C5A52] leading-relaxed font-semibold">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 8. PORTFOLIO & PROOF ── */}
+        <Testimonials />
+
+        {/* ── 9. TRANSPARENT PRICING matrix ── */}
         <div id="pricing">
           <Pricing />
         </div>
 
-        {/* ── 5. ORIGINAL STYLE FAQS SECTION ── */}
+        {/* ── 10. FAQS SECTION ── */}
         <section className="py-20 md:py-24 relative z-10 bg-[#FAF5EF] border-t border-[#E2DDD5]/60">
           <div className="max-w-4xl mx-auto px-6 space-y-12">
             <div className="text-center max-w-xl mx-auto space-y-3">
@@ -418,7 +593,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── 6. CONTACT SECTION (OLD UI STYLE FORM) ── */}
+        {/* ── 11. CONTACT SECTION (OLD UI STYLE FORM) ── */}
         <section id="contact" className="py-20 md:py-24 bg-white relative z-10 border-t border-[#E2DDD5]">
           <div className="max-w-5xl mx-auto px-6 grid gap-12 md:grid-cols-[1fr_1.3fr] items-start">
             
@@ -553,4 +728,5 @@ export default function Home() {
       </div>
     </>
   );
+
 }

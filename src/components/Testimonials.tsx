@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 
 // Count Up Helper Component
 function MetricCounter({ value, duration = 1.2 }: { value: string; duration?: number }) {
@@ -123,39 +124,54 @@ export default function Testimonials() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.4 }}
                   transition={{ duration: 0.4, delay: i * 0.1 }}
-                  className="relative rounded-2xl border border-[#E2DDD5] bg-[#F4F2ED] p-8 shadow-xs text-left"
+                  className="relative rounded-2xl border border-[#E2DDD5] bg-[#F4F2ED] p-8 shadow-xs text-left flex flex-col justify-between"
                 >
-                  <div className="flex items-start justify-between mb-5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#BF7340]/10 text-sm font-bold text-[#BF7340]">
-                        {item.avatar}
+                  <div>
+                    <div className="flex items-start justify-between mb-5">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#BF7340]/10 text-sm font-bold text-[#BF7340]">
+                          {item.avatar}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-[#18170F]">{item.project}</p>
+                          <p className="text-xs text-[#5C5A52]">{item.category}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-[#18170F]">{item.project}</p>
-                        <p className="text-xs text-[#5C5A52]">{item.category}</p>
-                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E8F0ED] text-[#2A4A3E] border border-[#2A4A3E]/10">
+                        {item.status}
+                      </span>
                     </div>
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E8F0ED] text-[#2A4A3E] border border-[#2A4A3E]/10">
-                      {item.status}
-                    </span>
+
+                    <p className="text-sm text-[#5C5A52] leading-relaxed mb-5">
+                      {item.description}
+                    </p>
+
+                    <div className="w-full h-px bg-[#E2DDD5] mb-4" />
+
+                    <div className="mb-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#8C8A82] mb-2">Services Delivered</p>
+                      <ul className="space-y-1.5">
+                        {item.services.map((svc, si) => (
+                          <li key={si} className="flex items-center gap-2 text-xs text-[#5C5A52]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#BF7340] shrink-0" />
+                            {svc}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
 
-                  <p className="text-sm text-[#5C5A52] leading-relaxed mb-5">
-                    {item.description}
-                  </p>
-
-                  <div className="w-full h-px bg-[#E2DDD5] mb-4" />
-
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#8C8A82] mb-2">Services Delivered</p>
-                    <ul className="space-y-1.5">
-                      {item.services.map((svc, si) => (
-                        <li key={si} className="flex items-center gap-2 text-xs text-[#5C5A52]">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#BF7340] shrink-0" />
-                          {svc}
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="pt-3 border-t border-[#E2DDD5]/60 mt-4">
+                    <Link
+                      to={`/contact?service=${encodeURIComponent(
+                        item.project === "Vaastu Infra" 
+                          ? "Website Development" 
+                          : "Custom Software Development"
+                      )}`}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[#BF7340] hover:text-[#A6612E] transition-colors cursor-pointer"
+                    >
+                      Enquire about a similar system &rarr;
+                    </Link>
                   </div>
                 </motion.div>
               ))}

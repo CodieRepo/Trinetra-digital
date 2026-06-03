@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Phone, MessageCircle, Mail, MapPin, Clock, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
 import SEO from "../components/seo/SEO";
 import LocationMap from "../components/LocationMap";
@@ -37,6 +37,9 @@ const SCHEMA = {
 };
 
 export default function ContactPage() {
+  const [searchParams] = useSearchParams();
+  const presetService = searchParams.get("service") || "";
+
   useEffect(() => window.scrollTo({ top: 0, behavior: "instant" }), []);
   
   const [submitting, setSubmitting] = useState(false);
@@ -326,7 +329,8 @@ export default function ContactPage() {
                       id="contact-service"
                       name="service"
                       required
-                      className="h-11 rounded-lg border border-[#E2DDD5] bg-[#F9F8F5] px-3.5 text-sm text-[#18170F] focus:outline-none focus:ring-2 focus:ring-[#BF7340]/30 focus:border-[#BF7340] transition-all"
+                      defaultValue={presetService}
+                      className="h-11 rounded-lg border border-[#E2DDD5] bg-[#F9F8F5] px-3.5 text-sm text-[#18170F] focus:outline-none focus:ring-2 focus:ring-[#BF7340]/30 focus:border-[#BF7340] transition-all cursor-pointer"
                     >
                       <option value="">Select a service…</option>
                       <option value="Website Development">Website Development</option>

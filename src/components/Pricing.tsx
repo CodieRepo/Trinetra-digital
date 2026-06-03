@@ -13,6 +13,7 @@ export default function Pricing() {
   const packages = [
     {
       name: "Starter Presence",
+      bestFor: "Best for local service providers establishing credibility.",
       price: "₹14,999",
       setupLabel: "One-Time Setup",
       monthlyPrice: "₹2,999/month",
@@ -32,6 +33,7 @@ export default function Pricing() {
     },
     {
       name: "Growth Engine",
+      bestFor: "Best for growing businesses wanting structured leads.",
       price: "₹29,999",
       setupLabel: "One-Time Setup",
       monthlyPrice: "₹5,999/month",
@@ -53,6 +55,7 @@ export default function Pricing() {
     },
     {
       name: "Sales System",
+      bestFor: "Best for teams looking to automate sales pipeline follow-ups.",
       price: "₹59,999",
       setupLabel: "One-Time Setup",
       monthlyPrice: "₹9,999/month",
@@ -72,6 +75,7 @@ export default function Pricing() {
     },
     {
       name: "Business OS",
+      bestFor: "Best for custom databases, dashboards, and app workflows.",
       price: "₹1,49,999+",
       setupLabel: "One-Time Investment",
       monthlyPrice: "₹19,999+/month",
@@ -190,17 +194,18 @@ export default function Pricing() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -16 }}
                       transition={{ duration: 0.3 }}
-                      className="flex flex-col justify-between rounded-xl border border-[#BF7340]/40 bg-[#131210] p-6 md:p-8 shadow-md ring-1 ring-[#BF7340]/25 text-left relative overflow-hidden"
+                      className="flex flex-col justify-between rounded-xl border-2 border-[#BF7340] bg-[#131210] p-6 md:p-8 shadow-md ring-1 ring-[#BF7340]/25 text-left relative overflow-hidden"
                     >
                       <div className="absolute top-0 inset-x-0 h-[3px] bg-[#BF7340]" />
                       <div>
                         <div className="flex justify-between items-center">
                           <span className="text-[10px] uppercase font-bold tracking-widest text-[#FAF5EF]/60">{plan.name}</span>
                           <span className="text-[9px] bg-[#BF7340] text-[#FAF5EF] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-sm">
-                            <Sparkles size={8} /> Most Popular
+                            <Sparkles size={8} /> Recommended
                           </span>
                         </div>
-                        <div className="mt-6 space-y-4">
+                        <p className="text-[11px] font-semibold text-[#BF7340] mt-1.5">{plan.bestFor}</p>
+                        <div className="mt-4 space-y-4">
                           <div>
                             <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#BF7340]">{plan.setupLabel}</p>
                             <div className="flex items-baseline gap-1.5 mt-1">
@@ -245,7 +250,8 @@ export default function Pricing() {
                   >
                     <div>
                       <span className="text-[10px] uppercase font-bold tracking-widest text-[#8C8A82]">{plan.name}</span>
-                      <div className="mt-6 space-y-4">
+                      <p className="text-[11px] font-semibold text-[#BF7340] mt-1.5">{plan.bestFor}</p>
+                      <div className="mt-4 space-y-4">
                         <div>
                           <p className="text-[9.5px] uppercase tracking-wider font-semibold text-[#BF7340]">{plan.setupLabel}</p>
                           <div className="flex items-baseline gap-1.5 mt-1">
