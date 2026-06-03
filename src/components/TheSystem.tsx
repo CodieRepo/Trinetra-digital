@@ -163,7 +163,7 @@ export default function TheSystem() {
                         <span className="text-slate-400 font-mono text-[9px]">yourwebsite.com</span>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/videos/build-growth-automate.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-slate-150 shadow-inner overflow-hidden"><LazyVideo src="/videos/build-growth-automate.mp4" className="absolute inset-0 w-full h-full" /></div>
                     </div>
                   )}
 
@@ -173,7 +173,7 @@ export default function TheSystem() {
                         <span className="text-slate-400 font-mono text-[9px]">crm.yourwebsite.com</span>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/videos/why-tinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-slate-150 shadow-inner overflow-hidden"><LazyVideo src="/videos/why-tinetra.mp4" className="absolute inset-0 w-full h-full" /></div>
                     </div>
                   )}
 
@@ -183,7 +183,7 @@ export default function TheSystem() {
                         <span className="text-slate-400 font-mono text-[9px]">analytics.yourwebsite.com</span>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/videos/pricing.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-slate-150 shadow-inner overflow-hidden"><LazyVideo src="/videos/pricing.mp4" className="absolute inset-0 w-full h-full" /></div>
                     </div>
                   )}
                 </div>
@@ -315,7 +315,7 @@ export default function TheSystem() {
                         </div>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/videos/build-growth-automate.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-slate-150 shadow-inner overflow-hidden"><LazyVideo src="/videos/build-growth-automate.mp4" className="absolute inset-0 w-full h-full" /></div>
                       <div className="flex justify-center mt-1">
                         <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
                           Mobile Responsive âœ“ SEO Ready âœ“
@@ -343,7 +343,7 @@ export default function TheSystem() {
                         </div>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/videos/why-tinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-slate-150 shadow-inner overflow-hidden"><LazyVideo src="/videos/why-tinetra.mp4" className="absolute inset-0 w-full h-full" /></div>
                       <div className="flex justify-center mt-1">
                         <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
                           WhatsApp Auto-Alerts Active âœ“
@@ -371,7 +371,7 @@ export default function TheSystem() {
                         </div>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/videos/pricing.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-slate-150 shadow-inner overflow-hidden"><LazyVideo src="/videos/pricing.mp4" className="absolute inset-0 w-full h-full" /></div>
                       <div className="flex justify-center mt-1">
                         <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
                           SEO Crawler Tracked âœ“
@@ -389,4 +389,6 @@ export default function TheSystem() {
     </section>
   );
 }
+
+
 

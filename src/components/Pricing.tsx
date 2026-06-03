@@ -249,8 +249,8 @@ export default function Pricing() {
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-200" />
               </div>
             </div>
-            <div className="relative rounded-lg overflow-hidden border border-slate-150 aspect-video grayscale opacity-75 hover:grayscale-0 hover:opacity-100 transition-all duration-500 ease-out shadow-inner">
-              <LazyVideo src="/videos/pricing.mp4" className="w-full h-full" />
+            <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg overflow-hidden border border-slate-150 grayscale opacity-75 hover:grayscale-0 hover:opacity-100 transition-all duration-500 ease-out shadow-inner">
+              <LazyVideo src="/videos/pricing.mp4" className="absolute inset-0 w-full h-full" />
             </div>
             <div className="mt-2.5 text-center">
               <span className="text-[8.5px] font-mono font-semibold text-slate-400 uppercase tracking-wider">Hover to activate telemetry review</span>

@@ -30,7 +30,7 @@ import TheProblem from "../components/TheProblem";
 import TheSystem from "../components/TheSystem";
 import Testimonials from "../components/Testimonials";
 import LazyVideo from "../components/LazyVideo";
-import ScrollVideo from "../components/ScrollVideo";
+import HeroBgVideo from "../components/HeroBgVideo";
 
 export default function Home() {
   const location = useLocation();
@@ -102,152 +102,371 @@ export default function Home() {
         canonical="https://trinetradigitalsolution.com/"
       />
 
-      {/* Main container with clean light theme background */}
-      <div className="min-h-screen bg-[#FCFCFD] text-[#0F172A] relative overflow-hidden font-sans pt-12">
-        {/* Hairline background grid pattern for tech authority */}
-        <div className="absolute inset-0 grid-pattern opacity-[0.02] pointer-events-none" />
-        
-        {/* ── 1. HIGH-TRUST HERO ── */}
-        <section ref={heroRef} className="relative z-10 max-w-[1200px] mx-auto px-4 md:px-10 pt-20 pb-24 border-b border-border/80">
-          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-16 items-center">
-            
-            {/* Left side positioning */}
-            <div className="space-y-8 text-left">
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-light border border-accent/15 text-accent text-[10px] font-mono font-bold tracking-widest uppercase"
-              >
-                <Sparkles size={11} className="text-accent fill-accent/10" />
-                Complete Business Growth Partner
-              </motion.div>
+      {/* ── PAGE WRAPPER ── */}
+      <div className="min-h-screen bg-[#FCFCFD] text-[#0F172A] relative font-sans">
 
-              <motion.h1
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-                className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.08] text-ink-1 font-display"
-              >
-                Build, Grow, <br />
-                <span className="font-editorial italic text-accent font-normal">Automate</span> &amp; Scale <br />
-                Your Business.
-              </motion.h1>
+        {/* ── 1. FULL-WIDTH VIDEO HERO ── */}
+        <section
+          ref={heroRef}
+          className="hero-video-section"
+          style={{
+            position: "relative",
+            width: "100%",
+            minHeight: "100svh",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            overflow: "hidden",
+            paddingTop: "72px",
+          }}
+        >
+          {/* ── Background Video Layer ── */}
+          <HeroBgVideo
+            src="/videos/trinetra-hero-video.mp4"
+            poster="/dashboard-poster.svg"
+          />
 
-              <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="text-ink-2 text-sm sm:text-base leading-relaxed max-w-xl font-medium"
-              >
-                We design custom high-converting websites, build custom CRM systems, and execute strategic SEO &amp; digital marketing campaigns for local businesses, service providers, and startups across India. Build credibility, automate follow-ups, and scale your operations.
-              </motion.p>
+          {/* ── Dark gradient overlay for text readability ── */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 1,
+              background:
+                "linear-gradient(to bottom, rgba(9,9,11,0.72) 0%, rgba(9,9,11,0.50) 50%, rgba(9,9,11,0.78) 100%)",
+            }}
+          />
 
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="flex flex-col sm:flex-row gap-3.5 items-stretch sm:items-center"
-              >
-                <Link
-                  to="/contact"
-                  className="btn-primary-forest h-11 px-6 rounded-lg flex items-center justify-center gap-2 bg-cta text-white hover:bg-cta-hover transition-colors font-semibold shadow-sm text-xs uppercase tracking-wider cursor-pointer"
-                >
-                  Get Free Consultation <ArrowRight size={14} />
-                </Link>
-                <a
-                  href="#pricing"
-                  className="btn-secondary-outlined h-11 px-6 rounded-lg flex items-center justify-center gap-1.5 border border-border text-ink-1 hover:bg-slate-50 transition-colors font-semibold text-xs uppercase tracking-wider cursor-pointer"
-                >
-                  Explore Pricing
-                </a>
-                <a
-                  href={WA_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-semibold text-accent hover:text-accent-hover transition-colors flex items-center justify-center gap-1.5 mt-2 sm:mt-0"
-                >
-                  💬 WhatsApp Us
-                </a>
-              </motion.div>
-
-              {/* Service Discovery Shortcuts */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="border-t border-border pt-6 mt-8"
-              >
-                <p className="text-[9px] uppercase font-mono font-bold tracking-widest text-ink-3 mb-3.5">What is your primary growth need today?</p>
-                <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap">
-                  {[
-                    { label: "I Need A Website", anchor: "services-website" },
-                    { label: "I Need More Leads", anchor: "services-marketing" },
-                    { label: "I Need Automation", anchor: "services-crm" },
-                    { label: "I Need Custom Software", anchor: "services-software" }
-                  ].map((pathway, idx) => (
-                    <a
-                      key={idx}
-                      href={`#${pathway.anchor}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        const el = document.getElementById(pathway.anchor);
-                        if (el) {
-                          el.scrollIntoView({ behavior: "smooth", block: "center" });
-                        }
-                      }}
-                      className="inline-flex items-center justify-center h-10 px-4 text-xs font-semibold text-ink-2 bg-white border border-border rounded-lg hover:border-accent hover:text-accent transition-all duration-150 shadow-xs cursor-pointer"
-                    >
-                      {pathway.label} &rarr;
-                    </a>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Social proof */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.25 }}
-                className="flex items-center gap-3 border-t border-border pt-6"
-              >
-                <div className="flex -space-x-1.5">
-                  {['T', 'D', 'S', 'A'].map((char, i) => (
-                    <span key={i} className="h-7 w-7 rounded-full border border-border bg-surface-3 flex items-center justify-center text-[9px] font-mono font-bold text-ink-2 shadow-xs">{char}</span>
-                  ))}
-                </div>
-                <p className="text-[11px] text-ink-3 font-semibold">Serving professional businesses across India with compliant software tools.</p>
-              </motion.div>
-            </div>
-
-            {/* Right Side: Browser Mockup with Scroll-Synced Video */}
+          {/* ── Hero Content (sits above overlay) ── */}
+          <div
+            style={{
+              position: "relative",
+              zIndex: 2,
+              width: "100%",
+              maxWidth: "860px",
+              margin: "0 auto",
+              padding: "clamp(24px, 6vw, 80px) clamp(16px, 5vw, 40px)",
+              textAlign: "center",
+            }}
+          >
+            {/* Eyebrow badge */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.15 }}
-              className="relative w-full rounded-xl overflow-hidden shadow-md border border-border bg-white"
-              style={{ aspectRatio: "16/9" }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}
             >
-              {/* Browser Address Bar Mockup */}
-              <div className="absolute top-0 left-0 right-0 z-10 bg-slate-50 border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                </div>
-                <div className="bg-white border border-slate-200/60 rounded px-6 py-0.5 text-[9px] font-mono text-slate-400 font-semibold tracking-wide">
-                  trinetradigital.com/dashboard
-                </div>
-                <ArrowRight size={10} className="text-slate-400" />
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "6px 14px",
+                  borderRadius: "9999px",
+                  border: "1px solid rgba(99,102,241,0.35)",
+                  background: "rgba(99,102,241,0.12)",
+                  color: "#a5b4fc",
+                  fontSize: "10px",
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: 700,
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                }}
+              >
+                <Sparkles size={10} />
+                Complete Business Growth Partner
+              </span>
+            </motion.div>
+
+            {/* Main headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.08 }}
+              style={{
+                fontSize: "clamp(32px, 6.5vw, 72px)",
+                fontWeight: 800,
+                lineHeight: 1.06,
+                letterSpacing: "-0.025em",
+                color: "#ffffff",
+                fontFamily: "var(--font-display)",
+                marginBottom: "20px",
+              }}
+            >
+              Build, Grow,{" "}
+              <span
+                style={{
+                  fontFamily: "var(--font-editorial)",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  color: "#818cf8",
+                }}
+              >
+                Automate
+              </span>{" "}
+              &amp; Scale{" "}<br className="hidden sm:block" />
+              Your Business.
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.16 }}
+              style={{
+                fontSize: "clamp(13px, 1.8vw, 17px)",
+                color: "rgba(248,250,252,0.78)",
+                lineHeight: 1.7,
+                maxWidth: "640px",
+                margin: "0 auto 36px",
+                fontWeight: 500,
+              }}
+            >
+              We design custom high-converting websites, build custom CRM systems,
+              and execute strategic SEO &amp; digital marketing campaigns for local businesses,
+              service providers, and startups across India.
+            </motion.p>
+
+            {/* CTA Row */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.24 }}
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "12px",
+                justifyContent: "center",
+                alignItems: "center",
+                marginBottom: "48px",
+              }}
+            >
+              <Link
+                to="/contact"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  height: "48px",
+                  padding: "0 28px",
+                  borderRadius: "10px",
+                  background: "#4f46e5",
+                  color: "#ffffff",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                  transition: "background 0.2s, transform 0.15s",
+                  whiteSpace: "nowrap",
+                  boxShadow: "0 4px 24px rgba(79,70,229,0.35)",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = "#4338ca")}
+                onMouseLeave={e => (e.currentTarget.style.background = "#4f46e5")}
+              >
+                Get Free Consultation <ArrowRight size={14} />
+              </Link>
+
+              <a
+                href="#pricing"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  height: "48px",
+                  padding: "0 24px",
+                  borderRadius: "10px",
+                  border: "1.5px solid rgba(255,255,255,0.25)",
+                  background: "rgba(255,255,255,0.07)",
+                  color: "rgba(248,250,252,0.9)",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                  backdropFilter: "blur(8px)",
+                  transition: "background 0.2s",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Explore Pricing
+              </a>
+
+              <a
+                href={WA_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  height: "44px",
+                  padding: "0 20px",
+                  borderRadius: "10px",
+                  background: "rgba(37,211,102,0.15)",
+                  border: "1px solid rgba(37,211,102,0.3)",
+                  color: "#4ade80",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                💬 WhatsApp Us
+              </a>
+            </motion.div>
+
+            {/* Quick nav shortcuts */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35 }}
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "8px",
+                justifyContent: "center",
+                marginBottom: "40px",
+              }}
+            >
+              {[
+                { label: "I Need A Website", anchor: "services-website" },
+                { label: "I Need More Leads", anchor: "services-marketing" },
+                { label: "I Need Automation", anchor: "services-crm" },
+                { label: "I Need Custom Software", anchor: "services-software" },
+              ].map((pathway, idx) => (
+                <a
+                  key={idx}
+                  href={`#${pathway.anchor}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const el = document.getElementById(pathway.anchor);
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    height: "34px",
+                    padding: "0 14px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    background: "rgba(255,255,255,0.06)",
+                    color: "rgba(248,250,252,0.7)",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                    backdropFilter: "blur(6px)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {pathway.label} →
+                </a>
+              ))}
+            </motion.div>
+
+            {/* Social proof strip */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.42 }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "12px",
+              }}
+            >
+              <div style={{ display: "flex", marginRight: "4px" }}>
+                {['T', 'D', 'S', 'A'].map((char, i) => (
+                  <span
+                    key={i}
+                    style={{
+                      height: "28px",
+                      width: "28px",
+                      borderRadius: "9999px",
+                      border: "2px solid rgba(255,255,255,0.2)",
+                      background: "rgba(255,255,255,0.1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "9px",
+                      fontFamily: "var(--font-mono)",
+                      fontWeight: 700,
+                      color: "rgba(248,250,252,0.8)",
+                      marginLeft: i === 0 ? 0 : "-6px",
+                    }}
+                  >
+                    {char}
+                  </span>
+                ))}
               </div>
-              <ScrollVideo
-                src="/videos/trinetra-hero-video.mp4"
-                containerRef={heroRef}
-                startOffset="start start"
-                endOffset="end start"
-                poster="/dashboard-poster.svg"
-              />
+              <p
+                style={{
+                  fontSize: "11px",
+                  color: "rgba(248,250,252,0.55)",
+                  fontWeight: 600,
+                }}
+              >
+                Serving professional businesses across India
+              </p>
             </motion.div>
           </div>
+
+          {/* Scroll indicator */}
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            style={{
+              position: "absolute",
+              bottom: "24px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 2,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "9px",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 700,
+                letterSpacing: "0.2em",
+                color: "rgba(248,250,252,0.35)",
+                textTransform: "uppercase",
+              }}
+            >
+              Scroll
+            </span>
+            <motion.div
+              animate={{ y: [0, 5, 0] }}
+              transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                width: "20px",
+                height: "30px",
+                borderRadius: "10px",
+                border: "1.5px solid rgba(255,255,255,0.2)",
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "center",
+                paddingTop: "5px",
+              }}
+            >
+              <div
+                style={{
+                  width: "3px",
+                  height: "6px",
+                  borderRadius: "2px",
+                  background: "rgba(255,255,255,0.4)",
+                }}
+              />
+            </motion.div>
+          </motion.div>
         </section>
 
         {/* ── 2. FEATURED PROJECTS (CREDIBILITY UPFRONT) ── */}
@@ -472,7 +691,9 @@ export default function Home() {
                      Synced Database
                    </span>
                  </div>
-                 <LazyVideo src="/videos/why-tinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner mb-4" />
+                 <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-slate-150 shadow-inner overflow-hidden mb-4">
+                   <LazyVideo src="/videos/why-tinetra.mp4" className="absolute inset-0 w-full h-full" />
+                 </div>
                  <p className="text-[9.5px] text-slate-400 font-mono text-center leading-relaxed font-semibold">
                    Continuous data replication checks active.
                  </p>

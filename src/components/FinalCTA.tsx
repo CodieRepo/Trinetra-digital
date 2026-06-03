@@ -102,8 +102,8 @@ export function FinalCTAFooter() {
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-200" />
               </div>
             </div>
-            <div className="relative rounded-lg overflow-hidden border border-slate-150 aspect-video shadow-inner">
-              <LazyVideo src="/videos/build-growth-automate.mp4" className="w-full h-full" />
+            <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg overflow-hidden border border-slate-150 shadow-inner">
+              <LazyVideo src="/videos/build-growth-automate.mp4" className="absolute inset-0 w-full h-full" />
             </div>
           </div>
         </div>
