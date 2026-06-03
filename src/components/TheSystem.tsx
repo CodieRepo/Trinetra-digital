@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Globe, Layout, Layers, Database, ArrowUpRight, ShieldCheck } from "lucide-react";
 import LazyVideo from "./LazyVideo";
@@ -13,7 +13,7 @@ export default function TheSystem() {
   const [activeTab, setActiveTab] = useState("digital");
 
   return (
-    <section id="system" aria-label="Trinetra AI Automation System — WhatsApp Automation, AI CRM, Smart Follow-Up" className="relative overflow-hidden bg-white py-24 md:py-32 border-b border-border/80">
+    <section id="system" aria-label="Trinetra AI Automation System â€” WhatsApp Automation, AI CRM, Smart Follow-Up" className="relative overflow-hidden bg-white py-24 md:py-32 border-b border-border/80">
       <div className="absolute inset-0 grid-pattern opacity-[0.01] pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto px-4 md:px-10 relative z-10">
@@ -27,11 +27,11 @@ export default function TheSystem() {
             One partner. Every capability. <br />Zero corners cut.
           </h2>
           <p className="body-lg text-ink-2 max-w-[540px] mx-auto font-medium">
-            From building your online presence to automating operations and driving growth — we handle every layer of your digital business.
+            From building your online presence to automating operations and driving growth â€” we handle every layer of your digital business.
           </p>
         </div>
 
-        {/* ── MOBILE / TABLET VIEW (Clickable Tabs) ── */}
+        {/* â”€â”€ MOBILE / TABLET VIEW (Clickable Tabs) â”€â”€ */}
         <div className="block lg:hidden">
           {/* Tab Switcher Wrapper (Toolbar style with horizontal scroll mask) */}
           <div className="relative mb-12 w-full max-w-lg mx-auto">
@@ -163,7 +163,7 @@ export default function TheSystem() {
                         <span className="text-slate-400 font-mono text-[9px]">yourwebsite.com</span>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/build-growth-automate.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <LazyVideo src="/videos/build-growth-automate.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
                     </div>
                   )}
 
@@ -173,7 +173,7 @@ export default function TheSystem() {
                         <span className="text-slate-400 font-mono text-[9px]">crm.yourwebsite.com</span>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/why-tinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <LazyVideo src="/videos/why-tinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
                     </div>
                   )}
 
@@ -183,7 +183,7 @@ export default function TheSystem() {
                         <span className="text-slate-400 font-mono text-[9px]">analytics.yourwebsite.com</span>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/pricing.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <LazyVideo src="/videos/pricing.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
                     </div>
                   )}
                 </div>
@@ -192,7 +192,7 @@ export default function TheSystem() {
           </AnimatePresence>
         </div>
 
-        {/* ── DESKTOP VIEW (Sticky Scroll corridor) ── */}
+        {/* â”€â”€ DESKTOP VIEW (Sticky Scroll corridor) â”€â”€ */}
         <div className="hidden lg:grid grid-cols-[1.1fr_0.9fr] gap-16 items-start relative max-w-6xl mx-auto">
           {/* Left Column: Spaced narrative items triggering tab updates on scroll */}
           <div className="space-y-8 pb-[15vh] w-full">
@@ -315,10 +315,10 @@ export default function TheSystem() {
                         </div>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/build-growth-automate.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <LazyVideo src="/videos/build-growth-automate.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
                       <div className="flex justify-center mt-1">
                         <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
-                          Mobile Responsive ✓ SEO Ready ✓
+                          Mobile Responsive âœ“ SEO Ready âœ“
                         </span>
                       </div>
                     </div>
@@ -343,10 +343,10 @@ export default function TheSystem() {
                         </div>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/why-tinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <LazyVideo src="/videos/why-tinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
                       <div className="flex justify-center mt-1">
                         <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
-                          WhatsApp Auto-Alerts Active ✓
+                          WhatsApp Auto-Alerts Active âœ“
                         </span>
                       </div>
                     </div>
@@ -371,10 +371,10 @@ export default function TheSystem() {
                         </div>
                         <ArrowUpRight size={10} className="text-slate-500" />
                       </div>
-                      <LazyVideo src="/pricing.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
+                      <LazyVideo src="/videos/pricing.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner" />
                       <div className="flex justify-center mt-1">
                         <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
-                          SEO Crawler Tracked ✓
+                          SEO Crawler Tracked âœ“
                         </span>
                       </div>
                     </div>
@@ -389,3 +389,4 @@ export default function TheSystem() {
     </section>
   );
 }
+

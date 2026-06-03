@@ -103,7 +103,7 @@ export function FinalCTAFooter() {
               </div>
             </div>
             <div className="relative rounded-lg overflow-hidden border border-slate-150 aspect-video shadow-inner">
-              <LazyVideo src="/build-growth-automate.mp4" className="w-full h-full" />
+              <LazyVideo src="/videos/build-growth-automate.mp4" className="w-full h-full" />
             </div>
           </div>
         </div>

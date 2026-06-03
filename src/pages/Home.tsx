@@ -239,7 +239,7 @@ export default function Home() {
                 <ArrowRight size={10} className="text-slate-400" />
               </div>
               <ScrollVideo
-                src="/trinetra-hero-video.mp4"
+                src="/videos/trinetra-hero-video.mp4"
                 containerRef={heroRef}
                 startOffset="start start"
                 endOffset="end start"
@@ -471,7 +471,7 @@ export default function Home() {
                      Synced Database
                    </span>
                  </div>
-                 <LazyVideo src="/why-tinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner mb-4" />
+                 <LazyVideo src="/videos/why-tinetra.mp4" className="rounded-lg aspect-video border border-slate-150 shadow-inner mb-4" />
                  <p className="text-[9.5px] text-slate-400 font-mono text-center leading-relaxed font-semibold">
                    Continuous data replication checks active.
                  </p>

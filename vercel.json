@@ -72,6 +72,23 @@
           "value": "public, max-age=2592000, s-maxage=2592000"
         }
       ]
+    },
+    {
+      "source": "/videos/(.*\\.mp4|.*\\.webm|.*\\.mov|.*\\.avi)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "video/mp4"
+        },
+        {
+          "key": "Accept-Ranges",
+          "value": "bytes"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000"
+        }
+      ]
     }
   ],
   "rewrites": [
@@ -80,7 +97,7 @@
       "destination": "https://api.trinetradigitalsolution.com/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!videos/).*)",
       "destination": "/index.html"
     }
   ]
