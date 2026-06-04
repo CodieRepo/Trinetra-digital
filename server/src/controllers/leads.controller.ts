@@ -136,6 +136,17 @@ export const LeadsController = {
       // Audit Logging
       await logAuditAction('LEAD_CREATION', `Captured lead "${name}" (${formattedPhone}) from ${source || 'website'}`);
 
+      // Notify admin team about new lead
+      import('../services/notification.service').then(({ notifyNewLead }) => {
+        notifyNewLead({
+          name: name.trim(),
+          phone: formattedPhone,
+          source: source || 'website',
+          service: service ? service.trim() : 'AI Automation Solutions',
+          company: company ? company.trim() : undefined,
+        }).catch(err => console.warn('⚠️ [NOTIFY] New lead notification failed:', err));
+      }).catch(err => console.warn('⚠️ [NOTIFY] Failed to import notification service:', err));
+
       // Trigger asynchronous AI processing
       setImmediate(async () => {
         try {

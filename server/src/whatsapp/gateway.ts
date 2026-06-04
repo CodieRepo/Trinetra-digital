@@ -436,6 +436,16 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
     lead = await LeadModel.findById(leadId);
     isNewLead = true;
     await logAuditAction('LEAD_CREATION', `New lead "${senderName}" (${cleanPhone}) created via WhatsApp.`);
+    
+    // Notify admin team about new lead
+    import('../services/notification.service').then(({ notifyNewLead }) => {
+      notifyNewLead({
+        name: senderName,
+        phone: cleanPhone,
+        source: 'whatsapp',
+        service: 'WhatsApp Automation Intake',
+      }).catch(err => console.warn('⚠️ [NOTIFY] New lead notification failed:', err));
+    }).catch(err => console.warn('⚠️ [NOTIFY] Failed to import notification service:', err));
   }
 
   if (!lead) {

@@ -1,17 +1,29 @@
 /**
  * notification.service.ts
- * Admin WhatsApp notification system for Trinetra CRM
+ * Admin notification system (WhatsApp + Email) for Trinetra CRM
  *
- * Sends WhatsApp alerts to admin team when:
+ * Sends alerts to admin team when:
+ * - New lead is registered
  * - Human handoff is triggered
  * - FIRE lead detected (score >= 85)
  * - Appointment is requested
  * - High-budget lead identified
  *
- * Admin number configured via ADMIN_NOTIFY_PHONE env variable.
+ * Configured via env variables:
+ * - WhatsApp: ADMIN_NOTIFY_PHONE
+ * - Email (SMTP): SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, SMTP_TO
  */
 
+import nodemailer from 'nodemailer';
 import { logAuditAction } from '../database/connection';
+
+// ─── SMTP Configurations ─────────────────────────────────────────────────────
+const SMTP_HOST = process.env.SMTP_HOST || '';
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
+const SMTP_USER = process.env.SMTP_USER || '';
+const SMTP_PASS = process.env.SMTP_PASS || '';
+const SMTP_FROM = process.env.SMTP_FROM || '';
+const SMTP_TO = process.env.SMTP_TO || '';
 
 // ─── Notification deduplication cache ────────────────────────────────────────
 // Prevents spamming admin with repeated alerts for the same event within 15 minutes
@@ -40,12 +52,40 @@ setInterval(() => {
 const ADMIN_PHONE = process.env.ADMIN_NOTIFY_PHONE || '+919334757759';
 const CALENDLY_URL = process.env.CALENDLY_URL || 'https://calendly.com/trinetra-demo';
 
-// ─── Lazy import to avoid circular dependency ─────────────────────────────────
-// gateway.ts imports from cron.service, so we lazy-load sendWhatsAppMessage
+// ─── Admin Email Alert ───────────────────────────────────────────────────────
+async function sendEmailAlert(subject: string, text: string, html?: string): Promise<void> {
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS || !SMTP_TO) {
+    console.log('[NOTIFY] SMTP settings not fully configured in environment. Skipping email alert.');
+    return;
+  }
+  try {
+    const transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_PORT === 465,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
+    });
 
+    await transporter.sendMail({
+      from: SMTP_FROM || SMTP_USER,
+      to: SMTP_TO,
+      subject,
+      text,
+      html: html || text.replace(/\n/g, '<br>'),
+    });
+    console.log(`📧 [NOTIFY] Email alert sent to ${SMTP_TO}`);
+  } catch (err) {
+    console.error('❌ [NOTIFY] Error sending email alert:', err);
+  }
+}
+
+// ─── Admin WhatsApp Alert ────────────────────────────────────────────────────
 async function sendAdminAlert(message: string): Promise<void> {
   if (!ADMIN_PHONE) {
-    console.warn('⚠️ [NOTIFY] ADMIN_NOTIFY_PHONE not configured. Skipping notification.');
+    console.warn('⚠️ [NOTIFY] ADMIN_NOTIFY_PHONE not configured. Skipping WhatsApp notification.');
     return;
   }
   try {
@@ -53,17 +93,61 @@ async function sendAdminAlert(message: string): Promise<void> {
     const { sendWhatsAppMessage } = await import('../whatsapp/gateway');
     const sent = await sendWhatsAppMessage(ADMIN_PHONE, message);
     if (sent) {
-      console.log(`📲 [NOTIFY] Admin alert sent to ${ADMIN_PHONE}`);
+      console.log(`📲 [NOTIFY] Admin WhatsApp alert sent to ${ADMIN_PHONE}`);
     } else {
-      console.warn(`⚠️ [NOTIFY] Failed to send admin alert (WhatsApp not connected?)`);
+      console.warn(`⚠️ [NOTIFY] Failed to send admin WhatsApp alert (WhatsApp not connected?)`);
     }
   } catch (err) {
-    console.error('❌ [NOTIFY] Error sending admin alert:', err);
+    console.error('❌ [NOTIFY] Error sending admin WhatsApp alert:', err);
   }
 }
 
-// ─── Human Handoff Alert ──────────────────────────────────────────────────────
+// ─── New Lead Alert ──────────────────────────────────────────────────────────
+export async function notifyNewLead(lead: {
+  name: string;
+  phone: string;
+  source: string;
+  service?: string;
+  company?: string;
+  city?: string;
+}): Promise<void> {
+  const message =
+    `👤 *NEW LEAD REGISTERED*\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `👤 *Name:* ${lead.name}\n` +
+    `📞 *Phone:* ${lead.phone}\n` +
+    `🏢 *Business:* ${lead.company || 'Not specified'}\n` +
+    `🎯 *Interest:* ${lead.service || 'Not specified'}\n` +
+    `🌍 *Source:* ${lead.source}\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `AI has initiated the conversation. Track their activity on your dashboard!\n\n` +
+    `Reply to lead: wa.me/${lead.phone.replace(/[^0-9]/g, '')}\n` +
+    `📋 Dashboard: https://trinetradigitalsolution.com/admin`;
 
+  const dedupKey = `new_lead:${lead.phone}`;
+  if (!shouldNotify(dedupKey)) return;
+
+  await sendAdminAlert(message);
+
+  const emailSubject = `🆕 New Lead Registered: ${lead.name}`;
+  const emailBody = 
+    `A new lead has been registered in the CRM via WhatsApp:\n\n` +
+    `- Name: ${lead.name}\n` +
+    `- Phone: ${lead.phone}\n` +
+    `- Business: ${lead.company || 'Not specified'}\n` +
+    `- Interest: ${lead.service || 'Not specified'}\n` +
+    `- Source: ${lead.source}\n\n` +
+    `Click below to view the lead details and chat history on the dashboard:\n` +
+    `Dashboard Link: https://trinetradigitalsolution.com/admin`;
+  
+  await sendEmailAlert(emailSubject, emailBody);
+
+  await logAuditAction('ADMIN_NOTIFIED_NEW_LEAD',
+    `Admin notified about new lead: ${lead.name} (${lead.phone})`
+  );
+}
+
+// ─── Human Handoff Alert ──────────────────────────────────────────────────────
 export async function notifyHandoff(lead: {
   name: string;
   phone: string;
@@ -92,13 +176,27 @@ export async function notifyHandoff(lead: {
   if (!shouldNotify(dedupKey)) return;
 
   await sendAdminAlert(message);
+
+  const emailSubject = `🚨 Human Handoff Alert: ${lead.name}`;
+  const emailBody = 
+    `Human Handoff Alert details:\n\n` +
+    `- Lead Name: ${lead.name}\n` +
+    `- Phone: ${lead.phone}\n` +
+    `- Business: ${lead.company || 'Not specified'}\n` +
+    `- Interest: ${lead.service || 'Not specified'}\n` +
+    `- City: ${lead.city || 'Not specified'}\n` +
+    `- Budget: ${lead.budget_range || 'Not discussed'}\n` +
+    `- Lead Score: ${lead.ai_score}/100\n` +
+    `- Handoff Reason: ${reason}\n\n` +
+    `Dashboard Link: https://trinetradigitalsolution.com/admin`;
+  await sendEmailAlert(emailSubject, emailBody);
+
   await logAuditAction('ADMIN_NOTIFIED_HANDOFF',
     `Admin notified about handoff for ${lead.name} (${lead.phone}). Reason: ${reason}`
   );
 }
 
 // ─── FIRE Lead Alert (score >= 85) ───────────────────────────────────────────
-
 export async function notifyFireLead(lead: {
   name: string;
   phone: string;
@@ -125,13 +223,26 @@ export async function notifyFireLead(lead: {
   if (!shouldNotify(dedupKey)) return;
 
   await sendAdminAlert(message);
+
+  const emailSubject = `🔥 FIRE LEAD DETECTED: ${lead.name}`;
+  const emailBody = 
+    `FIRE Lead details:\n\n` +
+    `- Lead Name: ${lead.name}\n` +
+    `- Phone: ${lead.phone}\n` +
+    `- Business: ${lead.company || 'Not specified'}\n` +
+    `- Interest: ${lead.service || 'Not specified'}\n` +
+    `- City: ${lead.city || 'Not specified'}\n` +
+    `- Lead Score: ${lead.ai_score}/100\n\n` +
+    `This lead is highly qualified. Contact them immediately!\n` +
+    `Dashboard Link: https://trinetradigitalsolution.com/admin`;
+  await sendEmailAlert(emailSubject, emailBody);
+
   await logAuditAction('ADMIN_NOTIFIED_FIRE_LEAD',
     `Admin notified about FIRE lead: ${lead.name} (${lead.phone}) — Score: ${lead.ai_score}/100`
   );
 }
 
 // ─── Appointment Request Alert ────────────────────────────────────────────────
-
 export async function notifyAppointmentRequest(lead: {
   name: string;
   phone: string;
@@ -157,13 +268,25 @@ export async function notifyAppointmentRequest(lead: {
   if (!shouldNotify(dedupKey)) return;
 
   await sendAdminAlert(message);
+
+  const emailSubject = `📅 Appointment Requested: ${lead.name}`;
+  const emailBody = 
+    `Appointment requested details:\n\n` +
+    `- Lead Name: ${lead.name}\n` +
+    `- Phone: ${lead.phone}\n` +
+    `- Business: ${lead.company || 'Not specified'}\n` +
+    `- Interest: ${lead.service || 'Not specified'}\n` +
+    `- City: ${lead.city || 'Not specified'}\n\n` +
+    `Calendly URL: ${CALENDLY_URL}\n` +
+    `Dashboard Link: https://trinetradigitalsolution.com/admin`;
+  await sendEmailAlert(emailSubject, emailBody);
+
   await logAuditAction('ADMIN_NOTIFIED_APPOINTMENT',
     `Admin notified about appointment request from ${lead.name} (${lead.phone})`
   );
 }
 
 // ─── High Budget Alert ────────────────────────────────────────────────────────
-
 export async function notifyHighBudgetLead(lead: {
   name: string;
   phone: string;
@@ -184,7 +307,22 @@ export async function notifyHighBudgetLead(lead: {
     `Reply to lead: wa.me/${lead.phone.replace(/[^0-9]/g, '')}\n` +
     `📋 Dashboard: https://trinetradigitalsolution.com/admin`;
 
+  const dedupKey = `budget:${lead.phone}`;
+  if (!shouldNotify(dedupKey)) return;
+
   await sendAdminAlert(message);
+
+  const emailSubject = `💰 High Budget Lead: ${lead.name}`;
+  const emailBody = 
+    `High Budget Lead details:\n\n` +
+    `- Lead Name: ${lead.name}\n` +
+    `- Phone: ${lead.phone}\n` +
+    `- Business: ${lead.company || 'Not specified'}\n` +
+    `- Budget: ${lead.budget_range}\n` +
+    `- Interest: ${lead.service || 'Not specified'}\n\n` +
+    `Dashboard Link: https://trinetradigitalsolution.com/admin`;
+  await sendEmailAlert(emailSubject, emailBody);
+
   await logAuditAction('ADMIN_NOTIFIED_HIGH_BUDGET',
     `Admin notified about high-budget lead: ${lead.name} (${lead.phone}) — Budget: ${lead.budget_range}`
   );

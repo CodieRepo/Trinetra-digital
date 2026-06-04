@@ -6,7 +6,7 @@ const { initDb, getDb } = require('./dist/database/connection');
 const { handleInboundMessage } = require('./dist/whatsapp/gateway');
 
 async function testSequence() {
-  console.log('🏁 STARTING PHASE 4 SIMULATED INBOUND MESSAGE TESTING...');
+  console.log('🏁 STARTING REFINED SIMULATED INBOUND MESSAGE TESTING...');
   await initDb();
   const db = getDb();
 
@@ -29,10 +29,10 @@ async function testSequence() {
     { text: 'Website Development', label: '3. Website Development Service Request' },
     { text: 'AI Chatbot', label: '4. AI Chatbot Service Request' },
     { text: 'WhatsApp Automation', label: '5. WhatsApp Automation Service Request' },
-    { text: 'I run a salon', label: '6. Business Category: Salon (Launch Package recommendation)' },
-    { text: 'I run a wholesale business', label: '7. Business Category: Wholesale (Growth/AI Sales recommendation)' },
-    { text: 'I want a proposal', label: '8. Handoff: Proposal Request (Instant Trigger)' },
-    { text: 'My budget is ₹20,000', label: '9. Handoff: Budget Mention (Instant Trigger)' },
+    { text: 'I run a salon and need appointment scheduling for 5 staff members', label: '6. Salon recommendation (should match Growth package dynamically)' },
+    { text: 'I run a high volume wholesale business with 100+ daily orders', label: '7. Wholesale recommendation (should match Growth/AI Sales dynamically)' },
+    { text: 'My budget is ₹20,000. What fits?', label: '8. Budget Mention (Should NOT trigger handoff, should recommend matching Growth/Launch options)' },
+    { text: 'I want a proposal', label: '9. Handoff: Proposal Request (Instant Trigger)' },
     { text: 'Connect me to a consultant', label: '10. Handoff: Human Request (Instant Trigger)' }
   ];
 
@@ -71,7 +71,7 @@ async function testSequence() {
     try {
       await handleInboundMessage(mockMsg);
       
-      // Wait for async operations to complete
+      // Wait for async operations to complete (6 seconds to bypass 5s anti-spam)
       await new Promise(resolve => setTimeout(resolve, 6000));
       
       if (capturedResponse) {
@@ -96,9 +96,9 @@ async function testSequence() {
     }
   }
 
-  // 11. Test Case 11: Conversation Thread > 15 messages triggers handoff on engaged message
+  // 11. Test Case 11: Conversation Thread > 15 messages, NO buying/action intent
   console.log(`\n==================================================`);
-  console.log(`📡 [TEST] 11. Thread Length escalation (> 15 messages)`);
+  console.log(`📡 [TEST] 11. Thread Length escalation (> 15 messages) WITHOUT buying intent`);
   console.log(`Resetting and pre-populating database with 16 messages...`);
 
   await db.run("DELETE FROM whatsapp_chats WHERE lead_id = ?", [leadId]);
@@ -115,39 +115,39 @@ async function testSequence() {
     );
   }
 
-  // Send an engaged service question (normally safe, but should trigger handoff due to thread count > 15)
-  const engMsgText = 'I want to build a business website';
-  console.log(`Simulating engaged message: "${engMsgText}"`);
+  // Send an engaged service question without buying/action intent (should NOT trigger handoff)
+  const engMsgTextNoIntent = 'I want to build a business website';
+  console.log(`Simulating message with NO intent: "${engMsgTextNoIntent}"`);
 
-  const mockMsgLong = {
+  const mockMsgLongNoIntent = {
     key: {
       remoteJid: jid,
       fromMe: false,
-      id: `mock-msg-long-${Date.now()}`
+      id: `mock-msg-long-nointent-${Date.now()}`
     },
     pushName: pushName,
     message: {
-      conversation: engMsgText
+      conversation: engMsgTextNoIntent
     }
   };
 
-  let capturedResponseLong = null;
-  const originalWarnLong = console.warn;
+  let capturedResponseNoIntent = null;
+  const originalWarnNoIntent = console.warn;
   console.warn = (...args) => {
     const msgStr = args.join(' ');
     if (msgStr.includes('Cannot send WhatsApp')) {
-      capturedResponseLong = msgStr.match(/Text: "(.*)"/)?.[1] || msgStr;
+      capturedResponseNoIntent = msgStr.match(/Text: "(.*)"/)?.[1] || msgStr;
     }
-    originalWarnLong(...args);
+    originalWarnNoIntent(...args);
   };
 
   try {
-    await handleInboundMessage(mockMsgLong);
+    await handleInboundMessage(mockMsgLongNoIntent);
     await new Promise(resolve => setTimeout(resolve, 6000));
 
-    if (capturedResponseLong) {
+    if (capturedResponseNoIntent) {
       console.log(`\n💬 AI RESPONSE:`);
-      console.log(capturedResponseLong.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\r/g, '\r'));
+      console.log(capturedResponseNoIntent.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\r/g, '\r'));
     }
 
     const alert = await db.get("SELECT reason FROM handoff_alerts WHERE lead_id = ? AND status = 'pending'", [leadId]);
@@ -157,12 +157,78 @@ async function testSequence() {
       console.log(`✅ Status: AI Conversation continues (No handoff triggered).`);
     }
   } catch (err) {
-    console.error(`❌ Error during thread length escalation case:`, err);
+    console.error(`❌ Error during thread length case without intent:`, err);
   } finally {
-    console.warn = originalWarnLong;
+    console.warn = originalWarnNoIntent;
   }
 
-  console.log('\n🏁 PHASE 4 SIMULATED INBOUND MESSAGE TESTING COMPLETED!');
+  // 12. Test Case 12: Conversation Thread > 15 messages, WITH buying/action intent
+  console.log(`\n==================================================`);
+  console.log(`📡 [TEST] 12. Thread Length escalation (> 15 messages) WITH buying intent`);
+  console.log(`Resetting and pre-populating database with 16 messages...`);
+
+  await db.run("DELETE FROM whatsapp_chats WHERE lead_id = ?", [leadId]);
+  await db.run("DELETE FROM handoff_alerts WHERE lead_id = ?", [leadId]);
+  await db.run("UPDATE leads SET ai_enabled = 1 WHERE id = ?", [leadId]);
+
+  // Insert 16 dummy messages
+  for (let i = 1; i <= 16; i++) {
+    const direction = i % 2 === 0 ? 'outbound' : 'inbound';
+    const body = direction === 'inbound' ? `Mock user question ${i}` : `Mock assistant answer ${i}`;
+    await db.run(
+      "INSERT INTO whatsapp_chats (id, lead_id, direction, body, status) VALUES (?, ?, ?, ?, 'sent')",
+      [`mock-history-${i}`, leadId, direction, body]
+    );
+  }
+
+  // Send a message with buying intent (should trigger handoff)
+  const engMsgTextWithIntent = "Let's start the project now";
+  console.log(`Simulating message WITH intent: "${engMsgTextWithIntent}"`);
+
+  const mockMsgLongWithIntent = {
+    key: {
+      remoteJid: jid,
+      fromMe: false,
+      id: `mock-msg-long-withintent-${Date.now()}`
+    },
+    pushName: pushName,
+    message: {
+      conversation: engMsgTextWithIntent
+    }
+  };
+
+  let capturedResponseWithIntent = null;
+  const originalWarnWithIntent = console.warn;
+  console.warn = (...args) => {
+    const msgStr = args.join(' ');
+    if (msgStr.includes('Cannot send WhatsApp')) {
+      capturedResponseWithIntent = msgStr.match(/Text: "(.*)"/)?.[1] || msgStr;
+    }
+    originalWarnWithIntent(...args);
+  };
+
+  try {
+    await handleInboundMessage(mockMsgLongWithIntent);
+    await new Promise(resolve => setTimeout(resolve, 6000));
+
+    if (capturedResponseWithIntent) {
+      console.log(`\n💬 AI RESPONSE:`);
+      console.log(capturedResponseWithIntent.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\r/g, '\r'));
+    }
+
+    const alert = await db.get("SELECT reason FROM handoff_alerts WHERE lead_id = ? AND status = 'pending'", [leadId]);
+    if (alert) {
+      console.log(`🚨 ALERT: Human Handoff was TRIGGERED! Reason: "${alert.reason}"`);
+    } else {
+      console.log(`✅ Status: AI Conversation continues (No handoff triggered).`);
+    }
+  } catch (err) {
+    console.error(`❌ Error during thread length case with intent:`, err);
+  } finally {
+    console.warn = originalWarnWithIntent;
+  }
+
+  console.log('\n🏁 PHASE 4 REFINED SIMULATED INBOUND MESSAGE TESTING COMPLETED!');
   process.exit(0);
 }
 
