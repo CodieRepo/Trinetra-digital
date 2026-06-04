@@ -28,6 +28,7 @@ export interface ConversationContext {
   currentScore: number;
   conversationSummary: string;
   recentMessages: Array<{ role: 'user' | 'assistant'; content: string }>;
+  totalMessagesCount?: number;
 }
 
 // ─── Get or create memory record ──────────────────────────────────────────────
@@ -177,6 +178,7 @@ export async function buildContext(leadId: string): Promise<ConversationContext 
       currentScore: lead.ai_score || 0,
       conversationSummary: summary,
       recentMessages,
+      totalMessagesCount: totalCount,
     };
 
     // ── Diagnostic log: verify what context the AI actually receives
