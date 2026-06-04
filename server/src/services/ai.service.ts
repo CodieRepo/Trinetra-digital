@@ -33,7 +33,7 @@ export async function qualifyLead(
 ): Promise<AIQualificationResult> {
 
   // ── 1. Validate API key ───────────────────────────────────────────────────
-  if (!GEMINI_API_KEY || GEMINI_API_KEY.startsWith('AQ.') || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
     console.warn('⚠️ [AI SERVICE] Gemini API key is missing or malformed. Activating emergency response template.');
     await logAuditAction('AI_EMERGENCY', 'Gemini API key not configured. Using emergency response template.');
     return emergencyResponse();
@@ -87,7 +87,7 @@ CRITICAL: Return ONLY a valid JSON object (no markdown, no backticks, no extra t
   try {
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         responseMimeType: 'application/json',
         temperature: 0.7,
@@ -126,7 +126,7 @@ CRITICAL: Return ONLY a valid JSON object (no markdown, no backticks, no extra t
 
     await logAuditAction(
       'AI_SUCCESS',
-      `AI reply generated using gemini-1.5-flash in ${responseTime}ms. Intent Score: ${parsed.ai_score}.`
+      `AI reply generated using gemini-2.5-flash in ${responseTime}ms. Intent Score: ${parsed.ai_score}.`
     );
 
     console.log(`✅ [AI SERVICE] Gemini qualification successful in ${responseTime}ms. Score: ${parsed.ai_score}`);
