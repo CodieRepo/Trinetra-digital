@@ -368,7 +368,7 @@ function cleanJidToPhone(jid: string): string {
   return `+${number}`; // Normalize to international prefix
 }
 
-async function handleInboundMessage(msg: proto.IWebMessageInfo) {
+export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
   const jid = msg.key.remoteJid;
   if (!jid) return;
 
