@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate, useLocation, Link as RouterLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -90,9 +91,31 @@ export default function AdminCrm() {
     rollbackBackup
   } = useDashboard();
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // Navigation and Layout Controls
-  const [activeView, setActiveView] = useState<ViewSection>('overview');
+  const getInitialView = (): ViewSection => {
+    const path = window.location.pathname;
+    if (path.startsWith('/admin/leads')) return 'leads';
+    if (path.startsWith('/admin/conversions')) return 'conversions';
+    return 'overview';
+  };
+
+  const [activeView, setActiveView] = useState<ViewSection>(getInitialView);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Sync activeView when URL pathname changes (e.g. back/forward navigation)
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/admin') {
+      setActiveView('overview');
+    } else if (path.startsWith('/admin/leads')) {
+      setActiveView('leads');
+    } else if (path.startsWith('/admin/conversions')) {
+      setActiveView('conversions');
+    }
+  }, [location.pathname]);
   const [workspace, setWorkspace] = useState("Trinetra Digital Primary");
   const [activityTab, setActivityTab] = useState<'chats' | 'audit'>('chats');
 
@@ -566,7 +589,11 @@ export default function AdminCrm() {
   // Perform localized auth submit
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(username, password);
+    const success = await login(username, password);
+    if (success) {
+      const fromPath = (location.state as any)?.from?.pathname || '/admin';
+      navigate(fromPath, { replace: true });
+    }
   };
 
   if (!token) {
@@ -739,7 +766,15 @@ export default function AdminCrm() {
           ].map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveView(item.id as ViewSection)}
+              onClick={() => {
+                const view = item.id as ViewSection;
+                setActiveView(view);
+                if (view === 'overview') {
+                  navigate('/admin');
+                } else if (view === 'leads' || view === 'conversions') {
+                  navigate(`/admin/${view}`);
+                }
+              }}
               className={`flex w-full items-center justify-between h-10 px-3.5 rounded-xl text-xs font-semibold tracking-wide transition-all relative ${
                 activeView === item.id 
                   ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-[0_4px_12px_-2px_rgba(16,185,129,0.2)]'
@@ -761,14 +796,14 @@ export default function AdminCrm() {
           ))}
 
           {/* ── Pipeline Board (external route) ── */}
-          <a
-            href="/admin/pipeline"
+          <RouterLink
+            to="/admin/pipeline"
             className="flex w-full items-center gap-2.5 h-10 px-3.5 rounded-xl text-xs font-semibold tracking-wide transition-all text-slate-500 hover:bg-slate-100/50 hover:text-slate-800 no-underline"
           >
             <TrendingUp size={15} />
             Revenue Pipeline
             <span className="ml-auto h-4 min-w-4 flex items-center justify-center rounded-full text-[8px] font-bold px-1.5 bg-indigo-500 text-white">NEW</span>
-          </a>
+          </RouterLink>
         </nav>
 
         {/* Mini health stats card */}

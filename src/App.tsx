@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route, useLocation, Navigate, useNavigate } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import PageLayout from "@/layouts/PageLayout";
 
@@ -46,9 +46,30 @@ function PageSpinner() {
   );
 }
 
+// Protected Route Guard Component
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const token = localStorage.getItem("trinetra_jwt");
+  const location = useLocation();
+
+  if (!token) {
+    return <Navigate to="/admin" state={{ from: location }} replace />;
+  }
+  return <>{children}</>;
+}
+
 // AnimatePresence needs the key from useLocation
 function AnimatedRoutes() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Redirect globally on session expiration
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      navigate("/admin", { state: { from: location } });
+    };
+    window.addEventListener("auth-expired", handleAuthExpired);
+    return () => window.removeEventListener("auth-expired", handleAuthExpired);
+  }, [navigate, location]);
 
   // Scroll to top on every route change
   return (
@@ -69,8 +90,12 @@ function AnimatedRoutes() {
           <Route path="/disclaimer"               element={<DisclaimerPage />} />
           <Route path="/cookie-policy"            element={<CookiePolicy />} />
           <Route path="/data-usage-notice"        element={<DataUsageNotice />} />
+          
+          {/* Admin Routes with Auth Persistence */}
           <Route path="/admin"                    element={<AdminCrm />} />
-          <Route path="/admin/pipeline"            element={<AdminPipeline />} />
+          <Route path="/admin/pipeline"           element={<ProtectedRoute><AdminPipeline /></ProtectedRoute>} />
+          <Route path="/admin/conversions"        element={<ProtectedRoute><AdminCrm /></ProtectedRoute>} />
+          <Route path="/admin/leads"              element={<ProtectedRoute><AdminCrm /></ProtectedRoute>} />
 
           {/* Service Sub-pages */}
           <Route path="/services/whatsapp-automation" element={<FutureSolutions />} />
