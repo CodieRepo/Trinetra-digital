@@ -1,6 +1,12 @@
 const { Client } = require('ssh2');
 
-const conn = new Client();
+const sshConfig = {
+  host: '187.127.170.222',
+  port: 22,
+  username: 'root',
+  password: 'SatwikPal@123Shubham'
+};
+
 const commands = `
 cd /var/www/trinetra
 echo "Pulling latest changes..."
@@ -22,12 +28,15 @@ pm2 restart trinetra-crm-backend --update-env
 echo "Deployment complete."
 `;
 
-conn.on('ready', () => {
-  console.log('Client :: ready');
+function runCommands(conn) {
   conn.exec(commands, (err, stream) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Exec error:', err);
+      conn.end();
+      return;
+    }
     stream.on('close', (code, signal) => {
-      console.log('Stream :: close :: code: ' + code + ', signal: ' + signal);
+      console.log('\nStream :: close :: code: ' + code + ', signal: ' + signal);
       conn.end();
     }).on('data', (data) => {
       process.stdout.write(data);
@@ -35,9 +44,40 @@ conn.on('ready', () => {
       process.stderr.write(data);
     });
   });
-}).connect({
-  host: '187.127.170.222',
-  port: 22,
-  username: 'root',
-  password: 'SatwikPal@123Shubham'
-});
+}
+
+function connectWithRetry(config, maxRetries = 5, delayMs = 5000) {
+  let attempt = 0;
+
+  const tryConnect = () => {
+    attempt++;
+    console.log(`Connecting to SSH (Attempt ${attempt}/${maxRetries})...`);
+    const conn = new Client();
+
+    conn.on('ready', () => {
+      console.log('SSH Connection Successful!');
+      runCommands(conn);
+    });
+
+    conn.on('error', (err) => {
+      console.error(`SSH Connection Error (Attempt ${attempt}):`, err.message);
+      conn.end();
+      if (attempt < maxRetries) {
+        console.log(`Waiting ${delayMs}ms before retrying...`);
+        setTimeout(tryConnect, delayMs);
+      } else {
+        console.error('Max SSH connection retries reached. Deployment failed.');
+        process.exit(1);
+      }
+    });
+
+    conn.connect({
+      ...config,
+      readyTimeout: 60000
+    });
+  };
+
+  tryConnect();
+}
+
+connectWithRetry(sshConfig);
