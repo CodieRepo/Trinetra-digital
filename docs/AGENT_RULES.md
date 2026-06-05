@@ -6,7 +6,11 @@ This document provides strict instructions and rules of engagement for all futur
 
 ## 1. Core Operating Guidelines
 
-* **Read First:** Always read the documentation in `docs/` (specifically `PROJECT_MASTER_CONTEXT.md` and `BUSINESS_RULES.md`) before analyzing the codebase or making structural changes.
+* **Mandatory Bootstrap:** Work cannot begin until [SESSION_START.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/SESSION_START.md) has been read in its entirety.
+* **Documentation Authority:** Documentation is the single source of truth and overrides all assumptions, previous memory, or generic guidelines.
+* **Disagreement Resolution:** If documentation and code disagree, you must verify the actual implementation, update the documentation to align with reality, and record findings in [HANDOFF.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/HANDOFF.md). Do not guess.
+* **Context Limit Handling:** If the context window becomes limited, stop implementation immediately and update [HANDOFF.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/HANDOFF.md) with a complete continuation summary before stopping.
+* **Handoff Requirement:** No task is complete until [HANDOFF.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/HANDOFF.md) is updated with completed work, files modified, deployment status, and next recommended actions.
 * **No Speculative Assumptions:** Do not assume directories, network ports, or API architectures. Verify them directly using repository search or local inspection commands.
 * **Minimal Surgical Changes:** Prefer localized, highly targeted code edits. Avoid rewriting entire files or refactoring working subsystems unless explicitly requested.
 * **Keep Production Stable:** Trinetra CRM is a live, revenue-generating SaaS product. Ensure your modifications maintain 100% uptime and introduce no regressions.
