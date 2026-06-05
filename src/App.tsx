@@ -93,7 +93,7 @@ function AnimatedRoutes() {
           
           {/* Admin Routes with Auth Persistence */}
           <Route path="/admin"                    element={<AdminCrm />} />
-          <Route path="/admin/pipeline"           element={<ProtectedRoute><AdminPipeline /></ProtectedRoute>} />
+          <Route path="/admin/pipeline"           element={<ProtectedRoute><AdminCrm /></ProtectedRoute>} />
           <Route path="/admin/conversions"        element={<ProtectedRoute><AdminCrm /></ProtectedRoute>} />
           <Route path="/admin/leads"              element={<ProtectedRoute><AdminCrm /></ProtectedRoute>} />
 

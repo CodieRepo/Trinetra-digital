@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { apiService, PipelineLead, PipelineStageGroup, ForecastData, PipelineAuditEntry } from '../../services/api';
 import { getDisplayName } from '../../utils/contact';
 
@@ -43,7 +44,7 @@ function ProbabilityRing({ probability, size = 36 }: { probability: number; size
   const dash = (probability / 100) * circ;
   const color = probability >= 70 ? '#10b981' : probability >= 40 ? '#f59e0b' : '#6b7280';
   return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }} className="shrink-0">
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e5e7eb" strokeWidth={4} />
       <circle
         cx={size / 2} cy={size / 2} r={r} fill="none"
@@ -74,157 +75,147 @@ function LeadCard({
   const intentStyle = INTENT_COLORS[lead.intent_level || 'COLD'] || INTENT_COLORS.COLD;
 
   const borderColor =
-    lead.is_stuck_14d ? '#ef4444' :
-    lead.is_stuck_7d ? '#f59e0b' : '#e5e7eb';
+    lead.is_stuck_14d ? 'border-rose-500' :
+    lead.is_stuck_7d ? 'border-amber-500' : 'border-slate-200/80';
 
-  const cardStyle: React.CSSProperties = {
-    background: '#fff',
-    borderRadius: 10,
-    border: `1.5px solid ${borderColor}`,
-    padding: '12px 14px',
-    marginBottom: 10,
-    cursor: 'grab',
-    opacity: dragging ? 0.5 : 1,
-    boxShadow: dragging
-      ? '0 8px 24px rgba(0,0,0,0.15)'
-      : lead.is_stuck_14d
-        ? '0 0 0 2px rgba(239,68,68,0.25)'
-        : lead.is_stuck_7d
-          ? '0 0 0 2px rgba(245,158,11,0.25)'
-          : '0 1px 3px rgba(0,0,0,0.07)',
-    animation: lead.is_stuck_14d ? 'stuck-pulse 2s infinite' : 'none',
-    transition: 'box-shadow 0.2s, border-color 0.2s',
-    userSelect: 'none',
-  };
+  const pulseClass =
+    lead.is_stuck_14d ? 'shadow-[0_0_0_2px_rgba(239,68,68,0.2)] animate-[stuck-pulse_2s_infinite]' :
+    lead.is_stuck_7d ? 'shadow-[0_0_0_2px_rgba(245,158,11,0.2)]' : 'shadow-3xs';
+
+  const computedAnnual = (lead.deal_setup_value || 0) + (lead.deal_mrr || 0) * 12;
+  const computedExpected = (computedAnnual * (lead.deal_probability || 0)) / 100;
 
   return (
     <div
       draggable
-      onDragStart={e => { e.dataTransfer.setData('leadId', lead.id); e.dataTransfer.setData('leadName', getDisplayName(lead)); setDragging(true); }}
+      onDragStart={e => {
+        e.dataTransfer.setData('leadId', lead.id);
+        e.dataTransfer.setData('leadName', getDisplayName(lead));
+        setDragging(true);
+      }}
       onDragEnd={() => setDragging(false)}
-      style={cardStyle}
+      className={`bg-white border p-3 rounded-xl cursor-grab transition-all select-none space-y-2.5 ${borderColor} ${pulseClass} ${
+        dragging ? 'opacity-40' : 'opacity-100 hover:shadow-2xs'
+      }`}
     >
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a', marginBottom: 2 }}>{getDisplayName(lead)}</div>
-          {lead.company && <div style={{ fontSize: 11, color: '#64748b' }}>{lead.company}</div>}
+      <div className="flex items-start gap-2 justify-between">
+        <div className="min-w-0">
+          <p className="font-extrabold text-[12px] text-slate-800 truncate">{getDisplayName(lead)}</p>
+          {lead.company && <p className="text-[9px] text-slate-400 truncate mt-0.5">{lead.company}</p>}
         </div>
         <ProbabilityRing probability={lead.deal_probability} />
       </div>
 
       {/* Intent badge + days in stage */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', gap: 4,
-          background: intentStyle.bg, color: intentStyle.text,
-          borderRadius: 99, padding: '2px 8px', fontSize: 10, fontWeight: 700
-        }}>
-          <span style={{ width: 5, height: 5, borderRadius: '50%', background: intentStyle.dot, display: 'inline-block' }} />
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black"
+          style={{ backgroundColor: intentStyle.bg, color: intentStyle.text }}
+        >
+          <span className="w-1 h-1 rounded-full" style={{ backgroundColor: intentStyle.dot }} />
           {lead.intent_level || 'COLD'}
         </span>
-        <span style={{
-          fontSize: 10, color: lead.is_stuck_14d ? '#dc2626' : lead.is_stuck_7d ? '#d97706' : '#64748b',
-          fontWeight: lead.is_stuck_7d ? 700 : 400
-        }}>
+        <span className={`text-[9px] font-bold ${
+          lead.is_stuck_14d ? 'text-rose-600' : lead.is_stuck_7d ? 'text-amber-600' : 'text-slate-400'
+        }`}>
           {lead.is_stuck_14d ? '🚨' : lead.is_stuck_7d ? '⚠️' : '⏱'} {lead.days_in_stage}d in stage
         </span>
         {lead.is_no_reply_30d && (
-          <span style={{ fontSize: 10, color: '#7c3aed' }}>📵 {lead.days_since_reply}d silent</span>
+          <span className="text-[8px] text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded font-extrabold">📵 silent</span>
         )}
       </div>
 
       {/* Revenue block */}
-      <div style={{
-        background: '#f8fafc', borderRadius: 7, padding: '7px 10px', marginBottom: 8,
-        fontSize: 11, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4
-      }}>
+      <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 grid grid-cols-2 gap-1.5 text-[9px] font-sans">
         <div>
-          <div style={{ color: '#94a3b8', marginBottom: 1 }}>Setup</div>
-          <div style={{ fontWeight: 700, color: '#0f172a' }}>{formatINR(lead.deal_setup_value)}</div>
+          <span className="text-slate-400 block">Setup</span>
+          <span className="font-extrabold text-slate-700 mt-0.5 block">{formatINR(lead.deal_setup_value)}</span>
         </div>
         <div>
-          <div style={{ color: '#94a3b8', marginBottom: 1 }}>MRR</div>
-          <div style={{ fontWeight: 700, color: '#0f172a' }}>{formatINR(lead.deal_mrr)}</div>
+          <span className="text-slate-400 block">MRR</span>
+          <span className="font-extrabold text-slate-700 mt-0.5 block">{formatINR(lead.deal_mrr)}</span>
         </div>
-        <div>
-          <div style={{ color: '#94a3b8', marginBottom: 1 }}>Annual</div>
-          <div style={{ fontWeight: 700, color: '#6366f1' }}>{formatINR(lead.deal_annual_value)}</div>
+        <div className="border-t border-slate-200/50 pt-1">
+          <span className="text-slate-400 block">Annual</span>
+          <span className="font-extrabold text-indigo-600 mt-0.5 block">{formatINR(computedAnnual)}</span>
         </div>
-        <div>
-          <div style={{ color: '#94a3b8', marginBottom: 1 }}>Expected</div>
-          <div style={{ fontWeight: 700, color: '#10b981' }}>{formatINR(lead.expected_revenue)}</div>
+        <div className="border-t border-slate-200/50 pt-1">
+          <span className="text-slate-400 block">Expected</span>
+          <span className="font-extrabold text-emerald-600 mt-0.5 block">{formatINR(computedExpected)}</span>
         </div>
       </div>
 
       {/* Package + owner + last activity */}
-      <div style={{ fontSize: 10, color: '#64748b', marginBottom: 8 }}>
+      <div className="flex flex-wrap gap-1 items-center text-[8px] font-bold">
         {lead.recommended_package && (
-          <span style={{ background: '#ede9fe', color: '#7c3aed', borderRadius: 99, padding: '1px 7px', marginRight: 5 }}>
+          <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-1 rounded truncate max-w-[80px]">
             {lead.recommended_package}
           </span>
         )}
         {lead.assigned_owner && (
-          <span style={{ background: '#e0f2fe', color: '#0369a1', borderRadius: 99, padding: '1px 7px', marginRight: 5 }}>
+          <span className="bg-sky-50 border border-sky-100 text-sky-700 px-1 rounded truncate max-w-[80px]">
             👤 {lead.assigned_owner}
           </span>
         )}
-        <span>🕐 {relativeTime(lead.updated_at)}</span>
+        <span className="text-slate-400 font-medium ml-auto">🕐 {relativeTime(lead.updated_at)}</span>
       </div>
 
       {/* Action buttons */}
-      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-        <button onClick={() => onMoveStage(lead)} style={btnStyle('#6366f1', '#fff')}>⬆ Move</button>
-        <button onClick={() => onSetProbability(lead)} style={btnStyle('#f59e0b', '#fff')}>% Prob</button>
-        <button onClick={() => onSetDealValues(lead)} style={btnStyle('#10b981', '#fff')}>₹ Deal</button>
-        <button onClick={() => onViewAudit(lead)} style={btnStyle('#e2e8f0', '#475569')}>📋 Log</button>
+      <div className="flex gap-1 pt-1.5 border-t border-slate-100 flex-wrap">
+        <button onClick={() => onMoveStage(lead)} className="px-1.5 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded text-[8px] font-extrabold transition-colors cursor-pointer border-0">Stage</button>
+        <button onClick={() => onSetProbability(lead)} className="px-1.5 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded text-[8px] font-extrabold transition-colors cursor-pointer border-0">Prob</button>
+        <button onClick={() => onSetDealValues(lead)} className="px-1.5 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-[8px] font-extrabold transition-colors cursor-pointer border-0">Deal</button>
+        <button onClick={() => onViewAudit(lead)} className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[8px] font-extrabold transition-colors cursor-pointer border-0">Log</button>
       </div>
     </div>
   );
-}
-
-function btnStyle(bg: string, color: string): React.CSSProperties {
-  return {
-    background: bg, color, border: 'none', borderRadius: 6, padding: '3px 9px',
-    fontSize: 10, fontWeight: 600, cursor: 'pointer', transition: 'opacity 0.15s',
-  };
 }
 
 // ─── Forecast Panel ───────────────────────────────────────────────────────────
 
 function ForecastPanel({ forecast, loading }: { forecast: ForecastData | null; loading: boolean }) {
-  const stat = (label: string, value: string, sub?: string, color?: string) => (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 800, color: color || '#0f172a' }}>{value}</div>
-      {sub && <div style={{ fontSize: 10, color: '#64748b', marginTop: 1 }}>{sub}</div>}
+  const stat = (label: string, value: string, sub?: string, colorClass?: string) => (
+    <div className="space-y-0.5">
+      <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block">{label}</span>
+      <p className={`text-base font-black font-mono leading-none ${colorClass || 'text-slate-800'}`}>{value}</p>
+      {sub && <p className="text-[8px] text-slate-400 font-medium">{sub}</p>}
     </div>
   );
 
   if (loading || !forecast) return (
-    <div style={{ color: '#94a3b8', fontSize: 12, textAlign: 'center', marginTop: 20 }}>Loading forecast...</div>
+    <div className="flex flex-col items-center justify-center py-6 text-slate-400 text-[10px] font-bold gap-1.5">
+      <Loader2 className="animate-spin text-emerald-500" size={16} />
+      <span>Loading forecast...</span>
+    </div>
   );
 
   return (
-    <div>
-      {stat('Pipeline Value', formatINR(forecast.pipeline_value), 'Active qualified leads', '#6366f1')}
-      {stat('Expected Revenue', formatINR(forecast.expected_revenue), 'Probability-weighted', '#10b981')}
-      {stat('Won Revenue', formatINR(forecast.won_revenue), undefined, '#059669')}
-      {stat('Lost Revenue', formatINR(forecast.lost_revenue), undefined, '#dc2626')}
-      <div style={{ background: '#f1f5f9', borderRadius: 8, padding: '10px 12px', marginBottom: 16 }}>
-        <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>Deal Metrics</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 11 }}>
-          <div><div style={{ color: '#94a3b8' }}>Win Rate</div><div style={{ fontWeight: 800, fontSize: 14, color: '#10b981' }}>{forecast.win_rate}%</div></div>
-          <div><div style={{ color: '#94a3b8' }}>Avg Deal</div><div style={{ fontWeight: 800, fontSize: 14 }}>{formatINR(forecast.avg_deal_size)}</div></div>
-          <div><div style={{ color: '#94a3b8' }}>Avg Cycle</div><div style={{ fontWeight: 800, fontSize: 14 }}>{forecast.avg_sales_cycle_days}d</div></div>
-          <div><div style={{ color: '#94a3b8' }}>In Pipeline</div><div style={{ fontWeight: 800, fontSize: 14 }}>{forecast.total_leads_in_pipeline}</div></div>
-        </div>
-      </div>
-      <div style={{ background: '#f1f5f9', borderRadius: 8, padding: '10px 12px' }}>
-        <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>Movement</div>
-        <div style={{ fontSize: 12, display: 'flex', flexDirection: 'column', gap: 5 }}>
-          <div>🏆 Won: <strong>{forecast.leads_moved_to_won}</strong></div>
-          <div>💔 Lost: <strong>{forecast.leads_moved_to_lost}</strong></div>
+    <div className="space-y-4">
+      {stat('Pipeline Value', formatINR(forecast.pipeline_value), 'Active qualified leads', 'text-indigo-600')}
+      {stat('Expected Revenue', formatINR(forecast.expected_revenue), 'Weighted by win-probability', 'text-emerald-600')}
+      {stat('Won Revenue', formatINR(forecast.won_revenue), undefined, 'text-emerald-700')}
+      {stat('Lost Revenue', formatINR(forecast.lost_revenue), undefined, 'text-rose-600')}
+      
+      <div className="bg-slate-50/50 border border-slate-200/60 rounded-2xl p-3.5 space-y-2.5">
+        <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Metrics Checklist</span>
+        <div className="grid grid-cols-2 gap-3 text-[10px] font-sans">
+          <div>
+            <span className="text-slate-400 font-semibold block">Win Rate</span>
+            <p className="text-sm font-black text-emerald-600 font-mono mt-0.5">{forecast.win_rate}%</p>
+          </div>
+          <div>
+            <span className="text-slate-400 font-semibold block">Avg Deal</span>
+            <p className="text-sm font-black text-slate-700 font-mono mt-0.5">{formatINR(forecast.avg_deal_size)}</p>
+          </div>
+          <div>
+            <span className="text-slate-400 font-semibold block">Cycle Time</span>
+            <p className="text-sm font-black text-slate-700 font-mono mt-0.5">{forecast.avg_sales_cycle_days}d</p>
+          </div>
+          <div>
+            <span className="text-slate-400 font-semibold block">Total Deals</span>
+            <p className="text-sm font-black text-slate-700 font-mono mt-0.5">{forecast.total_leads_in_pipeline}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -235,16 +226,13 @@ function ForecastPanel({ forecast, loading }: { forecast: ForecastData | null; l
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
-    }}>
-      <div style={{ background: '#fff', borderRadius: 14, width: '100%', maxWidth: 440, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
-        <div style={{ padding: '18px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontWeight: 700, fontSize: 15, color: '#0f172a' }}>{title}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#94a3b8' }}>✕</button>
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-sm shadow-xl overflow-hidden flex flex-col">
+        <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <h4 className="font-extrabold text-[11px] uppercase text-slate-700 tracking-wider">{title}</h4>
+          <button onClick={onClose} className="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-100 border-0 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors text-xs font-bold">✕</button>
         </div>
-        <div style={{ padding: '20px' }}>{children}</div>
+        <div className="p-5">{children}</div>
       </div>
     </div>
   );
@@ -380,55 +368,50 @@ export default function AdminPipeline() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ display: 'flex', height: '100%', background: '#f8fafc', fontFamily: 'Inter, sans-serif' }}>
+    <div className="flex flex-col lg:flex-row gap-6 w-full items-start font-sans">
       <style>{`
-        @keyframes stuck-pulse { 0%,100% { box-shadow: 0 0 0 2px rgba(239,68,68,0.25); } 50% { box-shadow: 0 0 0 4px rgba(239,68,68,0.4); } }
+        @keyframes stuck-pulse { 0%,100% { box-shadow: 0 0 0 2px rgba(239,68,68,0.2); } 50% { box-shadow: 0 0 0 4px rgba(239,68,68,0.35); } }
         .pipe-column::-webkit-scrollbar { width: 4px; }
         .pipe-column::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .drop-zone-active { background: #eff6ff !important; border: 2px dashed #6366f1 !important; }
       `}</style>
 
-      {/* ── Main Kanban Area ─────────────────────────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
+      {/* ── Main Kanban Area ── */}
+      <div className="flex-1 w-full bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-3xl p-5 shadow-3xs flex flex-col overflow-hidden">
         {/* Top bar */}
-        <div style={{
-          background: '#fff', borderBottom: '1px solid #e5e7eb',
-          padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0
-        }}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
           <div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>📊 Sales Pipeline</div>
-            <div style={{ fontSize: 12, color: '#64748b' }}>{allLeads.length} leads · {formatINR(totalPipelineValue)} pipeline value</div>
+            <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">📊 Sales Pipeline</h3>
+            <p className="text-[10px] text-slate-400 font-bold mt-0.5">{allLeads.length} leads · {formatINR(totalPipelineValue)} pipeline value</p>
           </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
             {stuckLeads.length > 0 && (
-              <span style={{ background: '#fef3c7', color: '#92400e', borderRadius: 99, padding: '4px 10px', fontSize: 11, fontWeight: 700 }}>
+              <span className="bg-amber-50 text-amber-700 border border-amber-100 text-[9px] font-bold px-2 py-0.5 rounded-lg shadow-3xs">
                 ⚠️ {stuckLeads.length} stuck
               </span>
             )}
             {noReplyLeads.length > 0 && (
-              <span style={{ background: '#f3e8ff', color: '#6b21a8', borderRadius: 99, padding: '4px 10px', fontSize: 11, fontWeight: 700 }}>
+              <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[9px] font-bold px-2 py-0.5 rounded-lg shadow-3xs">
                 📵 {noReplyLeads.length} silent
               </span>
             )}
-            <button onClick={loadPipeline} style={{
-              background: '#f1f5f9', border: 'none', borderRadius: 8, padding: '6px 14px',
-              fontSize: 12, cursor: 'pointer', fontWeight: 600, color: '#475569'
-            }}>⟳ Refresh</button>
+            <button onClick={loadPipeline} className="h-8 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[10px] font-bold transition-all shadow-3xs cursor-pointer border border-slate-200">
+              ⟳ Refresh
+            </button>
           </div>
         </div>
 
         {/* Kanban columns */}
         {loading ? (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 14 }}>
-            Loading pipeline...
+          <div className="flex flex-col items-center justify-center py-20 text-slate-400 text-xs font-semibold gap-2">
+            <Loader2 className="animate-spin text-emerald-500" size={20} />
+            <span>Loading pipeline...</span>
           </div>
         ) : error ? (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', fontSize: 14 }}>
+          <div className="flex items-center justify-center py-20 text-rose-500 text-xs font-semibold">
             {error}
           </div>
         ) : (
-          <div style={{ flex: 1, display: 'flex', overflowX: 'auto', overflowY: 'hidden', padding: '16px', gap: 14 }}>
+          <div className="flex overflow-x-auto gap-4 py-4 min-h-[450px] scrollbar-thin">
             {STAGES.map(stage => {
               const group = groups.find(g => g.stage === stage.key);
               const leads = group?.leads || [];
@@ -437,36 +420,34 @@ export default function AdminPipeline() {
               return (
                 <div
                   key={stage.key}
-                  className={isTarget ? 'drop-zone-active' : ''}
                   onDragOver={e => { e.preventDefault(); setDragTarget(stage.key); }}
                   onDragLeave={() => setDragTarget(null)}
                   onDrop={e => handleDrop(e, stage.key)}
-                  style={{
-                    width: 240, flexShrink: 0, display: 'flex', flexDirection: 'column',
-                    background: stage.bg, borderRadius: 12,
-                    border: `1.5px solid ${isTarget ? '#6366f1' : stage.border}`,
-                    transition: 'border-color 0.2s, background 0.2s',
-                  }}
+                  className={`w-[250px] shrink-0 rounded-2xl border flex flex-col p-3 space-y-3 transition-all ${
+                    isTarget 
+                      ? 'bg-blue-50/40 border-accent/40 shadow-xs' 
+                      : 'border-slate-200/60'
+                  }`}
+                  style={{ backgroundColor: stage.bg }}
                 >
                   {/* Column header */}
-                  <div style={{ padding: '12px 14px', borderBottom: `2px solid ${stage.border}`, flexShrink: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontWeight: 700, fontSize: 13, color: stage.color }}>{stage.label}</span>
-                      <span style={{
-                        background: stage.color, color: '#fff', borderRadius: 99,
-                        padding: '1px 8px', fontSize: 11, fontWeight: 700
-                      }}>{leads.length}</span>
+                  <div className="pb-2 border-b border-slate-200/60 flex-shrink-0">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: stage.color }}>{stage.label}</span>
+                      <span className="text-[9px] font-bold text-white px-1.5 py-0.5 rounded-full" style={{ backgroundColor: stage.color }}>
+                        {leads.length}
+                      </span>
                     </div>
-                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 4 }}>
-                      {formatINR(group?.total_pipeline_value || 0)} pipeline ·{' '}
-                      <span style={{ color: '#10b981' }}>{formatINR(group?.total_expected_revenue || 0)} exp</span>
+                    <div className="text-[9px] text-slate-400 mt-1 font-medium">
+                      {formatINR(group?.total_pipeline_value || 0)} value ·{' '}
+                      <span className="text-emerald-600 font-semibold">{formatINR(group?.total_expected_revenue || 0)} exp</span>
                     </div>
                   </div>
 
-                  {/* Cards */}
-                  <div className="pipe-column" style={{ flex: 1, overflowY: 'auto', padding: '10px 10px 8px' }}>
+                  {/* Cards container */}
+                  <div className="pipe-column flex-1 overflow-y-auto space-y-3 max-h-[380px] pr-1">
                     {leads.length === 0 ? (
-                      <div style={{ textAlign: 'center', color: '#cbd5e1', fontSize: 12, paddingTop: 20 }}>
+                      <div className="text-center text-slate-300 text-[10px] py-12 italic border border-dashed border-slate-200 rounded-xl">
                         Drop leads here
                       </div>
                     ) : (
@@ -489,174 +470,206 @@ export default function AdminPipeline() {
         )}
       </div>
 
-      {/* ── Right: Forecast Sidebar ──────────────────────────────────────── */}
-      <div style={{
-        width: 240, flexShrink: 0, background: '#fff', borderLeft: '1px solid #e5e7eb',
-        display: 'flex', flexDirection: 'column', overflowY: 'auto'
-      }}>
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
-          <div style={{ fontWeight: 800, fontSize: 14, color: '#0f172a', marginBottom: 10 }}>Revenue Forecast</div>
-          <div style={{ display: 'flex', gap: 4 }}>
+      {/* ── Forecast Panel ── */}
+      <div className="w-full lg:w-72 bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-3xl p-5 shadow-3xs space-y-5 flex-shrink-0">
+        <div className="border-b border-slate-100 pb-3">
+          <h4 className="text-xs font-black uppercase text-slate-700 tracking-wider">Revenue Forecast</h4>
+          <div className="flex gap-1.5 mt-3">
             {(['month', 'quarter', 'year'] as const).map(p => (
               <button
                 key={p}
                 onClick={() => setForecastPeriod(p)}
-                style={{
-                  flex: 1, padding: '4px 0', border: 'none', borderRadius: 6, cursor: 'pointer',
-                  fontSize: 10, fontWeight: 700,
-                  background: forecastPeriod === p ? '#6366f1' : '#f1f5f9',
-                  color: forecastPeriod === p ? '#fff' : '#475569',
-                  transition: 'background 0.15s',
-                }}
+                className={`flex-1 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer border ${
+                  forecastPeriod === p 
+                    ? 'bg-slate-800 text-white border-slate-800' 
+                    : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border-slate-200'
+                }`}
               >
                 {p === 'month' ? 'Month' : p === 'quarter' ? 'Quarter' : 'Year'}
               </button>
             ))}
           </div>
         </div>
-        <div style={{ padding: '16px' }}>
-          <ForecastPanel forecast={forecast} loading={forecastLoading} />
-        </div>
 
-        {/* Velocity metrics */}
-        <div style={{ padding: '0 16px 16px' }}>
-          <div style={{ fontWeight: 700, fontSize: 12, color: '#475569', marginBottom: 10, marginTop: 4 }}>Pipeline Velocity</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 11 }}>
-            <div style={{ background: '#ecfdf5', borderRadius: 8, padding: '8px 10px' }}>
-              <div style={{ color: '#064e3b', fontWeight: 700, marginBottom: 2 }}>Active Pipeline</div>
-              <div style={{ color: '#10b981', fontSize: 15, fontWeight: 800 }}>{formatINR(totalPipelineValue)}</div>
+        <ForecastPanel forecast={forecast} loading={forecastLoading} />
+        
+        {/* Pipeline Velocity */}
+        <div className="pt-3 border-t border-slate-100 space-y-3">
+          <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Pipeline Velocity</h4>
+          <div className="grid gap-2.5">
+            <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3">
+              <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-wider">Active Pipeline</span>
+              <p className="text-base font-black text-emerald-800 font-mono mt-0.5">{formatINR(totalPipelineValue)}</p>
             </div>
-            <div style={{ background: '#fef9c3', borderRadius: 8, padding: '8px 10px' }}>
-              <div style={{ color: '#854d0e', fontWeight: 700, marginBottom: 2 }}>⚠️ Stuck Leads</div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#92400e' }}>{stuckLeads.length} leads</div>
-              <div style={{ color: '#a16207', marginTop: 2 }}>{stuckLeads.filter(l => l.is_stuck_14d).length} need escalation</div>
+            
+            <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-3 space-y-1">
+              <span className="text-[9px] font-extrabold text-amber-600 uppercase tracking-wider">⚠️ Stuck Leads</span>
+              <p className="text-base font-black text-amber-800 font-mono">{stuckLeads.length} leads</p>
+              <p className="text-[9px] text-amber-500 font-medium">{stuckLeads.filter(l => l.is_stuck_14d).length} require escalation</p>
             </div>
-            <div style={{ background: '#f3e8ff', borderRadius: 8, padding: '8px 10px' }}>
-              <div style={{ color: '#6b21a8', fontWeight: 700, marginBottom: 2 }}>📵 No Reply</div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#7c3aed' }}>{noReplyLeads.length} leads</div>
-              <div style={{ color: '#6b21a8', marginTop: 2 }}>30+ days silent</div>
+            
+            <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-3 space-y-1">
+              <span className="text-[9px] font-extrabold text-indigo-600 uppercase tracking-wider">📵 No Reply</span>
+              <p className="text-base font-black text-indigo-800 font-mono">{noReplyLeads.length} leads</p>
+              <p className="text-[9px] text-indigo-500 font-medium">30+ days silent</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Drop Confirmation Modal ─────────────────────────────────────── */}
+      {/* ── Drop Confirmation Modal ── */}
       {dropConfirm && (
         <Modal title="Confirm Stage Move" onClose={() => setDropConfirm(null)}>
-          <div style={{ fontSize: 13, color: '#475569', marginBottom: 14 }}>
-            Move <strong>{dropConfirm.leadName}</strong> to <strong style={{ color: '#6366f1' }}>
+          <div className="text-xs text-slate-600 mb-3.5">
+            Move <strong>{dropConfirm.leadName}</strong> to <strong className="text-indigo-600">
               {STAGES.find(s => s.key === dropConfirm.newStage)?.label || dropConfirm.newStage}
             </strong>?
           </div>
-          <label style={labelStyle}>Reason (optional — recorded in audit trail)</label>
-          <textarea
-            value={dropReason}
-            onChange={e => setDropReason(e.target.value)}
-            placeholder="e.g. Customer confirmed budget availability"
-            rows={3}
-            style={inputStyle}
-          />
-          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-            <button onClick={confirmDrop} style={{ ...actionBtn('#6366f1'), flex: 1 }}>✓ Confirm Move</button>
-            <button onClick={() => setDropConfirm(null)} style={{ ...actionBtn('#f1f5f9'), color: '#475569', flex: 1 }}>Cancel</button>
+          <div className="space-y-1">
+            <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Reason (optional)</label>
+            <textarea
+              value={dropReason}
+              onChange={e => setDropReason(e.target.value)}
+              placeholder="e.g. Customer confirmed budget availability"
+              rows={3}
+              className="w-full p-2 border border-slate-200 rounded-xl text-xs outline-none bg-slate-50 focus:bg-white transition-colors"
+            />
+          </div>
+          <div className="flex gap-2 mt-4">
+            <button onClick={confirmDrop} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold border-0 cursor-pointer transition-colors">Confirm Move</button>
+            <button onClick={() => setDropConfirm(null)} className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold border-0 cursor-pointer transition-colors">Cancel</button>
           </div>
         </Modal>
       )}
 
-      {/* ── Move Stage Modal ────────────────────────────────────────────── */}
+      {/* ── Move Stage Modal ── */}
       {moveModal && (
         <Modal title={`Move: ${getDisplayName(moveModal.lead)}`} onClose={() => setMoveModal(null)}>
-          <label style={labelStyle}>New Stage</label>
-          <select value={moveStage} onChange={e => setMoveStage(e.target.value)} style={inputStyle}>
-            <option value="">Select stage...</option>
-            {STAGES.filter(s => s.key !== moveModal.lead.lead_stage).map(s => (
-              <option key={s.key} value={s.key}>{s.label}</option>
-            ))}
-          </select>
-          <label style={{ ...labelStyle, marginTop: 10 }}>Reason (recorded in audit trail)</label>
-          <textarea value={moveReason} onChange={e => setMoveReason(e.target.value)} rows={2} style={inputStyle}
-            placeholder="e.g. Follow-up call completed, ready for proposal" />
-          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-            <button onClick={submitMove} disabled={!moveStage} style={{ ...actionBtn('#6366f1'), flex: 1, opacity: moveStage ? 1 : 0.5 }}>Move Stage</button>
-            <button onClick={() => setMoveModal(null)} style={{ ...actionBtn('#f1f5f9'), color: '#475569' }}>Cancel</button>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">New Stage</label>
+              <select
+                value={moveStage}
+                onChange={e => setMoveStage(e.target.value)}
+                className="w-full p-2 border border-slate-200 rounded-xl text-xs outline-none bg-slate-50 focus:bg-white transition-colors"
+              >
+                <option value="">Select stage...</option>
+                {STAGES.filter(s => s.key !== moveModal.lead.lead_stage).map(s => (
+                  <option key={s.key} value={s.key}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Reason (recorded in log)</label>
+              <textarea
+                value={moveReason}
+                onChange={e => setMoveReason(e.target.value)}
+                rows={2}
+                className="w-full p-2 border border-slate-200 rounded-xl text-xs outline-none bg-slate-50 focus:bg-white transition-colors"
+                placeholder="e.g. Follow-up call completed"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <button onClick={submitMove} disabled={!moveStage} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold border-0 cursor-pointer transition-colors disabled:opacity-50">Move Stage</button>
+            <button onClick={() => setMoveModal(null)} className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold border-0 cursor-pointer transition-colors">Cancel</button>
           </div>
         </Modal>
       )}
 
-      {/* ── Probability Modal ───────────────────────────────────────────── */}
+      {/* ── Probability Modal ── */}
       {probModal && (
         <Modal title={`Win Probability: ${getDisplayName(probModal.lead)}`} onClose={() => setProbModal(null)}>
-          <div style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
-            Current: <strong>{probModal.lead.deal_probability}%</strong> · 
-            Intent: <strong>{probModal.lead.intent_level || 'COLD'}</strong>
+          <div className="text-[10px] text-slate-500 mb-3 bg-slate-50 p-2 rounded-xl border border-slate-100 flex justify-between">
+            <span>Current: <strong>{probModal.lead.deal_probability}%</strong></span>
+            <span>Intent: <strong className="text-slate-700">{probModal.lead.intent_level || 'COLD'}</strong></span>
           </div>
-          <label style={labelStyle}>New Probability (0–100%)</label>
-          <input type="number" min={0} max={100} value={probValue} onChange={e => setProbValue(e.target.value)} style={inputStyle} />
-          {probValue && !isNaN(parseFloat(probValue)) && (
-            <div style={{ fontSize: 11, color: '#64748b', marginTop: 6 }}>
-              Expected Revenue: <strong style={{ color: '#10b981' }}>
-                {formatINR(probModal.lead.deal_annual_value * parseFloat(probValue) / 100)}
-              </strong>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">New Probability (0–100%)</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={probValue}
+                onChange={e => setProbValue(e.target.value)}
+                className="w-full p-2 border border-slate-200 rounded-xl text-xs outline-none bg-slate-50 focus:bg-white transition-colors"
+              />
             </div>
-          )}
-          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-            <button onClick={submitProb} style={{ ...actionBtn('#f59e0b'), flex: 1 }}>Update Probability</button>
-            <button onClick={() => setProbModal(null)} style={{ ...actionBtn('#f1f5f9'), color: '#475569' }}>Cancel</button>
+            {probValue && !isNaN(parseFloat(probValue)) && (
+              <div className="text-[10px] text-slate-500 flex justify-between">
+                <span>Expected Revenue:</span>
+                <strong className="text-emerald-600">{formatINR(probModal.lead.deal_annual_value * parseFloat(probValue) / 100)}</strong>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 mt-4">
+            <button onClick={submitProb} className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold border-0 cursor-pointer transition-colors">Update</button>
+            <button onClick={() => setProbModal(null)} className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold border-0 cursor-pointer transition-colors">Cancel</button>
           </div>
         </Modal>
       )}
 
-      {/* ── Deal Values Modal ───────────────────────────────────────────── */}
+      {/* ── Deal Values Modal ── */}
       {dealModal && (
         <Modal title={`Deal Values: ${getDisplayName(dealModal.lead)}`} onClose={() => setDealModal(null)}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 11, color: '#64748b', marginBottom: 12, background: '#f8fafc', borderRadius: 8, padding: '8px 12px' }}>
-            <div>Current Setup: <strong>{formatINR(dealModal.lead.deal_setup_value)}</strong></div>
-            <div>Current MRR: <strong>{formatINR(dealModal.lead.deal_mrr)}</strong></div>
-            <div>Annual Value: <strong style={{ color: '#6366f1' }}>{formatINR(dealModal.lead.deal_annual_value)}</strong></div>
-            <div>Expected: <strong style={{ color: '#10b981' }}>{formatINR(dealModal.lead.expected_revenue)}</strong></div>
+          <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-500 mb-3 bg-slate-50/70 border border-slate-150 rounded-xl p-2.5">
+            <div>Setup: <strong>{formatINR(dealModal.lead.deal_setup_value)}</strong></div>
+            <div>MRR: <strong>{formatINR(dealModal.lead.deal_mrr)}</strong></div>
+            <div>Annual: <strong className="text-indigo-600">{formatINR(dealModal.lead.deal_annual_value)}</strong></div>
+            <div>Expected: <strong className="text-emerald-600">{formatINR(dealModal.lead.expected_revenue)}</strong></div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div>
-              <label style={labelStyle}>Setup Value (₹)</label>
-              <input type="number" value={dealSetup} onChange={e => setDealSetup(e.target.value)} style={inputStyle} placeholder="29999" />
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Setup Value (₹)</label>
+              <input
+                type="number"
+                value={dealSetup}
+                onChange={e => setDealSetup(e.target.value)}
+                placeholder="29999"
+                className="w-full p-2 border border-slate-200 rounded-xl text-xs outline-none bg-slate-50 focus:bg-white transition-colors"
+              />
             </div>
-            <div>
-              <label style={labelStyle}>MRR (₹/mo)</label>
-              <input type="number" value={dealMrr} onChange={e => setDealMrr(e.target.value)} style={inputStyle} placeholder="5999" />
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">MRR (₹/mo)</label>
+              <input
+                type="number"
+                value={dealMrr}
+                onChange={e => setDealMrr(e.target.value)}
+                placeholder="5999"
+                className="w-full p-2 border border-slate-200 rounded-xl text-xs outline-none bg-slate-50 focus:bg-white transition-colors"
+              />
             </div>
           </div>
           {dealSetup && dealMrr && (
-            <div style={{ fontSize: 11, color: '#475569', marginTop: 8, background: '#ecfdf5', borderRadius: 6, padding: '6px 10px' }}>
-              Annual Value: <strong style={{ color: '#10b981', fontSize: 13 }}>
-                {formatINR(parseFloat(dealSetup || '0') + parseFloat(dealMrr || '0') * 12)}
-              </strong>
+            <div className="text-[10px] text-slate-500 mt-3 bg-emerald-50/50 border border-emerald-100 rounded-lg p-2 flex justify-between items-center">
+              <span>Annualized Value:</span>
+              <strong className="text-emerald-700 text-xs">{formatINR(parseFloat(dealSetup || '0') + parseFloat(dealMrr || '0') * 12)}</strong>
             </div>
           )}
-          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-            <button onClick={submitDeal} style={{ ...actionBtn('#10b981'), flex: 1 }}>Update Values</button>
-            <button onClick={() => setDealModal(null)} style={{ ...actionBtn('#f1f5f9'), color: '#475569' }}>Cancel</button>
+          <div className="flex gap-2 mt-4">
+            <button onClick={submitDeal} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold border-0 cursor-pointer transition-colors">Update Values</button>
+            <button onClick={() => setDealModal(null)} className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold border-0 cursor-pointer transition-colors">Cancel</button>
           </div>
         </Modal>
       )}
 
-      {/* ── Audit Trail Modal ───────────────────────────────────────────── */}
+      {/* ── Audit Trail Modal ── */}
       {auditModal && (
         <Modal title={`Pipeline Audit: ${getDisplayName(auditModal.lead)}`} onClose={() => setAuditModal(null)}>
           {auditModal.entries.length === 0 ? (
-            <div style={{ color: '#94a3b8', textAlign: 'center', padding: 20 }}>No stage movements recorded yet.</div>
+            <div className="text-slate-400 text-center py-6 text-xs italic">No stage movements recorded yet.</div>
           ) : (
-            <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+            <div className="max-h-[300px] overflow-y-auto space-y-3 pr-1 scrollbar-thin">
               {auditModal.entries.map(e => (
-                <div key={e.id} style={{
-                  borderLeft: '3px solid #6366f1', paddingLeft: 12, marginBottom: 14
-                }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>
-                    {e.old_stage} → <span style={{ color: '#6366f1' }}>{e.new_stage}</span>
+                <div key={e.id} className="border-l-2 border-indigo-500 pl-3 py-0.5 space-y-0.5">
+                  <div className="text-[11px] font-bold text-slate-800">
+                    {e.old_stage} → <span className="text-indigo-600">{e.new_stage}</span>
                   </div>
-                  <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                  <div className="text-[9px] text-slate-400 font-medium">
                     by <strong>{e.changed_by}</strong> · {new Date(e.timestamp).toLocaleString('en-IN')}
                   </div>
-                  {e.reason && <div style={{ fontSize: 11, color: '#475569', marginTop: 4, fontStyle: 'italic' }}>"{e.reason}"</div>}
+                  {e.reason && <p className="text-[10px] text-slate-500 italic mt-1 bg-slate-50 p-1 rounded">"{e.reason}"</p>}
                 </div>
               ))}
             </div>
@@ -665,21 +678,4 @@ export default function AdminPipeline() {
       )}
     </div>
   );
-}
-
-// ─── Style Helpers ────────────────────────────────────────────────────────────
-
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: 11, fontWeight: 600, color: '#475569', marginBottom: 5
-};
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 10px', border: '1.5px solid #e2e8f0', borderRadius: 8,
-  fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
-  background: '#f8fafc', color: '#0f172a'
-};
-function actionBtn(bg: string): React.CSSProperties {
-  return {
-    background: bg, color: '#fff', border: 'none', borderRadius: 8,
-    padding: '9px 16px', fontWeight: 700, fontSize: 13, cursor: 'pointer'
-  };
 }

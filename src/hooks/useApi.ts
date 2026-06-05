@@ -180,6 +180,40 @@ export function useDashboard() {
     }
   };
 
+  // Rename Lead
+  const renameLead = async (leadId: string, newName: string): Promise<boolean> => {
+    if (!token) return false;
+    try {
+      await apiService.leads.update(leadId, { name: newName });
+      // Update local states immediately for responsiveness
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, name: newName } : l));
+      if (leadDetail && leadDetail.lead.id === leadId) {
+        setLeadDetail(prev => prev ? { ...prev, lead: { ...prev.lead, name: newName } } : null);
+      }
+      return true;
+    } catch (err: any) {
+      setLatestApiError(`[DATABASE] ${err.message || 'Failed renaming lead'}`);
+      return false;
+    }
+  };
+
+  // Update Lead Fields (e.g. name, company, phone)
+  const updateLeadField = async (leadId: string, fields: Partial<Lead>): Promise<boolean> => {
+    if (!token) return false;
+    try {
+      await apiService.leads.update(leadId, fields);
+      // Update local states immediately for responsiveness
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, ...fields } : l));
+      if (leadDetail && leadDetail.lead.id === leadId) {
+        setLeadDetail(prev => prev ? { ...prev, lead: { ...prev.lead, ...fields } } : null);
+      }
+      return true;
+    } catch (err: any) {
+      setLatestApiError(`[DATABASE] ${err.message || 'Failed updating lead details'}`);
+      return false;
+    }
+  };
+
   // Toggle AI Automation ON/OFF
   const toggleAI = async (leadId: string, enabled: boolean): Promise<boolean> => {
     if (!token) return false;
@@ -338,6 +372,8 @@ export function useDashboard() {
     // Operations
     sendManualMessage,
     updateLeadStatus,
+    renameLead,
+    updateLeadField,
     toggleAI,
     triggerDatabaseBackup,
     triggerRefresh,
