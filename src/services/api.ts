@@ -302,6 +302,7 @@ async function request<T>(path: string, options: FetchOptions = {}): Promise<T> 
     const response = await fetch(url, config);
     
     if (response.status === 401 || response.status === 403) {
+      console.warn(`[AUTH EXPIRED] Endpoint ${url} returned ${response.status}. Clearing token.`);
       localStorage.removeItem("trinetra_jwt");
       window.dispatchEvent(new Event("auth-expired"));
     }
