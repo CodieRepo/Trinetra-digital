@@ -331,6 +331,8 @@ export async function initDb(): Promise<Database<sqlite3.Database, sqlite3.State
     { sql: 'ALTER TABLE appointments ADD COLUMN notification_sent INTEGER DEFAULT 0;',        label: 'appointments.notification_sent' },
     { sql: 'ALTER TABLE appointments ADD COLUMN notification_channel TEXT;',                  label: 'appointments.notification_channel' },
     { sql: 'ALTER TABLE appointments ADD COLUMN notification_timestamp TEXT;',                label: 'appointments.notification_timestamp' },
+    // Post-booking cooldown counter: track messages sent after booking confirmed before clearing active_flow
+    { sql: 'ALTER TABLE leads ADD COLUMN post_booking_message_count INTEGER DEFAULT 0;',     label: 'leads.post_booking_message_count' },
   ];
 
   for (const migration of migrations) {

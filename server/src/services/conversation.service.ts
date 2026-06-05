@@ -198,7 +198,7 @@ export async function processInboundMessage(
 
   // Force booking state to confirmed if date & time are both resolved
   let finalBookingState = aiResult.booking_state || lead.booking_state || null;
-  const isBookingFlow = aiResult.active_flow === 'Booking' || lead.active_flow === 'Booking' || aiResult.booking_state || lead.booking_state;
+  const isBookingFlow = aiResult.active_flow === 'Booking' || lead.active_flow === 'appointment_booking' || aiResult.booking_state || lead.booking_state;
   if (isBookingFlow) {
     if (finalBookingDate && finalBookingTime) {
       finalBookingState = 'confirmed';
@@ -212,6 +212,35 @@ export async function processInboundMessage(
         finalBookingState = 'waiting_for_date';
       }
     }
+  }
+
+  // ── Post-booking cooldown management ────────────────────────────────────────
+  // After "confirmed": clear booking_state immediately, keep active_flow for 3 more messages,
+  // then clear active_flow too. This lets the bot respond naturally ("Thanks" → "Welcome")
+  // without permanently locking the lead in a confirmed state.
+  let finalActiveFlow = aiResult.active_flow || lead.active_flow || null;
+  let finalPostBookingCount = lead.post_booking_message_count || 0;
+
+  // Guard: if already in post-booking courtesy window, ignore any AI re-confirmation
+  const inPostBookingWindow = lead.active_flow === 'appointment_booking' && !lead.booking_state;
+  if (inPostBookingWindow) {
+    // Override any AI state signals — we control the state here
+    finalBookingState = null;
+    finalActiveFlow = 'appointment_booking';
+    finalPostBookingCount = (lead.post_booking_message_count || 0) + 1;
+    if (finalPostBookingCount > 3) {
+      finalActiveFlow = null;
+      finalPostBookingCount = 0;
+      console.log(`🏁 [BOOKING] Post-booking 3-message window exhausted. active_flow cleared.`);
+    } else {
+      console.log(`💬 [BOOKING] Post-booking courtesy window: msg ${finalPostBookingCount}/3.`);
+    }
+  } else if (finalBookingState === 'confirmed') {
+    // Fresh confirmation — clear booking_state, start courtesy window
+    finalBookingState = null;
+    finalActiveFlow = 'appointment_booking';
+    finalPostBookingCount = 1;
+    console.log(`✅ [BOOKING] Appointment confirmed. booking_state cleared. active_flow=appointment_booking (3 msg window starting)`);
   }
 
   const updates: Record<string, any> = {
@@ -228,8 +257,9 @@ export async function processInboundMessage(
     booking_state: finalBookingState,
     booking_date: finalBookingDate,
     booking_time: finalBookingTime,
-    active_intent: aiResult.active_intent || null,
-    active_flow: aiResult.active_flow || null,
+    active_intent: aiResult.active_intent || lead.active_intent || null,
+    active_flow: finalActiveFlow,
+    post_booking_message_count: finalPostBookingCount,
   };
 
   if (fields.name     && fields.name !== lead.name) updates.name = fields.name;

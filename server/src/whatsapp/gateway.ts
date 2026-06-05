@@ -964,35 +964,40 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
   let skipMenuRouter = false;
 
   // Priority 1: Active State Machine (Booking Flow)
+  // Also covers post-booking courtesy window (active_flow=appointment_booking, no booking_state)
   if (lead.booking_state) {
     skipMenuRouter = true;
     console.log(`[ROUTER] Priority 1: Active Booking State (${lead.booking_state}). Bypassing Menu.`);
-  } 
+  } else if ((lead as any).active_flow === 'appointment_booking') {
+    skipMenuRouter = true;
+    console.log(`[ROUTER] Priority 1b: Post-Booking Courtesy Window (active_flow=appointment_booking). Bypassing Menu.`);
+  }
   // Priority 2: Human Handoff
   else if (lead.ai_enabled === 0) {
     skipMenuRouter = true;
     console.log(`[ROUTER] Priority 2: Human Handoff Active. Bypassing Menu.`);
-  } 
+  }
   // Priority 3: Active Intent Context
-  else if (lead.active_intent) {
+  else if ((lead as any).active_intent) {
     const isExplicitMenu = /^[1-7]$/.test(trimmedMsg) || /^(menu|help|start)$/i.test(trimmedMsg);
     if (!isExplicitMenu) {
       skipMenuRouter = true;
-      console.log(`[ROUTER] Priority 3: Active Intent Context (${lead.active_intent}). Bypassing Menu.`);
+      console.log(`[ROUTER] Priority 3: Active Intent Context (${(lead as any).active_intent}). Bypassing Menu.`);
     }
   }
 
   // ── KEYWORD MENU ROUTER (Priority 4) ─────────────────────────────────────────
+  // STRICT: Only digits 1-7 and exact keywords menu/help/start trigger the menu.
+  // ALL natural language (website, pricing, demo, consultation, etc.) goes to OpenRouter.
   let menuKey: string | null = null;
 
   if (!skipMenuRouter) {
     if (/^[1-7]$/.test(trimmedMsg)) {
       menuKey = trimmedMsg;
-    } else if (/^(menu|help|hi|hello|namaste|helo|start|hey|hii|hy|hye|नमस्ते|good morning|good evening|good afternoon|gm|gmrng)$/i.test(trimmedMsg)) {
+    } else if (/^(menu|help|start)$/i.test(trimmedMsg)) {
       menuKey = 'MAIN';
     }
-    // Note: Broad keywords (website, pricing, demo) have been removed from the Menu Router 
-    // so they fall through to Priority 5 (OpenRouter AI) for contextual handling.
+    // Everything else (greetings, service names, questions) falls through to Priority 5 (OpenRouter AI).
   }
 
   if (menuKey && MENU_RESPONSE[menuKey]) {

@@ -39,6 +39,7 @@ export interface LeadDTO {
   active_flow?: string | null;
   last_selected_service?: string | null;
   service_context_count?: number;
+  post_booking_message_count?: number;
 }
 
 export const LeadModel = {
