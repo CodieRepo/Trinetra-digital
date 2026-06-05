@@ -7,7 +7,31 @@ const sshConfig = {
   password: 'SatwikPal@123Shubham'
 };
 
-const commands = `cat /var/www/trinetra/server/.env`;
+const commands = `
+  set -e &&
+  cd /var/www/trinetra &&
+  git pull origin main &&
+
+  echo "=== Building Frontend ===" &&
+  npm install &&
+  npm run build &&
+
+  echo "=== Building Backend ===" &&
+  cd server &&
+  npm install &&
+  npm run build &&
+  cd .. &&
+
+  echo "=== Applying Nginx Config ===" &&
+  cp nginx.conf /etc/nginx/sites-available/trinetra &&
+  nginx -t &&
+  systemctl reload nginx &&
+
+  echo "=== Restarting Backend ===" &&
+  pm2 restart trinetra-crm-backend &&
+
+  echo "=== DEPLOYMENT COMPLETE ==="
+`;
 
 const conn = new Client();
 conn.on('ready', () => {

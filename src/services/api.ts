@@ -1,9 +1,16 @@
 // Trinetra Next-Gen AI SaaS Platform API Service Layer
 // Dynamic Environment Base Binding to high-fidelity VPS host
 
-export const API_BASE_URL = 
-  (import.meta as any).env?.VITE_API_BASE_URL || 
-  "/api";
+const _envApiUrl = (import.meta as any).env?.VITE_API_BASE_URL;
+const _isLocalhost = typeof window !== 'undefined' && (
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+);
+
+export const API_BASE_URL: string =
+  _envApiUrl ||
+  (_isLocalhost ? '/api' : 'https://api.trinetradigitalsolution.com/api');
+
 
 // ── 1. High-Fidelity Type Definitions ──────────────────────────────────────
 
