@@ -17,7 +17,7 @@ npm install
 npm run build
 
 echo "Restarting application..."
-pm2 restart trinetra-backend --update-env
+pm2 restart trinetra-crm-backend --update-env
 
 echo "Deployment complete."
 `;
