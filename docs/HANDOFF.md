@@ -12,6 +12,7 @@ Create a permanent repository-based memory and context-persistence system for Tr
 ## 2. Completed Work
 
 * **Documentation System Completed:** Created a complete suite of markdown guides under `docs/` that serve as the absolute source of truth for the codebase, architecture, business rules, server coordinates, deployment processes, and agent rules.
+* **Architectural Decisions Log Created:** Authored [docs/DECISIONS.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/DECISIONS.md) documenting decoupled SPA architecture, SQLite WAL database, Baileys gateway, OpenRouter AI cascade, and conversational safeguards.
 * **Session Bootstrap Established:** Created [SESSION_START.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/SESSION_START.md) as the initial entry point for all development sessions, creating a mandatory sequence before inspecting code.
 * **Refined Operating Rules:** Modified [AGENT_RULES.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/docs/AGENT_RULES.md) to make reading [SESSION_START.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/SESSION_START.md) and updating [HANDOFF.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/HANDOFF.md) hard prerequisites, as well as enforcing the authority of documentation over assumptions.
 * **Git Status Cleanup:** Removed the temporary script `server/run_audit.js` containing the production VPS root SSH password to prevent credentials leakage.
@@ -21,6 +22,7 @@ Create a permanent repository-based memory and context-persistence system for Tr
 
 ## 3. Files Created or Updated
 
+* **[NEW]** [docs/DECISIONS.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/DECISIONS.md) — Architectural Decisions Log (ADR).
 * **[NEW]** [docs/SESSION_START.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/SESSION_START.md) — Main entry point and bootstrap script index.
 * **[MODIFY]** [docs/AGENT_RULES.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/AGENT_RULES.md) — Added mandatory bootstrap, override, context-limit, and handoff guidelines.
 * **[MODIFY]** [docs/HANDOFF.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/docs/HANDOFF.md) — Updated with session start reference, final system details, and audit status.
@@ -68,4 +70,4 @@ Create a permanent repository-based memory and context-persistence system for Tr
 
 ---
 
-**Last Updated:** 2026-06-06T00:20:00+05:30 (India Standard Time)
+**Last Updated:** 2026-06-06T00:23:00+05:30 (India Standard Time)
