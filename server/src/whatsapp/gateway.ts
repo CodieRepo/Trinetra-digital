@@ -19,6 +19,7 @@ import { processInboundMessage } from '../services/conversation.service';
 import { LeadModel } from '../models/lead.model';
 import { MessageModel, ConversationModel } from '../models/message.model';
 import { scheduleNurtureSequence } from '../services/cron.service';
+import { getActiveAiProvider } from '../services/openrouter.service';
 
 // ─── Opt-out detection — Meta compliance requirement ───────────────────────────────────────────
 const OPT_OUT_PATTERN = /^(STOP|CANCEL|UNSUBSCRIBE|BAND KARO|NAHI CHAHIYE|NAI CHAHIYE|ROKEIN|BAND KRO|OPT.?OUT)$/i;
@@ -170,24 +171,268 @@ if (!fs.existsSync(resolvedSessionPath)) {
 }
 
 let sock: WASocket | null = null;
-let connectionStatus: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
+let connectionStatus: 'connected' | 'connecting' | 'qr_required' | 'logged_out' | 'auth_failed' | 'intervention_required' | 'disconnected' = 'disconnected';
 let latestQr: string | null = null;
 let latestQrImage: string | null = null;
+let disconnectReason: string | null = null;
+let reconnectTimestamps: number[] = [];
 
 // Reconnection backoff variables
 let reconnectAttempts = 0;
 let reconnectTimeout: NodeJS.Timeout | null = null;
 const MAX_RECONNECT_ATTEMPTS = 15;
 
+interface QueuedMessage {
+  id: string;
+  leadId: string;
+  phone: string;
+  text: string;
+  overrideJid?: string;
+  attempts: number;
+}
+
+const outboundQueue: QueuedMessage[] = [];
+let isProcessingQueue = false;
+let failedQueueCount = 0;
+let lastInboundTime: string | null = null;
+let lastOutboundTime: string | null = null;
+let lastDeliveryTime: string | null = null;
+let reconnectCount = 0;
+
 // Clean logger to suppress Baileys verbose output
 const logger = pino({ level: 'silent' });
+
+const backupsPath = path.resolve(process.cwd(), 'whatsapp-session-backups');
+
+function copyDirSync(src: string, dest: string) {
+  fs.mkdirSync(dest, { recursive: true });
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyDirSync(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+async function backupSessionFolder(reason: string) {
+  try {
+    if (!fs.existsSync(resolvedSessionPath)) return;
+    
+    const credsPath = path.join(resolvedSessionPath, 'creds.json');
+    if (!fs.existsSync(credsPath)) {
+      console.log('ℹ️ [BACKUP] No credentials to backup.');
+      return;
+    }
+
+    if (!fs.existsSync(backupsPath)) {
+      fs.mkdirSync(backupsPath, { recursive: true });
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupDirName = `session-backup-${timestamp}`;
+    const backupDest = path.join(backupsPath, backupDirName);
+
+    console.log(`💾 [BACKUP] Backing up session credentials to ${backupDest}. Reason: ${reason}`);
+    copyDirSync(resolvedSessionPath, backupDest);
+
+    fs.writeFileSync(path.join(backupDest, 'backup-info.json'), JSON.stringify({
+      timestamp: new Date().toISOString(),
+      reason,
+      connectionStatus
+    }, null, 2));
+
+    await logAuditAction('WHATSAPP_SESSION_BACKUP', `Created backup ${backupDirName}. Reason: ${reason}`);
+
+    pruneBackups();
+  } catch (err) {
+    console.error('❌ [BACKUP] Error creating session backup:', err);
+  }
+}
+
+function pruneBackups() {
+  try {
+    if (!fs.existsSync(backupsPath)) return;
+    const entries = fs.readdirSync(backupsPath, { withFileTypes: true });
+    const backupDirs = entries
+      .filter(e => e.isDirectory() && e.name.startsWith('session-backup-'))
+      .map(e => ({
+        name: e.name,
+        path: path.join(backupsPath, e.name),
+        mtime: fs.statSync(path.join(backupsPath, e.name)).mtimeMs
+      }))
+      .sort((a, b) => b.mtime - a.mtime);
+
+    if (backupDirs.length > 3) {
+      const toDelete = backupDirs.slice(3);
+      for (const dir of toDelete) {
+        console.log(`🗑️ [BACKUP] Pruning old backup: ${dir.name}`);
+        fs.rmSync(dir.path, { recursive: true, force: true });
+      }
+    }
+  } catch (err) {
+    console.error('❌ [BACKUP] Error pruning backups:', err);
+  }
+}
+
+export async function restoreSessionBackup(backupDirName: string): Promise<boolean> {
+  try {
+    const backupSource = path.join(backupsPath, backupDirName);
+    if (!fs.existsSync(backupSource)) {
+      console.error(`❌ [ROLLBACK] Backup ${backupDirName} does not exist.`);
+      return false;
+    }
+
+    console.log(`🔄 [ROLLBACK] Restoring session backup from: ${backupDirName}`);
+    
+    if (sock) {
+      try {
+        sock.end(undefined);
+      } catch (err) {}
+      sock = null;
+    }
+
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = null;
+    }
+
+    await backupSessionFolder(`pre-rollback-restore-of-${backupDirName}`);
+
+    try {
+      fs.rmSync(resolvedSessionPath, { recursive: true, force: true });
+    } catch (err) {
+      console.warn('⚠️ [ROLLBACK] Non-fatal error cleaning session folder before restore:', err);
+    }
+    fs.mkdirSync(resolvedSessionPath, { recursive: true });
+
+    copyDirSync(backupSource, resolvedSessionPath);
+
+    const infoPath = path.join(resolvedSessionPath, 'backup-info.json');
+    if (fs.existsSync(infoPath)) {
+      fs.unlinkSync(infoPath);
+    }
+
+    await logAuditAction('WHATSAPP_SESSION_RESTORE', `Restored backup: ${backupDirName}`);
+    console.log('🟢 [ROLLBACK] Session files restored. Re-initializing gateway...');
+    
+    reconnectAttempts = 0;
+    connectionStatus = 'disconnected';
+    latestQr = null;
+    latestQrImage = null;
+    disconnectReason = null;
+
+    await initWhatsApp();
+    return true;
+  } catch (err) {
+    console.error('❌ [ROLLBACK] Failed to restore session backup:', err);
+    return false;
+  }
+}
+
+export function listSessionBackups() {
+  try {
+    if (!fs.existsSync(backupsPath)) return [];
+    const entries = fs.readdirSync(backupsPath, { withFileTypes: true });
+    return entries
+      .filter(e => e.isDirectory() && e.name.startsWith('session-backup-'))
+      .map(e => {
+        const dirPath = path.join(backupsPath, e.name);
+        const infoPath = path.join(dirPath, 'backup-info.json');
+        let info: any = {};
+        if (fs.existsSync(infoPath)) {
+          try {
+            info = JSON.parse(fs.readFileSync(infoPath, 'utf8'));
+          } catch (err) {}
+        }
+        return {
+          name: e.name,
+          timestamp: info.timestamp || fs.statSync(dirPath).mtime,
+          reason: info.reason || 'Unknown',
+          connectionStatus: info.connectionStatus || 'Unknown'
+        };
+      })
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  } catch (err) {
+    console.error('❌ [BACKUP] Error listing backups:', err);
+    return [];
+  }
+}
+
+export function calculateHealthScore(status: string): number {
+  if (status === 'qr_required' || status === 'logged_out' || status === 'auth_failed' || status === 'disconnected') {
+    return 0;
+  }
+  if (status === 'intervention_required') {
+    return 10;
+  }
+  
+  let score = 100;
+  
+  score -= reconnectAttempts * 5;
+  
+  if (failedQueueCount > 0) {
+    score -= Math.min(failedQueueCount * 10, 30);
+  }
+  
+  const pendingCount = outboundQueue.length;
+  if (pendingCount > 0) {
+    score -= Math.min(pendingCount * 5, 20);
+  }
+  
+  if (lastOutboundTime) {
+    const lastOutboundTs = new Date(lastOutboundTime).getTime();
+    const lastDeliveryTs = lastDeliveryTime ? new Date(lastDeliveryTime).getTime() : 0;
+    
+    if (lastOutboundTs > lastDeliveryTs) {
+      const timeSinceOutbound = Date.now() - lastOutboundTs;
+      if (timeSinceOutbound > 3600000) {
+        score -= 25;
+      }
+    }
+  }
+
+  if (status === 'connecting') {
+    score = Math.min(score, 75);
+  }
+  
+  return Math.max(0, Math.min(100, score));
+}
+
+export async function restartWhatsApp(): Promise<void> {
+  console.log('🔄 Restarting WhatsApp Gateway...');
+  await logAuditAction('WHATSAPP_RESTART', 'Manual/automatic restart of the WhatsApp gateway initiated.');
+
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
+
+  if (sock) {
+    try {
+      sock.end(undefined);
+    } catch (err) {
+      console.error('⚠️ Error closing existing WhatsApp socket:', err);
+    }
+    sock = null;
+  }
+
+  connectionStatus = 'disconnected';
+  latestQr = null;
+  latestQrImage = null;
+  reconnectAttempts = 0;
+
+  await initWhatsApp();
+}
 
 function getReconnectDelay(statusCode?: number): number {
   if (statusCode === DisconnectReason.restartRequired) {
     console.log('🔄 Restart required by server. Reconnecting instantly (1s)...');
     return 1000;
   }
-  // Starting at 5 seconds, double every attempt, cap at 5 minutes (300000ms)
   const delay = Math.min(5000 * Math.pow(2, reconnectAttempts), 300000);
   return delay;
 }
@@ -197,6 +442,38 @@ export async function initWhatsApp() {
 
   console.log('🔄 Initializing WhatsApp Bot gateway (Baileys)...');
   connectionStatus = 'connecting';
+
+  // Startup Validation
+  const credsPath = path.join(resolvedSessionPath, 'creds.json');
+  let credentialsExist = false;
+  let credentialsValid = false;
+
+  if (fs.existsSync(credsPath)) {
+    credentialsExist = true;
+    try {
+      const content = fs.readFileSync(credsPath, 'utf8');
+      const parsed = JSON.parse(content);
+      if (parsed && parsed.creds) {
+        credentialsValid = true;
+        console.log('🟢 [STARTUP] Valid WhatsApp credentials found. Auto-connecting...');
+      }
+    } catch (err) {
+      console.warn('⚠️ [STARTUP] WhatsApp credentials file is invalid or corrupted:', err);
+    }
+  } else {
+    console.log('ℹ️ [STARTUP] No credentials found. First-time QR generation required.');
+  }
+
+  if (credentialsExist && !credentialsValid) {
+    console.warn('🚨 [STARTUP] Invalid credentials file found. Backing up and clearing...');
+    await backupSessionFolder('invalid_credentials_on_startup');
+    try {
+      fs.rmSync(resolvedSessionPath, { recursive: true, force: true });
+      fs.mkdirSync(resolvedSessionPath, { recursive: true });
+    } catch (cleanErr) {
+      console.error('❌ Failed to clean session folder:', cleanErr);
+    }
+  }
 
   try {
     let version: [number, number, number] = [2, 3000, 1015841372]; // Stable fallback version
@@ -215,31 +492,91 @@ export async function initWhatsApp() {
         creds: state.creds,
         keys: makeCacheableSignalKeyStore(state.keys, logger)
       },
-      version, // Pass the fetched version for compatibility
-      printQRInTerminal: false, // Handled manually below
-      browser: Browsers.ubuntu('Chrome'), // Production-grade user agent signature
-      connectTimeoutMs: 60000, // Increase connection timeout to 60s
+      version,
+      printQRInTerminal: false,
+      browser: Browsers.ubuntu('Chrome'),
+      connectTimeoutMs: 60000,
       defaultQueryTimeoutMs: undefined,
       keepAliveIntervalMs: 30000,
-      syncFullHistory: false, // Low VPS RAM usage: do not download historic media/chats
+      syncFullHistory: false,
       logger
     });
 
     sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on('contacts.upsert', (contacts) => {
+      if (!sock) return;
+      if (!(sock as any).contacts) {
+        (sock as any).contacts = {};
+      }
+      for (const contact of contacts) {
+        if (!contact.id) continue;
+        (sock as any).contacts[contact.id] = {
+          ...(sock as any).contacts[contact.id],
+          ...contact
+        };
+      }
+      console.log(`[LIFECYCLE] Stage: CONNECTION_WATCHDOG | Contacts upserted. Cache size: ${Object.keys((sock as any).contacts).length}`);
+    });
+
+    sock.ev.on('contacts.update', (updates) => {
+      if (!sock) return;
+      if (!(sock as any).contacts) {
+        (sock as any).contacts = {};
+      }
+      for (const update of updates) {
+        if (!update.id) continue;
+        if ((sock as any).contacts[update.id]) {
+          (sock as any).contacts[update.id] = {
+            ...(sock as any).contacts[update.id],
+            ...update
+          };
+        } else {
+          (sock as any).contacts[update.id] = update;
+        }
+      }
+    });
+
+    sock.ev.on('messages.update', async (updates) => {
+      for (const update of updates) {
+        const key = update.key;
+        if (!key.id || !key.remoteJid) continue;
+        
+        const status = update.update.status;
+        if (status !== undefined && status !== null) {
+          let statusText = 'sent';
+          if (status === 2) {
+            statusText = 'delivered';
+            lastDeliveryTime = new Date().toISOString();
+          } else if (status === 3 || status === 4) {
+            statusText = 'read';
+          } else if (status === 0 || status === 1) {
+            statusText = 'sent';
+          }
+          
+          const msg = await MessageModel.findById(key.id);
+          if (msg) {
+            await MessageModel.updateStatus(key.id, statusText);
+            console.log(`[LIFECYCLE] Stage: DELIVERY_ACK | LeadID: ${msg.lead_id} | JID: ${key.remoteJid} | MsgID: ${key.id} | Status: ${statusText}`);
+          }
+        }
+      }
+    });
 
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
         latestQr = qr;
-        console.log('📷 New WhatsApp QR code generated. Scan this to pair your device:');
+        connectionStatus = 'qr_required';
+        disconnectReason = 'qr_required: Scan QR code to authenticate';
         try {
-          // Render in terminal fallback
           qrcodeTerminal.generate(qr, { small: true });
-          
-          // Generate Base64 QR Image for dashboard API exposure
           latestQrImage = await QRCode.toDataURL(qr);
           console.log('✨ Base64 QR image updated successfully.');
+
+          const { notifyWhatsAppDisconnect } = await import('../services/notification.service');
+          await notifyWhatsAppDisconnect('QR code scan required for pairing', true, 'qr_required');
         } catch (qrErr) {
           console.error('⚠️ Error rendering or generating QR code:', qrErr);
         }
@@ -255,29 +592,68 @@ export async function initWhatsApp() {
         const statusCode = error?.output?.statusCode;
         console.log(`🔴 WhatsApp connection closed. Status Code: ${statusCode || 'Unknown'}, Error: ${error || 'Unknown'}`);
 
+        let reasonMsg = 'Unknown disconnect';
+        let isPermanent = false;
         let shouldReconnect = true;
         let shouldCleanSession = false;
 
         if (statusCode === DisconnectReason.loggedOut) {
-          console.warn('👤 WhatsApp session logged out / deleted by user. Auto-reconnection disabled.');
+          reasonMsg = 'logged_out: Device unlinked or logged out from phone';
+          connectionStatus = 'logged_out';
+          isPermanent = true;
           shouldReconnect = false;
           shouldCleanSession = true;
         } else if (statusCode === DisconnectReason.badSession) {
-          console.error('🚨 Bad session credentials. Resetting session directory...');
+          reasonMsg = 'auth_failed: Bad session credentials';
+          connectionStatus = 'auth_failed';
+          isPermanent = true;
           shouldReconnect = true;
           shouldCleanSession = true;
         } else if (statusCode === DisconnectReason.connectionReplaced) {
-          console.warn('⚠️ WhatsApp connection replaced by another active session. Reconnecting in 30s...');
-          if (reconnectTimeout) clearTimeout(reconnectTimeout);
-          reconnectTimeout = setTimeout(() => {
-            reconnectAttempts = 0; // Reset attempts
-            initWhatsApp();
-          }, 30000);
-          return;
+          reasonMsg = 'session_replaced: Connection replaced by another active session';
+          connectionStatus = 'connecting';
+          shouldReconnect = true;
+        } else if (statusCode === DisconnectReason.connectionClosed) {
+          reasonMsg = 'connection_closed: Socket connection closed by server';
+          connectionStatus = 'connecting';
+          shouldReconnect = true;
+        } else if (statusCode === DisconnectReason.connectionLost) {
+          reasonMsg = 'connection_lost: Network connection lost';
+          connectionStatus = 'connecting';
+          shouldReconnect = true;
+        } else if (statusCode === DisconnectReason.timedOut) {
+          reasonMsg = 'timeout: Connection timed out';
+          connectionStatus = 'connecting';
+          shouldReconnect = true;
+        } else if (statusCode === DisconnectReason.restartRequired) {
+          reasonMsg = 'restart_required: Server requested restart';
+          connectionStatus = 'connecting';
+          shouldReconnect = true;
+        } else if (statusCode === DisconnectReason.multideviceMismatch) {
+          reasonMsg = 'multidevice_mismatch: Multi-device version mismatch';
+          connectionStatus = 'auth_failed';
+          isPermanent = true;
+          shouldReconnect = false;
+          shouldCleanSession = true;
+        } else if (error) {
+          reasonMsg = `error: ${error.message || 'socket error'}`;
+          connectionStatus = 'connecting';
+          shouldReconnect = true;
+        }
+
+        disconnectReason = reasonMsg;
+        await logAuditAction('WHATSAPP_DISCONNECT', `Connection closed: code=${statusCode || 'unknown'}, reason=${reasonMsg}`);
+
+        try {
+          const { notifyWhatsAppDisconnect } = await import('../services/notification.service');
+          await notifyWhatsAppDisconnect(reasonMsg, isPermanent, connectionStatus);
+        } catch (alertErr) {
+          console.error('⚠️ [GATEWAY] Failed to send disconnect alert:', alertErr);
         }
 
         if (shouldCleanSession) {
           try {
+            await backupSessionFolder(reasonMsg);
             console.log(`🗑️ Erasing invalid session files at: ${resolvedSessionPath}`);
             fs.rmSync(resolvedSessionPath, { recursive: true, force: true });
             fs.mkdirSync(resolvedSessionPath, { recursive: true });
@@ -287,14 +663,33 @@ export async function initWhatsApp() {
         }
 
         if (shouldReconnect) {
+          // Restart Protection Check (Rate limit reconnect loops)
+          const now = Date.now();
+          reconnectTimestamps.push(now);
+          reconnectTimestamps = reconnectTimestamps.filter(ts => now - ts < 900000); // 15 mins
+
+          if (reconnectTimestamps.length > 5) {
+            console.error(`🚨 [RESTART PROTECTION] Too many reconnect attempts (${reconnectTimestamps.length}) within 15 minutes. Stopping loop.`);
+            connectionStatus = 'intervention_required';
+            disconnectReason = 'rate_limited: Too many reconnect attempts within 15 minutes. Manual intervention required.';
+            await logAuditAction('WHATSAPP_RATE_LIMITED', 'Gateway enters intervention_required state. Reconnect attempts throttled.');
+
+            try {
+              const { notifyWhatsAppDisconnect } = await import('../services/notification.service');
+              await notifyWhatsAppDisconnect(disconnectReason, true, 'intervention_required');
+            } catch (err) {
+              console.error('⚠️ Failed to notify admin about rate-limiting:', err);
+            }
+            return; // Exit reconnect loop
+          }
+
           if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
             console.error(`🚨 Reached max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}). Pausing automatic reconnect. Please check credentials or network.`);
-            // Back off extremely slowly (try every 10 minutes)
             const slowRetryDelay = 600000;
             console.log(`⏳ Entering cool-down cycle. Next check in ${slowRetryDelay / 60000} minutes...`);
             if (reconnectTimeout) clearTimeout(reconnectTimeout);
             reconnectTimeout = setTimeout(() => {
-              reconnectAttempts = 0; // Reset to retry again
+              reconnectAttempts = 0;
               initWhatsApp();
             }, slowRetryDelay);
             return;
@@ -313,12 +708,15 @@ export async function initWhatsApp() {
         latestQr = null;
         latestQrImage = null;
         connectionStatus = 'connected';
+        disconnectReason = null;
         reconnectAttempts = 0;
         if (reconnectTimeout) {
           clearTimeout(reconnectTimeout);
           reconnectTimeout = null;
         }
+        reconnectCount++;
         console.log('🟢 WhatsApp connection successfully established and active!');
+        await logAuditAction('WHATSAPP_CONNECT', 'Connection successfully established.');
       }
     });
 
@@ -355,11 +753,14 @@ export async function initWhatsApp() {
 
 // Format telephone to standardized JID
 function formatJid(phone: string): string {
-  let clean = phone.replace(/\D/g, '');
-  if (!clean.endsWith('@s.whatsapp.net')) {
-    clean = `${clean}@s.whatsapp.net`;
+  if (phone.includes('@')) {
+    return phone;
   }
-  return clean;
+  let clean = phone.replace(/\D/g, '');
+  if (clean.startsWith('2224') && clean.length === 15) {
+    return `${clean}@lid`;
+  }
+  return `${clean}@s.whatsapp.net`;
 }
 
 // Format JID to clean phone number for matching
@@ -379,6 +780,9 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
 
   if (!textContent) return;
 
+  lastInboundTime = new Date().toISOString();
+  console.log(`[LIFECYCLE] Stage: INBOUND_RECEIVED | LeadID: pending | PushName: ${senderName} | JID: ${jid} | Body: "${textContent}"`);
+  console.log(`[TEMP LOG - 1] Incoming message received: id=${msg.key.id}, jid=${jid}, pushName=${senderName}, text="${textContent}"`);
   console.log(`✉️ Incoming WhatsApp message from ${senderName} (${jid}): "${textContent}"`);
 
   // ── Track the actual JID to reply to ─────────────────────────────────
@@ -411,6 +815,10 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
         console.log(`ℹ️ [LID] No name match found. Will reply directly to LID.`);
       }
     }
+  }
+
+  if (lead) {
+    console.log(`[LIFECYCLE] Stage: LEAD_RESOLVED | LeadID: ${lead.id} | Phone: ${lead.phone} | State: ai_enabled=${lead.ai_enabled}, stage=${lead.lead_stage || 'greeting'}, score=${lead.ai_score || 0}`);
   }
 
   // ── Auto-create lead if first contact ───────────────────────────────────
@@ -480,6 +888,7 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
   // ── OPT-OUT COMPLIANCE CHECK ──────────────────────────────────────────
   // Must run BEFORE AI processing — Meta WhatsApp Business Policy requirement
   if (OPT_OUT_PATTERN.test(textContent.trim())) {
+    console.log(`[LIFECYCLE] Stage: ROUTER_SELECTED | LeadID: ${lead.id} | Router: COMPLIANCE_OPTOUT | Reason: opt-out keyword`);
     console.log(`🚫 [OPT-OUT] ${lead.name} (${cleanPhone}) opted out. Cancelling all sequences.`);
     const db = getDb();
     // Mark lead as opted out
@@ -502,6 +911,7 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
   // ── IMMEDIATE HUMAN HANDOFF SHORTCUT ──────────────────────────────────────────
   // Bypass AI entirely — serve instantly for any human-connection request
   if (HUMAN_REQUEST_PATTERN.test(textContent.trim())) {
+    console.log(`[LIFECYCLE] Stage: ROUTER_SELECTED | LeadID: ${lead.id} | Router: HUMAN_SHORTCUT | Reason: human request keyword`);
     console.log(`🤝 [HANDOFF SHORTCUT] ${lead.name} requested human. Instant handoff without AI.`);
     const db = getDb();
 
@@ -563,6 +973,7 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
   }
 
   if (menuKey && MENU_RESPONSE[menuKey]) {
+    console.log(`[LIFECYCLE] Stage: ROUTER_SELECTED | LeadID: ${lead.id} | Router: MENU_SHORTCUT | Reason: menu keyword '${trimmedMsg}'`);
     console.log(`📍 [MENU] Serving menu option '${menuKey}' to ${lead.name} (trigger: "${trimmedMsg}")`);
     const menuMsg = MENU_RESPONSE[menuKey];
 
@@ -584,6 +995,7 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
       }
     }
 
+    console.log(`[TEMP LOG - 2] Menu response generated: length=${menuMsg.length}`);
     await sendWhatsAppMessage(lead.phone, menuMsg, replyJid);
     // ⚠️ DO NOT schedule nurture sequence on menu-only interactions.
     // Nurture is only for leads who have engaged in a real conversation (AI pipeline).
@@ -591,6 +1003,7 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
   }
 
   // ── Delegate to conversation pipeline (OpenRouter + memory + anti-spam) ───
+  console.log(`[LIFECYCLE] Stage: ROUTER_SELECTED | LeadID: ${lead.id} | Router: AI_CONVERSATION | Reason: natural language query`);
   const result = await processInboundMessage(lead.id, messageId, textContent, jid);
 
   if (result.skipped) {
@@ -600,6 +1013,7 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
 
   // ── Send AI reply back to WhatsApp ───────────────────────────────────
   if (result.reply) {
+    console.log(`[TEMP LOG - 2] AI response generated: reply="${result.reply.substring(0, 100)}..."`);
     console.log(`📤 [GATEWAY] Sending reply to ${lead.name} via [${replyJid}]`);
     await sendWhatsAppMessage(lead.phone, result.reply, replyJid);
   }
@@ -611,7 +1025,90 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
   }
 }
 
+async function processQueue() {
+  if (isProcessingQueue) return;
+  isProcessingQueue = true;
+
+  try {
+    while (outboundQueue.length > 0) {
+      const msg = outboundQueue[0];
+      
+      await MessageModel.updateStatus(msg.id, 'SENDING');
+      console.log(`[LIFECYCLE] Stage: OUTBOUND_SEND_START | LeadID: ${msg.leadId} | MsgID: ${msg.id} | Status: SENDING`);
+      
+      const targetJid = msg.overrideJid || formatJid(msg.phone);
+      console.log(`[LIFECYCLE] Stage: OUTBOUND_RESOLVED_JID | LeadID: ${msg.leadId} | JID: ${targetJid}`);
+      console.log(`[LIFECYCLE] Stage: OUTBOUND_SEND_START | LeadID: ${msg.leadId} | JID: ${targetJid} | Socket: ${sock ? 'initialized' : 'null'} | connectionStatus: ${connectionStatus}`);
+
+      if (!sock) {
+        console.warn(`⚠️ Cannot send WhatsApp: Client is not initialized. MsgID: ${msg.id}`);
+        await MessageModel.updateStatus(msg.id, 'FAILED');
+        console.log(`[LIFECYCLE] Stage: OUTBOUND_SEND_FAILURE | LeadID: ${msg.leadId} | JID: ${targetJid} | Error: Socket not initialized`);
+        failedQueueCount++;
+        outboundQueue.shift();
+        continue;
+      }
+
+      // Throttling: simulate human typing offset delay (1.5s to 3s)
+      const delay = Math.floor(Math.random() * 1500) + 1500;
+      await new Promise(resolve => setTimeout(resolve, delay));
+
+      let sentMsg = null;
+      let lastError: any = null;
+      const maxAttempts = 3;
+
+      while (msg.attempts < maxAttempts) {
+        try {
+          console.log(`[LIFECYCLE] Stage: OUTBOUND_SEND_START | LeadID: ${msg.leadId} | JID: ${targetJid} | Attempt: ${msg.attempts + 1}/${maxAttempts}`);
+          console.log(`[TEMP LOG - 5] sock.sendMessage start to targetJid=${targetJid}`);
+          sentMsg = await sock.sendMessage(targetJid, { text: msg.text });
+          console.log(`[TEMP LOG - 6] sock.sendMessage success: id=${sentMsg?.key?.id || 'unknown'}`);
+          console.log(`[LIFECYCLE] Stage: OUTBOUND_SEND_SUCCESS | LeadID: ${msg.leadId} | JID: ${targetJid} | MsgID: ${sentMsg?.key?.id || 'unknown'} | Status: SENT`);
+          break;
+        } catch (err: any) {
+          msg.attempts++;
+          lastError = err;
+          console.warn(`⚠️ [GATEWAY] sendMessage attempt ${msg.attempts} failed for MsgID ${msg.id}: ${err.message || err}`);
+          
+          // Smart Retry Rules:
+          const errorMsg = err.message || '';
+          const isPermanent = /invalid|malformed|blocked|not-found|400|404/i.test(errorMsg);
+          if (isPermanent) {
+            console.error(`❌ Permanent error detected. Skipping retries for MsgID ${msg.id}.`);
+            break;
+          }
+          
+          if (msg.attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, msg.attempts * 1000));
+          }
+        }
+      }
+
+      if (sentMsg) {
+        const finalMsgId = sentMsg.key.id || msg.id;
+        const db = getDb();
+        await db.run(
+          'UPDATE whatsapp_chats SET id = ?, status = ? WHERE id = ?',
+          [finalMsgId, 'SENT', msg.id]
+        );
+        lastOutboundTime = new Date().toISOString();
+        outboundQueue.shift();
+      } else {
+        await MessageModel.updateStatus(msg.id, 'FAILED');
+        console.log(`[TEMP LOG - 6] sock.sendMessage failure for targetJid=${targetJid}:`, lastError?.message || lastError);
+        console.log(`[TEMP LOG - 7] Full exception stack:\n`, lastError?.stack || 'No stack trace');
+        console.log(`[LIFECYCLE] Stage: OUTBOUND_SEND_FAILURE | LeadID: ${msg.leadId} | JID: ${targetJid} | Error: ${lastError?.message || 'Unknown error'}`);
+        failedQueueCount++;
+        outboundQueue.shift();
+      }
+    }
+  } finally {
+    isProcessingQueue = false;
+  }
+}
+
 export async function sendWhatsAppMessage(phone: string, text: string, overrideJid?: string): Promise<boolean> {
+  console.log(`[TEMP LOG - 3] sendWhatsAppMessage called: phone=${phone}, overrideJid=${overrideJid}`);
   let lead = await LeadModel.findByPhone(phone);
 
   // Auto-create lead for outbound messages if none exists
@@ -658,56 +1155,53 @@ export async function sendWhatsAppMessage(phone: string, text: string, overrideJ
     await ConversationModel.updateThread(lead.id, text, false);
   }
 
-  if (!sock || connectionStatus !== 'connected') {
-    console.warn(`⚠️ Cannot send WhatsApp: Client is not authenticated or disconnected. Text: "${text}"`);
-    await MessageModel.create({
-      id: `fail-${Date.now()}`,
-      lead_id: lead.id,
-      direction: 'outbound',
-      body: text,
-      status: 'failed'
-    });
-    return false;
-  }
+  const msgId = `queued-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  
+  await MessageModel.create({
+    id: msgId,
+    lead_id: lead.id,
+    direction: 'outbound',
+    body: text,
+    status: 'QUEUED'
+  });
 
-  try {
-    // Use the override JID if provided (for LID-based replies), otherwise format from phone
-    const targetJid = overrideJid || formatJid(phone);
-    console.log(`📡 [SEND] Targeting JID: ${targetJid}`);
-    
-    // Smart throttling: simulate human typing offset delay (1.5s to 3s)
-    const delay = Math.floor(Math.random() * 1500) + 1500;
-    await new Promise(resolve => setTimeout(resolve, delay));
+  const targetJid = overrideJid || formatJid(phone);
+  console.log(`[LIFECYCLE] Stage: OUTBOUND_SEND_START | LeadID: ${lead.id} | JID: ${targetJid} | Socket: ${sock ? 'initialized' : 'null'} | Status: QUEUED`);
 
-    const sentMsg = await sock.sendMessage(targetJid, { text });
-    const msgId = sentMsg?.key?.id || `out-${Date.now()}`;
+  // Push to queue
+  outboundQueue.push({
+    id: msgId,
+    leadId: lead.id,
+    phone,
+    text,
+    overrideJid,
+    attempts: 0
+  });
 
-    await MessageModel.create({
-      id: msgId,
-      lead_id: lead.id,
-      direction: 'outbound',
-      body: text,
-      status: 'sent'
-    });
+  // Trigger queue processing (async)
+  processQueue().catch(err => {
+    console.error('❌ Error processing outbound queue:', err);
+  });
 
-    return true;
-  } catch (error) {
-    console.error(`❌ Failed to send WhatsApp to ${phone}:`, error);
-    await MessageModel.create({
-      id: `err-${Date.now()}`,
-      lead_id: lead.id,
-      direction: 'outbound',
-      body: text,
-      status: 'failed'
-    });
-    return false;
-  }
+  return true;
 }
 
 export function getWhatsAppStatus() {
+  const pendingCount = outboundQueue.length;
+  const currentStatus = connectionStatus;
+  const score = calculateHealthScore(currentStatus);
   return {
-    status: connectionStatus,
+    status: currentStatus,
     qr: latestQr,
-    qrImage: latestQrImage
+    qrImage: latestQrImage,
+    lastInboundMessageTimestamp: lastInboundTime,
+    lastOutboundMessageTimestamp: lastOutboundTime,
+    lastSuccessfulDeliveryTimestamp: lastDeliveryTime,
+    pendingQueueCount: pendingCount,
+    failedQueueCount: failedQueueCount,
+    reconnectCount: reconnectCount,
+    activeAiProvider: getActiveAiProvider(),
+    disconnectReason: disconnectReason,
+    healthScore: score
   };
 }

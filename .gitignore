@@ -52,6 +52,12 @@ server/data/backups/
 
 # WhatsApp session data
 **/wa-session/
+server/whatsapp-session/
+server/whatsapp-session-backups/
+
+# Scratch & Data
+server/scratch/
+server/data/
 
 # Zip / backup archives
 *.zip

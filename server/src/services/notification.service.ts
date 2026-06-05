@@ -327,3 +327,33 @@ export async function notifyHighBudgetLead(lead: {
     `Admin notified about high-budget lead: ${lead.name} (${lead.phone}) — Budget: ${lead.budget_range}`
   );
 }
+
+// ─── WhatsApp Disconnect Notification ────────────────────────────────────────
+export async function notifyWhatsAppDisconnect(reason: string, isPermanent: boolean, status: string): Promise<void> {
+  const message =
+    `⚠️ *WHATSAPP DISCONNECTED*\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `🚨 *Status:* ${status.toUpperCase()}\n` +
+    `📝 *Reason:* ${reason}\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `Please check the CRM admin dashboard immediately to restore connectivity.\n` +
+    `📋 Dashboard: https://trinetradigitalsolution.com/admin`;
+
+  const dedupKey = `wa_disconnect:${status}`;
+  if (!shouldNotify(dedupKey)) return;
+
+  const emailSubject = `⚠️ WhatsApp Gateway Status: ${status.toUpperCase()}`;
+  const emailBody =
+    `The Trinetra WhatsApp gateway status has changed.\n\n` +
+    `- New Status: ${status.toUpperCase()}\n` +
+    `- Disconnect Reason: ${reason}\n\n` +
+    `Click below to view the QR code or connection status on the dashboard:\n` +
+    `Dashboard Link: https://trinetradigitalsolution.com/admin`;
+  
+  await sendEmailAlert(emailSubject, emailBody);
+
+  await logAuditAction('WHATSAPP_DISCONNECT_ALERT',
+    `Admin notified about disconnect: ${reason} (Status=${status})`
+  );
+}
+

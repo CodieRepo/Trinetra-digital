@@ -21,6 +21,7 @@ const CookiePolicy     = lazy(() => import("@/pages/CookiePolicy"));
 const DataUsageNotice  = lazy(() => import("@/pages/DataUsageNotice"));
 const NotFoundPage     = lazy(() => import("@/pages/NotFoundPage"));
 const AdminCrm         = lazy(() => import("@/pages/admin/AdminCrm"));
+const AdminPipeline    = lazy(() => import("@/pages/admin/AdminPipeline"));
 
 
 // Service sub-pages
@@ -69,6 +70,7 @@ function AnimatedRoutes() {
           <Route path="/cookie-policy"            element={<CookiePolicy />} />
           <Route path="/data-usage-notice"        element={<DataUsageNotice />} />
           <Route path="/admin"                    element={<AdminCrm />} />
+          <Route path="/admin/pipeline"            element={<AdminPipeline />} />
 
           {/* Service Sub-pages */}
           <Route path="/services/whatsapp-automation" element={<FutureSolutions />} />

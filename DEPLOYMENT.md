@@ -1,256 +1,151 @@
-# Trinetra Digital Solution — VPS Production Operation & Deployment Manual
+# Trinetra OS — Deployment Guide
 
-This manual provides structured procedures to initialize, configure, monitor, maintain, and recover the Trinetra AI CRM and WhatsApp Automation platform in a secure, high-performance Linux VPS environment.
+## Prerequisites
 
----
+* Ubuntu 22.04 LTS (or similar)
+* Node.js v20+
+* Nginx (for reverse proxying and SSL)
+* PM2 (Process Manager for Node.js)
+* Git
 
-## 📂 System Directory Layout
-Ensure the application is deployed under `/var/www/` with isolated data directories:
-
-```text
-/var/www/trinetra/
-├── dist/                          # Compiled high-performance Vite frontend (served by Nginx)
-├── nginx.conf                     # Active Nginx configuration mapping
-└── server/                        # Backend Express API and WhatsApp Automation
-    ├── dist/                      # Compiled TypeScript backend assets
-    ├── ecosystem.config.js        # Active PM2 process definition
-    ├── logs/                      # Node/PM2 execution logs
-    │   ├── out.log
-    │   └── err.log
-    └── data/                      # Stateful Persistent Data Folder
-        ├── backups/               # 7-file rolling database backups
-        ├── trinetra.db            # Primary SQLite database
-        └── wa-session/            # WhatsApp Baileys credentials
-```
-
----
-
-## 🛠️ Step 1: VPS Environment Setup
-
-### 1. Install System Dependencies
-Execute the following commands on your Ubuntu/Debian server to install Nginx, Node.js (v20 LTS), npm, PM2, Git, and Certbot:
+## 1. Initial Server Setup
 
 ```bash
-# Update local packages database
+# Update system packages
 sudo apt update && sudo apt upgrade -y
 
-# Install git, curl, and build-essential packages
-sudo apt install -y git curl build-essential
-
-# Install Node.js v20 LTS
+# Install Node.js
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
+sudo apt-get install -y nodejs
 
-# Install PM2 Process Manager globally
+# Install PM2 globally
 sudo npm install -g pm2
-
-# Install Nginx and Certbot
-sudo apt install -y nginx certbot python3-certbot-nginx
 ```
 
-### 2. Configure Firewall (UFW)
-Secure the server ports. Open only SSH (22), HTTP (80), and HTTPS (443):
+## 2. Application Deployment
 
 ```bash
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-sudo ufw allow ssh
-sudo ufw allow 'Nginx Full'
-sudo ufw --force enable
-```
-
----
-
-## 🚀 Step 2: Code Initialization & Build
-
-### 1. Initialize Deployment Directories
-Clone the repository and set up directory permissions:
-
-```bash
-sudo mkdir -p /var/www/trinetra
-sudo chown -R $USER:$USER /var/www/trinetra
+# Clone the repository
+git clone https://github.com/your-org/trinetra-crm.git /var/www/trinetra
 cd /var/www/trinetra
 
-# Clone repository files into current folder
-git clone <YOUR_REPOSITORY_GIT_URL> .
-```
-
-### 2. Install Project Dependencies
-```bash
-# Install frontend package dependencies
+# Build the Frontend
 npm install
+npm run build
 
-# Install backend package dependencies
+# Build the Backend
 cd server
 npm install
-```
-
-### 3. Configure Production Environment Variables
-Create the production environment file `server/.env` and load secure variables:
-
-```bash
-nano /var/www/trinetra/server/.env
-```
-
-Add the following keys (replace with production secrets):
-```ini
-PORT=5000
-DATABASE_PATH=./data/trinetra.db
-WHATSAPP_SESSION_PATH=./data/wa-session
-JWT_SECRET=4f5b9d33261947bde904c62fbc0430db89d53c3d528f804aa1d258b387cf3c1a  # Create a secure random hash
-GEMINI_API_KEY=AIzaSyA1...YourAPIKey  # Secure Google AI Developer Key
-```
-
-### 4. Compile the Production Bundles
-Build both the frontend client and backend server to generate production assets:
-
-```bash
-# 1. Compile Vite frontend production assets
-cd /var/www/trinetra
-npm run build
-
-# 2. Compile TypeScript backend files to JavaScript
-cd /var/www/trinetra/server
 npm run build
 ```
 
----
+## 3. Environment Configuration
 
-## ⚙️ Step 3: PM2 Process Management
+Create a `.env` file in the `/var/www/trinetra/server` directory:
 
-Start the backend application using the production-hardened PM2 profile. This enforces stateful single-instance fork-mode constraints and limits Node memory usage:
+```env
+PORT=3000
+NODE_ENV=production
+FRONTEND_URL=https://crm.trinetra.digital
+
+# Database
+DB_FILE=./data/trinetra.db
+
+# OpenRouter Configuration
+OPENROUTER_API_KEY=your_key_here
+```
+
+## 4. PM2 Process Management
+
+Start the backend server using PM2.
 
 ```bash
+# Start the application
 cd /var/www/trinetra/server
+pm2 start dist/index.js --name "trinetra-backend" --update-env
 
-# Start server using the ecosystem configuration
-pm2 start ecosystem.config.js --env production
-
-# Ensure process list is saved to recover automatically on VPS reboot
+# Save the PM2 list to auto-start on server reboot
 pm2 save
-sudo pm2 startup
+pm2 startup
 ```
-*(Copy and execute the output command generated by `pm2 startup` to register the PM2 systemctl boot service).*
 
----
+## 5. Reverse Proxy Setup (Nginx)
 
-## 🔒 Step 4: Nginx Reverse Proxy & SSL Setup
+Configure Nginx to serve the static frontend and proxy backend API requests.
 
-### 1. Install Nginx Server Block
-Link the repository's production `nginx.conf` directly into active Nginx sites:
+```nginx
+server {
+    listen 80;
+    server_name crm.trinetra.digital;
+
+    # Serve built frontend static files
+    root /var/www/trinetra/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Proxy API and WebSocket requests to Backend
+    location /api/ {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+## 6. Update Procedure (Routine Deployments)
+
+When pushing new features, run the following commands on the VPS:
 
 ```bash
-# Copy nginx config file
-sudo cp /var/www/trinetra/nginx.conf /etc/nginx/sites-available/trinetra
+cd /var/www/trinetra
+git pull origin main
 
-# Create symbolic link to enable site
-sudo ln -sf /etc/nginx/sites-available/trinetra /etc/nginx/sites-enabled/
+# Rebuild Frontend
+npm install && npm run build
 
-# Remove default site if present
-sudo rm -f /etc/nginx/sites-enabled/default
+# Rebuild Backend
+cd server
+npm install && npm run build
 
-# Test Nginx syntax correctness
-sudo nginx -t
-```
-If the test reports `syntax is ok / test is successful`, reload Nginx:
-```bash
-sudo systemctl reload nginx
+# Restart the application
+pm2 restart trinetra-backend --update-env
 ```
 
-### 2. Provision Let's Encrypt SSL Certificates
-Run Certbot to automate SSL provisioning and secure all connections over HTTPS:
+## 7. Backup Procedure
+
+Automate SQLite backups using a cron job. The database is stored at `/var/www/trinetra/server/data/trinetra.db`.
 
 ```bash
-sudo certbot --nginx -d trinetradigitalsolution.com -d www.trinetradigitalsolution.com
-```
-*Select option **2** (Redirect all traffic to HTTPS) if prompted by Certbot.*
-
----
-
-## 🩺 Step 5: System Health Monitoring & Verification
-*   **Web API Status**: Access `https://trinetradigitalsolution.com/api/health` from a browser or curl. Verify the response contains:
-    ```json
-    { "status": "ok", "db": "connected", "whatsapp": "connected" }
-    ```
-*   **WhatsApp Pairing State**: Check logs using PM2:
-    ```bash
-    pm2 logs trinetra-crm-backend
-    ```
-    If paired, logs will state `🟢 WhatsApp connection successfully established and active!`. If pairing is required, it will output a sharp scannable ASCII QR code in the terminal logs!
-
----
-
-## 🛠️ Step 6: Disaster Recovery & Maintenance Playbook
-
-### 1. WhatsApp Session Reset (Credentials Corruption Recovery)
-If the WhatsApp connection gets corrupted, loops, or fails, execute this sequence to perform a clean session erasure and re-trigger a fresh terminal QR scan:
-
-```bash
-# Stop backend service
-pm2 stop trinetra-crm-backend
-
-# Clean WhatsApp credentials cache completely
-rm -rf /var/www/trinetra/server/data/wa-session/*
-
-# Restart service to print a fresh pairing QR code in logs
-pm2 start trinetra-crm-backend
-pm2 logs trinetra-crm-backend
+# Example backup script (run daily via cron)
+#!/bin/bash
+BACKUP_DIR="/var/backups/trinetra"
+DATE=$(date +"%Y%m%d_%H%M%S")
+mkdir -p $BACKUP_DIR
+sqlite3 /var/www/trinetra/server/data/trinetra.db ".backup '$BACKUP_DIR/trinetra_$DATE.db'"
 ```
 
-### 2. SQLite Database Integrity & Backups
-*   **Trigger Manual Backup**: To verify write health or secure a backup before code changes, run:
-    ```bash
-    curl -X POST -H "Authorization: Bearer <ADMIN_JWT_TOKEN>" https://trinetradigitalsolution.com/api/leads/backup
-    ```
-*   **Restore SQLite Database**: If database files get corrupted or need rollbacks, copy the latest backup from `/var/www/trinetra/server/data/backups/` over the active database:
-    ```bash
-    # Stop backend process to close all active write handles
-    pm2 stop trinetra-crm-backend
-    
-    # Restore file
-    cp /var/www/trinetra/server/data/backups/trinetra-backup-TIMESTAMP.db /var/www/trinetra/server/data/trinetra.db
-    
-    # Restart backend
-    pm2 start trinetra-crm-backend
-    ```
+## 8. Rollback Procedure
 
-### 3. Log Auditing & Cleaning
-To prevent disk space exhaustion, check logs sizes and clear them regularly:
-
-```bash
-# View active storage footprint of Node application logs
-du -h /var/www/trinetra/server/logs/
-
-# Flush/truncate logs to restore disk space
-pm2 flush
-```
-
-### 4. Code Hot-Update Sequence
-To update the live production code from the remote repository without downtime:
+If a deployment introduces critical bugs, execute the following commands to revert to a previous stable tag (e.g., `v1.0.0-trinetra-crm`).
 
 ```bash
 cd /var/www/trinetra
 
-# Pull latest files
-git pull
+# Fetch tags and checkout the stable version
+git fetch --tags
+git checkout tags/v1.0.0-trinetra-crm
 
-# Install any new dependencies
-npm install
-cd server && npm install
+# Rebuild Frontend and Backend
+npm install && npm run build
+cd server
+npm install && npm run build
 
-# Compile new bundles
-npm run build
-npm run build
-
-# Restart the live PM2 process gracefully to apply new server code
-pm2 reload trinetra-crm-backend
+# Restart the application
+pm2 restart trinetra-backend --update-env
 ```
-
----
-
-## 🏆 Verified Status Summary
-The entire setup has been rigorously tested using our localized E2E testing framework, confirming:
-*   Vite frontend + Express backend run seamlessly on a unified domain route structure.
-*   The rate limiter dynamically protects endpoints against spam flooding (`HTTP 429`).
-*   Rolling backups dynamically retain exactly 7 files, cleaning older backups automatically.
-*   System telemetry displays memory consumption and node uptime stats seamlessly in real-time.

@@ -18,5 +18,46 @@ export const WhatsAppController = {
       qr: status.qr,
       qrImage: status.qrImage
     });
+  },
+
+  // POST /api/whatsapp/restart
+  async restart(req: Request, res: Response) {
+    try {
+      const { restartWhatsApp } = await import('../whatsapp/gateway');
+      await restartWhatsApp();
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // GET /api/whatsapp/backups
+  async listBackups(req: Request, res: Response) {
+    try {
+      const { listSessionBackups } = await import('../whatsapp/gateway');
+      const backups = listSessionBackups();
+      return res.json(backups);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // POST /api/whatsapp/rollback
+  async rollbackBackup(req: Request, res: Response) {
+    try {
+      const { backupDirName } = req.body;
+      if (!backupDirName) {
+        return res.status(400).json({ error: 'backupDirName parameter is required.' });
+      }
+      const { restoreSessionBackup } = await import('../whatsapp/gateway');
+      const success = await restoreSessionBackup(backupDirName);
+      if (success) {
+        return res.json({ success: true });
+      } else {
+        return res.status(500).json({ error: 'Failed to restore session backup.' });
+      }
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
   }
 };

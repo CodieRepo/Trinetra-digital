@@ -16,6 +16,7 @@ import whatsappRoutes from './routes/whatsapp.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import conversationsRoutes from './routes/conversations.routes';
 import appointmentsRoutes from './routes/appointments.routes';
+import quotationsRoutes from './routes/quotations.routes';
 import { ConversationsController } from './controllers/conversations.controller';
 import { authenticateJWT } from './middleware/auth';
 
@@ -72,6 +73,7 @@ app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/conversations', conversationsRoutes);
 app.use('/api/appointments', appointmentsRoutes);
+app.use('/api/quotations', quotationsRoutes);
 app.post('/api/send-message', authenticateJWT, ConversationsController.sendGeneralMessage);
 
 // Token + cost analytics endpoints

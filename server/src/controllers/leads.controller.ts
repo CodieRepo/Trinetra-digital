@@ -4,11 +4,13 @@ import path from 'path';
 import fs from 'fs';
 import { getDb, logAuditAction, resolvedDbPath } from '../database/connection';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { qualifyLead } from '../services/ai.service';
+import { processWithAI, AIContext } from '../services/openrouter.service';
 import { sendWhatsAppMessage } from '../whatsapp/gateway';
 import { scheduleNurtureSequence } from '../services/cron.service';
 import { LeadModel, LeadDTO } from '../models/lead.model';
 import { MessageModel, ConversationModel } from '../models/message.model';
+import { TaskModel, TaskStatus } from '../models/tasks.model';
+import { getLeadTimeline } from '../services/timeline.service';
 
 // UUID v4 generator helper
 function generateUuid() {
@@ -66,18 +68,29 @@ export const LeadsController = {
         setImmediate(async () => {
           try {
             const aiStart = performance.now();
-            console.log(`🤖 Triggering Gemini AI qualification loop for existing lead: ${name}...`);
+            console.log(`🤖 Triggering OpenRouter AI qualification loop for existing lead: ${name}...`);
             
             let aiResult;
             try {
-              aiResult = await qualifyLead(name, service || 'AI Automation', source || 'website', []);
+              const ctx: AIContext = {
+                leadId: existingLead!.id,
+                leadName: name,
+                leadPhone: formattedPhone,
+                service: service || 'AI Automation Solutions',
+                source: source || 'website',
+                currentScore: existingLead!.ai_score || 0,
+                conversationSummary: '',
+                recentMessages: [],
+                totalMessagesCount: 0
+              };
+              aiResult = await processWithAI(ctx);
             } catch (err) {
               console.error(`❌ AI qualification error for existing lead ${name}:`, err);
               aiResult = {
                 ai_score: 50,
                 ai_budget: false,
                 ai_summary: "Intake evaluation in progress. Awaiting further customer responses.",
-                suggested_reply: `Thank you for contacting Trinetra Digital Solution.\n\nWe've received your inquiry and our team will review it shortly.\n\nPlease share:\n• Business Name\n• Industry\n• Approximate monthly leads\n\nWe will get back to you as soon as possible.`
+                reply: `Thank you for contacting Trinetra Digital Solution.\n\nWe've received your inquiry and our team will review it shortly.\n\nPlease share:\n• Business Name\n• Industry\n• Approximate monthly leads\n\nWe will get back to you as soon as possible.`
               };
             }
             const aiDuration = (performance.now() - aiStart).toFixed(2);
@@ -91,7 +104,7 @@ export const LeadsController = {
             });
 
             console.log(`📤 Sending initial WhatsApp message to ${name} (${formattedPhone})...`);
-            const sent = await sendWhatsAppMessage(formattedPhone, aiResult.suggested_reply);
+            const sent = await sendWhatsAppMessage(formattedPhone, aiResult.reply);
             if (sent) {
               await LeadModel.update(existingLead!.id, { status: 'qualified' });
               await logAuditAction('WHATSAPP_SEND', `Sent automated initial qualification response to ${name}`);
@@ -151,18 +164,29 @@ export const LeadsController = {
       setImmediate(async () => {
         try {
           const aiStart = performance.now();
-          console.log(`🤖 Triggering Gemini AI qualification loop for lead: ${name}...`);
+          console.log(`🤖 Triggering OpenRouter AI qualification loop for lead: ${name}...`);
           
           let aiResult;
           try {
-            aiResult = await qualifyLead(name, service || 'AI Automation', source || 'website', []);
+            const ctx: AIContext = {
+              leadId: leadId,
+              leadName: name,
+              leadPhone: formattedPhone,
+              service: service || 'AI Automation Solutions',
+              source: source || 'website',
+              currentScore: 0,
+              conversationSummary: '',
+              recentMessages: [],
+              totalMessagesCount: 0
+            };
+            aiResult = await processWithAI(ctx);
           } catch (err) {
             console.error(`❌ AI qualification error for lead ${name}:`, err);
             aiResult = {
               ai_score: 50,
               ai_budget: false,
               ai_summary: "Intake evaluation in progress. Awaiting further customer responses.",
-              suggested_reply: `Thank you for contacting Trinetra Digital Solution.\n\nWe've received your inquiry and our team will review it shortly.\n\nPlease share:\n• Business Name\n• Industry\n• Approximate monthly leads\n\nWe will get back to you as soon as possible.`
+              reply: `Thank you for contacting Trinetra Digital Solution.\n\nWe've received your inquiry and our team will review it shortly.\n\nPlease share:\n• Business Name\n• Industry\n• Approximate monthly leads\n\nWe will get back to you as soon as possible.`
             };
           }
           const aiDuration = (performance.now() - aiStart).toFixed(2);
@@ -178,7 +202,7 @@ export const LeadsController = {
 
           // Send Initial WhatsApp Touchpoint
           console.log(`📤 Sending initial WhatsApp message to ${name} (${formattedPhone})...`);
-          const sent = await sendWhatsAppMessage(formattedPhone, aiResult.suggested_reply);
+          const sent = await sendWhatsAppMessage(formattedPhone, aiResult.reply);
           if (sent) {
             await LeadModel.update(leadId, {
               status: 'qualified'
@@ -497,5 +521,93 @@ export const LeadsController = {
       return res.status(500).json({ success: false, error: err.message });
     }
   },
-};
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PHASE 3B — Tasks API
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // GET /api/leads/:id/tasks — List all tasks for a lead
+  async listTasks(req: AuthenticatedRequest, res: Response) {
+    const { id } = req.params;
+    try {
+      const lead = await LeadModel.findById(id);
+      if (!lead) return res.status(404).json({ error: 'Lead not found' });
+      const tasks = await TaskModel.findByLead(id);
+      return res.json({ success: true, data: tasks });
+    } catch (err: any) {
+      console.error('listTasks error:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
+  // POST /api/leads/:id/tasks — Manually create a task for a lead
+  async createTask(req: AuthenticatedRequest, res: Response) {
+    const { id } = req.params;
+    const { title, description, type, due_at } = req.body;
+
+    if (!title || !type) {
+      return res.status(400).json({ error: 'title and type are required' });
+    }
+
+    try {
+      const lead = await LeadModel.findById(id);
+      if (!lead) return res.status(404).json({ error: 'Lead not found' });
+
+      const task = await TaskModel.create({
+        lead_id: id,
+        title,
+        description: description ?? null,
+        status: 'pending',
+        type,
+        due_at: due_at ?? null,
+      });
+
+      await logAuditAction('TASK_CREATED', `Manual task created for ${lead.name}: "${title}"`);
+      return res.status(201).json({ success: true, data: task });
+    } catch (err: any) {
+      console.error('createTask error:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
+  // PATCH /api/tasks/:taskId — Update task status
+  async updateTask(req: AuthenticatedRequest, res: Response) {
+    const { taskId } = req.params;
+    const { status } = req.body;
+
+    const validStatuses: TaskStatus[] = ['pending', 'in_progress', 'completed', 'cancelled'];
+    if (!status || !validStatuses.includes(status)) {
+      return res.status(400).json({ error: `status must be one of: ${validStatuses.join(', ')}` });
+    }
+
+    try {
+      const task = await TaskModel.findById(taskId);
+      if (!task) return res.status(404).json({ error: 'Task not found' });
+
+      await TaskModel.updateStatus(taskId, status as TaskStatus);
+      await logAuditAction('TASK_UPDATE', `Task ${taskId} updated to status: ${status}`);
+      return res.json({ success: true, message: `Task marked as ${status}` });
+    } catch (err: any) {
+      console.error('updateTask error:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PHASE 3A — Lead Timeline API
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // GET /api/leads/:id/timeline — Get full activity timeline for a lead
+  async getTimeline(req: AuthenticatedRequest, res: Response) {
+    const { id } = req.params;
+    try {
+      const lead = await LeadModel.findById(id);
+      if (!lead) return res.status(404).json({ error: 'Lead not found' });
+      const timeline = await getLeadTimeline(id);
+      return res.json({ success: true, data: timeline });
+    } catch (err: any) {
+      console.error('getTimeline error:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  },
+};

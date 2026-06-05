@@ -14,14 +14,24 @@ async function testSequence() {
   const jid = '222483684843672@s.whatsapp.net';
   const pushName = 'Satwik Live Test';
 
-  // 1. Initial complete clean of chat history & alerts
   console.log('\n🔄 Cleaning up database state for test lead...');
   await db.run("DELETE FROM whatsapp_chats WHERE lead_id = ?", [leadId]);
   await db.run("DELETE FROM handoff_alerts WHERE lead_id = ?", [leadId]);
-  await db.run(
-    "UPDATE leads SET ai_enabled = 1, ai_summary = NULL, status = 'new', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-    [leadId]
-  );
+
+  const leadExists = await db.get("SELECT id FROM leads WHERE id = ?", [leadId]);
+  if (!leadExists) {
+    console.log(`👤 Test lead does not exist. Creating default test lead...`);
+    await db.run(
+      `INSERT INTO leads (id, name, phone, email, company, service, source, status, ai_score, ai_budget, ai_summary, notes, ai_enabled) 
+       VALUES (?, ?, ?, NULL, NULL, 'WhatsApp Automation Intake', 'whatsapp', 'new', 0, 0, NULL, NULL, 1)`,
+      [leadId, pushName, '+222483684843672']
+    );
+  } else {
+    await db.run(
+      "UPDATE leads SET name = ?, phone = ?, ai_enabled = 1, ai_summary = NULL, status = 'new', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [pushName, '+222483684843672', leadId]
+    );
+  }
 
   const testCases = [
     { text: 'Hi', label: '1. Greeting / Introduction' },

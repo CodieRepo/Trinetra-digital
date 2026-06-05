@@ -13,14 +13,29 @@
  */
 
 import dotenv from 'dotenv';
-dotenv.config();
-
 import { logAuditAction } from '../database/connection';
+import { getKnowledgeBaseBlock, COMPANY, AI_RULES, LEAD_SIGNALS } from '../config/knowledge-base';
+
+dotenv.config();
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 const OPENROUTER_BASE = 'https://openrouter.ai/api/v1/chat/completions';
 const SITE_URL = process.env.FRONTEND_URL || 'https://trinetradigitalsolution.com';
 const SITE_NAME = 'Trinetra Digital Solution';
+
+// Startup key logging (masked)
+const keyLen = OPENROUTER_API_KEY.length;
+const maskedKey = keyLen >= 16 
+  ? `${OPENROUTER_API_KEY.substring(0, 8)}...${OPENROUTER_API_KEY.substring(keyLen - 8)}`
+  : 'invalid_length';
+console.log(`🔑 [AI_STARTUP] Loaded OPENROUTER_API_KEY: length=${keyLen}, masked="${maskedKey}"`);
+console.log(`🌐 [AI_STARTUP] OpenRouter Base URL: "${OPENROUTER_BASE}"`);
+
+let currentAiProvider: 'OpenRouter' | 'Gemini' | 'EmergencyTemplate' | 'HandoffTemplate' = 'OpenRouter';
+
+export function getActiveAiProvider() {
+  return currentAiProvider;
+}
 
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -46,6 +61,11 @@ export interface AIResponse {
   ai_score: number;
   ai_budget: boolean;
   ai_summary: string;
+  ai_summary_detailed?: string;
+  intent_level?: 'HOT' | 'WARM' | 'COLD' | 'QUOTATION_REQUIRED';
+  recommended_action?: string;
+  urgency_level?: 'low' | 'medium' | 'high';
+  objections?: string;
   human_handoff: boolean;
   handoff_reason?: string;
   lead_stage: 'greeting' | 'qualifying' | 'recommending' | 'objection' | 'booking' | 'handoff';
@@ -176,7 +196,6 @@ function detectHandoff(text: string): { trigger: boolean; reason: string } {
     }
   }
 
-  // 4. Buying Intent
   const buyingIntentPatterns = [
     /\b(buy|purchase|order|subscribe|get started|sign up|deal|close deal|start project|want to start|shuru krna|shuru karna|finalise|finalize|onboard|onboarding|interested to start)\b/i,
     /\b(i want this|let's start|lets start|how do we proceed|when can we begin|i am interested|interested in this)\b/i,
@@ -187,14 +206,12 @@ function detectHandoff(text: string): { trigger: boolean; reason: string } {
     }
   }
 
-  // 5. Safe Service Patterns (only checks if none of the above escalation intents matched)
   for (const safe of SAFE_SERVICE_PATTERNS) {
     if (safe.test(text)) {
       return { trigger: false, reason: '' };
     }
   }
 
-  // 6. Other escalation keywords (angerness, refund, scam, etc.)
   for (const pattern of HANDOFF_PATTERNS) {
     if (pattern.test(text)) {
       return { trigger: true, reason: `Escalation keyword: "${pattern.source}"` };
@@ -210,25 +227,20 @@ function estimateCost(modelId: string, inputTokens: number, outputTokens: number
   return (inputTokens * model.cost_in) + (outputTokens * model.cost_out);
 }
 
-// â”€â”€â”€ Master System Prompt â€” Trinetra AI Sales Assistant â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Update this function to change AI persona and behavior.
+// ─── Master System Prompt — Trinetra AI Sales Assistant ──────────────────────
+// Powered by official Knowledge Base (knowledge-base.ts).
+// All pricing, policies, and brand identity are sourced from the KB.
 
 function buildSystemPrompt(ctx: AIContext): string {
-  return `You are the official Sales Consultant, Business Advisor, and Service Recommendation Assistant for Trinetra Digital Solution.
-Your name is "Trinetra Assistant". You represent Trinetra Digital Solution professionally and focus on helping businesses understand services, packages, and digital solutions.
+  const kb = getKnowledgeBaseBlock();
+
+  return `You are the official AI Sales Consultant and Business Advisor for Trinetra Digital Solution.
+Your name is "Trinetra Assistant". You are knowledgeable, honest, helpful, and consultative.
 
 DO NOT behave like ChatGPT, a survey form, an interviewer, or a robotic chatbot.
-Your goal is to have a consultative, helpful conversation, guiding leads to find the best solutions and take the next step.
+Your goal: guide leads to find the best solutions and take the next step with confidence.
 
-==================================================
-COMPANY IDENTITY & DETAILS
-==================================================
-Company: Trinetra Digital Solution
-Tagline: Your Business Automation & Digital Growth Partner
-Address: 218X, Gayatri Puram, Nakaha No. 1, Basharatpur, Gorakhpur, Uttar Pradesh, India
-Website: https://trinetradigitalsolution.com
-Phone: +91 9334757759
-Email: info@trinetradigitalsolution.com
+${kb}
 
 ==================================================
 CURRENT LEAD PROFILE
@@ -242,105 +254,49 @@ ${ctx.company ? `Business: ${ctx.company}` : ''}
 Current Lead Score: ${ctx.currentScore}/100
 
 CONVERSATION CONTEXT:
-${ctx.conversationSummary ? `Previous Summary: ${ctx.conversationSummary}` : 'New conversation.'}
-
-==================================================
-SERVICES CATALOG
-==================================================
-1. Website Development — Business websites, landing pages, portfolio, e-commerce, lead generation sites
-2. WhatsApp Automation — Auto-replies, lead capture, follow-up automation, CRM integration, broadcast management
-3. AI Chatbot Development — WhatsApp chatbots, website chatbots, lead qualification bots, support bots
-4. CRM Development — Lead management, sales pipeline, customer tracking, reporting dashboards
-5. Lead Management Systems — Automated lead capture, scoring, nurturing, and routing
-6. AI Sales Systems — AI-powered conversations, smart follow-ups, appointment booking, team assignment
-7. Appointment Booking Systems — Online booking, calendar integration, reminder automation
-8. Digital Marketing — Social media marketing, lead generation campaigns, brand visibility
-9. SEO Services — Keyword research, on-page SEO, technical SEO, local SEO, reporting
-10. Google Business Profile — GBP setup, optimization, review management, local visibility
-11. Social Media Automation — Content planning, scheduling, posting, engagement automation
-12. Custom SaaS Development — Custom web applications, multi-user platforms, portals
-13. Workflow Automation — Business process automation, API integrations, n8n/Zapier flows
-14. Customer Support Automation — Automated FAQ systems, ticket management, support bots
-15. API Integrations — WhatsApp API, payment gateways, ERP, CRM, third-party APIs
-16. Business Process Automation — End-to-end business workflow digitization
-
-==================================================
-PACKAGE & PRICING CATALOG
-==================================================
-Be transparent about pricing. Mention: "Final pricing may vary based on scope and customization requirements."
-
-• PACKAGE 1: LAUNCH PACKAGE
-  - Setup Cost: ₹7,999 (one-time)
-  - Monthly Cost: ₹1,499/month
-  - Includes: WhatsApp Business setup, welcome messages, FAQ automation, lead capture, contact management, basic analytics
-  - Best For: Small local shops, individual service providers needing simple welcome/away replies and basic FAQs.
-
-• PACKAGE 2: GROWTH PACKAGE
-  - Setup Cost: ₹14,999 (one-time)
-  - Monthly Cost: ₹3,999/month
-  - Includes: Everything in Launch PLUS lead qualification surveys, automated follow-up sequences, missed lead recovery, appointment booking flows, CRM integration, analytics dashboard
-  - Best For: Growing businesses, clinics, salons, coaching institutes, agencies needing automatic appointment scheduling or lead qualification.
-
-• PACKAGE 3: AI SALES SYSTEM
-  - Setup Cost: ₹29,999 – ₹75,000 (based on scope)
-  - Monthly Cost: ₹7,999 – ₹24,999/month
-  - Includes: Smart AI chatbot, 24/7 AI lead qualification, custom knowledge base, smart follow-ups, appointment booking, CRM pipeline dashboard, automated sales routing
-  - Best For: High lead volume businesses, real estate, education providers, sales teams needing a 24/7 AI-powered agent.
-
-• PACKAGE 4: CUSTOM CRM / CUSTOM SAAS
-  - Setup Cost: ₹50,000 – ₹3,00,000+ (depends on scope)
-  - Monthly Cost: ₹2,999 – ₹25,000+/month
-  - Best For: Enterprises requiring custom internal software, employee login portals, or specialized modules.
-
-• ADD-ON SERVICES:
-  - Website Development:
-    * Starter (5 pages): ₹7,999 – ₹15,000
-    * Business Website: ₹15,000 – ₹35,000
-    * Premium Website: ₹35,000 – ₹75,000+
-    * E-Commerce: ₹25,000 – ₹1,50,000+
-  - SEO Services:
-    * Local SEO: ₹5,000/month
-    * Business SEO: ₹10,000/month
-    * Advanced SEO: ₹15,000 – ₹25,000/month
-  - Digital Marketing:
-    * Starter: ₹5,000/month
-    * Growth: ₹10,000/month
-    * Premium: ₹25,000+/month
-  - Google Business Profile:
-    * Setup: ₹2,999
-    * Management: ₹999 – ₹2,999/month
-  - Social Media Management: ₹4,999 – ₹25,000/month
-  - Custom Integrations: ₹5,000 – ₹1,00,000+
+${ctx.conversationSummary ? `Previous Summary: ${ctx.conversationSummary}` : 'New conversation — greet warmly.'}
 
 ==================================================
 CORE BEHAVIOR RULES (MANDATORY)
 ==================================================
-1. SERVICE-FIRST, BENEFITS-FIRST, PRICING-FIRST: Whenever a customer asks about a service or package, you MUST first explain what the service/package does, outline its value-driven business benefits (e.g. saving time, converting leads), state the pricing clearly (transparent setup and monthly costs), and suggest a next step. ONLY THEN you may ask at most ONE relevant follow-up question.
-2. PACKAGE-FIRST RULE: When users ask about price, cost, charges, or packages, you MUST immediately provide pricing details. Never hide pricing or force qualification before showing pricing.
-3. DYNAMIC RECOMMENDATION MODE: When a user mentions their business type or description:
-   - DO NOT use hardcoded business-type lookups.
-   - Consultant Outcome-First Thinking: Focus on the specific business outcome the customer wants first:
-     * Salon: More appointments / booking management
-     * Clinic: Patient follow-ups
-     * Wholesale: Inquiry management / bulk order processing
-     * Construction: Lead generation
-     * Coaching: Student inquiries
-     * Restaurant: Bookings and repeat customers
-   - Always present EXACTLY ONE primary recommendation and optionally ONE upgrade path. Do NOT list multiple packages as equal primary suggestions (e.g. avoid suggesting "Growth Package or Custom CRM").
-   - Follow this strict structured format (BUSINESS OUTCOME FIRST):
-     1. Business Benefit/Outcome (What problem is solved, e.g. getting more appointments automatically without manual booking hassle)
-     2. Solution (How the automation achieves it, e.g. self-serve calendar booking link with auto SMS/WhatsApp reminders)
-     3. Recommended Package name (e.g. Growth Package)
-     4. Setup & Monthly Pricing (transparently listed)
-     5. Upgrade Option (e.g., Custom CRM if advanced customization or team dashboards are required)
-   - Suggest a next step (e.g., booking a demo call) and ask at most ONE relevant question.
-4. BUDGET HANDLING RULE: If a user shares a budget (e.g., ₹20,000):
-   - Explain suitable options that fit or are closest to their budget first.
-   - Recommend a package and outline its business benefits.
-   - Offer a free consultation or demo call as an option.
-   - Limit follow-up questions to exactly one. Do not trigger a human handoff on budget mentions alone. Only let the system escalate if they explicitly ask to speak to a consultant, request a formal proposal/quote, or want to proceed with purchase.
-5. QUALIFICATION RULE: Ask at most ONE question per response. Never stack multiple questions in a single turn. Always provide value and information before asking.
-6. Language: Hinglish (Hindi + English mix) matching the customer's choice, using a professional, consultative, helpful tone. Emojis and bullet points must render correctly in UTF-8 (use ₹ for Rupee, 🙏, etc.).
+1. PRICING-FIRST RULE: When asked about price, cost, charges, or packages — immediately provide pricing from the OFFICIAL PACKAGE PRICING section above. Never hide pricing or force qualification before showing pricing.
+
+2. BENEFITS-FIRST RECOMMENDATION: When a user mentions their business type:
+   - Lead with the business OUTCOME (e.g., "more appointments without manual booking")
+   - Then explain the solution
+   - Then state the package name and pricing clearly
+   - Offer ONE primary recommendation + ONE optional upgrade path
+   - Never suggest two packages as equal alternatives
+
+3. HOT LEAD SIGNALS: Score above 75 and/or asking for pricing/quotation/proposal/demo:
+   ${LEAD_SIGNALS.hot.slice(0,4).join(' | ')}
+
+4. BUDGET HANDLING: If user shares budget:
+   - Find the best fitting package from official pricing
+   - Explain business benefits
+   - Offer free consultation as next step
+   - Ask exactly ONE follow-up question max
+   - Do NOT trigger handoff on budget mentions alone
+
+5. OBJECTION RESPONSES (use these when applicable):
+   - "Too expensive": Compare to cost of missed leads. Starter = ₹14,999 setup + ₹2,999/month — less than 1-2 missed conversions.
+   - "No guarantee": We are transparent — no lead/ranking guarantees. We guarantee professional delivery, clean code, and strategic execution.
+   - "Need to think": "Bilkul! Free 30-minute consultation available — koi pressure nahi. Kab convenient hoga aapko?"
+   - "Already have developer": We offer website + CRM + marketing under one roof — integrated systems.
+
+6. ONE QUESTION RULE: Ask at most ONE question per response. Never stack multiple questions.
+
+7. LANGUAGE: Hinglish (Hindi + English mix) matching customer's choice. Professional, warm, consultative. Emojis and bullet points in UTF-8. Use ₹ for Rupee. Max 120 words per reply.
+
+8. ALWAYS END with a clear next step: free consultation call, send WhatsApp message to ${COMPANY.phone}, or visit ${COMPANY.website}
+
+9. NEVER use pricing different from the OFFICIAL PACKAGE PRICING section above.
+
+10. CUSTOMER PAIN POINTS → SOLUTIONS:
+    - No website → Starter Presence (₹14,999 + ₹2,999/month)
+    - Losing leads from WhatsApp → Growth Engine (₹29,999 + ₹5,999/month)
+    - No structured follow-up / using spreadsheets → Sales System (₹59,999 + ₹9,999/month)
+    - Need custom software / dashboards → Business OS (₹1,49,999+ + ₹19,999+/month)
 
 ==================================================
 RESPOND ONLY WITH THIS EXACT JSON FORMAT (no markdown, no backticks):
@@ -350,7 +306,12 @@ RESPOND ONLY WITH THIS EXACT JSON FORMAT (no markdown, no backticks):
   "ai_score": <number 1-100>,
   "ai_budget": <true if budget or price was mentioned by customer>,
   "ai_summary": "<1-2 sentence CRM summary of the lead>",
-  "human_handoff": <true if handoff conditions are met, else false>,
+  "ai_summary_detailed": "<structured summary: business type | service interest | budget signals | urgency | objections | last discussion point>",
+  "intent_level": "<HOT|WARM|COLD|QUOTATION_REQUIRED>",
+  "urgency_level": "<low|medium|high>",
+  "objections": "<list of any objections raised, or null>",
+  "recommended_action": "<next sales action, e.g. Send Growth Engine pricing sheet, Schedule demo call, Share portfolio>",
+  "human_handoff": <true if handoff conditions met, else false>,
   "handoff_reason": "<reason if handoff is true, else null>",
   "lead_stage": "<greeting|qualifying|recommending|objection|booking|handoff>",
   "recommended_package": "<launch|growth|ai_sales|custom|null>",
@@ -377,6 +338,13 @@ async function callModel(
   
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20_000); // 20s hard timeout
+
+  const keyLen = OPENROUTER_API_KEY.length;
+  const maskedAuth = keyLen >= 16 
+    ? `Bearer ${OPENROUTER_API_KEY.substring(0, 8)}...${OPENROUTER_API_KEY.substring(keyLen - 8)}`
+    : 'Bearer invalid_length';
+  
+  console.log(`🌐 [OPENROUTER CALL] Target: "${OPENROUTER_BASE}" | Model: "${model.id}" | Auth: "${maskedAuth}"`);
 
   try {
     const res = await fetch(OPENROUTER_BASE, {
@@ -433,7 +401,16 @@ export async function processWithAI(ctx: AIContext): Promise<AIResponse> {
   const cacheKey = getCacheKey(ctx);
   const cached = responseCache.get(cacheKey);
   if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) {
-    console.log(`ðŸ—‚ï¸ [OPENROUTER] Cache hit for ${ctx.leadName}. Returning cached response.`);
+    console.log(`📁 [OPENROUTER] Cache hit for ${ctx.leadName}. Returning cached response.`);
+    if (cached.result.model_used.includes('gemini-2.5-flash-fallback')) {
+      currentAiProvider = 'Gemini';
+    } else if (cached.result.model_used === 'emergency_template') {
+      currentAiProvider = 'EmergencyTemplate';
+    } else if (cached.result.model_used === 'handoff_template') {
+      currentAiProvider = 'HandoffTemplate';
+    } else {
+      currentAiProvider = 'OpenRouter';
+    }
     return cached.result;
   }
 
@@ -456,33 +433,30 @@ export async function processWithAI(ctx: AIContext): Promise<AIResponse> {
 
   if (handoffCheck.trigger) {
     console.log(`🚨 [OPENROUTER] Human handoff triggered for ${ctx.leadName}: ${handoffCheck.reason}`);
+    currentAiProvider = 'HandoffTemplate';
     return handoffResponse(ctx, handoffCheck.reason);
   }
 
-  // 3. Build system prompt (same every time for a lead â€” can be cached by OpenRouter)
+  // 3. Build system prompt
   const systemPrompt = buildSystemPrompt(ctx);
 
-  // â”€â”€ Diagnostic: log prompt fingerprint so we can verify the correct prompt is being sent
-  console.log(`\ud83d\udccc [PROMPT] len=${systemPrompt.length} | first300='${systemPrompt.substring(0, 300).replace(/\n/g, ' ')}'`);
+  console.log(`📌 [PROMPT] len=${systemPrompt.length} | first300='${systemPrompt.substring(0, 300).replace(/\n/g, ' ')}'`);
 
   // 4. Cascade through models
   let lastError = '';
   for (const model of MODELS) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        console.log(`\ud83e\udd16 [OPENROUTER] Trying ${model.id} (attempt ${attempt}/2) for ${ctx.leadName}`);
+        console.log(`🤖 [OPENROUTER] Trying ${model.id} (attempt ${attempt}/2) for ${ctx.leadName}`);
         
         const { raw, usage } = await callModel(model, systemPrompt, ctx.recentMessages, attempt);
         
-        // Parse JSON response
         const parsed = parseAIResponse(raw);
         
-        // Validate required fields
         if (!parsed.reply || typeof parsed.ai_score !== 'number') {
           throw new Error('Response missing required fields');
         }
 
-        // Cap the reply to 120 words
         const words = parsed.reply.split(/\s+/);
         if (words.length > 130) {
           parsed.reply = words.slice(0, 120).join(' ') + '...';
@@ -490,11 +464,26 @@ export async function processWithAI(ctx: AIContext): Promise<AIResponse> {
 
         const cost = estimateCost(model.id, usage.prompt_tokens, usage.completion_tokens);
         
+        const finalScore = Math.min(100, Math.max(0, parsed.ai_score));
+        let intent: 'HOT' | 'WARM' | 'COLD' | 'QUOTATION_REQUIRED' = 'COLD';
+        if (parsed.ai_budget || parsed.lead_stage === 'objection' || /pricing|price|rate|quote|cost|charges/i.test(ctx.recentMessages[ctx.recentMessages.length-1]?.content || '')) {
+          intent = 'QUOTATION_REQUIRED';
+        } else if (finalScore >= 75) {
+          intent = 'HOT';
+        } else if (finalScore >= 35) {
+          intent = 'WARM';
+        }
+
         const result: AIResponse = {
           reply: parsed.reply,
-          ai_score: Math.min(100, Math.max(0, parsed.ai_score)),
+          ai_score: finalScore,
           ai_budget: !!parsed.ai_budget,
           ai_summary: parsed.ai_summary || '',
+          ai_summary_detailed: parsed.ai_summary_detailed || '',
+          intent_level: intent,
+          recommended_action: parsed.recommended_action || 'Consult client needs',
+          urgency_level: parsed.urgency_level || 'low',
+          objections: parsed.objections || undefined,
           human_handoff: !!parsed.human_handoff,
           handoff_reason: parsed.handoff_reason || undefined,
           lead_stage: parsed.lead_stage || 'qualifying',
@@ -508,7 +497,6 @@ export async function processWithAI(ctx: AIContext): Promise<AIResponse> {
           cost_usd: cost,
         };
 
-        // Store in cache
         responseCache.set(cacheKey, { result, ts: Date.now() });
 
         await logAuditAction('AI_SUCCESS', 
@@ -516,30 +504,32 @@ export async function processWithAI(ctx: AIContext): Promise<AIResponse> {
           `Tokens: ${result.input_tokens}in/${result.output_tokens}out | Cost: $${cost.toFixed(6)}`
         );
 
-        console.log(`âœ… [OPENROUTER] ${model.id} success | Score: ${result.ai_score} | Cost: $${cost.toFixed(6)}`);
+        console.log(`✅ [OPENROUTER] ${model.id} success | Score: ${result.ai_score} | Cost: $${cost.toFixed(6)}`);
+        currentAiProvider = 'OpenRouter';
         return result;
 
       } catch (err: any) {
         lastError = err?.message || 'Unknown error';
-        console.warn(`âš ï¸ [OPENROUTER] ${model.id} attempt ${attempt} failed: ${lastError.substring(0, 100)}`);
+        console.warn(`⚠️ [OPENROUTER] ${model.id} attempt ${attempt} failed: ${lastError.substring(0, 100)}`);
         
         if (attempt < 2) {
-          await new Promise(r => setTimeout(r, 1000)); // 1s delay before retry
+          await new Promise(r => setTimeout(r, 1000));
         }
       }
     }
     
-    console.error(`âŒ [OPENROUTER] ${model.id} exhausted. Moving to next model.`);
+    console.error(`❌ [OPENROUTER] ${model.id} exhausted. Moving to next model.`);
     await logAuditAction('AI_FAILOVER', `${model.id} failed: ${lastError.substring(0, 150)}`);
   }
 
-  // All models failed â€” use emergency template
-  console.error('ðŸš¨ [OPENROUTER] All models failed. Activating emergency template.');
-  await logAuditAction('AI_EMERGENCY', `All OpenRouter models failed. Last error: ${lastError}`);
+  // All OpenRouter models failed — fallback to local emergency template
+  console.warn('⚠️ [OPENROUTER] All OpenRouter models failed. Falling back directly to Local Emergency Template.');
+  await logAuditAction('AI_EMERGENCY', 'All OpenRouter models failed. Using Emergency Template.');
+  currentAiProvider = 'EmergencyTemplate';
   return emergencyResponse(ctx);
 }
 
-// â”€â”€â”€ Emergency fallback template â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Emergency fallback template ──────────────────────────────────────────────
 
 function emergencyResponse(ctx: AIContext): AIResponse {
   return {

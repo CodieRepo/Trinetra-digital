@@ -24,16 +24,26 @@ import {
   X,
   Activity,
   Clock,
-  Compass
+  Compass,
+  CheckSquare,
+  Calendar,
+  Award,
+  FileText,
+  Trash2,
+  Link,
+  DollarSign,
+  Percent,
+  ChevronRight
 } from "lucide-react";
 import { useDashboard } from "../../hooks/useApi";
-import { Lead } from "../../services/api";
+import { Lead, Task, TimelineEvent, apiService } from "../../services/api";
 
 type ViewSection = 
   | 'overview' 
   | 'conversations' 
   | 'leads' 
   | 'pipelines' 
+  | 'conversions' 
   | 'campaigns' 
   | 'automations' 
   | 'agents' 
@@ -74,7 +84,10 @@ export default function AdminCrm() {
     updateLeadStatus,
     toggleAI,
     triggerDatabaseBackup,
-    triggerRefresh
+    triggerRefresh,
+    restartWhatsAppGateway,
+    fetchBackups,
+    rollbackBackup
   } = useDashboard();
 
   // Navigation and Layout Controls
@@ -82,6 +95,82 @@ export default function AdminCrm() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [workspace, setWorkspace] = useState("Trinetra Digital Primary");
   const [activityTab, setActivityTab] = useState<'chats' | 'audit'>('chats');
+
+  // WhatsApp Backups and Gateway Control States
+  const [backups, setBackups] = useState<Array<{ name: string; timestamp: string; reason: string; connectionStatus: string }>>([]);
+  const [loadingBackups, setLoadingBackups] = useState(false);
+  const [restartingGateway, setRestartingGateway] = useState(false);
+  const [rollingBack, setRollingBack] = useState<string | null>(null);
+
+  // Phase 3D: Tasks and Timeline state
+  const [leadTasks, setLeadTasks] = useState<Task[]>([]);
+  const [leadTimeline, setLeadTimeline] = useState<TimelineEvent[]>([]);
+  const [tasksPanelTab, setTasksPanelTab] = useState<'tasks' | 'timeline'>('tasks');
+  const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
+
+  // Load backups when view is changed to QR
+  useEffect(() => {
+    if (activeView === 'qr' && token) {
+      setLoadingBackups(true);
+      fetchBackups().then(data => {
+        setBackups(data);
+        setLoadingBackups(false);
+      }).catch(() => {
+        setLoadingBackups(false);
+      });
+    }
+  }, [activeView, token]);
+
+  // Phase 3D: Fetch tasks and timeline when a lead is selected
+  useEffect(() => {
+    if (!selectedLeadId || !token) {
+      setLeadTasks([]);
+      setLeadTimeline([]);
+      return;
+    }
+    const fetchTasksAndTimeline = async () => {
+      try {
+        const [tasksRes, timelineRes] = await Promise.all([
+          apiService.leads.getTasks(selectedLeadId),
+          apiService.leads.getTimeline(selectedLeadId),
+        ]);
+        setLeadTasks(tasksRes.data || []);
+        setLeadTimeline(timelineRes.data || []);
+      } catch (err) {
+        console.warn('Failed to fetch tasks/timeline:', err);
+      }
+    };
+    fetchTasksAndTimeline();
+    const timer = setInterval(fetchTasksAndTimeline, 5000);
+    return () => clearInterval(timer);
+  }, [selectedLeadId, token]);
+
+  // Phase 3D: Update task status
+  const handleUpdateTask = async (taskId: string, status: Task['status']) => {
+    setUpdatingTaskId(taskId);
+    try {
+      await apiService.leads.updateTask(taskId, status);
+      setLeadTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
+    } catch (err) {
+      console.warn('Failed to update task:', err);
+    } finally {
+      setUpdatingTaskId(null);
+    }
+  };
+
+  // Handle manual gateway restart
+  const handleRestartGateway = async () => {
+    if (window.confirm("Are you sure you want to restart the WhatsApp gateway? This will disconnect and rebuild the socket instance.")) {
+      setRestartingGateway(true);
+      const success = await restartWhatsAppGateway();
+      setRestartingGateway(false);
+      if (success) {
+        alert("Gateway successfully restarted and initialized!");
+      } else {
+        alert("Failed to restart gateway. Check console logs.");
+      }
+    }
+  };
   
   // Custom Form & Interactive States
   const [username, setUsername] = useState("");
@@ -96,6 +185,277 @@ export default function AdminCrm() {
     { role: 'assistant', text: "Hello! I am your Trinetra AI Copilot. I can write automated replies, score leads, analyze analytics pipelines, or trigger DB backups. Try saying: 'Review latest lead' or 'Create a database backup'." }
   ]);
   const [aiLoading, setAiLoading] = useState(false);
+
+  // Phase 4A: Conversions & Slots states
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [quotations, setQuotations] = useState<any[]>([]);
+  const [conversionStats, setConversionStats] = useState<any>(null);
+  const [calendarData, setCalendarData] = useState<{ appointments: any[]; slots: any[] }>({ appointments: [], slots: [] });
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [newSlotDate, setNewSlotDate] = useState("");
+  const [newSlotTime, setNewSlotTime] = useState("");
+  
+  // Selected Package tier for QuoteModal
+  const [quoteTier, setQuoteTier] = useState<'starter_presence' | 'growth_engine' | 'sales_system' | 'business_os' | 'custom'>('growth_engine');
+  const [quoteDiscount, setQuoteDiscount] = useState(0);
+  const [quoteNotes, setQuoteNotes] = useState("");
+  const [customItems, setCustomItems] = useState<{ description: string; price: number }[]>([
+    { description: "Custom Service Setup", price: 0 },
+    { description: "Custom Service Monthly", price: 0 }
+  ]);
+
+  // Appointment states
+  const [selectedSlotId, setSelectedSlotId] = useState("");
+  const [appointmentDate, setAppointmentDate] = useState("");
+  const [appointmentTime, setAppointmentTime] = useState("");
+  const [appointmentCallType, setAppointmentCallType] = useState<'call' | 'video' | 'in_person'>('call');
+  const [appointmentNotes, setAppointmentNotes] = useState("");
+  const [meetingLink, setMeetingLink] = useState("");
+  const [confirmingApptId, setConfirmingApptId] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [completingApptId, setCompletingApptId] = useState("");
+  const [apptDealValue, setApptDealValue] = useState(0);
+
+  // Conversions Data fetcher
+  useEffect(() => {
+    if (!token) return;
+    if (activeView === 'conversions' || showQuoteModal || showAppointmentModal || confirmingApptId || completingApptId) {
+      const fetchConversionsData = async () => {
+        try {
+          const [quotesRes, statsRes, calRes, slotsRes] = await Promise.all([
+            apiService.quotations.list(),
+            apiService.quotations.getStats(),
+            apiService.appointments.getCalendar(),
+            apiService.appointments.getSlots(),
+          ]);
+          setQuotations(quotesRes);
+          setConversionStats(statsRes);
+          setCalendarData(calRes);
+          setAvailableSlots(slotsRes);
+        } catch (err) {
+          console.warn('Failed to fetch conversions data:', err);
+        }
+      };
+      fetchConversionsData();
+      const interval = setInterval(fetchConversionsData, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [activeView, showQuoteModal, showAppointmentModal, token]);
+
+  const handleCreateQuotation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLeadId) {
+      alert("Please select a lead first.");
+      return;
+    }
+    try {
+      await apiService.quotations.create({
+        lead_id: selectedLeadId,
+        package_tier: quoteTier,
+        custom_items: quoteTier === 'custom' ? customItems : undefined,
+        discount_pct: quoteDiscount,
+        notes: quoteNotes,
+      });
+      alert("Quotation generated successfully!");
+      setShowQuoteModal(false);
+      // Reset form
+      setQuoteDiscount(0);
+      setQuoteNotes("");
+    } catch (err: any) {
+      alert(`Error creating quotation: ${err.message}`);
+    }
+  };
+
+  const handleSendQuotation = async (quoteId: string) => {
+    try {
+      await apiService.quotations.send(quoteId);
+      alert("Quotation link sent to lead via WhatsApp!");
+      const quotes = await apiService.quotations.list();
+      setQuotations(quotes);
+    } catch (err: any) {
+      alert(`Error sending quotation: ${err.message}`);
+    }
+  };
+
+  const handleAcceptQuotation = async (quoteId: string) => {
+    if (window.confirm("Are you sure you want to mark this quotation as accepted? This will update the lead stage to WON.")) {
+      try {
+        await apiService.quotations.accept(quoteId);
+        alert("Quotation accepted and lead stage set to WON!");
+        const quotes = await apiService.quotations.list();
+        setQuotations(quotes);
+      } catch (err: any) {
+        alert(`Error accepting quotation: ${err.message}`);
+      }
+    }
+  };
+
+  const handleRejectQuotation = async (quoteId: string) => {
+    const reason = window.prompt("Enter rejection reason (optional):") || "";
+    try {
+      await apiService.quotations.reject(quoteId, reason);
+      alert("Quotation marked as rejected.");
+      const quotes = await apiService.quotations.list();
+      setQuotations(quotes);
+    } catch (err: any) {
+      alert(`Error rejecting quotation: ${err.message}`);
+    }
+  };
+
+  const handleCreateSlot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSlotDate || !newSlotTime) {
+      alert("Date and time are required.");
+      return;
+    }
+    try {
+      await apiService.appointments.createSlot({
+        slot_date: newSlotDate,
+        slot_time: newSlotTime,
+        duration_mins: 30
+      });
+      alert("Available appointment slot created!");
+      setNewSlotDate("");
+      setNewSlotTime("");
+      const slots = await apiService.appointments.getSlots();
+      setAvailableSlots(slots);
+      const cal = await apiService.appointments.getCalendar();
+      setCalendarData(cal);
+    } catch (err: any) {
+      alert(`Error creating slot: ${err.message}`);
+    }
+  };
+
+  const handleDeleteSlot = async (slotId: string) => {
+    if (window.confirm("Delete this slot?")) {
+      try {
+        await apiService.appointments.deleteSlot(slotId);
+        setAvailableSlots(prev => prev.filter(s => s.id !== slotId));
+        const cal = await apiService.appointments.getCalendar();
+        setCalendarData(cal);
+      } catch (err: any) {
+        alert(`Error deleting slot: ${err.message}`);
+      }
+    }
+  };
+
+  const handleBookAppointment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLeadId) {
+      alert("Please select a lead first.");
+      return;
+    }
+    let dateToUse = appointmentDate;
+    let timeToUse = appointmentTime;
+    
+    if (selectedSlotId) {
+      const slot = availableSlots.find(s => s.id === selectedSlotId);
+      if (slot) {
+        dateToUse = slot.slot_date;
+        timeToUse = slot.slot_time;
+      }
+    }
+
+    if (!dateToUse || !timeToUse) {
+      alert("Please select an available slot or enter date/time.");
+      return;
+    }
+
+    try {
+      await apiService.appointments.create({
+        lead_id: selectedLeadId,
+        preferred_date: dateToUse,
+        preferred_time: timeToUse,
+        call_type: appointmentCallType,
+        notes: appointmentNotes,
+      });
+      alert("Appointment request created successfully!");
+      setShowAppointmentModal(false);
+      setAppointmentNotes("");
+      setSelectedSlotId("");
+    } catch (err: any) {
+      alert(`Error booking appointment: ${err.message}`);
+    }
+  };
+
+  const handleConfirmAppointment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await apiService.appointments.confirm(confirmingApptId, {
+        meeting_link: meetingLink,
+        admin_notes: "Confirmed by admin"
+      });
+      alert("Appointment confirmed! Confirmation message sent to lead via WhatsApp.");
+      setShowConfirmModal(false);
+      setMeetingLink("");
+      const cal = await apiService.appointments.getCalendar();
+      setCalendarData(cal);
+    } catch (err: any) {
+      alert(`Error confirming appointment: ${err.message}`);
+    }
+  };
+
+  const handleCompleteAppointment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await apiService.appointments.complete(completingApptId, {
+        deal_value: apptDealValue || undefined
+      });
+      alert("Appointment marked completed!");
+      setShowCompleteModal(false);
+      setApptDealValue(0);
+      const cal = await apiService.appointments.getCalendar();
+      setCalendarData(cal);
+    } catch (err: any) {
+      alert(`Error completing appointment: ${err.message}`);
+    }
+  };
+
+  const handleSendQuickFollowUp = async (type: string) => {
+    if (!selectedLeadId) return;
+    const lead = leads.find(l => l.id === selectedLeadId);
+    if (!lead) return;
+    let message = "";
+    if (type === 'quoting') {
+      message = `Hi ${lead.name}! Hum aapse related quotation share karne ke liye reach out kar rahe hain. Standard package details download link ready hai. Kya aap custom scope check karna chahte hain?`;
+    } else if (type === 'nurturing') {
+      message = `Hello ${lead.name} ji! Hum aapse updates lene ke liye call kar rahe the. Kya aapne humare automation systems ke growth details check kiye?`;
+    } else {
+      message = `Hello ${lead.name}! Kaise hain aap? Agar aapko website, CRM ya digital marketing requirements ko discuss karna ho, toh please batayein. Hum free consultation call schedule kar sakte hain.`;
+    }
+    const responseText = window.prompt("Confirm or customize the WhatsApp message:", message);
+    if (responseText) {
+      try {
+        setSendingMsg(true);
+        await apiService.leads.sendMessage(lead.id, responseText);
+        alert("WhatsApp message sent and timeline logged.");
+      } catch (err: any) {
+        alert(`Failed to send message: ${err.message}`);
+      } finally {
+        setSendingMsg(false);
+      }
+    }
+  };
+
+  const handleCustomItemChange = (index: number, field: 'description' | 'price', value: string) => {
+    const items = [...customItems];
+    if (field === 'price') {
+      items[index].price = Number(value) || 0;
+    } else {
+      items[index].description = value;
+    }
+    setCustomItems(items);
+  };
+
+  const addCustomItem = () => {
+    setCustomItems([...customItems, { description: "", price: 0 }]);
+  };
+
+  const removeCustomItem = (index: number) => {
+    setCustomItems(customItems.filter((_, i) => i !== index));
+  };
 
   // Reference hooks for UI components
   const activeChatEndRef = useRef<HTMLDivElement>(null);
@@ -372,6 +732,7 @@ export default function AdminCrm() {
             { id: 'conversations', label: 'Conversations', icon: MessageSquare, badge: leads.filter(l => l.status === 'new').length || undefined },
             { id: 'leads', label: 'Leads Command', icon: Users },
             { id: 'pipelines', label: 'CRM Pipelines', icon: TrendingUp },
+            { id: 'conversions', label: 'Sales Conversions', icon: Award },
             { id: 'qr', label: 'WhatsApp QR', icon: QrCode, badge: waStatus?.status !== 'connected' ? 'QR' : undefined },
             { id: 'integrations', label: 'Integrations', icon: Activity },
             { id: 'settings', label: 'Settings Panel', icon: Settings },
@@ -398,6 +759,16 @@ export default function AdminCrm() {
               )}
             </button>
           ))}
+
+          {/* ── Pipeline Board (external route) ── */}
+          <a
+            href="/admin/pipeline"
+            className="flex w-full items-center gap-2.5 h-10 px-3.5 rounded-xl text-xs font-semibold tracking-wide transition-all text-slate-500 hover:bg-slate-100/50 hover:text-slate-800 no-underline"
+          >
+            <TrendingUp size={15} />
+            Revenue Pipeline
+            <span className="ml-auto h-4 min-w-4 flex items-center justify-center rounded-full text-[8px] font-bold px-1.5 bg-indigo-500 text-white">NEW</span>
+          </a>
         </nav>
 
         {/* Mini health stats card */}
@@ -432,6 +803,50 @@ export default function AdminCrm() {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
             </span>
             ⚠️ Backend connection severed. Reconnecting to http://187.127.170.222:3000/api... Verify proxy.
+          </div>
+        )}
+
+        {/* WhatsApp Connection Warning Alert Bar */}
+        {waStatus && waStatus.status !== 'connected' && (
+          <div className={`border rounded-2xl p-4 mb-6 text-xs font-semibold flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm transition-all ${
+            waStatus.status === 'connecting'
+              ? 'bg-amber-500/10 border-amber-500/20 text-amber-600'
+              : 'bg-rose-500/10 border-rose-500/20 text-rose-600'
+          }`}>
+            <div className="flex items-start gap-2.5">
+              <ShieldAlert className={`shrink-0 mt-0.5 ${waStatus.status === 'connecting' ? 'text-amber-500 animate-pulse' : 'text-rose-500'}`} size={16} />
+              <div>
+                <span className="font-extrabold uppercase tracking-wide block">
+                  {waStatus.status === 'connecting' && '🔄 WhatsApp Reconnecting'}
+                  {waStatus.status === 'qr_required' && '📷 WhatsApp Pairing Required'}
+                  {waStatus.status === 'logged_out' && '🚨 WhatsApp Logged Out'}
+                  {waStatus.status === 'auth_failed' && '🚨 WhatsApp Authentication Failed'}
+                  {waStatus.status === 'intervention_required' && '🚫 Reconnection Blocked — Intervention Required'}
+                  {waStatus.status === 'disconnected' && '⚠️ WhatsApp Gateway Offline'}
+                </span>
+                <span className="text-[10px] opacity-80 block mt-0.5">
+                  {waStatus.status === 'connecting' && 'Attempting automatic connection self-healing recovery...'}
+                  {waStatus.status === 'qr_required' && 'Please scan the connection QR code in settings to pair your device.'}
+                  {waStatus.status === 'logged_out' && 'The device was unlinked or session logged out. Re-pairing is required.'}
+                  {waStatus.status === 'auth_failed' && 'Credentials invalidated or expired. Resetting session and generating fresh QR.'}
+                  {waStatus.status === 'intervention_required' && 'Rate limit exceeded: More than 5 reconnect failures in 15 mins. Please check networks and click Restart Gateway below.'}
+                  {waStatus.status === 'disconnected' && 'Connection to WhatsApp is completely offline. Verify VPS status.'}
+                </span>
+                {waStatus.disconnectReason && (
+                  <span className="text-[9px] font-mono opacity-80 block mt-1 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 w-fit">
+                    Reason: {waStatus.disconnectReason}
+                  </span>
+                )}
+              </div>
+            </div>
+            {waStatus.status !== 'connecting' && (
+              <button
+                onClick={() => setActiveView('qr')}
+                className="shrink-0 text-[10px] uppercase font-bold tracking-wider px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition-all cursor-pointer text-slate-700"
+              >
+                Go to QR Settings
+              </button>
+            )}
           </div>
         )}
 
@@ -1017,19 +1432,233 @@ export default function AdminCrm() {
                             )}
                           </div>
 
-                          {/* AI BANT Evaluation Summary */}
-                          <div className="bg-gradient-to-r from-emerald-50 to-teal-50/50 border border-emerald-100 rounded-2xl p-4 space-y-2 shadow-3xs">
-                            <span className="text-[9px] font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-                              <Sparkles size={11} /> Gemini BANT Assessment
-                            </span>
-                            <p className="text-[11px] text-slate-700 leading-normal italic">
-                              "{leadDetail.lead.ai_summary || 'Conversational intake currently processing intent...'}"
-                            </p>
-                            <div className="flex justify-between items-center pt-2 border-t border-emerald-100/50 text-[10px] text-emerald-800 font-bold">
-                              <span>Recommended Next Action:</span>
-                              <span className="bg-emerald-100 text-emerald-950 px-2 py-0.5 rounded text-[8px]">
-                                {leadDetail.lead.ai_score >= 80 ? 'SCHEDULE DEMO' : 'Discovery Qs'}
+                          {/* ── Phase 3D: AI Lead Summary Card ── */}
+                          <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/50 rounded-2xl p-4 space-y-3 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[9px] font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <Sparkles size={10} className="animate-pulse" /> AI Lead Intelligence
                               </span>
+                              {/* Intent Level Badge */}
+                              {leadDetail.lead.intent_level && (
+                                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${
+                                  leadDetail.lead.intent_level === 'QUOTATION_REQUIRED'
+                                    ? 'bg-amber-900/40 text-amber-300 border-amber-700/50'
+                                    : leadDetail.lead.intent_level === 'HOT'
+                                    ? 'bg-rose-900/40 text-rose-300 border-rose-700/50 animate-pulse'
+                                    : leadDetail.lead.intent_level === 'WARM'
+                                    ? 'bg-orange-900/40 text-orange-300 border-orange-700/50'
+                                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                                }`}>
+                                  {leadDetail.lead.intent_level === 'QUOTATION_REQUIRED' ? '💰 QUOTE REQ.' :
+                                   leadDetail.lead.intent_level === 'HOT' ? '🔥 HOT' :
+                                   leadDetail.lead.intent_level === 'WARM' ? '🌡 WARM' : '❄️ COLD'}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Detailed AI Summary */}
+                            <div className="bg-slate-800/60 rounded-xl p-3 text-[11px] text-slate-300 leading-relaxed italic border border-slate-700/30">
+                              {leadDetail.lead.ai_summary_detailed
+                                ? leadDetail.lead.ai_summary_detailed
+                                : leadDetail.lead.ai_summary
+                                ? `"${leadDetail.lead.ai_summary}"`
+                                : 'AI is building a profile from this conversation...'}
+                            </div>
+
+                            {/* Recommended Action */}
+                            {leadDetail.lead.recommended_action && (
+                              <div className="flex items-center gap-2 bg-emerald-950/40 border border-emerald-900/30 rounded-xl px-3 py-2">
+                                <CheckSquare size={12} className="text-emerald-400 shrink-0" />
+                                <span className="text-[10px] text-emerald-300 font-semibold">{leadDetail.lead.recommended_action}</span>
+                              </div>
+                            )}
+
+                            {/* Budget + Package signals */}
+                            <div className="grid grid-cols-2 gap-2 text-[10px]">
+                              {leadDetail.lead.budget_range && (
+                                <div className="bg-slate-800/40 border border-slate-700/30 rounded-xl px-2.5 py-2">
+                                  <p className="text-slate-500 text-[9px] uppercase font-bold mb-0.5">Budget Signal</p>
+                                  <p className="text-slate-300 font-semibold truncate">{leadDetail.lead.budget_range}</p>
+                                </div>
+                              )}
+                              {leadDetail.lead.recommended_package && (
+                                <div className="bg-slate-800/40 border border-slate-700/30 rounded-xl px-2.5 py-2">
+                                  <p className="text-slate-500 text-[9px] uppercase font-bold mb-0.5">Rec. Package</p>
+                                  <p className="text-slate-300 font-semibold truncate">{leadDetail.lead.recommended_package}</p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Suggested Actions based on intent_level */}
+                            <div className="border-t border-slate-700/40 pt-2.5 mt-2">
+                              <p className="text-[8px] font-extrabold text-slate-400 mb-1.5 uppercase tracking-wider">Suggested Next Actions</p>
+                              <div className="flex flex-wrap gap-1">
+                                {leadDetail.lead.intent_level === 'HOT' && (
+                                  <>
+                                    <button onClick={() => setShowQuoteModal(true)} className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-bold rounded-lg flex items-center gap-1 shadow-xs transition-colors">
+                                      📋 Generate Quote
+                                    </button>
+                                    <button onClick={() => setShowAppointmentModal(true)} className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-bold rounded-lg flex items-center gap-1 shadow-xs transition-colors">
+                                      📅 Book Demo
+                                    </button>
+                                    <button onClick={() => { navigator.clipboard.writeText(leadDetail.lead.phone); alert('Phone copied to clipboard!'); }} className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-100 text-[9px] font-bold rounded-lg flex items-center gap-1 transition-colors">
+                                      📞 Call Lead
+                                    </button>
+                                  </>
+                                )}
+                                {leadDetail.lead.intent_level === 'QUOTATION_REQUIRED' && (
+                                  <>
+                                    <button onClick={() => setShowQuoteModal(true)} className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-bold rounded-lg flex items-center gap-1 shadow-xs transition-colors">
+                                      📋 Generate Quote
+                                    </button>
+                                    <button onClick={() => { navigator.clipboard.writeText(leadDetail.lead.phone); alert('Phone copied to clipboard!'); }} className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-100 text-[9px] font-bold rounded-lg flex items-center gap-1 transition-colors">
+                                      📞 Call Lead
+                                    </button>
+                                    <button onClick={() => handleSendQuickFollowUp('quoting')} className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[9px] font-bold rounded-lg flex items-center gap-1 transition-colors">
+                                      💬 Send Follow-up
+                                    </button>
+                                  </>
+                                )}
+                                {leadDetail.lead.intent_level === 'WARM' && (
+                                  <>
+                                    <button onClick={() => setShowAppointmentModal(true)} className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-bold rounded-lg flex items-center gap-1 shadow-xs transition-colors">
+                                      📅 Book Demo
+                                    </button>
+                                    <button onClick={() => handleSendQuickFollowUp('nurturing')} className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[9px] font-bold rounded-lg flex items-center gap-1 transition-colors">
+                                      💬 Send Follow-up
+                                    </button>
+                                    <button onClick={() => {
+                                      const title = window.prompt("Enter task title:");
+                                      if (title) {
+                                        apiService.leads.createTask(leadDetail.lead.id, {
+                                          title,
+                                          type: 'FOLLOWUP_REMINDER',
+                                          description: 'Manually assigned task',
+                                          due_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+                                        }).then(() => alert("Task created successfully!"));
+                                      }
+                                    }} className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-100 text-[9px] font-bold rounded-lg flex items-center gap-1 transition-colors">
+                                      👥 Assign Task
+                                    </button>
+                                  </>
+                                )}
+                                {(leadDetail.lead.intent_level === 'COLD' || !leadDetail.lead.intent_level) && (
+                                  <>
+                                    <button onClick={() => handleSendQuickFollowUp('generic')} className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[9px] font-bold rounded-lg flex items-center gap-1 transition-colors">
+                                      💬 Send Follow-up
+                                    </button>
+                                    <button onClick={() => setShowAppointmentModal(true)} className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-bold rounded-lg flex items-center gap-1 shadow-xs transition-colors">
+                                      📅 Book Demo
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* ── Phase 3D: Tasks + Timeline Panel ── */}
+                          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-3xs">
+                            {/* Tab bar */}
+                            <div className="flex border-b border-slate-100">
+                              <button
+                                onClick={() => setTasksPanelTab('tasks')}
+                                className={`flex-1 text-[10px] font-bold py-2.5 flex items-center justify-center gap-1.5 transition-all ${
+                                  tasksPanelTab === 'tasks' ? 'bg-slate-50 text-slate-800 border-b-2 border-emerald-500' : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                              >
+                                <CheckSquare size={11} />
+                                Tasks ({leadTasks.filter(t => t.status === 'pending' || t.status === 'in_progress').length})
+                              </button>
+                              <button
+                                onClick={() => setTasksPanelTab('timeline')}
+                                className={`flex-1 text-[10px] font-bold py-2.5 flex items-center justify-center gap-1.5 transition-all ${
+                                  tasksPanelTab === 'timeline' ? 'bg-slate-50 text-slate-800 border-b-2 border-emerald-500' : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                              >
+                                <Activity size={11} />
+                                Timeline ({leadTimeline.length})
+                              </button>
+                            </div>
+
+                            <div className="max-h-[240px] overflow-y-auto">
+                              {tasksPanelTab === 'tasks' ? (
+                                leadTasks.length === 0 ? (
+                                  <div className="py-6 text-center text-[10px] text-slate-400 italic">
+                                    <CheckSquare size={20} className="mx-auto mb-1.5 opacity-30" />
+                                    No tasks yet. Tasks auto-generate on handoff,<br/>quotation requests, and appointment bookings.
+                                  </div>
+                                ) : (
+                                  <div className="divide-y divide-slate-100">
+                                    {leadTasks.map(task => (
+                                      <div key={task.id} className="p-3 flex items-start gap-2.5">
+                                        <span className={`mt-0.5 h-5 w-5 rounded-lg flex items-center justify-center shrink-0 text-[9px] font-bold ${
+                                          task.type === 'HUMAN_HANDOFF_TASK' ? 'bg-rose-100 text-rose-700' :
+                                          task.type === 'QUOTATION_TASK' ? 'bg-amber-100 text-amber-700' :
+                                          task.type === 'APPOINTMENT_TASK' ? 'bg-indigo-100 text-indigo-700' :
+                                          'bg-slate-100 text-slate-600'
+                                        }`}>
+                                          {task.type === 'HUMAN_HANDOFF_TASK' ? '🤝' :
+                                           task.type === 'QUOTATION_TASK' ? '💰' :
+                                           task.type === 'APPOINTMENT_TASK' ? '📅' : '📌'}
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                          <p className={`text-[11px] font-semibold leading-tight ${
+                                            task.status === 'completed' || task.status === 'cancelled'
+                                              ? 'text-slate-400 line-through'
+                                              : 'text-slate-800'
+                                          }`}>{task.title}</p>
+                                          {task.due_at && (
+                                            <p className="text-[9px] text-slate-400 mt-0.5 flex items-center gap-1">
+                                              <Calendar size={8} /> Due: {new Date(task.due_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </p>
+                                          )}
+                                        </div>
+                                        {task.status !== 'completed' && task.status !== 'cancelled' && (
+                                          <button
+                                            onClick={() => handleUpdateTask(task.id, 'completed')}
+                                            disabled={updatingTaskId === task.id}
+                                            className="shrink-0 h-5 px-1.5 rounded text-[8px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-all disabled:opacity-50"
+                                          >
+                                            {updatingTaskId === task.id ? '...' : '✓ Done'}
+                                          </button>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )
+                              ) : (
+                                leadTimeline.length === 0 ? (
+                                  <div className="py-6 text-center text-[10px] text-slate-400 italic">
+                                    <Activity size={20} className="mx-auto mb-1.5 opacity-30" />
+                                    No timeline events yet.
+                                  </div>
+                                ) : (
+                                  <div className="divide-y divide-slate-50">
+                                    {leadTimeline.slice(0, 20).map(event => (
+                                      <div key={event.id} className="px-3 py-2.5 flex items-start gap-2.5">
+                                        <span className={`mt-0.5 h-4 w-4 rounded-full flex items-center justify-center shrink-0 ${
+                                          event.event_type === 'inbound' ? 'bg-emerald-100' :
+                                          event.event_type === 'outbound' ? 'bg-indigo-100' :
+                                          event.event_type === 'ai_action' ? 'bg-purple-100' :
+                                          event.event_type === 'stage_change' ? 'bg-amber-100' :
+                                          'bg-rose-100'
+                                        }`}>
+                                          <span className="text-[7px]">
+                                            {event.event_type === 'inbound' ? '↙' :
+                                             event.event_type === 'outbound' ? '↗' :
+                                             event.event_type === 'ai_action' ? '🤖' :
+                                             event.event_type === 'stage_change' ? '→' : '👤'}
+                                          </span>
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-[10px] text-slate-700 leading-snug truncate">{event.description}</p>
+                                          <p className="text-[9px] text-slate-400 mt-0.5 font-mono">{new Date(event.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1542,6 +2171,300 @@ export default function AdminCrm() {
                 </div>
               )}
 
+              {/* ── VIEW 12: SALES CONVERSIONS HUB ── */}
+              {activeView === 'conversions' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-extrabold text-slate-800">Sales Conversion Engine</h3>
+                    <p className="text-xs text-slate-400 mt-0.5 font-sans">Generate professional PDF proposals, automate WhatsApp quote delivery, manage appointment slots, and track conversion funnels.</p>
+                  </div>
+
+                  {/* 1. Stat Cards Row */}
+                  <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-3xs">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Quotes Sent</p>
+                      <h4 className="text-xl font-black text-slate-700 font-mono mt-1">{conversionStats?.sent || 0}</h4>
+                    </div>
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-3xs">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Accepted</p>
+                      <h4 className="text-xl font-black text-emerald-600 font-mono mt-1">{conversionStats?.accepted || 0}</h4>
+                    </div>
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-3xs">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Demos Booked</p>
+                      <h4 className="text-xl font-black text-blue-600 font-mono mt-1">{calendarData?.appointments?.length || 0}</h4>
+                    </div>
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-3xs">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Completed</p>
+                      <h4 className="text-xl font-black text-indigo-600 font-mono mt-1">
+                        {calendarData?.appointments?.filter((a: any) => a.status === 'completed').length || 0}
+                      </h4>
+                    </div>
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-3xs">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Conv. Rate</p>
+                      <h4 className="text-xl font-black text-slate-700 font-mono mt-1">
+                        {conversionStats?.sent > 0 ? Math.round((conversionStats.accepted / (conversionStats.sent + conversionStats.draft)) * 100) : 0}%
+                      </h4>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 shadow-3xs">
+                      <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider">Total Value</p>
+                      <h4 className="text-lg font-black text-emerald-700 font-mono mt-0.5">₹{(conversionStats?.totalRevenue || 0).toLocaleString('en-IN')}</h4>
+                    </div>
+                  </div>
+
+                  {/* 2. Main Tables & Slot Management */}
+                  <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 items-start">
+                    {/* Recent Quotations Table */}
+                    <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-3xs space-y-4">
+                      <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <h4 className="text-xs font-extrabold uppercase text-slate-700 tracking-wider">Active Quotations Log</h4>
+                        <button 
+                          onClick={() => {
+                            if (!selectedLeadId) {
+                              alert("Please select a lead from the Leads Command view first to generate a quote.");
+                            } else {
+                              setShowQuoteModal(true);
+                            }
+                          }}
+                          className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition-all shadow-3xs"
+                        >
+                          <Plus size={12} /> Generate New Quote
+                        </button>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-slate-100 text-slate-400 font-bold text-[10px] uppercase">
+                              <th className="py-2.5">Quote ID</th>
+                              <th>Package</th>
+                              <th>Setup Fee</th>
+                              <th>Monthly Fee</th>
+                              <th>Status</th>
+                              <th className="text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-slate-600 font-medium">
+                            {quotations.length === 0 ? (
+                              <tr>
+                                <td colSpan={6} className="text-center py-6 text-slate-400 italic">No quotations created yet. Select a lead and click Generate Quote.</td>
+                              </tr>
+                            ) : (
+                              quotations.map((q) => {
+                                const lead = leads.find(l => l.id === q.lead_id);
+                                return (
+                                  <tr key={q.id} className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="py-3 font-bold text-slate-800">
+                                      {q.id}
+                                      {lead && <p className="text-[9px] text-slate-400 font-medium">{lead.name}</p>}
+                                    </td>
+                                    <td>
+                                      <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">{q.package_name}</span>
+                                    </td>
+                                    <td>₹{q.total_setup.toLocaleString('en-IN')}</td>
+                                    <td>₹{q.total_monthly.toLocaleString('en-IN')}/mo</td>
+                                    <td>
+                                      <span className={`text-[8px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
+                                        q.status === 'accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                        q.status === 'viewed' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                        q.status === 'sent' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                        q.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                                        'bg-slate-100 text-slate-500 border-slate-200'
+                                      }`}>
+                                        {q.status}
+                                      </span>
+                                    </td>
+                                    <td className="text-right py-3 space-x-1.5">
+                                      {q.status === 'draft' && (
+                                        <button 
+                                          onClick={() => handleSendQuotation(q.id)} 
+                                          className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded text-[9px] font-bold transition-colors"
+                                        >
+                                          Send
+                                        </button>
+                                      )}
+                                      {q.pdf_path && (
+                                        <a 
+                                          href={`${API_BASE_URL}/quotations/${q.id}/pdf`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[9px] font-bold transition-colors inline-block"
+                                        >
+                                          PDF
+                                        </a>
+                                      )}
+                                      {q.status !== 'accepted' && q.status !== 'rejected' && (
+                                        <>
+                                          <button 
+                                            onClick={() => handleAcceptQuotation(q.id)} 
+                                            className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-[9px] font-bold transition-colors"
+                                          >
+                                            Accept
+                                          </button>
+                                          <button 
+                                            onClick={() => handleRejectQuotation(q.id)} 
+                                            className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded text-[9px] font-bold transition-colors"
+                                          >
+                                            Reject
+                                          </button>
+                                        </>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Available Slots Manager */}
+                    <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-3xs space-y-4">
+                      <h4 className="text-xs font-extrabold uppercase text-slate-700 tracking-wider border-b border-slate-100 pb-3">Available Slots Manager</h4>
+                      
+                      {/* Slot Creator Form */}
+                      <form onSubmit={handleCreateSlot} className="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                        <p className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wide">Add Available Slot</p>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="space-y-1">
+                            <label className="text-[8px] font-bold text-slate-400 uppercase">Date</label>
+                            <input 
+                              type="date" 
+                              required 
+                              value={newSlotDate}
+                              onChange={(e) => setNewSlotDate(e.target.value)}
+                              className="w-full h-8 px-2 border border-slate-200 bg-white rounded-lg focus:outline-none"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[8px] font-bold text-slate-400 uppercase">Time</label>
+                            <input 
+                              type="time" 
+                              required 
+                              value={newSlotTime}
+                              onChange={(e) => setNewSlotTime(e.target.value)}
+                              className="w-full h-8 px-2 border border-slate-200 bg-white rounded-lg focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                        <button 
+                          type="submit"
+                          className="w-full h-8 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[9px] font-extrabold uppercase tracking-wide transition-colors"
+                        >
+                          Add Available Slot
+                        </button>
+                      </form>
+
+                      {/* Slots scroll area */}
+                      <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                        <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Active Slots list</p>
+                        {availableSlots.length === 0 ? (
+                          <p className="text-[10px] text-slate-400 italic text-center py-4">No slots configured. Create one above.</p>
+                        ) : (
+                          availableSlots.map((slot) => (
+                            <div key={slot.id} className="flex justify-between items-center p-2.5 border border-slate-100 rounded-xl hover:bg-slate-50/50 text-xs">
+                              <div>
+                                <p className="font-bold text-slate-700">{new Date(slot.slot_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
+                                <p className="text-[10px] text-slate-400 font-mono mt-0.5">{slot.slot_time} ({slot.duration_mins} mins)</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                                  slot.is_available === 1 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                                }`}>
+                                  {slot.is_available === 1 ? 'Available' : 'Booked'}
+                                </span>
+                                <button 
+                                  onClick={() => handleDeleteSlot(slot.id)}
+                                  className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 transition-colors"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Week-View Calendar Scheduler */}
+                  <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-3xs space-y-4">
+                    <div>
+                      <h4 className="text-xs font-extrabold uppercase text-slate-700 tracking-wider">Weekly Schedule &amp; Bookings</h4>
+                      <p className="text-[9px] text-slate-400 mt-0.5">Track upcoming demo sessions and client consultation calls.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+                      {/* Let's generate columns for Monday to Sunday */}
+                      {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, dIdx) => {
+                        // Get appointments matching this day of week
+                        // Let's filter appointments for the upcoming 7 days matching the day name
+                        const apptsForDay = calendarData.appointments?.filter((a: any) => {
+                          const dateObj = new Date(a.preferred_date);
+                          const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                          return dayName === day;
+                        }) || [];
+
+                        return (
+                          <div key={day} className="bg-slate-50 border border-slate-100 rounded-2xl p-2.5 space-y-2.5 min-h-[160px]">
+                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider border-b border-slate-200/60 pb-1.5 block">
+                              {day.substring(0, 3)} ({apptsForDay.length})
+                            </span>
+
+                            <div className="space-y-2">
+                              {apptsForDay.map((a: any) => (
+                                <div key={a.id} className="bg-white border border-slate-200/60 p-2 rounded-xl text-[10px] space-y-1.5 shadow-3xs">
+                                  <div className="flex justify-between items-start">
+                                    <p className="font-bold text-slate-700 truncate max-w-[80%]">{a.lead_name}</p>
+                                    <span className={`text-[7px] font-extrabold px-1 rounded uppercase ${
+                                      a.status === 'completed' ? 'bg-emerald-50 text-emerald-600' :
+                                      a.status === 'confirmed' ? 'bg-blue-50 text-blue-600' :
+                                      a.status === 'cancelled' ? 'bg-rose-50 text-rose-600' :
+                                      'bg-amber-50 text-amber-600'
+                                    }`}>
+                                      {a.status}
+                                    </span>
+                                  </div>
+                                  <p className="text-[8px] text-slate-400 font-mono">{a.preferred_time} | {a.call_type}</p>
+                                  {a.meeting_link && (
+                                    <a 
+                                      href={a.meeting_link} 
+                                      target="_blank" 
+                                      rel="noreferrer"
+                                      className="text-[8px] text-blue-500 font-medium block truncate hover:underline"
+                                    >
+                                      🔗 Join Meeting
+                                    </a>
+                                  )}
+                                  <div className="flex gap-1.5 pt-1.5 border-t border-slate-100">
+                                    {a.status === 'pending' && (
+                                      <button 
+                                        onClick={() => { setConfirmingApptId(a.id); setShowConfirmModal(true); }}
+                                        className="w-full py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded text-[8px] font-bold"
+                                      >
+                                        Confirm
+                                      </button>
+                                    )}
+                                    {a.status === 'confirmed' && (
+                                      <button 
+                                        onClick={() => { setCompletingApptId(a.id); setShowCompleteModal(true); }}
+                                        className="w-full py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-[8px] font-bold"
+                                      >
+                                        Complete
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* ── VIEW 12: WHATSAPP QR ── */}
               {activeView === 'qr' && (
                 <div className="space-y-6">
@@ -1555,16 +2478,23 @@ export default function AdminCrm() {
                       <span className={`h-3 w-3 rounded-full ${
                         waStatus?.status === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
                       }`} />
-                      <h4 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                      <h4 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider font-mono">
                         Status: {waStatus?.status.toUpperCase() || 'OFFLINE'}
                       </h4>
+                      <button
+                        onClick={handleRestartGateway}
+                        disabled={restartingGateway}
+                        className="ml-4 text-[10px] uppercase font-bold tracking-wider px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-600 rounded-lg transition-colors cursor-pointer border border-slate-200"
+                      >
+                        {restartingGateway ? 'Restarting...' : 'Restart Gateway'}
+                      </button>
                     </div>
 
                     {waStatus?.status === 'connected' ? (
                       <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 text-xs text-emerald-700 max-w-md mx-auto flex flex-col items-center gap-2">
                         <CheckCircle size={32} className="text-emerald-600 animate-bounce-slow" />
                         <p className="font-extrabold">Active WhatsApp Connection Established!</p>
-                        <p className="text-[10px] text-emerald-600">The Baileys node processes socket handshakes with WhatsApp servers seamlessly.</p>
+                        <p className="text-[10px] text-emerald-600 font-medium">The Baileys node processes socket handshakes with WhatsApp servers seamlessly.</p>
                       </div>
                     ) : waStatus?.qrImage ? (
                       <div className="space-y-4">
@@ -1579,6 +2509,140 @@ export default function AdminCrm() {
                       <div className="flex flex-col items-center gap-2 py-8 text-slate-400">
                         <Loader2 size={32} className="animate-spin text-emerald-500" />
                         <p className="text-xs font-semibold">Generating fresh Baileys credentials socket QR...</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Health Score Gauge */}
+                  {waStatus && (
+                    <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-3xl p-6 shadow-3xs max-w-xl mx-auto flex items-center justify-between gap-6">
+                      <div className="flex-1 text-left space-y-1">
+                        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Gateway Quality Score</h4>
+                        <p className="text-[10px] text-slate-400">Based on connection state, reconnect rates, delivery tracking, and queue health.</p>
+                      </div>
+                      <div className="relative flex items-center justify-center h-16 w-16 shrink-0">
+                        <svg className="w-16 h-16 transform -rotate-90">
+                          <circle cx="32" cy="32" r="28" className="stroke-slate-100" strokeWidth="6" fill="transparent" />
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            className={`transition-all duration-500 ${
+                              (waStatus.healthScore ?? 0) >= 80 ? 'stroke-emerald-500' :
+                              (waStatus.healthScore ?? 0) >= 50 ? 'stroke-amber-500' : 'stroke-rose-500'
+                            }`}
+                            strokeWidth="6"
+                            fill="transparent"
+                            strokeDasharray={2 * Math.PI * 28}
+                            strokeDashoffset={2 * Math.PI * 28 * (1 - (waStatus.healthScore ?? 0) / 100)}
+                          />
+                        </svg>
+                        <span className="absolute text-xs font-black text-slate-800 font-mono">
+                          {waStatus.healthScore ?? 0}%
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Live Diagnostics & Telemetry */}
+                  {waStatus && (
+                    <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-3xl p-6 shadow-3xs max-w-xl mx-auto space-y-4 text-left">
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                        <Activity size={14} className="text-emerald-600 animate-pulse" />
+                        Live Connection Diagnostics & Telemetry
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4 text-xs font-mono">
+                        <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                          <span className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Last Inbound Message</span>
+                          <span className="text-slate-700 font-bold">{waStatus.lastInboundMessageTimestamp ? new Date(waStatus.lastInboundMessageTimestamp).toLocaleString() : 'Never'}</span>
+                        </div>
+                        <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                          <span className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Last Outbound Message</span>
+                          <span className="text-slate-700 font-bold">{waStatus.lastOutboundMessageTimestamp ? new Date(waStatus.lastOutboundMessageTimestamp).toLocaleString() : 'Never'}</span>
+                        </div>
+                        <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                          <span className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Last Delivery Success</span>
+                          <span className="text-slate-700 font-bold">{waStatus.lastSuccessfulDeliveryTimestamp ? new Date(waStatus.lastSuccessfulDeliveryTimestamp).toLocaleString() : 'Never'}</span>
+                        </div>
+                        <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                          <span className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Active AI Provider</span>
+                          <span className="text-indigo-600 font-bold uppercase">{waStatus.activeAiProvider || 'None'}</span>
+                        </div>
+                        <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                          <span className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Reconnect Count</span>
+                          <span className="text-slate-700 font-bold">{waStatus.reconnectCount || 0}</span>
+                        </div>
+                        <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                          <span className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Queue Status (Pending/Failed)</span>
+                          <span className="text-slate-700 font-bold">
+                            <span className="text-amber-600 font-bold">{waStatus.pendingQueueCount || 0}</span>
+                            {' / '}
+                            <span className="text-rose-600 font-bold">{waStatus.failedQueueCount || 0}</span>
+                          </span>
+                        </div>
+                      </div>
+                      {waStatus.disconnectReason && (
+                        <div className="bg-rose-50 border border-rose-100 text-rose-700 p-3 rounded-xl text-xs font-semibold">
+                          🚨 <span className="font-bold">Last Disconnect Reason:</span> {waStatus.disconnectReason}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Session Backups Management */}
+                  <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-3xl p-6 shadow-3xs max-w-xl mx-auto space-y-4 text-left">
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
+                      <span>📦 Credentials Session Backups</span>
+                      <button
+                        onClick={() => {
+                          setLoadingBackups(true);
+                          fetchBackups().then(data => {
+                            setBackups(data);
+                            setLoadingBackups(false);
+                          }).catch(() => setLoadingBackups(false));
+                        }}
+                        className="text-[9px] lowercase font-mono text-emerald-600 hover:text-emerald-700 underline cursor-pointer"
+                      >
+                        refresh list
+                      </button>
+                    </h4>
+                    {loadingBackups ? (
+                      <div className="text-xs text-slate-400 flex items-center gap-1">
+                        <Loader2 className="animate-spin" size={12} /> Loading backup list...
+                      </div>
+                    ) : backups.length === 0 ? (
+                      <p className="text-[10px] text-slate-400 italic">No credentials session backups available yet.</p>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {backups.map((bak) => (
+                          <div key={bak.name} className="flex items-center justify-between border border-slate-100 rounded-xl p-3 bg-slate-50/50 hover:bg-slate-100/50 transition-all text-xs">
+                            <div className="min-w-0 flex-1 pr-3">
+                              <p className="font-bold text-slate-700 truncate">{bak.name}</p>
+                              <p className="text-[9px] text-slate-400 mt-0.5 font-mono">
+                                Created: {new Date(bak.timestamp).toLocaleString()} | Status: <span className="font-semibold text-slate-500">{bak.connectionStatus}</span>
+                              </p>
+                              <p className="text-[9px] text-slate-500 italic mt-0.5 truncate font-mono">Reason: {bak.reason}</p>
+                            </div>
+                            <button
+                              disabled={rollingBack !== null}
+                              onClick={async () => {
+                                if (window.confirm(`Are you sure you want to rollback to backup ${bak.name}? This will restart the gateway with those credentials.`)) {
+                                  setRollingBack(bak.name);
+                                  const success = await rollbackBackup(bak.name);
+                                  setRollingBack(null);
+                                  if (success) {
+                                    alert('Successfully rolled back and restarted gateway!');
+                                  } else {
+                                    alert('Failed to rollback. See console logs.');
+                                  }
+                                }
+                              }}
+                              className="shrink-0 text-[10px] font-bold px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-emerald-600 shadow-3xs hover:shadow-2xs cursor-pointer disabled:opacity-50"
+                            >
+                              {rollingBack === bak.name ? 'Restoring...' : 'Restore'}
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -1730,6 +2794,347 @@ export default function AdminCrm() {
               </button>
             </form>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Phase 4A Modals ── */}
+      <AnimatePresence>
+        {/* 1. QuoteModal */}
+        {showQuoteModal && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-slate-200 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4"
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Generate PDF Proposal</h3>
+                <button onClick={() => setShowQuoteModal(false)} className="text-slate-400 hover:text-slate-600">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateQuotation} className="space-y-4 text-xs">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase text-[9px]">Package Tier</label>
+                  <select 
+                    value={quoteTier}
+                    onChange={(e) => setQuoteTier(e.target.value as any)}
+                    className="w-full h-9 border border-slate-200 rounded-xl px-2.5 bg-slate-50 font-bold focus:outline-none"
+                  >
+                    <option value="starter_presence">Starter Presence (₹14,999 + ₹2,999/mo)</option>
+                    <option value="growth_engine">Growth Engine (₹29,999 + ₹5,999/mo)</option>
+                    <option value="sales_system">Sales System (₹59,999 + ₹9,999/mo)</option>
+                    <option value="business_os">Business OS (₹1,49,999+ + ₹19,999+/mo)</option>
+                    <option value="custom">Custom Package...</option>
+                  </select>
+                </div>
+
+                {quoteTier === 'custom' && (
+                  <div className="space-y-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-bold text-[9px] text-slate-500 uppercase">Custom Line Items</span>
+                      <button 
+                        type="button" 
+                        onClick={addCustomItem}
+                        className="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded font-bold text-[8px]"
+                      >
+                        + Add Row
+                      </button>
+                    </div>
+
+                    <div className="space-y-2 max-h-[140px] overflow-y-auto pr-1">
+                      {customItems.map((item, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <input 
+                            type="text" 
+                            placeholder="Description (e.g. CRM Setup)"
+                            required
+                            value={item.description}
+                            onChange={(e) => handleCustomItemChange(idx, 'description', e.target.value)}
+                            className="flex-1 h-8 px-2 border border-slate-200 bg-white rounded-lg focus:outline-none"
+                          />
+                          <input 
+                            type="number" 
+                            placeholder="Price"
+                            required
+                            value={item.price}
+                            onChange={(e) => handleCustomItemChange(idx, 'price', e.target.value)}
+                            className="w-24 h-8 px-2 border border-slate-200 bg-white rounded-lg focus:outline-none font-mono text-right"
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => removeCustomItem(idx)}
+                            className="text-slate-400 hover:text-rose-600"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-500 uppercase text-[9px]">Setup Discount %</label>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="100"
+                      value={quoteDiscount}
+                      onChange={(e) => setQuoteDiscount(Number(e.target.value) || 0)}
+                      className="w-full h-9 border border-slate-200 rounded-xl px-2.5 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-500 uppercase text-[9px]">Proposal Validity (Days)</label>
+                    <input 
+                      type="number" 
+                      disabled
+                      value={7}
+                      className="w-full h-9 border border-slate-200 bg-slate-100 text-slate-400 rounded-xl px-2.5 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase text-[9px]">Additional Notes / Terms</label>
+                  <textarea 
+                    value={quoteNotes}
+                    onChange={(e) => setQuoteNotes(e.target.value)}
+                    placeholder="Enter customized notes or project timelines..."
+                    className="w-full h-16 border border-slate-200 rounded-xl p-2.5 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowQuoteModal(false)}
+                    className="h-9 px-4 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="h-9 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-3xs"
+                  >
+                    Generate PDF
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 2. AppointmentModal */}
+        {showAppointmentModal && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4"
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Book Demo Appointment</h3>
+                <button onClick={() => setShowAppointmentModal(false)} className="text-slate-400 hover:text-slate-600">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleBookAppointment} className="space-y-4 text-xs">
+                {/* Available slots picker */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase text-[9px]">Select Pre-configured Slot</label>
+                  <select 
+                    value={selectedSlotId}
+                    onChange={(e) => setSelectedSlotId(e.target.value)}
+                    className="w-full h-9 border border-slate-200 rounded-xl px-2.5 bg-slate-50 font-bold focus:outline-none"
+                  >
+                    <option value="">-- Or enter custom date and time below --</option>
+                    {availableSlots.filter(s => s.is_available === 1).map(slot => (
+                      <option key={slot.id} value={slot.id}>
+                        {new Date(slot.slot_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} at {slot.slot_time}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {!selectedSlotId && (
+                  <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-100 rounded-2xl">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase text-[8px]">Custom Date</label>
+                      <input 
+                        type="date"
+                        value={appointmentDate}
+                        onChange={(e) => setAppointmentDate(e.target.value)}
+                        className="w-full h-8 px-2 border border-slate-200 bg-white rounded-lg focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase text-[8px]">Custom Time</label>
+                      <input 
+                        type="time"
+                        value={appointmentTime}
+                        onChange={(e) => setAppointmentTime(e.target.value)}
+                        className="w-full h-8 px-2 border border-slate-200 bg-white rounded-lg focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-500 uppercase text-[9px]">Meeting Type</label>
+                    <select 
+                      value={appointmentCallType}
+                      onChange={(e) => setAppointmentCallType(e.target.value as any)}
+                      className="w-full h-9 border border-slate-200 rounded-xl px-2.5 bg-slate-50 focus:outline-none"
+                    >
+                      <option value="call">Phone Call</option>
+                      <option value="video">Google Meet / Video</option>
+                      <option value="in_person">In-Person Meeting</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-500 uppercase text-[9px]">Duration</label>
+                    <input 
+                      type="text" 
+                      disabled
+                      value="30 minutes"
+                      className="w-full h-9 border border-slate-200 bg-slate-100 text-slate-400 rounded-xl px-2.5 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase text-[9px]">Notes / Requirements</label>
+                  <textarea 
+                    value={appointmentNotes}
+                    onChange={(e) => setAppointmentNotes(e.target.value)}
+                    placeholder="Enter additional call notes or topic focus..."
+                    className="w-full h-16 border border-slate-200 rounded-xl p-2.5 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAppointmentModal(false)}
+                    className="h-9 px-4 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="h-9 px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-3xs"
+                  >
+                    Confirm Booking
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 3. ConfirmModal */}
+        {showConfirmModal && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4"
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Confirm Appointment</h3>
+                <button onClick={() => setShowConfirmModal(false)} className="text-slate-400 hover:text-slate-600">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleConfirmAppointment} className="space-y-4 text-xs">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase text-[9px]">Google Meet / Zoom URL</label>
+                  <input 
+                    type="url"
+                    required
+                    placeholder="https://meet.google.com/xyz-abc-123"
+                    value={meetingLink}
+                    onChange={(e) => setMeetingLink(e.target.value)}
+                    className="w-full h-9 border border-slate-200 rounded-xl px-2.5 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowConfirmModal(false)}
+                    className="h-9 px-4 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="h-9 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-3xs"
+                  >
+                    Confirm &amp; Alert Client
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 4. CompleteModal */}
+        {showCompleteModal && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4"
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Complete Demo Session</h3>
+                <button onClick={() => setShowCompleteModal(false)} className="text-slate-400 hover:text-slate-600">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCompleteAppointment} className="space-y-4 text-xs">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-500 uppercase text-[9px]">Deal Value / Setup Revenue (INR)</label>
+                  <input 
+                    type="number"
+                    value={apptDealValue}
+                    onChange={(e) => setApptDealValue(Number(e.target.value) || 0)}
+                    className="w-full h-9 border border-slate-200 rounded-xl px-2.5 focus:outline-none font-mono"
+                  />
+                  <p className="text-[8px] text-slate-400 mt-1">If the lead converts on this call, enter their contract deal value to track conversion analytics.</p>
+                </div>
+
+                <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowCompleteModal(false)}
+                    className="h-9 px-4 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="h-9 px-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-3xs"
+                  >
+                    Mark Complete
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

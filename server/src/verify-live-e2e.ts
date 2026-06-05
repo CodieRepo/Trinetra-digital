@@ -1,5 +1,5 @@
 import { getDb, initDb } from './database/connection';
-import { qualifyLead } from './services/ai.service';
+import { processWithAI, AIContext } from './services/openrouter.service';
 
 const BASE_URL = 'http://localhost:5000/api';
 
@@ -80,21 +80,32 @@ async function main() {
   });
 
   // 4. Test B: Inbound follow-up to check Conversation Memory
-  console.log('\n🧠 [TEST B: CONVERSATION MEMORY] Simulating follow-up message to test Gemini memory...');
-  const chatHistory = chats.map((c: any) => ({
-    role: c.direction === 'inbound' ? 'user' as const : 'model' as const,
-    text: c.body
+  const recentMessages = chats.map((c: any) => ({
+    role: c.direction === 'inbound' ? 'user' as const : 'assistant' as const,
+    content: c.body
   }));
   // Append new inbound message
-  chatHistory.push({ role: 'user', text: 'Yes, I would like to book a slot for tomorrow at 4 PM. My budget is around $1500/month.' });
+  recentMessages.push({ role: 'user', content: 'Yes, I would like to book a slot for tomorrow at 4 PM. My budget is around $1500/month.' });
   
-  console.log('🤖 Invoking Gemini 2.5 Flash with conversation memory history...');
-  const memoryResult = await qualifyLead(lead.name, lead.service, lead.source, chatHistory);
+  const ctx: AIContext = {
+    leadId: lead.id,
+    leadName: lead.name,
+    leadPhone: lead.phone,
+    service: lead.service,
+    source: lead.source,
+    currentScore: lead.ai_score || 0,
+    conversationSummary: lead.ai_summary || '',
+    recentMessages: recentMessages,
+    totalMessagesCount: recentMessages.length
+  };
+  
+  console.log('🤖 Invoking OpenRouter AI with conversation memory history...');
+  const memoryResult = await processWithAI(ctx);
   console.log('✅ Context-aware response generated successfully!');
   console.log(`- New Score: ${memoryResult.ai_score}`);
   console.log(`- New Budget: ${memoryResult.ai_budget}`);
   console.log(`- New Summary: "${memoryResult.ai_summary}"`);
-  console.log(`- Suggestion: "${memoryResult.suggested_reply}"`);
+  console.log(`- Suggestion: "${memoryResult.reply}"`);
 
   // 5. Test C & D: Send Manual CRM Message & Verify Human Handoff (AI pauses)
   console.log(`\n✉️ [TEST C & D: MANUAL DISPATCH + HUMAN HANDOFF] Sending manual CRM message...`);

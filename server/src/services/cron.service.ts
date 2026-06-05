@@ -1,5 +1,7 @@
 import { getDb, logAuditAction } from '../database/connection';
 import { sendWhatsAppMessage } from '../whatsapp/gateway';
+import { QuotationService } from './quotation.service';
+import { PipelineService } from './pipeline.service';
 
 // ─── Production timing constants (milliseconds) ───────────────────────────────
 const STEP_DELAYS_MS = {
@@ -172,6 +174,20 @@ export function startCronService() {
 
     } catch (error) {
       console.error('❌ [CRON] Scheduler loop error:', error);
+    }
+
+    // ── Quotation expiry sweep ────────────────────────────────────────────────
+    try {
+      await QuotationService.processExpiry();
+    } catch (expiryErr) {
+      console.error('❌ [CRON] Expiry sweep error:', expiryErr);
+    }
+
+    // ── Pipeline stuck-lead detection ───────────────────────────────────
+    try {
+      await PipelineService.detectStuckLeads();
+    } catch (pipelineErr) {
+      console.error('❌ [CRON] Pipeline stuck-lead detection error:', pipelineErr);
     }
   }, 30_000); // Check every 30 seconds
 }

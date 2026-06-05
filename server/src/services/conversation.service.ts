@@ -16,9 +16,12 @@
 import { getDb, logAuditAction } from '../database/connection';
 import { processWithAI, AIContext } from './openrouter.service';
 import { buildContext, updateMemoryAfterResponse } from './memory.service';
+import { logTimelineEvent } from './timeline.service';
 import { logTokenUsage } from './cost-monitor.service';
 import { evaluateTags, applyLeadTags, TagInput } from './lead-tagger.service';
 import { notifyHandoff, notifyFireLead, notifyAppointmentRequest } from './notification.service';
+import { TaskModel } from '../models/tasks.model';
+import { pauseNurtureSequence } from './cron.service';
 
 // ─── Anti-spam cooldown map (JID → last response timestamp) ───────────────────
 
@@ -74,6 +77,13 @@ export async function processInboundMessage(
     return { reply: '', skipped: true, skipReason: 'lead_not_found', human_handoff: false, ai_score: 0 };
   }
 
+  // Log inbound message to timeline
+  await logTimelineEvent(leadId, 'inbound', inboundText);
+
+  // ── Phase 3C: Auto-pause nurture sequence on inbound reply ──────────────────
+  // This prevents automated follow-ups from firing while a lead is actively engaging
+  await pauseNurtureSequence(leadId);
+
   // ── 4. Check ai_enabled interlock ───────────────────────────────────────────
   if (lead.ai_enabled === 0) {
     console.log(`⏸️ [CONV] AI paused for ${lead.name} (human handoff active).`);
@@ -101,12 +111,20 @@ export async function processInboundMessage(
   console.log(`🧠 [CONV] Processing message for ${lead.name} | Context: ${ctx.recentMessages.length} msgs + summary`);
   const aiResult = await processWithAI(ctx);
 
+  // Log AI Action to timeline
+  await logTimelineEvent(leadId, 'ai_action', `AI generated reply using ${aiResult.model_used}. Reply: "${aiResult.reply}"`);
+  
+  if (aiResult.lead_stage && aiResult.lead_stage !== lead.lead_stage) {
+    await logTimelineEvent(leadId, 'stage_change', `Lead stage changed from ${lead.lead_stage || 'none'} to ${aiResult.lead_stage}`);
+  }
+
   // ── 8. Handle human handoff trigger ────────────────────────────────────────
   if (aiResult.human_handoff) {
     console.log(`🚨 [CONV] Human handoff triggered for ${lead.name}: ${aiResult.handoff_reason}`);
 
     // Disable AI auto-reply
     await db.run('UPDATE leads SET ai_enabled = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [leadId]);
+    await logTimelineEvent(leadId, 'human_action', `Escalated to human support. Reason: ${aiResult.handoff_reason}`);
 
     // Create handoff alert record
     const alertId = `alert-${Date.now()}`;
@@ -117,6 +135,13 @@ export async function processInboundMessage(
 
     await logAuditAction('HUMAN_HANDOFF',
       `Human handoff created for ${lead.name} (${lead.phone}). Reason: ${aiResult.handoff_reason}`
+    );
+
+    // Auto-spawn handoff task for sales team
+    await TaskModel.spawnHandoffTask(
+      leadId,
+      lead.name,
+      aiResult.handoff_reason || 'Customer requested human assistance'
     );
 
     // Notify admin team via WhatsApp
@@ -132,12 +157,24 @@ export async function processInboundMessage(
       .catch(err => console.warn('⚠️ [NOTIFY] Handoff notification failed:', err));
   }
 
+  // ── 8b. Auto-spawn quotation task (QUOTATION_REQUIRED intent) ───────────────
+  if (aiResult.intent_level === 'QUOTATION_REQUIRED') {
+    await TaskModel.spawnQuotationTask(
+      leadId,
+      lead.name,
+      (lead.service as string | undefined) || undefined
+    );
+  }
+
   // ── 9. Extract and update lead fields ────────────────────────────────────────────────
   const fields = aiResult.extracted_fields;
   const updates: Record<string, any> = {
     ai_score: aiResult.ai_score,
     ai_budget: aiResult.ai_budget ? 1 : 0,
     ai_summary: aiResult.ai_summary,
+    ai_summary_detailed: aiResult.ai_summary_detailed || '',
+    intent_level: aiResult.intent_level || 'COLD',
+    recommended_action: aiResult.recommended_action || 'Consult client needs',
     status: aiResult.ai_score >= 75 ? 'qualified' : 'nurturing',
     lead_stage: aiResult.lead_stage || 'qualifying',
     updated_at: new Date().toISOString(),
@@ -205,6 +242,8 @@ export async function processInboundMessage(
       `INSERT INTO appointments (id, lead_id, status) VALUES (?, ?, 'pending')`,
       [apptId, leadId]
     );
+    // Auto-spawn appointment task for sales team
+    await TaskModel.spawnAppointmentTask(leadId, lead.name);
     await notifyAppointmentRequest({
       name: freshLead.name,
       phone: freshLead.phone,
@@ -253,6 +292,7 @@ export async function resolveHandoffAlert(leadId: string): Promise<void> {
       'UPDATE leads SET ai_enabled = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [leadId]
     );
+    await logTimelineEvent(leadId, 'human_action', 'Human handoff resolved. AI auto-reply resumed.');
     await logAuditAction('HANDOFF_RESOLVED', `Human handoff resolved for lead ${leadId}. AI re-enabled.`);
   } catch (err) {
     console.error('❌ [CONV] resolveHandoffAlert failed:', err);

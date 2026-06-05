@@ -55,6 +55,26 @@ export const AnalyticsController = {
       // Conversion rate
       const conversionRate = totalLeads > 0 ? Math.round((qualifiedLeads / totalLeads) * 100) : 0;
 
+      // Intent-level breakdown (Phase 3A)
+      const intentRows = await db.all(`
+        SELECT intent_level, COUNT(*) as count
+        FROM leads
+        WHERE intent_level IS NOT NULL AND intent_level != ''
+        GROUP BY intent_level
+      `);
+      const intentBreakdown: Record<string, number> = { HOT: 0, WARM: 0, COLD: 0, QUOTATION_REQUIRED: 0 };
+      for (const row of intentRows) {
+        if (row.intent_level in intentBreakdown) {
+          intentBreakdown[row.intent_level] = row.count;
+        }
+      }
+
+      // Pending tasks count (Phase 3B)
+      const pendingTasksRow = await db.get<{ count: number }>(
+        "SELECT COUNT(*) as count FROM tasks WHERE status = 'pending'"
+      );
+      const pendingTasks = pendingTasksRow?.count || 0;
+
       // Recent activity list (last 5 chats)
       const recentActivity = await db.all(`
         SELECT c.id, c.direction, c.body, c.timestamp, l.name as lead_name, l.ai_score
@@ -86,9 +106,11 @@ export const AnalyticsController = {
           fireLeads,
           pendingHandoffs,
           pendingAppointments,
+          pendingTasks,
           optOutCount,
           conversionRate,
-          avgResponseTime: '< 5s'
+          avgResponseTime: '< 5s',
+          intentBreakdown,
         },
         pipeline,
         recentActivity

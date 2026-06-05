@@ -39,7 +39,20 @@ export function useDashboard() {
   // Live CRM State
   const [leads, setLeads] = useState<Lead[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [waStatus, setWaStatus] = useState<{ status: 'disconnected' | 'connecting' | 'connected'; qr: string | null; qrImage: string | null } | null>(null);
+  const [waStatus, setWaStatus] = useState<{
+    status: 'connected' | 'connecting' | 'qr_required' | 'logged_out' | 'auth_failed' | 'intervention_required' | 'disconnected';
+    qr: string | null;
+    qrImage: string | null;
+    lastInboundMessageTimestamp?: string | null;
+    lastOutboundMessageTimestamp?: string | null;
+    lastSuccessfulDeliveryTimestamp?: string | null;
+    pendingQueueCount?: number;
+    failedQueueCount?: number;
+    reconnectCount?: number;
+    activeAiProvider?: string;
+    disconnectReason?: string | null;
+    healthScore?: number;
+  } | null>(null);
   const [healthTelemetry, setHealthTelemetry] = useState<SystemHealth | null>(null);
   const [auditLogs, setAuditLogs] = useState<Array<{ id: string; action: string; details: string | null; timestamp: string }>>([]);
   
@@ -209,6 +222,43 @@ export function useDashboard() {
     }
   };
 
+  // Restart WhatsApp Gateway
+  const restartWhatsAppGateway = async (): Promise<boolean> => {
+    if (!token) return false;
+    try {
+      await apiService.whatsapp.restart();
+      await fetchGlobalMetrics();
+      return true;
+    } catch (err: any) {
+      setLatestApiError(`[GATEWAY] ${err.message || 'Failed restarting WhatsApp gateway'}`);
+      return false;
+    }
+  };
+
+  // Fetch Session Backups
+  const fetchBackups = async (): Promise<Array<{ name: string; timestamp: string; reason: string; connectionStatus: string }>> => {
+    if (!token) return [];
+    try {
+      return await apiService.whatsapp.listBackups();
+    } catch (err: any) {
+      setLatestApiError(`[GATEWAY] ${err.message || 'Failed to list backups'}`);
+      return [];
+    }
+  };
+
+  // Restore Rollback Backup
+  const rollbackBackup = async (backupDirName: string): Promise<boolean> => {
+    if (!token) return false;
+    try {
+      const res = await apiService.whatsapp.rollback(backupDirName);
+      await fetchGlobalMetrics();
+      return res.success;
+    } catch (err: any) {
+      setLatestApiError(`[GATEWAY] ${err.message || 'Failed to restore backup'}`);
+      return false;
+    }
+  };
+
   // ⏰ Periodic Sync telemetries
   useEffect(() => {
     if (token) {
@@ -287,6 +337,9 @@ export function useDashboard() {
     updateLeadStatus,
     toggleAI,
     triggerDatabaseBackup,
-    triggerRefresh
+    triggerRefresh,
+    restartWhatsAppGateway,
+    fetchBackups,
+    rollbackBackup
   };
 }
