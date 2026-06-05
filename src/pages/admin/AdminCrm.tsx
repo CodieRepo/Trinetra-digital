@@ -38,7 +38,7 @@ import {
   ChevronLeft
 } from "lucide-react";
 import { useDashboard } from "../../hooks/useApi";
-import { Lead, Task, TimelineEvent, apiService, API_BASE_URL } from "../../services/api";
+import { apiService, Lead, Task, TimelineEvent, API_BASE_URL } from "../../services/api";
 
 type ViewSection = 
   | 'overview' 
@@ -841,7 +841,7 @@ export default function AdminCrm() {
               <span className="absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75 animate-ping" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
             </span>
-            ⚠️ Backend connection severed. Reconnecting to http://187.127.170.222:3000/api... Verify proxy.
+            ⚠️ Backend connection severed. Reconnecting to {API_BASE_URL}... Verify proxy.
           </div>
         )}
 
@@ -2090,7 +2090,7 @@ export default function AdminCrm() {
                         <span className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-3xs"><Zap size={18} /></span>
                         <div>
                           <p className="text-xs font-bold text-slate-700">Webhooks Capture Integration</p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">API Path: <b className="text-slate-600 font-mono">POST http://187.127.170.222:3000/api/leads</b></p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">API Path: <b className="text-slate-600 font-mono">POST {API_BASE_URL}/leads</b></p>
                         </div>
                       </div>
                       <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">OPERATIONAL</span>
@@ -2146,7 +2146,7 @@ export default function AdminCrm() {
                         <input
                           type="text"
                           disabled
-                          value="http://187.127.170.222:3000/api"
+                          value={API_BASE_URL}
                           className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-4 text-xs text-slate-400 font-mono"
                         />
                       </div>
