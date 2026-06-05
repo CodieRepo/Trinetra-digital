@@ -959,31 +959,40 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
     return;
   }
 
-  // ── KEYWORD MENU ROUTER ─────────────────────────────────────────────────────
-  // Numbered menu shortcuts AND natural language keywords — no AI token spent
+  // ── ROUTING ARCHITECTURE: Priority Enforcement ──────────────────────────────
   const trimmedMsg = textContent.trim();
+  let skipMenuRouter = false;
 
-  // Map natural language phrases to menu keys
+  // Priority 1: Active State Machine (Booking Flow)
+  if (lead.booking_state) {
+    skipMenuRouter = true;
+    console.log(`[ROUTER] Priority 1: Active Booking State (${lead.booking_state}). Bypassing Menu.`);
+  } 
+  // Priority 2: Human Handoff
+  else if (lead.ai_enabled === 0) {
+    skipMenuRouter = true;
+    console.log(`[ROUTER] Priority 2: Human Handoff Active. Bypassing Menu.`);
+  } 
+  // Priority 3: Active Intent Context
+  else if (lead.active_intent) {
+    const isExplicitMenu = /^[1-7]$/.test(trimmedMsg) || /^(menu|help|start)$/i.test(trimmedMsg);
+    if (!isExplicitMenu) {
+      skipMenuRouter = true;
+      console.log(`[ROUTER] Priority 3: Active Intent Context (${lead.active_intent}). Bypassing Menu.`);
+    }
+  }
+
+  // ── KEYWORD MENU ROUTER (Priority 4) ─────────────────────────────────────────
   let menuKey: string | null = null;
 
-  if (/^[1-7]$/.test(trimmedMsg)) {
-    menuKey = trimmedMsg;
-  } else if (/^(menu|help|hi|hello|namaste|helo|start|hey|hii|helo|hy|hye|नमस्ते|नमस्ता|good morning|good evening|good afternoon|gm|gmrng)$/i.test(trimmedMsg)) {
-    menuKey = 'MAIN';
-  } else if (/^(website|web site|website banani hai|website chahiye|website ka price|website kitne mein|landing page|portfolio|ecommerce|e-commerce|online store)$/i.test(trimmedMsg)) {
-    menuKey = '1';
-  } else if (/^(whatsapp|whatsapp automation|whatsapp bot|chatbot|automation|auto reply|automate|crm|lead management|ai bot|ai chatbot|ai system|leads manage|lead system)$/i.test(trimmedMsg)) {
-    menuKey = '2';
-  } else if (/^(ai|crm system|ai crm|sales system|lead qualify|lead scoring|appointment|booking|chatgpt bot|gpt bot)$/i.test(trimmedMsg)) {
-    menuKey = '3';
-  } else if (/^(seo|digital marketing|social media|marketing|google|google ads|facebook ads|instagram ads|lead generation|ads|campaign|google business)$/i.test(trimmedMsg)) {
-    menuKey = '4';
-  } else if (/^(pricing|price|rates|cost|kitna|kitne|charges|fee|fees|paisa|package|packages|plans|plan|pricelist|price list|rate list|how much|rate card|budget|kharcha)$/i.test(trimmedMsg)) {
-    menuKey = '5';
-  } else if (/^(services|service|kya karte ho|kya karte hain|kya milega|what do you offer|what you offer|what services|tell me|all services|list|service list|details|batao|bataiye)$/i.test(trimmedMsg)) {
-    menuKey = 'MAIN';
-  } else if (/^(demo|consultation|free demo|book|appointment book|call schedule|meeting|call karna|baat karna|discuss|free call|free consultation)$/i.test(trimmedMsg)) {
-    menuKey = '6';
+  if (!skipMenuRouter) {
+    if (/^[1-7]$/.test(trimmedMsg)) {
+      menuKey = trimmedMsg;
+    } else if (/^(menu|help|hi|hello|namaste|helo|start|hey|hii|hy|hye|नमस्ते|good morning|good evening|good afternoon|gm|gmrng)$/i.test(trimmedMsg)) {
+      menuKey = 'MAIN';
+    }
+    // Note: Broad keywords (website, pricing, demo) have been removed from the Menu Router 
+    // so they fall through to Priority 5 (OpenRouter AI) for contextual handling.
   }
 
   if (menuKey && MENU_RESPONSE[menuKey]) {

@@ -32,6 +32,13 @@ export interface LeadDTO {
   appointment_requested?: number;
   created_at?: string;
   updated_at?: string;
+  booking_state?: string | null;
+  booking_date?: string | null;
+  booking_time?: string | null;
+  active_intent?: string | null;
+  active_flow?: string | null;
+  last_selected_service?: string | null;
+  service_context_count?: number;
 }
 
 export const LeadModel = {
