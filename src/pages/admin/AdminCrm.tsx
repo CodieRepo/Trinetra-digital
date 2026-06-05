@@ -34,7 +34,8 @@ import {
   Link,
   DollarSign,
   Percent,
-  ChevronRight
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
 import { useDashboard } from "../../hooks/useApi";
 import { Lead, Task, TimelineEvent, apiService, API_BASE_URL } from "../../services/api";
@@ -53,6 +54,8 @@ type ViewSection =
   | 'settings' 
   | 'billing' 
   | 'qr';
+
+import { normalizeRawPhone, formatPhoneForDisplay, getDisplayName } from "../../utils/contact";
 
 export default function AdminCrm() {
   const {
@@ -517,9 +520,10 @@ export default function AdminCrm() {
 
   // Masking helpers for sensitive data
   const maskPhone = (phone: string) => {
-    const clean = phone.trim();
+    const clean = normalizeRawPhone(phone);
+    if (!clean) return 'Unknown WhatsApp Contact';
     if (clean.length < 8) return '********';
-    return `${clean.slice(0, 4)}****${clean.slice(-4)}`;
+    return `${clean.slice(0, 5)}****${clean.slice(-4)}`;
   };
 
 
@@ -828,7 +832,7 @@ export default function AdminCrm() {
       </aside>
 
       {/* ── MAIN CONTENT WORKSPACE ── */}
-      <main className={`flex-1 transition-all duration-300 min-h-screen ${sidebarOpen ? "pl-64" : "pl-0"} p-8 overflow-y-auto`}>
+      <main className={`flex-1 transition-all duration-300 min-h-screen ${sidebarOpen ? "md:pl-64 pl-0" : "pl-0"} p-8 overflow-y-auto`}>
         
         {/* Offline Alarm Alert Bar */}
         {!backendOnline && (
@@ -1176,9 +1180,9 @@ export default function AdminCrm() {
 
               {/* ── VIEW 2: TEAM INBOX / CONVERSATIONS ── */}
               {activeView === 'conversations' && (
-                <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-3xl overflow-hidden shadow-sm grid md:grid-cols-[280px_1fr_300px] h-[calc(100vh-180px)]">
+                <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-3xl overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-[250px_1fr] lg:grid-cols-[280px_1fr_300px] h-[calc(100vh-180px)]">
                   {/* Left Column: Thread List */}
-                  <div className="border-r border-slate-200 flex flex-col h-full bg-white/40">
+                  <div className={`border-r border-slate-200 flex flex-col h-full bg-white/40 ${selectedLeadId ? 'hidden md:flex' : 'flex'}`}>
                     <div className="p-4 border-b border-slate-200 shrink-0 space-y-3">
                       <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center justify-between">
                         Live Threads
@@ -1214,7 +1218,7 @@ export default function AdminCrm() {
                             >
                               <div className="flex justify-between items-center w-full">
                                 <span className="text-xs font-bold text-slate-800 truncate max-w-[150px]">
-                                  {lead.name}
+                                  {getDisplayName(lead)}
                                 </span>
                                 {/* Score Badge */}
                                 <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${
@@ -1258,13 +1262,23 @@ export default function AdminCrm() {
                   </div>
 
                   {/* Middle Column: Chat Timeline */}
-                  <div className="flex flex-col h-full border-r border-slate-200 bg-white/20">
+                  <div className={`flex flex-col h-full border-r border-slate-200 bg-white/20 ${selectedLeadId ? 'flex' : 'hidden md:flex'}`}>
                     {leadDetail ? (
                       <>
                         <div className="p-4 border-b border-slate-200 bg-white/50 shrink-0 flex items-center justify-between">
-                          <div>
-                            <h4 className="text-xs font-extrabold text-slate-800">{leadDetail.lead.name}</h4>
-                            <p className="text-[9px] text-slate-400 font-mono mt-0.5">{leadDetail.lead.phone}</p>
+                          <div className="flex items-center gap-2">
+                            {/* Mobile Back Button */}
+                            <button
+                              onClick={() => setSelectedLeadId(null)}
+                              className="md:hidden p-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 mr-1.5"
+                              title="Back to thread list"
+                            >
+                              <ChevronLeft className="rotate-180" size={16} />
+                            </button>
+                            <div>
+                              <h4 className="text-xs font-extrabold text-slate-800">{getDisplayName(leadDetail.lead)}</h4>
+                              <p className="text-[9px] text-slate-400 font-mono mt-0.5">{formatPhoneForDisplay(leadDetail.lead.phone)}</p>
+                            </div>
                           </div>
                           <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
                             leadDetail.lead.ai_enabled === 0
@@ -1332,7 +1346,7 @@ export default function AdminCrm() {
                   </div>
 
                   {/* Right Column: Lead context profile */}
-                  <div className="h-full overflow-y-auto bg-slate-50/70 p-4 space-y-4 border-l border-slate-200">
+                  <div className="h-full overflow-y-auto bg-slate-50/70 p-4 space-y-4 border-l border-slate-200 hidden lg:block">
                     {leadDetail ? (
                       <>
                         <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-200/60 pb-2">
@@ -1344,7 +1358,7 @@ export default function AdminCrm() {
                           <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-3xs">
                             <div>
                               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Client Name</p>
-                              <p className="text-sm font-extrabold text-slate-800 mt-0.5">{leadDetail.lead.name}</p>
+                              <p className="text-sm font-extrabold text-slate-800 mt-0.5">{getDisplayName(leadDetail.lead)}</p>
                             </div>
                             <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-2 text-[11px]">
                               <div>
@@ -1358,7 +1372,7 @@ export default function AdminCrm() {
                             </div>
                             <div className="border-t border-slate-100 pt-2 text-[11px]">
                               <p className="text-slate-400 font-medium">WhatsApp Phone</p>
-                              <p className="font-mono font-bold text-slate-700 mt-0.5">{leadDetail.lead.phone}</p>
+                              <p className="font-mono font-bold text-slate-700 mt-0.5">{formatPhoneForDisplay(leadDetail.lead.phone)}</p>
                             </div>
                           </div>
 
@@ -1536,7 +1550,7 @@ export default function AdminCrm() {
                                     <button onClick={() => setShowAppointmentModal(true)} className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-bold rounded-lg flex items-center gap-1 shadow-xs transition-colors">
                                       📅 Book Demo
                                     </button>
-                                    <button onClick={() => { navigator.clipboard.writeText(leadDetail.lead.phone); alert('Phone copied to clipboard!'); }} className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-100 text-[9px] font-bold rounded-lg flex items-center gap-1 transition-colors">
+                                    <button onClick={() => { navigator.clipboard.writeText(normalizeRawPhone(leadDetail.lead.phone)); alert('Phone copied to clipboard!'); }} className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-100 text-[9px] font-bold rounded-lg flex items-center gap-1 transition-colors">
                                       📞 Call Lead
                                     </button>
                                   </>
@@ -1546,7 +1560,7 @@ export default function AdminCrm() {
                                     <button onClick={() => setShowQuoteModal(true)} className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-bold rounded-lg flex items-center gap-1 shadow-xs transition-colors">
                                       📋 Generate Quote
                                     </button>
-                                    <button onClick={() => { navigator.clipboard.writeText(leadDetail.lead.phone); alert('Phone copied to clipboard!'); }} className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-100 text-[9px] font-bold rounded-lg flex items-center gap-1 transition-colors">
+                                    <button onClick={() => { navigator.clipboard.writeText(normalizeRawPhone(leadDetail.lead.phone)); alert('Phone copied to clipboard!'); }} className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-100 text-[9px] font-bold rounded-lg flex items-center gap-1 transition-colors">
                                       📞 Call Lead
                                     </button>
                                     <button onClick={() => handleSendQuickFollowUp('quoting')} className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[9px] font-bold rounded-lg flex items-center gap-1 transition-colors">
@@ -1745,7 +1759,7 @@ export default function AdminCrm() {
                         ) : (
                           leads.map((lead) => (
                             <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="py-3.5 pl-3 font-bold text-slate-800">{lead.name}</td>
+                              <td className="py-3.5 pl-3 font-bold text-slate-800">{getDisplayName(lead)}</td>
                               <td className="py-3.5 text-slate-500">{lead.company || '—'}</td>
                               <td className="py-3.5 text-slate-400 font-mono">{maskPhone(lead.phone)}</td>
                               <td className="py-3.5 text-center">
@@ -1802,7 +1816,7 @@ export default function AdminCrm() {
                                 key={lead.id}
                                 className="bg-white border border-slate-200/80 p-3 rounded-xl shadow-3xs cursor-pointer hover:shadow-2xs transition-all space-y-2"
                               >
-                                <p className="text-xs font-bold text-slate-700 truncate">{lead.name}</p>
+                                <p className="text-xs font-bold text-slate-700 truncate">{getDisplayName(lead)}</p>
                                 <p className="text-[9px] text-slate-400 truncate">{lead.company || 'Private Lead'}</p>
                                 <div className="flex justify-between items-center pt-2 border-t border-slate-100 text-[8px] font-bold text-slate-400">
                                   <span>Score: {lead.ai_score}</span>
@@ -2290,7 +2304,7 @@ export default function AdminCrm() {
                                   <tr key={q.id} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="py-3 font-bold text-slate-800">
                                       {q.id}
-                                      {lead && <p className="text-[9px] text-slate-400 font-medium">{lead.name}</p>}
+                                      {lead && <p className="text-[9px] text-slate-400 font-medium">{getDisplayName(lead)}</p>}
                                     </td>
                                     <td>
                                       <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">{q.package_name}</span>

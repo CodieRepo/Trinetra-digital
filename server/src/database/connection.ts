@@ -319,6 +319,18 @@ export async function initDb(): Promise<Database<sqlite3.Database, sqlite3.State
     { sql: 'ALTER TABLE leads ADD COLUMN stuck_task_7d INTEGER DEFAULT 0;',                   label: 'leads.stuck_task_7d' },
     { sql: 'ALTER TABLE leads ADD COLUMN stuck_task_14d INTEGER DEFAULT 0;',                  label: 'leads.stuck_task_14d' },
     { sql: 'ALTER TABLE leads ADD COLUMN stuck_task_30d INTEGER DEFAULT 0;',                  label: 'leads.stuck_task_30d' },
+    // Conversational State Machine and lock context migrations
+    { sql: 'ALTER TABLE leads ADD COLUMN booking_state TEXT;',                                label: 'leads.booking_state' },
+    { sql: 'ALTER TABLE leads ADD COLUMN booking_date TEXT;',                                 label: 'leads.booking_date' },
+    { sql: 'ALTER TABLE leads ADD COLUMN booking_time TEXT;',                                 label: 'leads.booking_time' },
+    { sql: 'ALTER TABLE leads ADD COLUMN active_intent TEXT;',                                label: 'leads.active_intent' },
+    { sql: 'ALTER TABLE leads ADD COLUMN active_flow TEXT;',                                  label: 'leads.active_flow' },
+    { sql: 'ALTER TABLE leads ADD COLUMN last_selected_service TEXT;',                        label: 'leads.last_selected_service' },
+    { sql: 'ALTER TABLE leads ADD COLUMN service_context_count INTEGER DEFAULT 0;',           label: 'leads.service_context_count' },
+    // Owner Notification Audit columns for appointments
+    { sql: 'ALTER TABLE appointments ADD COLUMN notification_sent INTEGER DEFAULT 0;',        label: 'appointments.notification_sent' },
+    { sql: 'ALTER TABLE appointments ADD COLUMN notification_channel TEXT;',                  label: 'appointments.notification_channel' },
+    { sql: 'ALTER TABLE appointments ADD COLUMN notification_timestamp TEXT;',                label: 'appointments.notification_timestamp' },
   ];
 
   for (const migration of migrations) {

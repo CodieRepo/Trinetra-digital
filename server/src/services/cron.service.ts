@@ -61,19 +61,18 @@ Kya main 10 minute ka quick call arrange kar sakta hoon aapke saath? 🤝
   if (step === 3) {
     return `Namaste ${firstName} ji! 💡
 
-Ek important question \u2014 kya aap jaanna chahenge ki hamare system aapke business mein practically kaise kaam kar sakte hain?
+Ek important question — kya aap jaanna chahenge ki hamare system aapke business mein practically kaise kaam kar sakte hain?
 
 Hum offer karte hain:
-🔹 *Website Development* \u2014 \u20b97,999 se start
-🔹 *WhatsApp Automation* \u2014 \u20b97,999 setup + \u20b91,499/month
-🔹 *AI Chatbot + CRM* \u2014 \u20b914,999 se start
-🔹 *Full AI Sales System* \u2014 \u20b929,999 se start
+🔹 *Website Development* — ₹7,999 se start
+🔹 *WhatsApp Automation* — ₹7,999 setup + ₹1,499/month
+🔹 *AI Chatbot + CRM* — ₹14,999 se start
+🔹 *Full AI Sales System* — ₹29,999 se start
 
 *Final pricing aapki requirement aur scope ke hisab se vary kar sakti hai.*
 
-Kya aap ek free 15-minute consultation book karna chahenge?
+Kya aap ek free 15-minute consultation book karna chahenge? Mujhe bas date aur time batayein, aur main appointment book kar dunga! 😊
 
-🔗 https://calendly.com/trinetra-demo
 📞 +91 9334757759`;
   }
 

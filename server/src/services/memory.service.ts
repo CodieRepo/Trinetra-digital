@@ -29,6 +29,14 @@ export interface ConversationContext {
   conversationSummary: string;
   recentMessages: Array<{ role: 'user' | 'assistant'; content: string }>;
   totalMessagesCount?: number;
+  // State machine and lock context fields
+  booking_state?: string | null;
+  booking_date?: string | null;
+  booking_time?: string | null;
+  active_intent?: string | null;
+  active_flow?: string | null;
+  last_selected_service?: string | null;
+  service_context_count?: number;
 }
 
 // ─── Get or create memory record ──────────────────────────────────────────────
@@ -179,6 +187,14 @@ export async function buildContext(leadId: string): Promise<ConversationContext 
       conversationSummary: summary,
       recentMessages,
       totalMessagesCount: totalCount,
+      // Pass state tracking variables
+      booking_state: lead.booking_state || null,
+      booking_date: lead.booking_date || null,
+      booking_time: lead.booking_time || null,
+      active_intent: lead.active_intent || null,
+      active_flow: lead.active_flow || null,
+      last_selected_service: lead.last_selected_service || null,
+      service_context_count: lead.service_context_count || 0,
     };
 
     // ── Diagnostic log: verify what context the AI actually receives

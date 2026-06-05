@@ -6,7 +6,7 @@
 import { Router, Request, Response } from 'express';
 import { getDb, logAuditAction } from '../database/connection';
 import { authenticateJWT } from '../middleware/auth';
-import { sendWhatsAppMessage } from '../services/wa.service';
+import { sendWhatsAppMessage } from '../whatsapp/gateway';
 import { logTimelineEvent } from '../services/timeline.service';
 
 const router = Router();

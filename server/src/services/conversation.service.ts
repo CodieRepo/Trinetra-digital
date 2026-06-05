@@ -22,6 +22,7 @@ import { evaluateTags, applyLeadTags, TagInput } from './lead-tagger.service';
 import { notifyHandoff, notifyFireLead, notifyAppointmentRequest } from './notification.service';
 import { TaskModel } from '../models/tasks.model';
 import { pauseNurtureSequence } from './cron.service';
+import { parseNaturalDateTime } from '../utils/date-parser';
 
 // ─── Anti-spam cooldown map (JID → last response timestamp) ───────────────────
 
@@ -168,6 +169,51 @@ export async function processInboundMessage(
 
   // ── 9. Extract and update lead fields ────────────────────────────────────────────────
   const fields = aiResult.extracted_fields;
+
+  // Normalize natural language input using custom parser
+  const naturalParsed = parseNaturalDateTime(inboundText);
+  let finalBookingDate = aiResult.booking_date || null;
+  let finalBookingTime = aiResult.booking_time || null;
+
+  if (naturalParsed.date) {
+    finalBookingDate = naturalParsed.date;
+  }
+  if (naturalParsed.time) {
+    finalBookingTime = naturalParsed.time;
+  }
+
+  // Double check AI responses for any relative formats that leaked
+  if (finalBookingDate && !/^\d{4}-\d{2}-\d{2}$/.test(finalBookingDate)) {
+    const parsedAiDate = parseNaturalDateTime(finalBookingDate);
+    if (parsedAiDate.date) {
+      finalBookingDate = parsedAiDate.date;
+    }
+  }
+  if (finalBookingTime && !/^\d{2}:\d{2}$/.test(finalBookingTime)) {
+    const parsedAiTime = parseNaturalDateTime(finalBookingTime);
+    if (parsedAiTime.time) {
+      finalBookingTime = parsedAiTime.time;
+    }
+  }
+
+  // Force booking state to confirmed if date & time are both resolved
+  let finalBookingState = aiResult.booking_state || lead.booking_state || null;
+  const isBookingFlow = aiResult.active_flow === 'Booking' || lead.active_flow === 'Booking' || aiResult.booking_state || lead.booking_state;
+  if (isBookingFlow) {
+    if (finalBookingDate && finalBookingTime) {
+      finalBookingState = 'confirmed';
+    } else if (finalBookingDate) {
+      finalBookingState = 'waiting_for_time';
+    } else if (finalBookingTime) {
+      if (lead.booking_date) {
+        finalBookingDate = lead.booking_date;
+        finalBookingState = 'confirmed';
+      } else {
+        finalBookingState = 'waiting_for_date';
+      }
+    }
+  }
+
   const updates: Record<string, any> = {
     ai_score: aiResult.ai_score,
     ai_budget: aiResult.ai_budget ? 1 : 0,
@@ -178,6 +224,12 @@ export async function processInboundMessage(
     status: aiResult.ai_score >= 75 ? 'qualified' : 'nurturing',
     lead_stage: aiResult.lead_stage || 'qualifying',
     updated_at: new Date().toISOString(),
+    // Conversational State Machine updates
+    booking_state: finalBookingState,
+    booking_date: finalBookingDate,
+    booking_time: finalBookingTime,
+    active_intent: aiResult.active_intent || null,
+    active_flow: aiResult.active_flow || null,
   };
 
   if (fields.name     && fields.name !== lead.name) updates.name = fields.name;
@@ -195,6 +247,29 @@ export async function processInboundMessage(
   if (fields.is_decision_maker !== null && fields.is_decision_maker !== undefined) updates.is_decision_maker = fields.is_decision_maker ? 1 : 0;
   if (aiResult.recommended_package) updates.recommended_package = aiResult.recommended_package;
   if (aiResult.appointment_requested) updates.appointment_requested = 1;
+
+  // Enforce context lock counter
+  let newContextCount = lead.service_context_count || 0;
+  let newLastSelectedService = lead.last_selected_service || null;
+  if (aiResult.last_selected_service) {
+    if (aiResult.last_selected_service !== lead.last_selected_service) {
+      newLastSelectedService = aiResult.last_selected_service;
+      newContextCount = 1; // start of new lock (1st message)
+    } else {
+      newContextCount = (lead.service_context_count || 0) + 1; // increment on same
+    }
+  } else if (lead.last_selected_service) {
+    newContextCount = (lead.service_context_count || 0) + 1; // increment if lock is active
+  }
+
+  // Release context lock if it exceeds 10 messages
+  if (newContextCount > 10) {
+    newLastSelectedService = null;
+    newContextCount = 0;
+  }
+
+  updates.last_selected_service = newLastSelectedService;
+  updates.service_context_count = newContextCount;
 
   const setClauses = Object.keys(updates).map(k => `${k} = ?`).join(', ');
   await db.run(
@@ -234,23 +309,47 @@ export async function processInboundMessage(
     }).catch(err => console.warn('⚠️ [NOTIFY] FIRE lead notification failed:', err));
   }
 
-  // Notify on appointment request
-  if (aiResult.appointment_requested && !lead.appointment_requested) {
-    // Create appointment record
+  // Notify on appointment request / booking confirmation
+  const isBookingConfirmed = finalBookingState === 'confirmed';
+  const wasBookingConfirmed = lead.booking_state === 'confirmed';
+
+  if ((isBookingConfirmed && !wasBookingConfirmed) || (aiResult.appointment_requested && !lead.appointment_requested)) {
     const apptId = `appt-${Date.now()}`;
+    const statusVal = isBookingConfirmed ? 'confirmed' : 'pending';
+    const prefDate = finalBookingDate || null;
+    const prefTime = finalBookingTime || null;
+
+    let notificationSent = 0;
+    let notificationChannel = 'whatsapp';
+    let notificationTimestamp = new Date().toISOString();
+
+    try {
+      const deliverySuccess = await notifyAppointmentRequest({
+        name: freshLead.name,
+        phone: freshLead.phone,
+        company: freshLead.company,
+        service: freshLead.service || aiResult.last_selected_service || 'Consultation',
+        city: freshLead.city,
+        preferred_date: prefDate,
+        preferred_time: prefTime,
+      });
+      if (deliverySuccess) {
+        notificationSent = 1;
+      }
+    } catch (err) {
+      console.warn('⚠️ [NOTIFY] Appointment notification failed:', err);
+    }
+
     await db.run(
-      `INSERT INTO appointments (id, lead_id, status) VALUES (?, ?, 'pending')`,
-      [apptId, leadId]
+      `INSERT INTO appointments (id, lead_id, preferred_date, preferred_time, status, notification_sent, notification_channel, notification_timestamp) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [apptId, leadId, prefDate, prefTime, statusVal, notificationSent, notificationChannel, notificationTimestamp]
     );
+
     // Auto-spawn appointment task for sales team
     await TaskModel.spawnAppointmentTask(leadId, lead.name);
-    await notifyAppointmentRequest({
-      name: freshLead.name,
-      phone: freshLead.phone,
-      company: freshLead.company,
-      service: freshLead.service,
-      city: freshLead.city,
-    }).catch(err => console.warn('⚠️ [NOTIFY] Appointment notification failed:', err));
+
+    await logTimelineEvent(leadId, 'ai_action', `Auto-created ${statusVal} appointment for ${prefDate} at ${prefTime}. Owner notified: ${notificationSent === 1 ? 'SUCCESS' : 'FAILED'}`);
   }
 
   // Log hot lead

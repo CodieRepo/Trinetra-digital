@@ -83,10 +83,10 @@ async function sendEmailAlert(subject: string, text: string, html?: string): Pro
 }
 
 // ─── Admin WhatsApp Alert ────────────────────────────────────────────────────
-async function sendAdminAlert(message: string): Promise<void> {
+async function sendAdminAlert(message: string): Promise<boolean> {
   if (!ADMIN_PHONE) {
     console.warn('⚠️ [NOTIFY] ADMIN_NOTIFY_PHONE not configured. Skipping WhatsApp notification.');
-    return;
+    return false;
   }
   try {
     // Dynamic import to avoid circular dependency
@@ -94,11 +94,14 @@ async function sendAdminAlert(message: string): Promise<void> {
     const sent = await sendWhatsAppMessage(ADMIN_PHONE, message);
     if (sent) {
       console.log(`📲 [NOTIFY] Admin WhatsApp alert sent to ${ADMIN_PHONE}`);
+      return true;
     } else {
       console.warn(`⚠️ [NOTIFY] Failed to send admin WhatsApp alert (WhatsApp not connected?)`);
+      return false;
     }
   } catch (err) {
     console.error('❌ [NOTIFY] Error sending admin WhatsApp alert:', err);
+    return false;
   }
 }
 
@@ -249,41 +252,47 @@ export async function notifyAppointmentRequest(lead: {
   company?: string;
   service?: string;
   city?: string;
-}): Promise<void> {
+  preferred_date?: string | null;
+  preferred_time?: string | null;
+}): Promise<boolean> {
   const message =
-    `📅 *APPOINTMENT REQUESTED*\n` +
+    `📅 *APPOINTMENT CONFIRMED (CRM)*\n` +
     `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
     `👤 *Lead:* ${lead.name}\n` +
     `📞 *Phone:* ${lead.phone}\n` +
     `🏢 *Business:* ${lead.company || 'Not specified'}\n` +
     `🎯 *Interest:* ${lead.service || 'Not specified'}\n` +
     `📍 *City:* ${lead.city || 'Not specified'}\n` +
+    (lead.preferred_date ? `📅 *Date:* ${lead.preferred_date}\n` : '') +
+    (lead.preferred_time ? `🕒 *Time:* ${lead.preferred_time}\n` : '') +
     `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-    `This lead has requested a consultation/demo.\n\n` +
+    `The AI has automatically parsed and confirmed this appointment!\n\n` +
     `Reply to lead: wa.me/${lead.phone.replace(/[^0-9]/g, '')}\n` +
-    `📅 Your Calendly: ${CALENDLY_URL}\n` +
     `📋 Dashboard: https://trinetradigitalsolution.com/admin`;
 
   const dedupKey = `appt:${lead.phone}`;
-  if (!shouldNotify(dedupKey)) return;
+  if (!shouldNotify(dedupKey)) return true;
 
-  await sendAdminAlert(message);
+  const success = await sendAdminAlert(message);
 
-  const emailSubject = `📅 Appointment Requested: ${lead.name}`;
+  const emailSubject = `📅 CRM Appointment Confirmed: ${lead.name}`;
   const emailBody = 
-    `Appointment requested details:\n\n` +
+    `An appointment has been automatically scheduled in the CRM:\n\n` +
     `- Lead Name: ${lead.name}\n` +
     `- Phone: ${lead.phone}\n` +
     `- Business: ${lead.company || 'Not specified'}\n` +
     `- Interest: ${lead.service || 'Not specified'}\n` +
-    `- City: ${lead.city || 'Not specified'}\n\n` +
-    `Calendly URL: ${CALENDLY_URL}\n` +
-    `Dashboard Link: https://trinetradigitalsolution.com/admin`;
+    `- City: ${lead.city || 'Not specified'}\n` +
+    (lead.preferred_date ? `- Date: ${lead.preferred_date}\n` : '') +
+    (lead.preferred_time ? `- Time: ${lead.preferred_time}\n` : '') +
+    `\nDashboard Link: https://trinetradigitalsolution.com/admin`;
   await sendEmailAlert(emailSubject, emailBody);
 
   await logAuditAction('ADMIN_NOTIFIED_APPOINTMENT',
-    `Admin notified about appointment request from ${lead.name} (${lead.phone})`
+    `Admin notified about appointment request from ${lead.name} (${lead.phone}). Success: ${success}`
   );
+
+  return success;
 }
 
 // ─── High Budget Alert ────────────────────────────────────────────────────────

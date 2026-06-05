@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiService, PipelineLead, PipelineStageGroup, ForecastData, PipelineAuditEntry } from '../../services/api';
+import { getDisplayName } from '../../utils/contact';
 
 // ─── Types & Constants ────────────────────────────────────────────────────────
 
@@ -99,14 +100,14 @@ function LeadCard({
   return (
     <div
       draggable
-      onDragStart={e => { e.dataTransfer.setData('leadId', lead.id); e.dataTransfer.setData('leadName', lead.name); setDragging(true); }}
+      onDragStart={e => { e.dataTransfer.setData('leadId', lead.id); e.dataTransfer.setData('leadName', getDisplayName(lead)); setDragging(true); }}
       onDragEnd={() => setDragging(false)}
       style={cardStyle}
     >
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a', marginBottom: 2 }}>{lead.name}</div>
+          <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a', marginBottom: 2 }}>{getDisplayName(lead)}</div>
           {lead.company && <div style={{ fontSize: 11, color: '#64748b' }}>{lead.company}</div>}
         </div>
         <ProbabilityRing probability={lead.deal_probability} />
@@ -564,7 +565,7 @@ export default function AdminPipeline() {
 
       {/* ── Move Stage Modal ────────────────────────────────────────────── */}
       {moveModal && (
-        <Modal title={`Move: ${moveModal.lead.name}`} onClose={() => setMoveModal(null)}>
+        <Modal title={`Move: ${getDisplayName(moveModal.lead)}`} onClose={() => setMoveModal(null)}>
           <label style={labelStyle}>New Stage</label>
           <select value={moveStage} onChange={e => setMoveStage(e.target.value)} style={inputStyle}>
             <option value="">Select stage...</option>
@@ -584,7 +585,7 @@ export default function AdminPipeline() {
 
       {/* ── Probability Modal ───────────────────────────────────────────── */}
       {probModal && (
-        <Modal title={`Win Probability: ${probModal.lead.name}`} onClose={() => setProbModal(null)}>
+        <Modal title={`Win Probability: ${getDisplayName(probModal.lead)}`} onClose={() => setProbModal(null)}>
           <div style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
             Current: <strong>{probModal.lead.deal_probability}%</strong> · 
             Intent: <strong>{probModal.lead.intent_level || 'COLD'}</strong>
@@ -607,7 +608,7 @@ export default function AdminPipeline() {
 
       {/* ── Deal Values Modal ───────────────────────────────────────────── */}
       {dealModal && (
-        <Modal title={`Deal Values: ${dealModal.lead.name}`} onClose={() => setDealModal(null)}>
+        <Modal title={`Deal Values: ${getDisplayName(dealModal.lead)}`} onClose={() => setDealModal(null)}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 11, color: '#64748b', marginBottom: 12, background: '#f8fafc', borderRadius: 8, padding: '8px 12px' }}>
             <div>Current Setup: <strong>{formatINR(dealModal.lead.deal_setup_value)}</strong></div>
             <div>Current MRR: <strong>{formatINR(dealModal.lead.deal_mrr)}</strong></div>
@@ -640,7 +641,7 @@ export default function AdminPipeline() {
 
       {/* ── Audit Trail Modal ───────────────────────────────────────────── */}
       {auditModal && (
-        <Modal title={`Pipeline Audit: ${auditModal.lead.name}`} onClose={() => setAuditModal(null)}>
+        <Modal title={`Pipeline Audit: ${getDisplayName(auditModal.lead)}`} onClose={() => setAuditModal(null)}>
           {auditModal.entries.length === 0 ? (
             <div style={{ color: '#94a3b8', textAlign: 'center', padding: 20 }}>No stage movements recorded yet.</div>
           ) : (

@@ -54,6 +54,14 @@ export interface AIContext {
     content: string;
   }>;
   totalMessagesCount?: number;
+  // New state tracking fields passed to AI prompt
+  booking_state?: string | null;
+  booking_date?: string | null;
+  booking_time?: string | null;
+  active_intent?: string | null;
+  active_flow?: string | null;
+  last_selected_service?: string | null;
+  service_context_count?: number;
 }
 
 export interface AIResponse {
@@ -91,6 +99,13 @@ export interface AIResponse {
   input_tokens: number;
   output_tokens: number;
   cost_usd: number;
+  // State machine fields returned by AI
+  booking_state?: string | null;
+  booking_date?: string | null;
+  booking_time?: string | null;
+  active_intent?: string | null;
+  active_flow?: string | null;
+  last_selected_service?: string | null;
 }
 
 // â”€â”€â”€ Model cascade definition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -234,6 +249,11 @@ function estimateCost(modelId: string, inputTokens: number, outputTokens: number
 function buildSystemPrompt(ctx: AIContext): string {
   const kb = getKnowledgeBaseBlock();
 
+  const now = new Date();
+  const kolkataTimeStr = now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+  const weekdayStr = now.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata', weekday: 'long' });
+  const currentDateTimeStr = `${kolkataTimeStr} (${weekdayStr}) - Timezone: India Standard Time (IST)`;
+
   return `You are the official AI Sales Consultant and Business Advisor for Trinetra Digital Solution.
 Your name is "Trinetra Assistant". You are knowledgeable, honest, helpful, and consultative.
 
@@ -243,7 +263,7 @@ Your goal: guide leads to find the best solutions and take the next step with co
 ${kb}
 
 ==================================================
-CURRENT LEAD PROFILE
+CURRENT LEAD PROFILE & STATE MACHINE CONTEXT
 ==================================================
 Name: ${ctx.leadName}
 Phone: ${ctx.leadPhone}
@@ -253,8 +273,63 @@ ${ctx.city ? `City: ${ctx.city}` : ''}
 ${ctx.company ? `Business: ${ctx.company}` : ''}
 Current Lead Score: ${ctx.currentScore}/100
 
+- Booking State: ${ctx.booking_state || 'null'} (Possible values: null | 'waiting_for_date' | 'waiting_for_time' | 'confirmed')
+- Booking Date: ${ctx.booking_date || 'null'}
+- Booking Time: ${ctx.booking_time || 'null'}
+- Active Intent: ${ctx.active_intent || 'null'}
+- Active Flow: ${ctx.active_flow || 'null'}
+- Last Selected Service: ${ctx.last_selected_service || 'null'}
+- Service Context Count: ${ctx.service_context_count || 0} (Messages elapsed under active service lock)
+
+Current Local Time: ${currentDateTimeStr}
+
 CONVERSATION CONTEXT:
 ${ctx.conversationSummary ? `Previous Summary: ${ctx.conversationSummary}` : 'New conversation — greet warmly.'}
+
+==================================================
+STATE MACHINE & LOCK CONTEXT RULES (CRITICAL)
+==================================================
+1. APPOINTMENT BOOKING CONVERSATIONAL STATE MACHINE:
+- Trigger: If the customer shows interest in booking a free consultation, setting up a meeting, scheduling a demo, or scheduling a call (e.g. "free consultation book krdo", "call me", "meeting schedule karo", "appointment book kro", "kal 2 baje", "tomorrow afternoon", "next monday 11 am", "parso morning"):
+  - Set "active_flow" to "Booking"
+  - Set "active_intent" to "Booking Consultation"
+  - If date is unknown and NOT mentioned in the current message, transition "booking_state" to "waiting_for_date".
+  - If a date and/or time is already mentioned in the current message, parse and normalize them immediately, and if both are resolved, transition "booking_state" to "confirmed" directly.
+
+- Date & Time Parsing & Normalization Rules:
+  - You MUST resolve relative days based on the Current Local Time:
+    - 'today' / 'aaj' -> today's date: YYYY-MM-DD
+    - 'tomorrow' / 'kal' -> tomorrow's date: YYYY-MM-DD (e.g. if today is Friday 2026-06-05, tomorrow/kal resolves to Saturday 2026-06-06)
+    - 'day after tomorrow' / 'parso' -> day after tomorrow's date: YYYY-MM-DD (e.g. if today is Friday 2026-06-05, parso/day after tomorrow resolves to Sunday 2026-06-07)
+    - 'next monday' -> next Monday's date: YYYY-MM-DD (e.g. if today is Friday 2026-06-05, next monday resolves to Monday 2026-06-08)
+    - 'next tuesday' / 'next wednesday' etc. -> next occurrence's date: YYYY-MM-DD
+  - You MUST resolve relative/natural times and formats:
+    - '2 pm' / '2 baje' / 'tomorrow 2 pm' / 'kal 2 baje' -> '14:00' (or '2:00 PM')
+    - 'afternoon' / 'tomorrow afternoon' -> '14:00' (or '2:00 PM', default afternoon to 2:00 PM)
+    - '11 am' / 'next monday 11 am' -> '11:00' (or '11:00 AM')
+    - 'evening 6 baje' / '6 pm' -> '18:00' (or '6:00 PM')
+    - 'morning' / 'parso morning' -> '10:00' (or '10:00 AM', default morning to 10:00 AM)
+  - You MUST set the parsed date strictly as 'YYYY-MM-DD' in 'booking_date' (never leave it as relative).
+  - You MUST set the parsed time strictly in 'booking_time' (as HH:MM or HH:MM AM/PM).
+
+- Flow Logic:
+  - If "booking_state" is "waiting_for_date":
+    - If the user mentions a date (or relative day like 'kal', 'parso'), parse and save it in "booking_date". Transition "booking_state" to "waiting_for_time".
+    - If a time was ALSO mentioned (e.g. "kal 2 baje"), parse the time, save in "booking_time", and transition "booking_state" to "confirmed" directly.
+    - WhatsApp Reply: If only date is parsed: "Perfect, [booking_date] set kar liya hai. Kis time call schedule karein? E.g., 2 PM or 6 PM?"
+  - If "booking_state" is "waiting_for_time":
+    - If the user mentions a time, parse and save in "booking_time". Transition "booking_state" to "confirmed".
+    - WhatsApp Reply: "Great! Aapka free consultation successfully book ho gaya hai: \n📅 Date: [booking_date]\n🕒 Time: [booking_time]\n\nHamare advisor aapse connect karenge. Thank you! 🙏"
+- Cancellation: If they cancel or opt out of booking, set "booking_state", "booking_date", and "booking_time" to null.
+
+2. CONVERSATION CONTEXT PROTECTION (10-MESSAGE SERVICE LOCK):
+- Trigger: When the user explicitly selects or inquires about a core service (Website, WhatsApp Automation, CRM, Marketing):
+  - Set "last_selected_service" to that service (e.g. "Website") and "active_flow" to that service flow.
+- Service Context Lock: If "last_selected_service" is active and "service_context_count" is less than 10:
+  - You MUST keep all answers and recommendations focused on that active service.
+  - If they ask general questions (e.g. "price", "charges", "cost", "how much", "demo", "details"), answer specifically for the "last_selected_service" (e.g. Website package prices, Website demo). Do not automatically switch or offer other services.
+  - ONLY switch services if the user explicitly names another service or topic (e.g., "mujhe WhatsApp automation ke baare mein batayein").
+  - If you remain locked to that service, you MUST continue returning its name in "last_selected_service" in your JSON response so the backend preserves the lock.
 
 ==================================================
 CORE BEHAVIOR RULES (MANDATORY)
@@ -315,8 +390,14 @@ RESPOND ONLY WITH THIS EXACT JSON FORMAT (no markdown, no backticks):
   "handoff_reason": "<reason if handoff is true, else null>",
   "lead_stage": "<greeting|qualifying|recommending|objection|booking|handoff>",
   "recommended_package": "<launch|growth|ai_sales|custom|null>",
-  "appointment_requested": <true if customer asked for demo/call/consultation>,
+  "appointment_requested": <true if customer asked for demo/call/consultation OR booking_state just transitioned to confirmed>,
   "opt_out_requested": <true if customer requested STOP/UNSUBSCRIBE>,
+  "booking_state": "<null|waiting_for_date|waiting_for_time|confirmed>",
+  "booking_date": "<normalized_date_YYYY-MM-DD_or_null>",
+  "booking_time": "<normalized_time_HH:MM_or_readable_or_null>",
+  "active_intent": "<current_intent_or_null>",
+  "active_flow": "<current_flow_or_null>",
+  "last_selected_service": "<current_service_name_or_null>",
   "extracted_fields": {
     "name": "<name if stated>",
     "city": "<city if stated>",
@@ -495,6 +576,13 @@ export async function processWithAI(ctx: AIContext): Promise<AIResponse> {
           input_tokens: usage.prompt_tokens,
           output_tokens: usage.completion_tokens,
           cost_usd: cost,
+          // New state fields parsed from JSON
+          booking_state: parsed.booking_state || null,
+          booking_date: parsed.booking_date || null,
+          booking_time: parsed.booking_time || null,
+          active_intent: parsed.active_intent || null,
+          active_flow: parsed.active_flow || null,
+          last_selected_service: parsed.last_selected_service || null,
         };
 
         responseCache.set(cacheKey, { result, ts: Date.now() });

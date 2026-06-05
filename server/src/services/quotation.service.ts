@@ -1,6 +1,6 @@
 import { getDb, logAuditAction } from '../database/connection';
 import { COMPANY, PACKAGES, PAYMENT_POLICY } from '../config/knowledge-base';
-import { sendWhatsAppMessage } from './wa.service';
+import { sendWhatsAppMessage } from '../whatsapp/gateway';
 import { logTimelineEvent } from './timeline.service';
 import { TaskModel } from '../models/tasks.model';
 import fs from 'fs';

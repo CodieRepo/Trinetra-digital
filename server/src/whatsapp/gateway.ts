@@ -141,13 +141,11 @@ Kaunsa package aapke business ke liye suitable lagta hai? Main help karunga 😊
 
 Hamari team se ek free 15-minute consultation schedule karein.
 
-Please batayein:
-1️⃣ Preferred date (kal / parso / koi weekday)
-2️⃣ Preferred time (Morning 10-12 / Afternoon 2-5 / Evening 6-8)
-3️⃣ Call ya Video call?
+Aap seedhe chat par details share kar sakte hain:
+1️⃣ Preferred date (kal / parso / specific date)
+2️⃣ Preferred time (e.g. 2 PM, 4 PM)
 
-Ya directly book karein:
-🔗 https://calendly.com/trinetra-demo
+Main instant aapki appointment book kar dunga! 😊
 
 📞 +91 9334757759
 📧 info@trinetradigitalsolution.com`,
