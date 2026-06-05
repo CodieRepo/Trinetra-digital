@@ -456,6 +456,9 @@ export const apiService = {
       activeAiProvider?: string;
       disconnectReason?: string | null;
       healthScore?: number;
+      connectedAt?: string | null;
+      uptime?: number | null;
+      sessionAge?: string | null;
     }>("/whatsapp/status"),
     restart: async () => request<{ success: boolean }>("/whatsapp/restart", {
       method: "POST"

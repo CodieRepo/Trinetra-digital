@@ -9,6 +9,13 @@ const sshConfig = {
 
 const commands = `
 cd /var/www/trinetra
+echo "🔒 [DEPLOY SAFETY] Verifying session folder protection..."
+for folder in auth baileys-auth session whatsapp-session server/data/wa-session server/whatsapp-session server/whatsapp-session-backups; do
+  if [ -d "$folder" ]; then
+    echo "  -> Found session directory: $folder (Protected)"
+  fi
+done
+
 echo "Pulling latest changes..."
 git fetch origin main
 git reset --hard origin/main

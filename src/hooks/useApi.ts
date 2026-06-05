@@ -52,6 +52,9 @@ export function useDashboard() {
     activeAiProvider?: string;
     disconnectReason?: string | null;
     healthScore?: number;
+    connectedAt?: string | null;
+    uptime?: number | null;
+    sessionAge?: string | null;
   } | null>(null);
   const [healthTelemetry, setHealthTelemetry] = useState<SystemHealth | null>(null);
   const [auditLogs, setAuditLogs] = useState<Array<{ id: string; action: string; details: string | null; timestamp: string }>>([]);

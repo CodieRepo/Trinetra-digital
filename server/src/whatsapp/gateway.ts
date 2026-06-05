@@ -176,6 +176,7 @@ let latestQr: string | null = null;
 let latestQrImage: string | null = null;
 let disconnectReason: string | null = null;
 let reconnectTimestamps: number[] = [];
+let connectedAt: number | null = null;
 
 // Reconnection backoff variables
 let reconnectAttempts = 0;
@@ -218,14 +219,14 @@ function copyDirSync(src: string, dest: string) {
   }
 }
 
-async function backupSessionFolder(reason: string) {
+async function backupSessionFolder(reason: string): Promise<string | null> {
   try {
-    if (!fs.existsSync(resolvedSessionPath)) return;
+    if (!fs.existsSync(resolvedSessionPath)) return null;
     
     const credsPath = path.join(resolvedSessionPath, 'creds.json');
     if (!fs.existsSync(credsPath)) {
       console.log('ℹ️ [BACKUP] No credentials to backup.');
-      return;
+      return null;
     }
 
     if (!fs.existsSync(backupsPath)) {
@@ -248,8 +249,10 @@ async function backupSessionFolder(reason: string) {
     await logAuditAction('WHATSAPP_SESSION_BACKUP', `Created backup ${backupDirName}. Reason: ${reason}`);
 
     pruneBackups();
+    return backupDest;
   } catch (err) {
     console.error('❌ [BACKUP] Error creating session backup:', err);
+    return null;
   }
 }
 
@@ -424,6 +427,7 @@ export async function restartWhatsApp(): Promise<void> {
   latestQr = null;
   latestQrImage = null;
   reconnectAttempts = 0;
+  reconnectTimestamps = []; // reset timestamps to recover from rate limiting
 
   await initWhatsApp();
 }
@@ -433,8 +437,9 @@ function getReconnectDelay(statusCode?: number): number {
     console.log('🔄 Restart required by server. Reconnecting instantly (1s)...');
     return 1000;
   }
-  const delay = Math.min(5000 * Math.pow(2, reconnectAttempts), 300000);
-  return delay;
+  const delays = [30000, 60000, 120000, 300000, 600000]; // 30s, 60s, 120s, 300s, 600s
+  const attemptIndex = Math.min(reconnectAttempts, delays.length - 1);
+  return delays[attemptIndex];
 }
 
 export async function initWhatsApp() {
@@ -453,7 +458,7 @@ export async function initWhatsApp() {
     try {
       const content = fs.readFileSync(credsPath, 'utf8');
       const parsed = JSON.parse(content);
-      if (parsed && parsed.creds) {
+      if (parsed && (parsed.noiseKey || parsed.registrationId || parsed.creds)) {
         credentialsValid = true;
         console.log('🟢 [STARTUP] Valid WhatsApp credentials found. Auto-connecting...');
       }
@@ -587,6 +592,7 @@ export async function initWhatsApp() {
         latestQrImage = null;
         connectionStatus = 'disconnected';
         sock = null;
+        connectedAt = null;
 
         const error = lastDisconnect?.error as Boom;
         const statusCode = error?.output?.statusCode;
@@ -663,7 +669,33 @@ export async function initWhatsApp() {
         }
 
         if (shouldReconnect) {
-          // Restart Protection Check (Rate limit reconnect loops)
+          if (statusCode === DisconnectReason.restartRequired) {
+            console.log('🔄 Reconnecting immediately (1s) due to restartRequired...');
+            if (reconnectTimeout) clearTimeout(reconnectTimeout);
+            reconnectTimeout = setTimeout(() => {
+              initWhatsApp();
+            }, 1000);
+            return;
+          }
+
+          if (reconnectAttempts >= 5) {
+            console.error(`🚨 [RECONNECT EXHAUSTED] Failed to reconnect after 5 attempts. Switching to qr_required and stopping reconnect loop.`);
+            connectionStatus = 'qr_required';
+            disconnectReason = 'rate_limited: Failed to reconnect after 5 attempts. Stopped auto-reconnection loop.';
+            await logAuditAction('WHATSAPP_RATE_LIMITED', 'Gateway enters qr_required state due to exhausted reconnect attempts.');
+            try {
+              const { notifyWhatsAppDisconnect } = await import('../services/notification.service');
+              await notifyWhatsAppDisconnect(disconnectReason, true, 'qr_required');
+            } catch (err) {
+              console.error('⚠️ Failed to notify admin:', err);
+            }
+            return; // Stop reconnecting
+          }
+
+          reconnectAttempts++;
+          const delay = getReconnectDelay(statusCode);
+          console.log(`🔄 Attempting automatic reconnection in ${delay / 1000}s (Attempt ${reconnectAttempts}/5)...`);
+
           const now = Date.now();
           reconnectTimestamps.push(now);
           reconnectTimestamps = reconnectTimestamps.filter(ts => now - ts < 900000); // 15 mins
@@ -683,24 +715,8 @@ export async function initWhatsApp() {
             return; // Exit reconnect loop
           }
 
-          if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-            console.error(`🚨 Reached max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}). Pausing automatic reconnect. Please check credentials or network.`);
-            const slowRetryDelay = 600000;
-            console.log(`⏳ Entering cool-down cycle. Next check in ${slowRetryDelay / 60000} minutes...`);
-            if (reconnectTimeout) clearTimeout(reconnectTimeout);
-            reconnectTimeout = setTimeout(() => {
-              reconnectAttempts = 0;
-              initWhatsApp();
-            }, slowRetryDelay);
-            return;
-          }
-
-          const delay = getReconnectDelay(statusCode);
-          console.log(`🔄 Attempting automatic reconnection in ${delay / 1000}s (Attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})...`);
-          
           if (reconnectTimeout) clearTimeout(reconnectTimeout);
           reconnectTimeout = setTimeout(() => {
-            reconnectAttempts++;
             initWhatsApp();
           }, delay);
         }
@@ -1190,6 +1206,16 @@ export function getWhatsAppStatus() {
   const pendingCount = outboundQueue.length;
   const currentStatus = connectionStatus;
   const score = calculateHealthScore(currentStatus);
+  
+  let sessionAgeVal: string | null = null;
+  const credsPathVal = path.join(resolvedSessionPath, 'creds.json');
+  if (fs.existsSync(credsPathVal)) {
+    try {
+      const stat = fs.statSync(credsPathVal);
+      sessionAgeVal = stat.birthtime.toISOString();
+    } catch (err) {}
+  }
+
   return {
     status: currentStatus,
     qr: latestQr,
@@ -1202,6 +1228,9 @@ export function getWhatsAppStatus() {
     reconnectCount: reconnectCount,
     activeAiProvider: getActiveAiProvider(),
     disconnectReason: disconnectReason,
-    healthScore: score
+    healthScore: score,
+    connectedAt: connectedAt ? new Date(connectedAt).toISOString() : null,
+    uptime: connectedAt ? Math.floor((Date.now() - connectedAt) / 1000) : 0,
+    sessionAge: sessionAgeVal
   };
 }

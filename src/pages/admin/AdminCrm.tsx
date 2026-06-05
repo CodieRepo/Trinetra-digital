@@ -36,7 +36,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { useDashboard } from "../../hooks/useApi";
-import { Lead, Task, TimelineEvent, apiService } from "../../services/api";
+import { Lead, Task, TimelineEvent, apiService, API_BASE_URL } from "../../services/api";
 
 type ViewSection = 
   | 'overview' 
@@ -2578,6 +2578,22 @@ export default function AdminCrm() {
                             <span className="text-amber-600 font-bold">{waStatus.pendingQueueCount || 0}</span>
                             {' / '}
                             <span className="text-rose-600 font-bold">{waStatus.failedQueueCount || 0}</span>
+                          </span>
+                        </div>
+                        <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                          <span className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Gateway Uptime</span>
+                          <span className="text-slate-700 font-bold">
+                            {waStatus.status === 'connected' && waStatus.uptime !== undefined && waStatus.uptime !== null ? (
+                              `${Math.floor(waStatus.uptime / 3600)}h ${Math.floor((waStatus.uptime % 3600) / 60)}m ${waStatus.uptime % 60}s`
+                            ) : (
+                              'Offline'
+                            )}
+                          </span>
+                        </div>
+                        <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                          <span className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Session Active Age</span>
+                          <span className="text-slate-700 font-bold">
+                            {waStatus.sessionAge ? new Date(waStatus.sessionAge).toLocaleDateString() : 'No Active Session'}
                           </span>
                         </div>
                       </div>
