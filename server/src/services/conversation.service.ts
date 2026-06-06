@@ -112,6 +112,14 @@ export async function processInboundMessage(
   console.log(`🧠 [CONV] Processing message for ${lead.name} | Context: ${ctx.recentMessages.length} msgs + summary`);
   const aiResult = await processWithAI(ctx);
 
+  // ── 7.5 Race condition check ────────────────────────────────────────────────
+  // Re-fetch lead to ensure ai_enabled wasn't set to 0 by a human operator while waiting for LLM
+  const currentLead = await db.get('SELECT ai_enabled, ai_score FROM leads WHERE id = ?', [leadId]);
+  if (currentLead && currentLead.ai_enabled === 0) {
+    console.log(`⏸️ [CONV] AI response discarded for ${lead.name}. Human took over during generation.`);
+    return { reply: '', skipped: true, skipReason: 'human_takeover_during_generation', human_handoff: true, ai_score: currentLead.ai_score };
+  }
+
   // Log AI Action to timeline
   await logTimelineEvent(leadId, 'ai_action', `AI generated reply using ${aiResult.model_used}. Reply: "${aiResult.reply}"`);
   

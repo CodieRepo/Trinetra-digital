@@ -746,6 +746,8 @@ export async function initWhatsApp() {
       
       if (!msg.key.fromMe && m.type === 'notify') {
         await handleInboundMessage(msg);
+      } else if (msg.key.fromMe && m.type === 'notify') {
+        await handleOutboundSync(msg);
       }
     });
 
@@ -1051,6 +1053,61 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
   if (isNewLead && !result.skipped && result.reply) {
     await scheduleNurtureSequence(lead.id);
   }
+}
+
+export async function handleOutboundSync(msg: proto.IWebMessageInfo) {
+  const jid = msg.key.remoteJid;
+  const msgId = msg.key.id;
+  if (!jid || !msgId) return;
+
+  const textContent = msg.message?.conversation || 
+                      msg.message?.extendedTextMessage?.text || 
+                      '';
+  if (!textContent) return;
+
+  // Check if this message was sent by our system
+  const db = getDb();
+  const existingMsg = await db.get('SELECT id FROM whatsapp_chats WHERE id = ?', [msgId]);
+  
+  if (existingMsg) {
+    // We already know about this message (sent via API), do nothing
+    return;
+  }
+
+  // It's a manual outbound message sent from a physical device!
+  console.log(`📱 [GATEWAY] Detected manual physical device outbound message to ${jid}`);
+  
+  let cleanPhone = cleanJidToPhone(jid);
+  let lead = await LeadModel.findByPhone(cleanPhone);
+  
+  if (!lead) return;
+
+  console.log(`⏸️ [GATEWAY] Physical device message to ${lead.name} (${lead.phone}). Pausing AI...`);
+  
+  // 1. Pause AI
+  await db.run('UPDATE leads SET ai_enabled = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [lead.id]);
+  
+  // 2. Pause nurturing
+  import('./cron.service').then(({ pauseNurtureSequence }) => pauseNurtureSequence(lead.id));
+  
+  // 3. Create handoff alert
+  const alertId = `alert-${Date.now()}`;
+  await db.run(
+    "INSERT OR IGNORE INTO handoff_alerts (id, lead_id, reason, status) VALUES (?, ?, ?, 'pending')",
+    [alertId, lead.id, 'Manual message sent from physical WhatsApp device']
+  );
+
+  // 4. Save message to CRM
+  await MessageModel.save({
+    id: msgId,
+    leadId: lead.id,
+    direction: 'outbound',
+    body: textContent,
+    status: 'DELIVERED',
+    timestamp: new Date().toISOString()
+  });
+
+  await logAuditAction('HUMAN_TAKEOVER', `AI paused for ${lead.name} due to physical device reply.`);
 }
 
 async function processQueue() {
