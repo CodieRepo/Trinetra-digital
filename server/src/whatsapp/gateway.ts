@@ -1088,7 +1088,7 @@ export async function handleOutboundSync(msg: proto.IWebMessageInfo) {
   await db.run('UPDATE leads SET ai_enabled = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [lead.id]);
   
   // 2. Pause nurturing
-  import('./cron.service').then(({ pauseNurtureSequence }) => pauseNurtureSequence(lead.id));
+  import('../services/cron.service').then(({ pauseNurtureSequence }) => pauseNurtureSequence(lead.id));
   
   // 3. Create handoff alert
   const alertId = `alert-${Date.now()}`;
@@ -1098,7 +1098,7 @@ export async function handleOutboundSync(msg: proto.IWebMessageInfo) {
   );
 
   // 4. Save message to CRM
-  await MessageModel.save({
+  await MessageModel.create({
     id: msgId,
     leadId: lead.id,
     direction: 'outbound',
