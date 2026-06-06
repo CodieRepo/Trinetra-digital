@@ -191,13 +191,13 @@ export async function processInboundMessage(
   }
 
   // Double check AI responses for any relative formats that leaked
-  if (finalBookingDate && !/^\d{4}-\d{2}-\d{2}$/.test(finalBookingDate)) {
+  if (finalBookingDate && typeof finalBookingDate === 'string' && !/^\d{4}-\d{2}-\d{2}$/.test(finalBookingDate)) {
     const parsedAiDate = parseNaturalDateTime(finalBookingDate);
     if (parsedAiDate.date) {
       finalBookingDate = parsedAiDate.date;
     }
   }
-  if (finalBookingTime && !/^\d{2}:\d{2}$/.test(finalBookingTime)) {
+  if (finalBookingTime && typeof finalBookingTime === 'string' && !/^\d{2}:\d{2}$/.test(finalBookingTime)) {
     const parsedAiTime = parseNaturalDateTime(finalBookingTime);
     if (parsedAiTime.time) {
       finalBookingTime = parsedAiTime.time;
@@ -270,19 +270,19 @@ export async function processInboundMessage(
     post_booking_message_count: finalPostBookingCount,
   };
 
-  if (fields.name     && fields.name !== lead.name) updates.name = fields.name;
-  if (fields.company  && !lead.company)              updates.company = fields.company;
-  if (fields.city     && !lead.city)                 updates.city = fields.city;
-  if (fields.service_interest && !lead.service)      updates.service = fields.service_interest;
+  if (typeof fields.name === 'string' && fields.name !== lead.name) updates.name = fields.name;
+  if (typeof fields.company === 'string' && !lead.company) updates.company = fields.company;
+  if (typeof fields.city === 'string' && !lead.city) updates.city = fields.city;
+  if (typeof fields.service_interest === 'string' && !lead.service) updates.service = fields.service_interest;
   // New qualification fields
-  if (fields.business_type     && !lead.business_type)     updates.business_type = fields.business_type;
-  if (fields.team_size         && !lead.team_size)         updates.team_size = fields.team_size;
-  if (fields.monthly_lead_volume && !lead.monthly_lead_volume) updates.monthly_lead_volume = fields.monthly_lead_volume;
-  if (fields.current_problems  && !lead.current_problems)  updates.current_problems = fields.current_problems;
-  if (fields.budget            && !lead.budget_range)       updates.budget_range = fields.budget;
-  if (fields.has_website       !== null && fields.has_website !== undefined) updates.has_website = fields.has_website ? 1 : 0;
-  if (fields.has_crm           !== null && fields.has_crm !== undefined)     updates.has_crm = fields.has_crm ? 1 : 0;
-  if (fields.is_decision_maker !== null && fields.is_decision_maker !== undefined) updates.is_decision_maker = fields.is_decision_maker ? 1 : 0;
+  if (typeof fields.business_type === 'string' && !lead.business_type) updates.business_type = fields.business_type;
+  if (typeof fields.team_size === 'string' && !lead.team_size) updates.team_size = fields.team_size;
+  if (typeof fields.monthly_lead_volume === 'string' && !lead.monthly_lead_volume) updates.monthly_lead_volume = fields.monthly_lead_volume;
+  if (typeof fields.current_problems === 'string' && !lead.current_problems) updates.current_problems = fields.current_problems;
+  if (typeof fields.budget === 'string' && !lead.budget_range) updates.budget_range = fields.budget;
+  if (fields.has_website !== null && fields.has_website !== undefined && typeof fields.has_website === 'boolean') updates.has_website = fields.has_website ? 1 : 0;
+  if (fields.has_crm !== null && fields.has_crm !== undefined && typeof fields.has_crm === 'boolean') updates.has_crm = fields.has_crm ? 1 : 0;
+  if (fields.is_decision_maker !== null && fields.is_decision_maker !== undefined && typeof fields.is_decision_maker === 'boolean') updates.is_decision_maker = fields.is_decision_maker ? 1 : 0;
   if (aiResult.recommended_package) updates.recommended_package = aiResult.recommended_package;
   if (aiResult.appointment_requested) updates.appointment_requested = 1;
 

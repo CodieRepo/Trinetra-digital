@@ -116,8 +116,14 @@ CRITICAL: Return ONLY a valid JSON object (no markdown, no backticks, no extra t
     const rawText = result.response.text().trim();
 
     // Parse JSON response
-    const cleanJson = rawText.replace(/^```json\s*/i, '').replace(/```$/, '').trim();
-    const parsed = JSON.parse(cleanJson) as AIQualificationResult;
+    const codeBlockMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    let jsonString = codeBlockMatch ? codeBlockMatch[1] : rawText;
+    
+    const bracketMatch = jsonString.match(/\{[\s\S]*\}/);
+    if (bracketMatch) {
+      jsonString = bracketMatch[0];
+    }
+    const parsed = JSON.parse(jsonString.trim()) as AIQualificationResult;
 
     // Validate required fields
     if (typeof parsed.ai_score !== 'number' || !parsed.suggested_reply) {

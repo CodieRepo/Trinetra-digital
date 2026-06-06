@@ -111,10 +111,10 @@ export interface AIResponse {
 // â”€â”€â”€ Model cascade definition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const MODELS = [
-  { id: 'google/gemini-2.5-flash',      max_tokens: 400, cost_in: 0.0000000375,  cost_out: 0.00000015  },
-  { id: 'google/gemini-2.5-flash-lite', max_tokens: 350, cost_in: 0.000000010,   cost_out: 0.00000004  },
-  { id: 'deepseek/deepseek-chat-v3',    max_tokens: 350, cost_in: 0.0000000275,  cost_out: 0.00000011  },
-  { id: 'openrouter/auto',              max_tokens: 300, cost_in: 0.0000001,     cost_out: 0.0000002   },
+  { id: 'google/gemini-2.5-flash',      max_tokens: 800, cost_in: 0.0000000375,  cost_out: 0.00000015  },
+  { id: 'google/gemini-2.5-flash-lite', max_tokens: 800, cost_in: 0.000000010,   cost_out: 0.00000004  },
+  { id: 'deepseek/deepseek-chat',       max_tokens: 800, cost_in: 0.0000000275,  cost_out: 0.00000011  },
+  { id: 'openrouter/auto',              max_tokens: 800, cost_in: 0.0000001,     cost_out: 0.0000002   },
 ];
 
 // â”€â”€â”€ Response dedup cache (60-second window) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -168,11 +168,10 @@ const HANDOFF_PATTERNS = [
   /\bhuman agent\b/i,
   /\bcustomer care\b/i,
   /\bcustomer support\b/i,
-  /\bgusse\b.*\bhoon\b/i,        // "I am angry" â€” requires both words
+  /\bgusse\b.*\bh[uo]n\b/i,        // "I am angry"
   /\bfed up\b/i,
-  /\bpaisa wapas\b/i,
-  /\bpaise wapas\b/i,
-  /\bpaisa wapis\b/i,
+  /\bpais[ea]\swapas\b/i,
+  /\bpais[ea]\swapis\b/i,
   /\brefund\b/i,
   /\bscam\b/i, /\bfraud\b/i,
   /\bfake\b/i,
@@ -201,11 +200,9 @@ function detectHandoff(text: string): { trigger: boolean; reason: string } {
 
   // 3. Escalation Keywords (Only trigger if not a safe service inquiry, or if it is a genuine distress signal)
   const distressPatterns = [
-    /\bgusse\b.*\bhoon\b/i,
+    /\bgusse\b.*\bh[uo]n\b/i,
     /\bfed up\b/i,
-    /\bpaisa wapas\b/i,
-    /\bpaise wapas\b/i,
-    /\bpaisa wapis\b/i,
+    /\bpais[ea]\swap[ai]s\b/i,
     /\brefund\b/i,
     /\bscam\b/i, /\bfraud\b/i,
     /\bfake\b/i,
@@ -298,6 +295,8 @@ ${ctx.conversationSummary ? `Previous Summary: ${ctx.conversationSummary}` : 'Ne
 ==================================================
 STATE MACHINE & LOCK CONTEXT RULES (CRITICAL)
 ==================================================
+0. STATE PRESERVATION: You MUST carry forward existing values for booking_state, booking_date, booking_time, active_intent, and active_flow in your JSON response unless they are explicitly updated or cleared.
+
 1. APPOINTMENT BOOKING CONVERSATIONAL STATE MACHINE:
 - Trigger: If the customer shows interest in booking a free consultation, setting up a meeting, scheduling a demo, or scheduling a call (e.g. "free consultation book krdo", "call me", "meeting schedule karo", "appointment book kro", "kal 2 baje", "tomorrow afternoon", "next monday 11 am", "parso morning"):
   - Set "active_flow" to "Booking"
@@ -388,33 +387,37 @@ RESPOND ONLY WITH THIS EXACT JSON FORMAT (no markdown, no backticks):
 {
   "reply": "<your WhatsApp reply — Hinglish, professional, consultative, max 120 words, clean UTF-8 emojis>",
   "ai_score": <number 1-100>,
-  "ai_budget": <true if budget or price was mentioned by customer>,
+  "ai_budget": <true if budget or price was mentioned by customer, else false>,
   "ai_summary": "<1-2 sentence CRM summary of the lead>",
   "ai_summary_detailed": "<structured summary: business type | service interest | budget signals | urgency | objections | last discussion point>",
-  "intent_level": "<HOT|WARM|COLD|QUOTATION_REQUIRED>",
-  "urgency_level": "<low|medium|high>",
-  "objections": "<list of any objections raised, or null>",
-  "recommended_action": "<next sales action, e.g. Send Growth Engine pricing sheet, Schedule demo call, Share portfolio>",
+  "intent_level": "HOT", // or "WARM", "COLD", "QUOTATION_REQUIRED"
+  "urgency_level": "low", // or "medium", "high"
+  "objections": null, // or "<list of any objections raised>"
+  "recommended_action": "<next sales action>",
   "human_handoff": <true if handoff conditions met, else false>,
-  "handoff_reason": "<reason if handoff is true, else null>",
-  "lead_stage": "<greeting|qualifying|recommending|objection|booking|handoff>",
-  "recommended_package": "<launch|growth|ai_sales|custom|null>",
-  "appointment_requested": <true if customer asked for demo/call/consultation OR booking_state just transitioned to confirmed>,
+  "handoff_reason": null, // or "<reason if handoff is true>"
+  "lead_stage": "qualifying", // or "greeting", "recommending", "objection", "booking", "handoff"
+  "recommended_package": null, // or "launch", "growth", "ai_sales", "custom"
+  "appointment_requested": <true if customer asked for demo/call OR booking_state just transitioned to confirmed>,
   "opt_out_requested": <true if customer requested STOP/UNSUBSCRIBE>,
-  "booking_state": "<null|waiting_for_date|waiting_for_time|confirmed>",
-  "booking_date": "<normalized_date_YYYY-MM-DD_or_null>",
-  "booking_time": "<normalized_time_HH:MM_or_readable_or_null>",
-  "active_intent": "<current_intent_or_null>",
-  "active_flow": "<current_flow_or_null>",
-  "last_selected_service": "<current_service_name_or_null>",
+  "booking_state": null, // or "waiting_for_date", "waiting_for_time", "confirmed"
+  "booking_date": null, // or "YYYY-MM-DD"
+  "booking_time": null, // or "HH:MM"
+  "active_intent": null, // or "<current_intent>"
+  "active_flow": null, // or "<current_flow>"
+  "last_selected_service": null, // or "<current_service_name>"
   "extracted_fields": {
-    "name": "<name if stated>",
-    "city": "<city if stated>",
-    "company": "<business name if stated>",
-    "business_type": "<type of business if stated>",
-    "budget": "<budget range if mentioned>",
-    "service_interest": "<service if mentioned>",
-    "urgency": "<low|medium|high>"
+    "name": null, // or "<name>"
+    "city": null, // or "<city>"
+    "company": null, // or "<business name>"
+    "business_type": null, // or "<type of business>"
+    "budget": null, // or "<budget range>"
+    "service_interest": null, // or "<service>"
+    "urgency": null, // or "low", "medium", "high"
+    "has_website": null, // boolean or null
+    "has_crm": null, // boolean or null
+    "is_decision_maker": null, // boolean or null
+    "team_size": null // or "<team size string>"
   }
 }`;
 }
@@ -541,10 +544,15 @@ export async function processWithAI(ctx: AIContext): Promise<AIResponse> {
         
         const { raw, usage } = await callModel(model, systemPrompt, ctx.recentMessages, attempt);
         
-        const parsed = parseAIResponse(raw);
+        const parsed = parseAIResponse(raw, ctx);
         
-        if (!parsed.reply || typeof parsed.ai_score !== 'number') {
+        if (!parsed.reply) {
           throw new Error('Response missing required fields');
+        }
+
+        let parsedScore = Number(parsed.ai_score);
+        if (isNaN(parsedScore)) {
+          parsedScore = ctx.currentScore; // Fallback score to preserve intent
         }
 
         const words = parsed.reply.split(/\s+/);
@@ -554,9 +562,14 @@ export async function processWithAI(ctx: AIContext): Promise<AIResponse> {
 
         const cost = estimateCost(model.id, usage.prompt_tokens, usage.completion_tokens);
         
-        const finalScore = Math.min(100, Math.max(0, parsed.ai_score));
+        const finalScore = Math.min(100, Math.max(0, parsedScore));
         let intent: 'HOT' | 'WARM' | 'COLD' | 'QUOTATION_REQUIRED' = 'COLD';
-        if (parsed.ai_budget || parsed.lead_stage === 'objection' || /pricing|price|rate|quote|cost|charges/i.test(ctx.recentMessages[ctx.recentMessages.length-1]?.content || '')) {
+        
+        // Ensure boolean fields are actually booleans
+        const isBudgetMentioned = typeof parsed.ai_budget === 'string' ? parsed.ai_budget.toLowerCase() === 'true' : !!parsed.ai_budget;
+        const isHandoff = typeof parsed.human_handoff === 'string' ? parsed.human_handoff.toLowerCase() === 'true' : !!parsed.human_handoff;
+
+        if (isBudgetMentioned || parsed.lead_stage === 'objection' || /pricing|price|rate|quote|cost|charges/i.test(ctx.recentMessages[ctx.recentMessages.length-1]?.content || '')) {
           intent = 'QUOTATION_REQUIRED';
         } else if (finalScore >= 75) {
           intent = 'HOT';
@@ -567,20 +580,20 @@ export async function processWithAI(ctx: AIContext): Promise<AIResponse> {
         const result: AIResponse = {
           reply: parsed.reply,
           ai_score: finalScore,
-          ai_budget: !!parsed.ai_budget,
+          ai_budget: isBudgetMentioned,
           ai_summary: parsed.ai_summary || '',
           ai_summary_detailed: parsed.ai_summary_detailed || '',
           intent_level: intent,
           recommended_action: parsed.recommended_action || 'Consult client needs',
           urgency_level: parsed.urgency_level || 'low',
           objections: parsed.objections || undefined,
-          human_handoff: !!parsed.human_handoff,
+          human_handoff: isHandoff,
           handoff_reason: parsed.handoff_reason || undefined,
           lead_stage: parsed.lead_stage || 'qualifying',
           recommended_package: parsed.recommended_package || null,
           appointment_requested: !!parsed.appointment_requested,
           opt_out_requested: !!parsed.opt_out_requested,
-          extracted_fields: parsed.extracted_fields || {},
+          extracted_fields: (typeof parsed.extracted_fields === 'object' && parsed.extracted_fields !== null) ? parsed.extracted_fields : {},
           model_used: model.id,
           input_tokens: usage.prompt_tokens,
           output_tokens: usage.completion_tokens,
@@ -671,25 +684,23 @@ function handoffResponse(ctx: AIContext, reason: string): AIResponse {
 
 // ─── JSON Failure Recovery Helper ─────────────────────────────────────────────
 
-function parseAIResponse(raw: string): any {
+function parseAIResponse(raw: string, ctx: AIContext): any {
   try {
-    // Escape three backticks by matching them exactly without delimiting template literal issues
-    const cleanJson = raw.replace(/^```json\s*/i, '').replace(/```$/,'').trim();
-    return JSON.parse(cleanJson);
+    // Attempt 1: Extract block inside ```json ... ```
+    const codeBlockMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    let jsonString = codeBlockMatch ? codeBlockMatch[1] : raw;
+    
+    // Attempt 2: Extract first { to last }
+    const bracketMatch = jsonString.match(/\{[\s\S]*\}/);
+    if (bracketMatch) {
+      jsonString = bracketMatch[0];
+    }
+    
+    return JSON.parse(jsonString.trim());
   } catch (err) {
     console.warn('⚠️ [OPENROUTER] Standard JSON parse failed, trying regex fallback extraction...', err);
-    
-    // Fallback regex attempt 1: Find { ... } JSON-like structure
-    try {
-      const match = raw.match(/\{[\s\S]*\}/);
-      if (match) {
-        return JSON.parse(match[0]);
-      }
-    } catch (e) {
-      // ignore
-    }
 
-    // Fallback regex attempt 2: Try to extract fields directly with regexes
+    // Fallback regex attempt 1: Try to extract fields directly with regexes
     const replyMatch = raw.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)"/i);
     const scoreMatch = raw.match(/"ai_score"\s*:\s*(\d+)/i);
     const budgetMatch = raw.match(/"ai_budget"\s*:\s*(true|false)/i);
@@ -703,7 +714,7 @@ function parseAIResponse(raw: string): any {
       
       return {
         reply: replyVal,
-        ai_score: scoreMatch ? parseInt(scoreMatch[1], 10) : 50,
+        ai_score: scoreMatch ? parseInt(scoreMatch[1], 10) : ctx.currentScore,
         ai_budget: budgetMatch ? budgetMatch[1] === 'true' : false,
         ai_summary: 'Regex extracted response (JSON parsing failed)',
         human_handoff: false,
@@ -711,15 +722,22 @@ function parseAIResponse(raw: string): any {
         recommended_package: null,
         appointment_requested: false,
         opt_out_requested: false,
+        // PRESERVE STATE FIELDS
+        booking_state: ctx.booking_state || null,
+        booking_date: ctx.booking_date || null,
+        booking_time: ctx.booking_time || null,
+        active_intent: ctx.active_intent || null,
+        active_flow: ctx.active_flow || null,
+        last_selected_service: ctx.last_selected_service || null,
         extracted_fields: {}
       };
     }
 
-    // Fallback regex attempt 3: Treat the entire raw output as reply
+    // Fallback regex attempt 2: Treat the entire raw output as reply
     if (raw && raw.trim().length > 0) {
       return {
         reply: raw.trim(),
-        ai_score: 50,
+        ai_score: ctx.currentScore,
         ai_budget: false,
         ai_summary: 'Raw text fallback response (JSON parsing failed)',
         human_handoff: false,
@@ -727,6 +745,13 @@ function parseAIResponse(raw: string): any {
         recommended_package: null,
         appointment_requested: false,
         opt_out_requested: false,
+        // PRESERVE STATE FIELDS
+        booking_state: ctx.booking_state || null,
+        booking_date: ctx.booking_date || null,
+        booking_time: ctx.booking_time || null,
+        active_intent: ctx.active_intent || null,
+        active_flow: ctx.active_flow || null,
+        last_selected_service: ctx.last_selected_service || null,
         extracted_fields: {}
       };
     }
