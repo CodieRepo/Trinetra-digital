@@ -148,10 +148,12 @@ const EXPLICIT_HUMAN_PATTERNS = [
   /\breal person\b/i,
   /\bactual person\b/i,
   /\btalk to (a |an )?(human|person)\b/i,
+  /\btalk to (your|the) team\b/i,
   /\bspeak to (a |an )?(human|person|agent|someone)\b/i,
   /\bconnect me to\b/i,
   /\bhuman agent\b/i,
   /\bcustomer care\b/i,
+  /\bcustomer support\b/i,
 ];
 
 // Patterns that trigger human handoff â€” genuine escalation only
@@ -160,10 +162,12 @@ const HANDOFF_PATTERNS = [
   /\breal person\b/i,
   /\bactual person\b/i,
   /\btalk to someone\b/i,
+  /\btalk to (your|the) team\b/i,
   /\bspeak to (?:a )?human\b/i,
   /\bconnect me to\b/i,
   /\bhuman agent\b/i,
   /\bcustomer care\b/i,
+  /\bcustomer support\b/i,
   /\bgusse\b.*\bhoon\b/i,        // "I am angry" â€” requires both words
   /\bfed up\b/i,
   /\bpaisa wapas\b/i,
