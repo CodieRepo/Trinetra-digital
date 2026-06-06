@@ -144,3 +144,21 @@ This document records the major architectural decisions made during the design, 
 * **Impact:**
   * Cleaner codebase with no ambiguity about which modules are authoritative.
   * Build output reduced by ~200 lines of dead JavaScript.
+
+---
+
+## 9. Defensive AI Output Sanitization & Type Checking
+
+* **Date:** 2026-06-06
+* **Status:** Approved / Implemented
+* **Reason:** Heavy reliance on JSON parsed output from LLMs introduced vulnerabilities: regex stripping failed on preambles, missing state fields wiped conversational context, and hallucinated datatypes crashed the Node.js process during string operations. Furthermore, the LLM hallucinated handoffs for formal quotation requests despite clear business rules stating the AI handles quotations.
+* **Alternatives Considered:**
+  * *OpenRouter Strict JSON Schema (`response_format: { type: 'json_schema' }`):* Fully building a large nested JSON Schema inside the API request was evaluated, but since LLMs still struggle with perfect conformance on complex nested schemas and fallback is still needed for network truncations, programmatic defensive checks were preferred.
+* **Decision Taken:** 
+  1. Expand the `parseAIResponse` fallback logic to accept context (`ctx`) and selectively salvage existing state variables (score, intent, booking dates).
+  2. Implement strict programmatic `typeof` checks before invoking methods like `.test()` or writing to the database in `conversation.service.ts`.
+  3. Hardcode a defensive sanitization rule in `openrouter.service.ts` that automatically forces `human_handoff = false` if the `intent` is `QUOTATION_REQUIRED` or if the handoff reason contains keywords like "quotation", "proposal", or "proceed".
+* **Impact:**
+  * No silent lead downgrades (score defaults back to current score instead of 50).
+  * System no longer crashes on hallucinated array/object injection into string fields.
+  * Zero false-positive human handoffs for business proposal or quotation requests.

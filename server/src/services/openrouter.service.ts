@@ -344,6 +344,8 @@ CORE BEHAVIOR RULES (MANDATORY)
 ==================================================
 1. PRICING-FIRST RULE: When asked about price, cost, charges, or packages — immediately provide pricing from the OFFICIAL PACKAGE PRICING section above. Never hide pricing or force qualification before showing pricing.
 
+2. NEVER HANDOFF FOR QUOTATIONS: NEVER set "human_handoff" to true just because a user asks for pricing, packages, a quotation, a proposal, or a demo. You are the AI Sales Consultant and you must handle quotations and demos. Only trigger human handoff for angry customers or explicit human requests ("talk to a human").
+
 2. BENEFITS-FIRST RECOMMENDATION: When a user mentions their business type:
    - Lead with the business OUTCOME (e.g., "more appointments without manual booking")
    - Then explain the solution
@@ -394,7 +396,7 @@ RESPOND ONLY WITH THIS EXACT JSON FORMAT (no markdown, no backticks):
   "urgency_level": "low", // or "medium", "high"
   "objections": null, // or "<list of any objections raised>"
   "recommended_action": "<next sales action>",
-  "human_handoff": <true if handoff conditions met, else false>,
+  "human_handoff": <boolean. true ONLY for explicit requests like "talk to human" or angry users. FALSE for quotations, pricing, demos, or proceeding with a package>,
   "handoff_reason": null, // or "<reason if handoff is true>"
   "lead_stage": "qualifying", // or "greeting", "recommending", "objection", "booking", "handoff"
   "recommended_package": null, // or "launch", "growth", "ai_sales", "custom"
@@ -567,14 +569,20 @@ export async function processWithAI(ctx: AIContext): Promise<AIResponse> {
         
         // Ensure boolean fields are actually booleans
         const isBudgetMentioned = typeof parsed.ai_budget === 'string' ? parsed.ai_budget.toLowerCase() === 'true' : !!parsed.ai_budget;
-        const isHandoff = typeof parsed.human_handoff === 'string' ? parsed.human_handoff.toLowerCase() === 'true' : !!parsed.human_handoff;
+        let isHandoff = typeof parsed.human_handoff === 'string' ? parsed.human_handoff.toLowerCase() === 'true' : !!parsed.human_handoff;
 
-        if (isBudgetMentioned || parsed.lead_stage === 'objection' || /pricing|price|rate|quote|cost|charges/i.test(ctx.recentMessages[ctx.recentMessages.length-1]?.content || '')) {
+        if (isBudgetMentioned || parsed.lead_stage === 'objection' || /pricing|price|rate|quote|cost|charges|proposal/i.test(ctx.recentMessages[ctx.recentMessages.length-1]?.content || '')) {
           intent = 'QUOTATION_REQUIRED';
+          isHandoff = false; // Prevent LLM from hallucinating handoffs for quotations
         } else if (finalScore >= 75) {
           intent = 'HOT';
         } else if (finalScore >= 35) {
           intent = 'WARM';
+        }
+
+        // Defensive sanitization: Suppress LLM handoffs for "proceeding" or "contract" hallucinations
+        if (isHandoff && parsed.handoff_reason && /quotation|proposal|proceed|contract|onboarding|generate/i.test(parsed.handoff_reason)) {
+          isHandoff = false;
         }
 
         const result: AIResponse = {

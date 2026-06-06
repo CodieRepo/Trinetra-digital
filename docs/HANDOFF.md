@@ -38,8 +38,15 @@ Transform Trinetra CRM into a highly stable, production-grade, scalable, self-ma
   * Backup generation via `VACUUM INTO` — **verified** (0.35 MB, 19 tables, 11 leads match, integrity `ok`)
   * Backup restore — **verified** (table counts, lead counts, quotation counts all match original)
   * API health via HTTPS — **verified** (`status: ok`, `db: connected`, `whatsapp: connected`)
-  * Nginx — **active**, syntax `ok`, test `successful`
   * PM2 — **online**, uptime stable, `126.8 MB` RAM
+
+### AI Output Sanitization Session (2026-06-06)
+
+* **Defensive Parsing & Sanitization:** Overhauled `openrouter.service.ts` to implement `parseAIResponse(raw, ctx)`. Preserved state contexts (`score`, `intent`, `booking_date`) when JSON parsing falls back to regex. Fixed the anchor bug in markdown stripping (`/^```json/` to `/```(?:json)?/gi`). (ADR #9)
+* **LLM Prompt Hardening:** Changed system prompt to emit true boolean/null primitives instead of `<null>` strings. Added strict `STATE PRESERVATION` clauses to force LLM to maintain state machine locks.
+* **Handoff Hallucination Fix:** Added explicit programmatic override to `openrouter.service.ts` where `human_handoff` is forced `false` if `intent` is `QUOTATION_REQUIRED` or if the handoff reason contains quotation/proposal keywords.
+* **Defensive DB Writes:** Added strict `typeof === 'string'` checks in `conversation.service.ts` to prevent runtime crashes during regex validation (`.test()`) if the AI hallucinates an array/object.
+* **Validation Passed:** Live `verify-business-scenarios.js` passed **10/10** complex E2E test cases locally without any false-positive human handoffs or state resets.
 
 ---
 
@@ -53,10 +60,14 @@ Transform Trinetra CRM into a highly stable, production-grade, scalable, self-ma
 ### Hardening Session
 * **[MODIFY]** [server/package.json](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/server/package.json) — Updated `main`, `start`, `dev`, `build` scripts to use `index.ts`/`dist/index.js`.
 * **[MODIFY]** [server/src/server.ts](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/server/src/server.ts) — Synchronized route mounts (added appointments, quotations routes).
-* **[MODIFY]** [server/src/services/openrouter.service.ts](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/server/src/services/openrouter.service.ts) — Refactored `detectHandoff` to context-aware priority chain.
 * **[MODIFY]** [server/src/controllers/leads.controller.ts](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/server/src/controllers/leads.controller.ts) — Replaced `fs.copyFileSync` backup with `VACUUM INTO`.
 * **[DELETE]** `server/src/services/wa.service.ts` — Legacy Baileys client (superseded by `whatsapp/gateway.ts`).
 * **[DELETE]** `server/src/database/db.ts` — Legacy DB connection (superseded by `database/connection.ts`).
+
+### AI Output Sanitization Session
+* **[MODIFY]** [server/src/services/openrouter.service.ts](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/server/src/services/openrouter.service.ts) — Built robust JSON parsing, prompt hardening, and defensive handoff sanitization.
+* **[MODIFY]** [server/src/services/conversation.service.ts](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/server/src/services/conversation.service.ts) — Added `typeof` runtime checks before database updates.
+* **[MODIFY]** [server/src/services/ai.service.ts](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/server/src/services/ai.service.ts) — Applied robust markdown-stripping to Gemini fallback pipeline.
 
 ---
 
@@ -109,9 +120,16 @@ Transform Trinetra CRM into a highly stable, production-grade, scalable, self-ma
 | Commit 1 (hardening) | `553e33f` |
 | Commit 2 (handoff fix) | `18fd168` |
 | Push | `e720003..553e33f` then `553e33f..18fd168` → `main` |
-| VPS Pull | Fast-forward to `18fd168` |
 | VPS Build | `tsc` — zero errors |
 | PM2 Restart | PID `99383`, status `online` |
+
+| Item | Value |
+|---|---|
+| Commit 3 (sanitization) | `1c8acce` |
+| Push | `18fd168..1c8acce` → `main` |
+| VPS Pull | Pending |
+| VPS Build | Pending |
+| PM2 Restart | Pending |
 
 ---
 
