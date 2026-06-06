@@ -253,14 +253,14 @@ export const LeadsController = {
       if (!fs.existsSync(backupDir)) {
         fs.mkdirSync(backupDir, { recursive: true });
       }
-
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const backupFileName = `trinetra-backup-${timestamp}.db`;
       const backupFile = path.join(backupDir, backupFileName);
       
-      // Copy the active SQLite database safely
-      fs.copyFileSync(resolvedDbPath, backupFile);
-      console.log(`📦 Created database backup: ${backupFile}`);
+      // Perform a transaction-safe hot backup via SQLite's VACUUM INTO
+      const db = getDb();
+      await db.run('VACUUM INTO ?', [backupFile]);
+      console.log(`📦 Created transaction-safe database backup: ${backupFile}`);
 
       // Clean up old backups: keep only the latest 7 files to preserve VPS storage
       const files = fs.readdirSync(backupDir)

@@ -179,54 +179,59 @@ const HANDOFF_PATTERNS = [
 ];
 
 function detectHandoff(text: string): { trigger: boolean; reason: string } {
-  // 1. Explicit Human Request
+  // 1. Explicit Human Request (Always takes absolute priority)
   for (const explicit of EXPLICIT_HUMAN_PATTERNS) {
     if (explicit.test(text)) {
       return { trigger: true, reason: `Explicit human request: "${explicit.source}"` };
     }
   }
 
-  // 2. Call / Meeting / Consultation / Proposal / Quote Request
-  const callMeetingQuotePatterns = [
-    /\b(call me|call back|phone call|phone pe|call par|call pe|call kro|call karo|call kar|mujhe call|baat karni|baat krni|baat karwao)\b/i,
-    /\b(meeting|zoom|google meet|calendly|appointment|book slot|slot book|schedule meeting|demo call|live demo)\b/i,
-    /\b(quote|quotation|proposal|estimate|estimation|rate card|pricing sheet|rate sheet)\b/i,
-    /\b(call|phone|callback|mobile)\b/i,
-  ];
-  for (const pattern of callMeetingQuotePatterns) {
-    if (pattern.test(text)) {
-      return { trigger: true, reason: `User requested call/meeting/quote/proposal` };
-    }
-  }
-
-  // 3. User shares phone number, or project/implementation details (NO budget trigger here)
-  const detailsPatterns = [
-    /\b\d{10}\b/i, // 10 digit phone number
-    /\+?\d{1,4}[-.\s]?\d{6,12}\b/i, // international phone number
-    /\b(api key|credentials|password|sheet|excel|csv|workflow|database|integration details)\b/i,
-  ];
-  for (const pattern of detailsPatterns) {
-    if (pattern.test(text)) {
-      return { trigger: true, reason: `User shared phone number or implementation details` };
-    }
-  }
-
-  const buyingIntentPatterns = [
-    /\b(buy|purchase|order|subscribe|get started|sign up|deal|close deal|start project|want to start|shuru krna|shuru karna|finalise|finalize|onboard|onboarding|interested to start)\b/i,
-    /\b(i want this|let's start|lets start|how do we proceed|when can we begin|i am interested|interested in this)\b/i,
-  ];
-  for (const pattern of buyingIntentPatterns) {
-    if (pattern.test(text)) {
-      return { trigger: true, reason: `User showed buying intent` };
-    }
-  }
-
+  // 2. Safe Service Check (Suppress non-explicit handoffs for normal inquiries)
+  let isSafeServiceInquiry = false;
   for (const safe of SAFE_SERVICE_PATTERNS) {
     if (safe.test(text)) {
-      return { trigger: false, reason: '' };
+      isSafeServiceInquiry = true;
+      break;
     }
   }
 
+  // 3. Escalation Keywords (Only trigger if not a safe service inquiry, or if it is a genuine distress signal)
+  const distressPatterns = [
+    /\bgusse\b.*\bhoon\b/i,
+    /\bfed up\b/i,
+    /\bpaisa wapas\b/i,
+    /\bpaise wapas\b/i,
+    /\bpaisa wapis\b/i,
+    /\brefund\b/i,
+    /\bscam\b/i, /\bfraud\b/i,
+    /\bfake\b/i,
+    /\bcheat\b/i, /\bcheating\b/i,
+  ];
+
+  for (const pattern of distressPatterns) {
+    if (pattern.test(text)) {
+      return { trigger: true, reason: `Escalation keyword: "${pattern.source}"` };
+    }
+  }
+
+  // 4. Closing Signals (Requires human intervention to sign off or finalize terms)
+  const closingPatterns = [
+    /\bsign contract\b/i,
+    /\bpayment terms\b/i,
+    /final (?:price|pricing|quote)/i,
+  ];
+  for (const pattern of closingPatterns) {
+    if (pattern.test(text)) {
+      return { trigger: true, reason: `B2B Closing signal: "${pattern.source}"` };
+    }
+  }
+
+  // If it's a safe service inquiry, suppress general call/meeting/buying intent handoffs
+  if (isSafeServiceInquiry) {
+    return { trigger: false, reason: '' };
+  }
+
+  // 5. Fallback check for general handoff patterns (if not a safe service inquiry)
   for (const pattern of HANDOFF_PATTERNS) {
     if (pattern.test(text)) {
       return { trigger: true, reason: `Escalation keyword: "${pattern.source}"` };

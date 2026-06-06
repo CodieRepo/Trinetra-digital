@@ -2,12 +2,12 @@
   "name": "trinetra-backend",
   "version": "1.0.0",
   "description": "Backend API and automation server for Trinetra Digital Solution",
-  "main": "dist/server.js",
+  "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",

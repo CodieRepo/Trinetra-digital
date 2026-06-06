@@ -89,3 +89,58 @@ This document records the major architectural decisions made during the design, 
   * Prevents infinite loops and message spam.
   * Improves customer experience by gracefully handing over hot leads to sales reps.
   * Guarantees appointment slot booking consistency using relative natural date/time parsing.
+
+---
+
+## 6. Context-Aware AI Handoff Logic
+
+* **Date:** 2026-06-06
+* **Status:** Approved / Implemented
+* **Reason:** The original `detectHandoff` function in `openrouter.service.ts` used flat keyword matching, which caused false-positive escalations. Routine service inquiries (e.g., "koi package batao") containing words like "batao" were triggering handoff to human agents, breaking automated nurturing flows and prematurely disabling AI.
+* **Alternatives Considered:**
+  * *Broader keyword suppression:* Discarded because adding blanket exceptions would risk suppressing genuine distress signals.
+  * *ML-based intent classification:* Discarded as overly complex for the current scale; deterministic pattern matching is sufficient and more auditable.
+* **Decision Taken:** Refactor `detectHandoff` into a priority-ordered evaluation chain:
+  1. **Explicit human request patterns** (absolute priority — e.g., "insaan chahiye", "real person")
+  2. **Emotional distress detection** (urgent safety-critical signals)
+  3. **Closing signals** (polite conversation endings like "nahi chahiye", "no thanks")
+  4. **Safe service pattern suppression** — if the message matches routine inquiry patterns (pricing, booking, package info), suppress general handoff triggers entirely
+  5. **General handoff triggers** (only evaluated if no safe pattern matches)
+* **Impact:**
+  * Eliminates false-positive handoffs during routine service conversations.
+  * Preserves genuine distress and explicit human-request escalation paths.
+  * Maintains all appointment booking, qualification, and revenue qualification flows.
+
+---
+
+## 7. VACUUM INTO for WAL-Safe Database Backups
+
+* **Date:** 2026-06-06
+* **Status:** Approved / Implemented
+* **Reason:** The previous backup implementation used `fs.copyFileSync()`, which is unsafe for SQLite databases in WAL mode. Copying the `.db` file while a write-ahead log exists can produce a corrupt or incomplete backup because the WAL file contents are not flushed into the main database file during a raw copy.
+* **Alternatives Considered:**
+  * *`.backup` API via better-sqlite3:* Not applicable because Trinetra uses the async `sqlite3`/`sql.js` driver which doesn't expose the C-level backup API.
+  * *Stop-the-world backup (close DB, copy, reopen):* Discarded because it requires downtime and risks dropped WhatsApp messages during the backup window.
+* **Decision Taken:** Use SQLite's `VACUUM INTO ?` command, which creates a transactionally consistent, standalone copy of the entire database (including all WAL contents) without locking the active database. Verified compatibility with the production SQLite engine (v3.44.2, which supports `VACUUM INTO` since v3.27.0).
+* **Impact:**
+  * Zero-downtime, WAL-safe backups with full transactional consistency.
+  * Backup files are self-contained `.db` files that can be opened independently.
+  * No risk of corrupt backups from partial WAL state.
+
+---
+
+## 8. Dead Code Pruning Policy
+
+* **Date:** 2026-06-06
+* **Status:** Approved / Implemented
+* **Reason:** Legacy files (`wa.service.ts`, `database/db.ts`) remained in the source tree after being superseded by newer implementations (`whatsapp/gateway.ts`, `database/connection.ts`). Dead code increases cognitive overhead, creates false-positive search results, and risks accidental re-import.
+* **Decision Taken:** Delete legacy files only after verifying:
+  1. No import statements reference the file across the entire `src/` tree (verified via `grep`)
+  2. No runtime dependency exists (no dynamic `require()` or string-based imports)
+  3. Evidence is documented before deletion
+* **Files Deleted:**
+  * `server/src/services/wa.service.ts` — Legacy Baileys client, replaced by `whatsapp/gateway.ts`
+  * `server/src/database/db.ts` — Legacy DB connection, replaced by `database/connection.ts`
+* **Impact:**
+  * Cleaner codebase with no ambiguity about which modules are authoritative.
+  * Build output reduced by ~200 lines of dead JavaScript.
