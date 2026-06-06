@@ -1100,7 +1100,7 @@ export async function handleOutboundSync(msg: proto.IWebMessageInfo) {
   // 4. Save message to CRM
   await MessageModel.create({
     id: msgId,
-    leadId: lead.id,
+    lead_id: lead.id,
     direction: 'outbound',
     body: textContent,
     status: 'DELIVERED',
