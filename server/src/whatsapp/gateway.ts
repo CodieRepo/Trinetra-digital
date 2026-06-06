@@ -5,7 +5,8 @@ import makeWASocket, {
   proto,
   makeCacheableSignalKeyStore,
   Browsers,
-  fetchLatestBaileysVersion
+  fetchLatestBaileysVersion,
+  generateMessageID
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import path from 'path';
@@ -1146,7 +1147,7 @@ async function processQueue() {
         try {
           console.log(`[LIFECYCLE] Stage: OUTBOUND_SEND_START | LeadID: ${msg.leadId} | JID: ${targetJid} | Attempt: ${msg.attempts + 1}/${maxAttempts}`);
           console.log(`[TEMP LOG - 5] sock.sendMessage start to targetJid=${targetJid}`);
-          sentMsg = await sock.sendMessage(targetJid, { text: msg.text });
+          sentMsg = await sock.sendMessage(targetJid, { text: msg.text }, { messageId: msg.id });
           console.log(`[TEMP LOG - 6] sock.sendMessage success: id=${sentMsg?.key?.id || 'unknown'}`);
           console.log(`[LIFECYCLE] Stage: OUTBOUND_SEND_SUCCESS | LeadID: ${msg.leadId} | JID: ${targetJid} | MsgID: ${sentMsg?.key?.id || 'unknown'} | Status: SENT`);
           break;
@@ -1240,7 +1241,7 @@ export async function sendWhatsAppMessage(phone: string, text: string, overrideJ
     await ConversationModel.updateThread(lead.id, text, false);
   }
 
-  const msgId = `queued-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const msgId = generateMessageID();
   
   await MessageModel.create({
     id: msgId,
