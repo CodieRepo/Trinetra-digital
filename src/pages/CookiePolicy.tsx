@@ -51,15 +51,6 @@ export default function CookiePolicy() {
               <p className="mt-3">Please note that disabling cookies completely may impact your user experience and make some interactive features on our site inaccessible.</p>
             </div>
             
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">5. Legal Corporate Ownership</h2>
-              <p>This Cookie Policy is officially maintained and enforced by our parent registered legal entity: <strong>Charulata Enterprises</strong>, located in Gorakhpur, Uttar Pradesh, India — 273001.</p>
-              <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 font-semibold space-y-1">
-                <p>Entity: Charulata Enterprises (Trinetra Digital Solution)</p>
-                <p>Email: info@trinetradigitalsolution.com</p>
-                <p>Address: Gorakhpur, Uttar Pradesh, India — 273001</p>
-              </div>
-            </div>
           </div>
         </motion.div>
       </section>

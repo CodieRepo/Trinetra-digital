@@ -26,7 +26,7 @@ export default function DataUsageNotice() {
           <div className="flex flex-col gap-8 text-xs sm:text-sm text-slate-600 leading-relaxed text-left">
             <div>
               <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">1. Scope of Data Handling</h2>
-              <p>This Data Usage Notice details how Trinetra Digital Solution (a brand operated legally under Charulata Enterprises) and our client systems process, store, and integrate business inquiry records. We prioritize database integrity and strictly implement data protocols conforming to Meta Business Policies, Google Ads Policies, and local Indian data protection directives.</p>
+              <p>This Data Usage Notice details how Trinetra Digital Solution and our client systems process, store, and integrate business inquiry records. We prioritize database integrity and strictly implement data protocols conforming to Meta Business Policies, Google Ads Policies, and local Indian data protection directives.</p>
             </div>
             
             <div>
@@ -55,15 +55,6 @@ export default function DataUsageNotice() {
               <p>All client data transferred during website submission forms or dashboard workflows is encrypted using standard Transport Layer Security (TLS/HTTPS). Stored database objects employ Secure Hash Algorithms to protect critical parameters.</p>
             </div>
             
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">5. Legal Corporate Ownership</h2>
-              <p>This Data Usage Notice is maintained and legally executed under our parent entity: <strong>Charulata Enterprises</strong>, located in Gorakhpur, Uttar Pradesh, India — 273001.</p>
-              <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 font-semibold space-y-1">
-                <p>Corporate Office: Charulata Enterprises</p>
-                <p>Email: info@trinetradigitalsolution.com</p>
-                <p>Location: Gorakhpur, Uttar Pradesh, India — 273001</p>
-              </div>
-            </div>
           </div>
         </motion.div>
       </section>

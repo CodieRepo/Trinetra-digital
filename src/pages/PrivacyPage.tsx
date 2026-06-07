@@ -53,24 +53,13 @@ export default function PrivacyPage() {
               <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">6. Contact Information</h2>
               <p>If you have any questions, compliance concerns, or requests regarding this Privacy Policy, please reach out to our legal officer:</p>
               <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 font-semibold space-y-1">
-                <p>Entity: Trinetra Digital Solution (Charulata Enterprises)</p>
+                <p>Entity: Trinetra Digital Solution</p>
                 <p>Email: info@trinetradigitalsolution.com</p>
                 <p>Phone: +91 9334757759</p>
                 <p>Address: Gorakhpur, Uttar Pradesh, India — 273001</p>
               </div>
             </div>
             
-            <div className="mt-6 pt-8 border-t border-slate-200">
-              <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">7. Corporate Transparency &amp; Brand Ownership</h2>
-              <div className="p-5 bg-surface-2 border border-border rounded-2xl text-xs leading-relaxed text-slate-600 flex flex-col gap-3">
-                <p>
-                  <strong>Trinetra Digital Solution</strong> is the official services, technology, and software development brand operated and legally owned by the registered parent entity <strong>Charulata Enterprises</strong>. Any reference on this website to "Trinetra", "Trinetra Digital Solution", "we", "our", or "us" in relation to agreements, billing, proposals, or software operations refers to the business activities of <strong>Charulata Enterprises</strong>.
-                </p>
-                <p>
-                  All official business transactions, client invoicing, legally binding agreements, payment gateways, and banking reconciliations are transacted strictly under the legal corporate entity name <strong>Charulata Enterprises</strong>. This statement is published for absolute clarity and legal compliance during payment merchant gateway verification, Google Merchant Center audits, Meta Business Suite verification, and local tax audits.
-                </p>
-              </div>
-            </div>
           </div>
         </motion.div>
       </section>

@@ -53,10 +53,11 @@ const ADMIN_PHONE = process.env.ADMIN_NOTIFY_PHONE || '+919334757759';
 const CALENDLY_URL = process.env.CALENDLY_URL || 'https://calendly.com/trinetra-demo';
 
 function generateWaMeLink(phone: string): string {
-  if (phone.startsWith('+2224')) {
+  const digits = phone.replace(/\\D/g, '');
+  if (digits.length === 15) {
     return `⚠️ *Meta is currently syncing this phone number. The true number will appear in the CRM shortly.*`;
   }
-  return `Reply to lead: wa.me/${phone.replace(/[^0-9]/g, '')}`;
+  return `Reply to lead: wa.me/${digits}`;
 }
 
 // ─── Admin Email Alert ───────────────────────────────────────────────────────

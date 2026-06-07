@@ -26,7 +26,7 @@ export default function DisclaimerPage() {
           <div className="flex flex-col gap-8 text-xs sm:text-sm text-slate-600 leading-relaxed text-left">
             <div>
               <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">1. No Guarantees of Performance or Income</h2>
-              <p>Trinetra Digital Solution (a brand owned and operated under Charulata Enterprises) provides high-performance custom website development, software engineering, and strategic marketing campaign management. We do <strong>NOT</strong> make any fixed guarantees, assurances, or promises regarding: specific sales metrics, lead conversion rates, revenue generation, or profit numbers.</p>
+              <p>Trinetra Digital Solution provides high-performance custom website development, software engineering, and strategic marketing campaign management. We do <strong>NOT</strong> make any fixed guarantees, assurances, or promises regarding: specific sales metrics, lead conversion rates, revenue generation, or profit numbers.</p>
               <p className="mt-3">Business growth and digital marketing outcomes depend on several external variables, including but not limited to: your market niche, product pricing, customer service quality, overall brand authority, sales team follow-up speeds, and general economic conditions. Any examples, historical case studies, or realistic illustrations shared on this site or in our proposals are strictly for educational demonstration and represent no guarantee of identical outcomes.</p>
             </div>
             
@@ -45,10 +45,6 @@ export default function DisclaimerPage() {
               <p>All budgets spent on Google Ads and Meta Ads channels are paid directly by the client to those platforms. Trinetra Digital Solution holds no responsibility for click costs, impression bid changes, or billing disputes on Meta and Google accounts.</p>
             </div>
             
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">5. Legal Corporate Ownership</h2>
-              <p>Trinetra Digital Solution is a business brand operated legally under <strong>Charulata Enterprises</strong>, located in Gorakhpur, Uttar Pradesh, India — 273001.</p>
-            </div>
           </div>
         </motion.div>
       </section>

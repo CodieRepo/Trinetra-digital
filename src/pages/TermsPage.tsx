@@ -26,7 +26,7 @@ export default function TermsPage() {
           <div className="flex flex-col gap-8 text-xs sm:text-sm text-slate-600 leading-relaxed text-left">
             <div>
               <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">1. Agreement to Terms</h2>
-              <p>By accessing this website, booking a consultation, or engaging the services of Trinetra Digital Solution (a brand owned by Charulata Enterprises), you agree to be bound by these Terms &amp; Conditions. If you disagree with any clause outlined in this document, you must cease site access and refrain from executing project contracts.</p>
+              <p>By accessing this website, booking a consultation, or engaging the services of Trinetra Digital Solution, you agree to be bound by these Terms &amp; Conditions. If you disagree with any clause outlined in this document, you must cease site access and refrain from executing project contracts.</p>
             </div>
             
             <div>
@@ -59,15 +59,6 @@ export default function TermsPage() {
               <p>These terms and all project covenants are governed strictly under the laws of the Republic of India. Any legal disputes, mediation claims, or arbitration processes arising from our services are subject exclusively to the jurisdiction of the local courts located in Gorakhpur, Uttar Pradesh, India.</p>
             </div>
 
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">8. Corporate Information &amp; Entity</h2>
-              <p>Trinetra Digital Solution is the technology and service brand operated and legally owned by the registered parent entity <strong>Charulata Enterprises</strong>. All agreements, commercial covenants, and transactions are legally executed under <strong>Charulata Enterprises</strong>.</p>
-              <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 font-semibold space-y-1 font-mono">
-                <p>Legal Entity: Charulata Enterprises</p>
-                <p>Office Location: Gorakhpur, Uttar Pradesh, India — 273001</p>
-                <p>Official Contact: info@trinetradigitalsolution.com · +91 9334757759</p>
-              </div>
-            </div>
           </div>
         </motion.div>
       </section>

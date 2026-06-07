@@ -7,7 +7,6 @@ This document serves as the permanent memory and source of truth for the Trinetr
 ## 1. Project Information & Stage
 
 * **Project Name:** Trinetra CRM
-* **Legal Entity:** Charulata Enterprises
 * **Business Purpose:** Client-facing, sellable SaaS CRM designed for WhatsApp lead tracking, customer nurturing, professional PDF quotation generation, consultation appointment scheduling, and pipeline forecasting.
 * **Target Users:** Sales representatives, CRM administrators, and business owners.
 * **Core SaaS Goal:** Monetize business automation services by converting inbound WhatsApp conversations into qualified leads, automating follow-up routines, managing pipelines with win probability, and ensuring human-in-the-loop handoff.

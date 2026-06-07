@@ -839,6 +839,11 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
   const jid = msg.key.remoteJid;
   if (!jid) return;
 
+  // TEMPORARY STOP ALL WHATSAPP AUTOMATION
+  console.log("🛑 WhatsApp automation is temporarily disabled by user request.");
+  return;
+
+
   const senderName = msg.pushName || 'Unknown Contact';
   const textContent = msg.message?.conversation || 
                       msg.message?.extendedTextMessage?.text || 

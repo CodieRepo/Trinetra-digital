@@ -172,3 +172,13 @@ This document records the major architectural decisions made during the design, 
   3. Change max reconnect attempts from 5 hard-cap to infinite backoff (5 min max).
 * **Rationale**: Auto-deleting keys guarantees human intervention. Quarantine limits plus infinite backoff provides maximum recovery chances without spamming Meta.
 
+
+
+## 2026-06-07: WhatsApp LID Phone Number Resolution
+* **Context**: Meta's new policy masks incoming WhatsApp Ad leads with LID (+2224) numbers instead of the real phone number. This broke wa.me links in the CRM notifications.
+* **Decision**: 
+  1. Parse contacts.update and contacts.upsert inside gateway.ts to intercept the async mapping between LID and real JID.
+  2. Implement an automatic retroactive SQL UPDATE to leads and conversations tables.
+  3. Generate a 'Number Syncing' disclaimer for the immediate notification, followed by a 'Number Resolved' webhook once the sync completes.
+* **Rationale**: Delaying initial notification would hurt response times. Asynchronous retro-resolution guarantees the lead is immediately actionable, and the valid wa.me link is provided as soon as Meta releases it.
+

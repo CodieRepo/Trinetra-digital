@@ -102,6 +102,9 @@ Aapke business ke liye shubhkamnayein! 🙏`;
 // ─── Main cron service ────────────────────────────────────────────────────────
 
 export function startCronService() {
+  console.log('🛑 Cron Service (Automated Follow-ups) is temporarily disabled by user request.');
+  return;
+
   console.log('⏰ Starting production follow-up scheduler (Cron Service)...');
 
   setInterval(async () => {
