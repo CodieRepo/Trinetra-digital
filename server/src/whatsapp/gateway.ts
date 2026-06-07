@@ -519,6 +519,7 @@ export async function initWhatsApp() {
           ...(sock as any).contacts[contact.id],
           ...contact
         };
+        checkAndResolveLid(contact).catch(console.error);
       }
       console.log(`[LIFECYCLE] Stage: CONNECTION_WATCHDOG | Contacts upserted. Cache size: ${Object.keys((sock as any).contacts).length}`);
     });
@@ -530,14 +531,12 @@ export async function initWhatsApp() {
       }
       for (const update of updates) {
         if (!update.id) continue;
-        if ((sock as any).contacts[update.id]) {
-          (sock as any).contacts[update.id] = {
-            ...(sock as any).contacts[update.id],
-            ...update
-          };
-        } else {
-          (sock as any).contacts[update.id] = update;
-        }
+        const merged = {
+          ...((sock as any).contacts[update.id] || {}),
+          ...update
+        };
+        (sock as any).contacts[update.id] = merged;
+        checkAndResolveLid(merged).catch(console.error);
       }
     });
 
@@ -789,6 +788,45 @@ function formatJid(phone: string): string {
 function cleanJidToPhone(jid: string): string {
   const number = jid.split('@')[0];
   return `+${number}`; // Normalize to international prefix
+}
+
+async function checkAndResolveLid(contact: any) {
+  if (!contact.id || !contact.lid) return;
+  // Baileys 'id' is real JID, 'lid' is the LID
+  if (contact.id.endsWith('@lid')) return;
+  
+  const realPhone = cleanJidToPhone(contact.id);
+  const lidPhone = cleanJidToPhone(contact.lid);
+  
+  if (!lidPhone.startsWith('+2224')) return;
+  
+  try {
+    const db = getDb();
+    const lead = await db.get('SELECT id, name FROM leads WHERE phone = ?', [lidPhone]);
+    if (lead) {
+      console.log(`🔄 [LID SYNC] Retroactively resolving LID ${lidPhone} -> ${realPhone} for lead ${lead.id}`);
+      
+      // Update DB relationships explicitly mapped to phone
+      await db.run('UPDATE leads SET phone = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [realPhone, lead.id]);
+      await db.run('UPDATE conversations SET phone = ? WHERE lead_id = ?', [realPhone, lead.id]);
+      
+      // Update outbound queue in memory
+      for (const q of outboundQueue) {
+        if (q.leadId === lead.id) {
+          q.phone = realPhone;
+          if (q.overrideJid === contact.lid) {
+            q.overrideJid = contact.id;
+          }
+        }
+      }
+      
+      // Send resolution notification
+      const { notifyLidResolved } = await import('../services/notification.service');
+      await notifyLidResolved(lead.name, realPhone);
+    }
+  } catch (err) {
+    console.error(`❌ [LID SYNC] Error resolving LID ${lidPhone}:`, err);
+  }
 }
 
 export async function handleInboundMessage(msg: proto.IWebMessageInfo) {

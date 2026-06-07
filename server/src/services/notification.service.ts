@@ -52,6 +52,13 @@ setInterval(() => {
 const ADMIN_PHONE = process.env.ADMIN_NOTIFY_PHONE || '+919334757759';
 const CALENDLY_URL = process.env.CALENDLY_URL || 'https://calendly.com/trinetra-demo';
 
+function generateWaMeLink(phone: string): string {
+  if (phone.startsWith('+2224')) {
+    return `⚠️ *Meta is currently syncing this phone number. The true number will appear in the CRM shortly.*`;
+  }
+  return `Reply to lead: wa.me/${phone.replace(/[^0-9]/g, '')}`;
+}
+
 // ─── Admin Email Alert ───────────────────────────────────────────────────────
 async function sendEmailAlert(subject: string, text: string, html?: string): Promise<void> {
   if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS || !SMTP_TO) {
@@ -124,7 +131,7 @@ export async function notifyNewLead(lead: {
     `🌍 *Source:* ${lead.source}\n` +
     `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
     `AI has initiated the conversation. Track their activity on your dashboard!\n\n` +
-    `Reply to lead: wa.me/${lead.phone.replace(/[^0-9]/g, '')}\n` +
+    `${generateWaMeLink(lead.phone)}\n` +
     `📋 Dashboard: https://trinetradigitalsolution.com/admin`;
 
   const dedupKey = `new_lead:${lead.phone}`;
@@ -172,7 +179,7 @@ export async function notifyHandoff(lead: {
     `📊 *Lead Score:* ${lead.ai_score}/100\n` +
     `⚠️ *Reason:* ${reason}\n` +
     `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-    `Reply to lead: wa.me/${lead.phone.replace(/[^0-9]/g, '')}\n` +
+    `${generateWaMeLink(lead.phone)}\n` +
     `📋 Dashboard: https://trinetradigitalsolution.com/admin`;
 
   const dedupKey = `handoff:${lead.phone}`;
@@ -219,7 +226,7 @@ export async function notifyFireLead(lead: {
     `📊 *Lead Score:* ${lead.ai_score}/100 ⬆️ HIGH PRIORITY\n` +
     `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
     `⚡ This lead is ready to convert. Contact immediately!\n\n` +
-    `Reply to lead: wa.me/${lead.phone.replace(/[^0-9]/g, '')}\n` +
+    `${generateWaMeLink(lead.phone)}\n` +
     `📋 Dashboard: https://trinetradigitalsolution.com/admin`;
 
   const dedupKey = `fire:${lead.phone}`;
@@ -267,7 +274,7 @@ export async function notifyAppointmentRequest(lead: {
     (lead.preferred_time ? `🕒 *Time:* ${lead.preferred_time}\n` : '') +
     `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
     `The AI has automatically parsed and confirmed this appointment!\n\n` +
-    `Reply to lead: wa.me/${lead.phone.replace(/[^0-9]/g, '')}\n` +
+    `${generateWaMeLink(lead.phone)}\n` +
     `📋 Dashboard: https://trinetradigitalsolution.com/admin`;
 
   const dedupKey = `appt:${lead.phone}`;
@@ -313,7 +320,7 @@ export async function notifyHighBudgetLead(lead: {
     `🎯 *Interest:* ${lead.service || 'Not specified'}\n` +
     `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
     `⚡ High-value prospect. Contact ASAP!\n\n` +
-    `Reply to lead: wa.me/${lead.phone.replace(/[^0-9]/g, '')}\n` +
+    `${generateWaMeLink(lead.phone)}\n` +
     `📋 Dashboard: https://trinetradigitalsolution.com/admin`;
 
   const dedupKey = `budget:${lead.phone}`;
@@ -364,5 +371,21 @@ export async function notifyWhatsAppDisconnect(reason: string, isPermanent: bool
   await logAuditAction('WHATSAPP_DISCONNECT_ALERT',
     `Admin notified about disconnect: ${reason} (Status=${status})`
   );
+}
+
+// ─── LID Resolution Notification ─────────────────────────────────────────────
+export async function notifyLidResolved(leadName: string, realPhone: string): Promise<void> {
+  const message =
+    `🔄 *META NUMBER SYNCED*\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `👤 *Lead:* ${leadName}\n` +
+    `📞 *New Phone:* ${realPhone}\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `Meta has successfully resolved the masked phone number.\n\n` +
+    `Reply to lead: wa.me/${realPhone.replace(/[^0-9]/g, '')}\n` +
+    `📋 Dashboard: https://trinetradigitalsolution.com/admin`;
+
+  await sendAdminAlert(message);
+  await logAuditAction('LID_RESOLVED', `Admin notified of resolved LID for ${leadName}: ${realPhone}`);
 }
 
