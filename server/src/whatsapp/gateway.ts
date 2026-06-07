@@ -515,11 +515,15 @@ export async function initWhatsApp() {
       }
       for (const contact of contacts) {
         if (!contact.id) continue;
-        (sock as any).contacts[contact.id] = {
-          ...(sock as any).contacts[contact.id],
+        const merged = {
+          ...((sock as any).contacts[contact.id] || {}),
           ...contact
         };
-        checkAndResolveLid(contact).catch(console.error);
+        (sock as any).contacts[contact.id] = merged;
+        if (merged.lid) {
+          (sock as any).contacts[merged.lid] = merged;
+        }
+        checkAndResolveLid(merged).catch(console.error);
       }
       console.log(`[LIFECYCLE] Stage: CONNECTION_WATCHDOG | Contacts upserted. Cache size: ${Object.keys((sock as any).contacts).length}`);
     });
@@ -536,6 +540,9 @@ export async function initWhatsApp() {
           ...update
         };
         (sock as any).contacts[update.id] = merged;
+        if (merged.lid) {
+          (sock as any).contacts[merged.lid] = merged;
+        }
         checkAndResolveLid(merged).catch(console.error);
       }
     });
@@ -778,7 +785,8 @@ function formatJid(phone: string): string {
     return phone;
   }
   let clean = phone.replace(/\D/g, '');
-  if (clean.startsWith('2224') && clean.length === 15) {
+  // Meta LIDs are 15 digits long
+  if (clean.length === 15) {
     return `${clean}@lid`;
   }
   return `${clean}@s.whatsapp.net`;
@@ -797,8 +805,6 @@ async function checkAndResolveLid(contact: any) {
   
   const realPhone = cleanJidToPhone(contact.id);
   const lidPhone = cleanJidToPhone(contact.lid);
-  
-  if (!lidPhone.startsWith('+2224')) return;
   
   try {
     const db = getDb();
@@ -864,7 +870,7 @@ export async function handleInboundMessage(msg: proto.IWebMessageInfo) {
       const allLeads = await LeadModel.findAll();
       const nameMatch = allLeads.find(
         l => l.name.toLowerCase() === senderName.toLowerCase() &&
-             !l.phone.startsWith('+2224')
+             l.phone.replace(/\\D/g, '').length !== 15
       );
       if (nameMatch) {
         lead = nameMatch;
@@ -1111,6 +1117,12 @@ export async function handleOutboundSync(msg: proto.IWebMessageInfo) {
 
   // Check if this message was sent by our system
   const db = getDb();
+
+  let cleanPhone = cleanJidToPhone(jid);
+  let lead = await LeadModel.findByPhone(cleanPhone);
+  if (!lead) return; // Cannot pause a lead that doesn't exist
+
+  // Try exact ID match first
   const existingMsg = await db.get('SELECT id FROM whatsapp_chats WHERE id = ?', [msgId]);
   
   if (existingMsg) {
@@ -1118,13 +1130,20 @@ export async function handleOutboundSync(msg: proto.IWebMessageInfo) {
     return;
   }
 
+  // Fallback: Check if there's a recent outbound message with the EXACT SAME BODY within the last 30 seconds
+  const recentAPI = await db.get(`
+    SELECT id FROM whatsapp_chats 
+    WHERE lead_id = ? AND direction = 'outbound' AND body = ? 
+    AND (julianday('now') - julianday(timestamp)) * 86400 < 30
+  `, [lead.id, textContent]);
+
+  if (recentAPI) {
+    console.log(`[GATEWAY] Matched fromMe sync to queued message via body-match. Skipping takeover.`);
+    return;
+  }
+
   // It's a manual outbound message sent from a physical device!
   console.log(`📱 [GATEWAY] Detected manual physical device outbound message to ${jid}`);
-  
-  let cleanPhone = cleanJidToPhone(jid);
-  let lead = await LeadModel.findByPhone(cleanPhone);
-  
-  if (!lead) return;
 
   console.log(`⏸️ [GATEWAY] Physical device message to ${lead.name} (${lead.phone}). Pausing AI...`);
   
