@@ -26,7 +26,7 @@ export default function RefundPage() {
           <div className="flex flex-col gap-8 text-xs sm:text-sm text-slate-600 leading-relaxed text-left">
             <div>
               <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">1. General Principles</h2>
-              <p>At Trinetra Digital Solution (a brand operated under Charulata Enterprises), we hold our engineering quality and client satisfaction to the highest professional standards. Because we dedicate physical developer hours, designer resources, and strategic consulting hours immediately upon project kick-off, we operate under a fair, milestone-based structure outlined below.</p>
+              <p>At Trinetra Digital Solution, we hold our engineering quality and client satisfaction to the highest professional standards. Because we dedicate physical developer hours, designer resources, and strategic consulting hours immediately upon project kick-off, we operate under a fair, milestone-based structure outlined below.</p>
             </div>
             
             <div>
@@ -60,10 +60,6 @@ export default function RefundPage() {
               <p>To submit a formal milestone query or project cancellation, kindly send a detailed email stating your project scope and specific request to: <a href="mailto:info@trinetradigitalsolution.com" className="text-accent hover:underline font-semibold">info@trinetradigitalsolution.com</a>. Eligible refunds will be evaluated, approved, and wired back to the original source bank account within 7 to 10 working days.</p>
             </div>
 
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">6. Legal &amp; Corporate Entity</h2>
-              <p>This policy is legally binding and transacted under our parent registered entity: <strong>Charulata Enterprises</strong>, located in Gorakhpur, Uttar Pradesh, India — 273001.</p>
-            </div>
           </div>
         </motion.div>
       </section>
