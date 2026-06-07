@@ -21,7 +21,6 @@ const CookiePolicy     = lazy(() => import("@/pages/CookiePolicy"));
 const DataUsageNotice  = lazy(() => import("@/pages/DataUsageNotice"));
 const NotFoundPage     = lazy(() => import("@/pages/NotFoundPage"));
 const AdminCrm         = lazy(() => import("@/pages/admin/AdminCrm"));
-const AdminPipeline    = lazy(() => import("@/pages/admin/AdminPipeline"));
 
 
 // Service sub-pages
