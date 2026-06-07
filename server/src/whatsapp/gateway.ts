@@ -180,7 +180,7 @@ let connectedAt: number | null = null;
 // Reconnection backoff variables
 let reconnectAttempts = 0;
 let reconnectTimeout: NodeJS.Timeout | null = null;
-const MAX_RECONNECT_ATTEMPTS = 15;
+let consecutiveBadSessions = 0;
 
 interface QueuedMessage {
   id: string;
@@ -436,7 +436,7 @@ function getReconnectDelay(statusCode?: number): number {
     console.log('🔄 Restart required by server. Reconnecting instantly (1s)...');
     return 1000;
   }
-  const delays = [30000, 60000, 120000, 300000, 600000]; // 30s, 60s, 120s, 300s, 600s
+  const delays = [30000, 60000, 120000, 300000]; // 30s, 60s, 120s, 300s (max 5 minutes)
   const attemptIndex = Math.min(reconnectAttempts, delays.length - 1);
   return delays[attemptIndex];
 }
@@ -609,11 +609,32 @@ export async function initWhatsApp() {
           shouldReconnect = false;
           shouldCleanSession = true;
         } else if (statusCode === DisconnectReason.badSession) {
-          reasonMsg = 'auth_failed: Bad session credentials';
-          connectionStatus = 'auth_failed';
-          isPermanent = true;
-          shouldReconnect = true;
-          shouldCleanSession = true;
+          consecutiveBadSessions++;
+          console.warn(`[AUTH] Consecutive bad sessions: ${consecutiveBadSessions}`);
+          
+          if (consecutiveBadSessions >= 5) {
+            reasonMsg = 'auth_failed: Bad session credentials (Quarantined)';
+            connectionStatus = 'auth_failed';
+            isPermanent = true;
+            shouldReconnect = false;
+            shouldCleanSession = false; // Do not delete credentials automatically
+            await logAuditAction('WHATSAPP_SESSION_QUARANTINE', 'Session quarantined after 5 consecutive badSession errors.');
+          } else {
+            reasonMsg = `auth_failed: Bad session credentials (Retrying ${consecutiveBadSessions}/5)`;
+            connectionStatus = 'connecting';
+            isPermanent = false;
+            shouldReconnect = true;
+            shouldCleanSession = false; // PRESERVE CREDENTIALS
+            
+            if (consecutiveBadSessions >= 3) {
+              try {
+                const { notifyWhatsAppDisconnect } = await import('../services/notification.service');
+                await notifyWhatsAppDisconnect(`Bad session error (Attempt ${consecutiveBadSessions}/5)`, false, 'auth_failed_retry');
+              } catch (err) {
+                console.error('⚠️ Failed to notify admin:', err);
+              }
+            }
+          }
         } else if (statusCode === DisconnectReason.connectionReplaced) {
           reasonMsg = 'session_replaced: Connection replaced by another active session';
           connectionStatus = 'connecting';
@@ -639,7 +660,7 @@ export async function initWhatsApp() {
           connectionStatus = 'auth_failed';
           isPermanent = true;
           shouldReconnect = false;
-          shouldCleanSession = true;
+          shouldCleanSession = false; // Restricted to loggedOut only
         } else if (error) {
           reasonMsg = `error: ${error.message || 'socket error'}`;
           connectionStatus = 'connecting';
@@ -677,42 +698,25 @@ export async function initWhatsApp() {
             return;
           }
 
-          if (reconnectAttempts >= 5) {
-            console.error(`🚨 [RECONNECT EXHAUSTED] Failed to reconnect after 5 attempts. Switching to qr_required and stopping reconnect loop.`);
-            connectionStatus = 'qr_required';
-            disconnectReason = 'rate_limited: Failed to reconnect after 5 attempts. Stopped auto-reconnection loop.';
-            await logAuditAction('WHATSAPP_RATE_LIMITED', 'Gateway enters qr_required state due to exhausted reconnect attempts.');
+          reconnectAttempts++;
+          
+          if (reconnectAttempts === 5) {
+            console.error(`🚨 [RECONNECT] Reached 5 attempts. Entering infinite 5-minute backoff. Alerting admin once.`);
+            await logAuditAction('WHATSAPP_INFINITE_RETRY', 'Gateway entering infinite 5-minute retry loop.');
             try {
               const { notifyWhatsAppDisconnect } = await import('../services/notification.service');
-              await notifyWhatsAppDisconnect(disconnectReason, true, 'qr_required');
+              await notifyWhatsAppDisconnect('Connection lost. Entering infinite recovery loop.', false, 'reconnecting');
             } catch (err) {
               console.error('⚠️ Failed to notify admin:', err);
             }
-            return; // Stop reconnecting
           }
 
-          reconnectAttempts++;
           const delay = getReconnectDelay(statusCode);
-          console.log(`🔄 Attempting automatic reconnection in ${delay / 1000}s (Attempt ${reconnectAttempts}/5)...`);
+          console.log(`🔄 Attempting automatic reconnection in ${delay / 1000}s (Attempt ${reconnectAttempts}/∞)...`);
 
           const now = Date.now();
           reconnectTimestamps.push(now);
           reconnectTimestamps = reconnectTimestamps.filter(ts => now - ts < 900000); // 15 mins
-
-          if (reconnectTimestamps.length > 5) {
-            console.error(`🚨 [RESTART PROTECTION] Too many reconnect attempts (${reconnectTimestamps.length}) within 15 minutes. Stopping loop.`);
-            connectionStatus = 'intervention_required';
-            disconnectReason = 'rate_limited: Too many reconnect attempts within 15 minutes. Manual intervention required.';
-            await logAuditAction('WHATSAPP_RATE_LIMITED', 'Gateway enters intervention_required state. Reconnect attempts throttled.');
-
-            try {
-              const { notifyWhatsAppDisconnect } = await import('../services/notification.service');
-              await notifyWhatsAppDisconnect(disconnectReason, true, 'intervention_required');
-            } catch (err) {
-              console.error('⚠️ Failed to notify admin about rate-limiting:', err);
-            }
-            return; // Exit reconnect loop
-          }
 
           if (reconnectTimeout) clearTimeout(reconnectTimeout);
           reconnectTimeout = setTimeout(() => {
@@ -725,6 +729,7 @@ export async function initWhatsApp() {
         connectionStatus = 'connected';
         disconnectReason = null;
         reconnectAttempts = 0;
+        consecutiveBadSessions = 0; // Reset consecutive auth failures
         if (reconnectTimeout) {
           clearTimeout(reconnectTimeout);
           reconnectTimeout = null;

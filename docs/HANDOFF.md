@@ -143,3 +143,8 @@ Transform Trinetra CRM into a highly stable, production-grade, scalable, self-ma
 ---
 
 **Last Updated:** 2026-06-06T12:15:00+05:30 (India Standard Time)
+
+
+## 2026-06-07: WhatsApp Session Reliability Upgrade
+* **Changes**: Refactored gateway.ts to eliminate aggressive credentials wipe on 401 (badSession) errors. Reconnection logic modified to infinite backoff (capped at 5m delay) rather than permanent lockouts.
+* **Next Steps**: Monitor server logs for 408 (QR refs attempts ended) or 401 to verify recovery without human intervention.

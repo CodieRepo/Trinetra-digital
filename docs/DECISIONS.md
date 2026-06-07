@@ -162,3 +162,13 @@ This document records the major architectural decisions made during the design, 
   * No silent lead downgrades (score defaults back to current score instead of 50).
   * System no longer crashes on hallucinated array/object injection into string fields.
   * Zero false-positive human handoffs for business proposal or quotation requests.
+
+
+## 2026-06-07: WhatsApp Credentials Preservation
+* **Context**: The gateway was executing fs.rmSync on the first 401 Unauthorized error from Baileys. This was meant to clear bad sessions but triggered catastrophic lockouts because 401s can be transient.
+* **Decision**: 
+  1. Remove shouldCleanSession = true from badSession logic.
+  2. Implement quarantine limit (5 consecutive bad sessions) before ceasing reconnection.
+  3. Change max reconnect attempts from 5 hard-cap to infinite backoff (5 min max).
+* **Rationale**: Auto-deleting keys guarantees human intervention. Quarantine limits plus infinite backoff provides maximum recovery chances without spamming Meta.
+
