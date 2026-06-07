@@ -144,6 +144,37 @@ export default function AdminCrm() {
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
   const [rightPanelTab, setRightPanelTab] = useState<'profile' | 'intelligence' | 'tasks'>('profile');
 
+  // Custom Form & Interactive States
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [manualMsgText, setManualMsgText] = useState("");
+  const [sendingMsg, setSendingMsg] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [aiMsgText, setAiMsgText] = useState("");
+  const [aiChatHistory, setAiChatHistory] = useState<Array<{ role: 'user' | 'assistant'; text: string }>>([
+    { role: 'assistant', text: "Hello! I am your Trinetra AI Copilot. I can write automated replies, score leads, analyze analytics pipelines, or trigger DB backups. Try saying: 'Review latest lead' or 'Create a database backup'." }
+  ]);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  // Phase 4A: Conversions & Slots states
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [quotations, setQuotations] = useState<any[]>([]);
+  const [conversionStats, setConversionStats] = useState<any>(null);
+  const [calendarData, setCalendarData] = useState<{ appointments: any[]; slots: any[] }>({ appointments: [], slots: [] });
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [newSlotDate, setNewSlotDate] = useState("");
+  const [newSlotTime, setNewSlotTime] = useState("");
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [settingsSubTab, setSettingsSubTab] = useState<'general' | 'developer'>('general');
+  
+  // Selected Package tier for QuoteModal
+  const [quoteTier, setQuoteTier] = useState<'starter_presence' | 'growth_engine' | 'sales_system' | 'business_os' | 'custom'>('growth_engine');
+  const [quoteDiscount, setQuoteDiscount] = useState(0);
+  const [quoteNotes, setQuoteNotes] = useState("");
+
   // Load backups when view is changed to QR or developer settings tab
   useEffect(() => {
     if ((activeView === 'qr' || (activeView === 'settings' && settingsSubTab === 'developer')) && token) {
@@ -237,36 +268,7 @@ export default function AdminCrm() {
     }
   };
   
-  // Custom Form & Interactive States
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [manualMsgText, setManualMsgText] = useState("");
-  const [sendingMsg, setSendingMsg] = useState(false);
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
-  const [aiMsgText, setAiMsgText] = useState("");
-  const [aiChatHistory, setAiChatHistory] = useState<Array<{ role: 'user' | 'assistant'; text: string }>>([
-    { role: 'assistant', text: "Hello! I am your Trinetra AI Copilot. I can write automated replies, score leads, analyze analytics pipelines, or trigger DB backups. Try saying: 'Review latest lead' or 'Create a database backup'." }
-  ]);
-  const [aiLoading, setAiLoading] = useState(false);
 
-  // Phase 4A: Conversions & Slots states
-  const [showQuoteModal, setShowQuoteModal] = useState(false);
-  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
-  const [quotations, setQuotations] = useState<any[]>([]);
-  const [conversionStats, setConversionStats] = useState<any>(null);
-  const [calendarData, setCalendarData] = useState<{ appointments: any[]; slots: any[] }>({ appointments: [], slots: [] });
-  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
-  const [newSlotDate, setNewSlotDate] = useState("");
-  const [newSlotTime, setNewSlotTime] = useState("");
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [settingsSubTab, setSettingsSubTab] = useState<'general' | 'developer'>('general');
-  
-  // Selected Package tier for QuoteModal
-  const [quoteTier, setQuoteTier] = useState<'starter_presence' | 'growth_engine' | 'sales_system' | 'business_os' | 'custom'>('growth_engine');
-  const [quoteDiscount, setQuoteDiscount] = useState(0);
-  const [quoteNotes, setQuoteNotes] = useState("");
 
   // ── 6 Live Sales Metrics for Dashboard Redesign ──
   const leadsTodayCount = useMemo(() => {
