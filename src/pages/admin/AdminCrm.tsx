@@ -596,12 +596,19 @@ export default function AdminCrm() {
 
   // Reference hooks for UI components
   const activeChatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const commandPaletteRef = useRef<HTMLDivElement>(null);
 
   // Handle auto-scroll on conversation timeline updates
   useEffect(() => {
-    if (activeChatEndRef.current) {
-      activeChatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      const container = chatContainerRef.current;
+      setTimeout(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: "smooth"
+        });
+      }, 50);
     }
   }, [leadDetail?.chats]);
 
@@ -1505,7 +1512,7 @@ export default function AdminCrm() {
                             </button>
                           </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs">
+                        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs">
                           {leadDetail.chats.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-1">
                               <MessageSquare size={24} className="opacity-40" />
