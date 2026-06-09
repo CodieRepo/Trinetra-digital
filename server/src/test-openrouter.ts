@@ -20,7 +20,7 @@ async function runTests() {
   const test1 = await processWithAI({
     leadId: 'test-lead-1',
     leadName: 'Shubham Pal',
-    leadPhone: '+919334757759',
+    leadPhone: '+918810721068',
     service: 'AI CRM Development',
     source: 'Vercel Webform',
     currentScore: 0,
@@ -42,7 +42,7 @@ async function runTests() {
   const test2 = await processWithAI({
     leadId: 'test-lead-2',
     leadName: 'Rajesh Kumar',
-    leadPhone: '+919334757759',
+    leadPhone: '+918810721068',
     service: 'WhatsApp CRM',
     source: 'Google Ads',
     currentScore: 0,
@@ -69,7 +69,7 @@ async function runTests() {
   const test3 = await processWithAI({
     leadId: 'test-lead-3',
     leadName: 'Simran Gupta',
-    leadPhone: '+919334757759',
+    leadPhone: '+918810721068',
     service: 'Smart Follow-Up',
     source: 'WhatsApp Inbound',
     currentScore: 0,

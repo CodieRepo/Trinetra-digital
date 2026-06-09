@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Sparkles, Plus, ArrowRight } from "lucide-react";
 import LazyVideo from "./LazyVideo";
 
-const WA_NUMBER = "919334757759";
+const WA_NUMBER = "918810721068";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'd like to learn more about Trinetra Digital Solution's packages and pricing.")}`;
 
 type ServiceCategory = "packages" | "addons";

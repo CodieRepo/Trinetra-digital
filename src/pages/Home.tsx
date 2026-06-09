@@ -91,7 +91,7 @@ export default function Home() {
     }
   ];
 
-  const WA_NUMBER = "919334757759";
+  const WA_NUMBER = "918810721068";
   const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in booking a free consultation with Trinetra Digital Solution.")}`;
 
   return (

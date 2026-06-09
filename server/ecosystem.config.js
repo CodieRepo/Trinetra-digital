@@ -19,7 +19,7 @@ module.exports = {
         // Set them in .env on the VPS — do NOT hardcode secrets here
         // OPENROUTER_API_KEY: "set-in-.env-file",
         // JWT_SECRET: "set-in-.env-file",
-        // ADMIN_NOTIFY_PHONE: "+919334757759",
+        // ADMIN_NOTIFY_PHONE: "+918810721068",
         // CALENDLY_URL: "https://calendly.com/trinetra-demo",
       },
       error_file: "logs/err.log",

@@ -13,7 +13,7 @@ const SCHEMA = [
     "name": "Trinetra Digital Solution",
     "description": "Custom website development, bespoke CRM solutions, and performance digital marketing agency in Gorakhpur, Uttar Pradesh. Serving Indian businesses with professional software infrastructure.",
     "url": "https://trinetradigitalsolution.com/gorakhpur",
-    "telephone": "+91-9334757759",
+    "telephone": "+91-8810721068",
     "email": "info@trinetradigitalsolution.com",
     "address": {
       "@type": "PostalAddress",
@@ -23,7 +23,7 @@ const SCHEMA = [
       "addressCountry": "IN",
     },
     "geo": { "@type": "GeoCoordinates", "latitude": 26.7606, "longitude": 83.3732 },
-    "sameAs": ["https://maps.app.goo.gl/5d6fHtwWNEDcY1rH8", "https://wa.me/919334757759"],
+    "sameAs": ["https://maps.app.goo.gl/5d6fHtwWNEDcY1rH8", "https://wa.me/918810721068"],
   },
   {
     "@context": "https://schema.org",

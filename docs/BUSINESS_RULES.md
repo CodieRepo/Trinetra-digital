@@ -51,7 +51,7 @@ $$\text{Annual Value} = \text{Setup Cost} + (\text{Monthly Recurring Revenue (MR
   3. Copy the phone number to the clipboard.
 * **No-Reload Edits:** The lead's Name, Company, and Phone number must be editable inline directly on the lead card or profile panel without reloading the browser page.
 * **Highlight Focus:** The active, selected lead in the list must have an obvious visual highlight state to prevent confusion in multi-threaded workspaces.
-* **No Internal ID Exposures:** Raw database UUIDs, internal identifiers, and socket JIDs or LIDs (such as `919334757759@s.whatsapp.net` or `222483684843672@lid`) must **NEVER** appear in the user interface. Clean phone numbers and contact names must be displayed instead.
+* **No Internal ID Exposures:** Raw database UUIDs, internal identifiers, and socket JIDs or LIDs (such as `918810721068@s.whatsapp.net` or `222483684843672@lid`) must **NEVER** appear in the user interface. Clean phone numbers and contact names must be displayed instead.
 
 ---
 

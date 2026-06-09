@@ -28,7 +28,7 @@ async function runValidation() {
 
   // Test numbers configuration
   const numbers = {
-    personal: { phone: '+919334757759', jid: '919334757759@s.whatsapp.net', name: 'Personal WhatsApp' },
+    personal: { phone: '+918810721068', jid: '918810721068@s.whatsapp.net', name: 'Personal WhatsApp' },
     business: { phone: '+919334757750', jid: '919334757750@s.whatsapp.net', name: 'WhatsApp Business' },
     previouslyFailing: { phone: '+222483684843672', jid: '222483684843672@lid', name: 'Satwik LID Contact' },
     fresh: { phone: '+919999999999', jid: '919999999999@s.whatsapp.net', name: 'Fresh Lead Contact' }

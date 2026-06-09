@@ -1,5 +1,5 @@
 import { getDb, logAuditAction } from '../database/connection';
-import { sendWhatsAppMessage } from '../whatsapp/gateway';
+// import { sendWhatsAppMessage } from '../whatsapp/gateway'; // Removed during Meta compliance cleanup
 import { QuotationService } from './quotation.service';
 import { PipelineService } from './pipeline.service';
 
@@ -33,7 +33,7 @@ Kya aap apne business ke liye koi specific solution dhundh rahe hain?
 
 Main aapki requirement samajhkar sahi package suggest kar sakta hoon 😊
 
-📞 +91 9334757759
+📞 +91 88107 21068
 🌐 trinetradigitalsolution.com`;
   }
 
@@ -55,7 +55,7 @@ Kya main 10 minute ka quick call arrange kar sakta hoon aapke saath? 🤝
 
 *Final pricing scope ke hisab se vary kar sakti hai.*
 
-📞 +91 9334757759`;
+📞 +91 88107 21068`;
   }
 
   if (step === 3) {
@@ -73,7 +73,7 @@ Hum offer karte hain:
 
 Kya aap ek free 15-minute consultation book karna chahenge? Mujhe bas date aur time batayein, aur main appointment book kar dunga! 😊
 
-📞 +91 9334757759`;
+📞 +91 88107 21068`;
   }
 
   if (step === 4) {
@@ -89,7 +89,7 @@ Agar aap kabhi bhi apne business ke liye:
 
 Toh Trinetra Digital Solution hamesha available hai.
 
-📞 +91 9334757759
+📞 +91 88107 21068
 📧 info@trinetradigitalsolution.com
 🌐 trinetradigitalsolution.com
 
@@ -151,7 +151,9 @@ export function startCronService() {
         }
 
         // ── Send message ────────────────────────────────────────────────────
-        const sent = await sendWhatsAppMessage(seq.phone, message);
+        // const sent = await sendWhatsAppMessage(seq.phone, message);
+        // FIXME: Replace with official Meta Cloud API template messaging
+        const sent = false; // Disabled until Cloud API migration
 
         if (sent) {
           if (isLastStep) {
@@ -169,7 +171,7 @@ export function startCronService() {
           }
         } else {
           // Failed to send — retry next cycle (do not advance step)
-          console.warn(`⚠️ [CRON] Message send failed for ${seq.name}. Will retry next cycle.`);
+          console.warn(`⚠️ [CRON] Message send failed for ${seq.name} (Cloud API disabled). Will retry next cycle.`);
           await logAuditAction('CRON_SEND_FAIL', `Failed to send Step ${seq.current_step} to ${seq.name} (${seq.phone}).`);
         }
       }

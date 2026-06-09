@@ -55,7 +55,7 @@ export default function PrivacyPage() {
               <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 font-semibold space-y-1">
                 <p>Entity: Trinetra Digital Solution</p>
                 <p>Email: info@trinetradigitalsolution.com</p>
-                <p>Phone: +91 9334757759</p>
+                <p>Phone: +91 88107 21068</p>
                 <p>Address: Gorakhpur, Uttar Pradesh, India — 273001</p>
               </div>
             </div>

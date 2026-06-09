@@ -15,7 +15,7 @@ const SCHEMA = {
 export default function FutureSolutions() {
   useEffect(() => window.scrollTo({ top: 0, behavior: "instant" }), []);
 
-  const WA_NUMBER = "919334757759";
+  const WA_NUMBER = "918810721068";
   const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in learning more about Trinetra Digital's upcoming software and automation modules.")}`;
 
   return (
@@ -123,8 +123,8 @@ export default function FutureSolutions() {
               <MessageSquare size={13} /> Book Consultation
             </Link>
             <span className="text-slate-350">·</span>
-            <a href="tel:+919334757759" className="inline-flex items-center gap-1.5 text-xs font-bold text-accent hover:underline">
-              <Phone size={13} /> +91 9334757759
+            <a href="tel:+918810721068" className="inline-flex items-center gap-1.5 text-xs font-bold text-accent hover:underline">
+              <Phone size={13} /> +91 88107 21068
             </a>
           </div>
         </div>

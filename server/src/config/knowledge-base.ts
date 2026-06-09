@@ -18,8 +18,8 @@ export const COMPANY = {
   legal_entity: 'Charulata Enterprises',
   tagline:      'Your Business Automation & Digital Growth Partner',
   address:      'Gorakhpur, Uttar Pradesh, India — 273001',
-  phone:        '+91 9334757759',
-  whatsapp:     '+91 9334757759',
+  phone:        '+91 88107 21068',
+  whatsapp:     '+91 88107 21068',
   email:        'info@trinetradigitalsolution.com',
   website:      'https://trinetradigitalsolution.com',
   hours:        'Monday – Saturday, 9:00 AM – 7:00 PM IST',
@@ -202,7 +202,7 @@ export const SERVICES = [
     name: 'WhatsApp Automation & AI Chatbots',
     status: 'coming_soon',
     description: 'Advanced WhatsApp automation, natural language engines, intelligent customer support modules. Currently in Innovation Lab.',
-    note: 'Join waitlist via WhatsApp: +91 9334757759',
+    note: 'Join waitlist via WhatsApp: +91 88107 21068',
   },
 ];
 
@@ -318,7 +318,7 @@ export const AI_RULES = {
     'Share portfolio (Vaastu Infra, Akuafi)',
     'Explain payment terms (50% + 50%)',
     'Mention month-to-month billing with no lock-in',
-    'Provide contact: +91 9334757759, info@trinetradigitalsolution.com',
+    'Provide contact: +91 88107 21068, info@trinetradigitalsolution.com',
     'Discuss industries served and specific use cases',
     'Handle objections using the OBJECTION_HANDLING guide above',
   ],

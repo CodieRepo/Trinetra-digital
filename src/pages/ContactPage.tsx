@@ -5,9 +5,9 @@ import { Phone, MessageCircle, Mail, MapPin, Clock, ArrowRight, CheckCircle, Loa
 import SEO from "../components/seo/SEO";
 import LocationMap from "../components/LocationMap";
 
-const WA_NUMBER = "919334757759";
-const PHONE_TEL = "tel:+919334757759";
-const PHONE_NUMBER = "+91 9334757759";
+const WA_NUMBER = "918810721068";
+const PHONE_TEL = "tel:+918810721068";
+const PHONE_NUMBER = "+91 88107 21068";
 const EMAIL = "info@trinetradigitalsolution.com";
 const FORMSPREE_ID = "mbdbqbwy";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'd like to book a free consultation with Trinetra Digital Solution.")}`;
@@ -22,7 +22,7 @@ const SCHEMA = {
     "@id": "https://trinetradigitalsolution.com/#localbusiness",
     "@type": "LocalBusiness",
     "name": "Trinetra Digital Solution",
-    "telephone": "+91-9334757759",
+    "telephone": "+91-8810721068",
     "email": "info@trinetradigitalsolution.com",
     "address": {
       "@type": "PostalAddress",
@@ -32,7 +32,7 @@ const SCHEMA = {
       "addressCountry": "IN",
     },
     "geo": { "@type": "GeoCoordinates", "latitude": 26.7606, "longitude": 83.3732 },
-    "sameAs": ["https://maps.app.goo.gl/5d6fHtwWNEDcY1rH8", "https://wa.me/919334757759"],
+    "sameAs": ["https://maps.app.goo.gl/5d6fHtwWNEDcY1rH8", "https://wa.me/918810721068"],
   },
 };
 

@@ -3,9 +3,9 @@ import { Phone, MessageCircle, ArrowRight, MapPin, ExternalLink } from "lucide-r
 import { Link } from "react-router-dom";
 import LazyVideo from "./LazyVideo";
 
-const WA_NUMBER = "919334757759";
-const PHONE_TEL = "tel:+919334757759";
-const PHONE_NUMBER = "+91 9334757759";
+const WA_NUMBER = "918810721068";
+const PHONE_TEL = "tel:+918810721068";
+const PHONE_NUMBER = "+91 88107 21068";
 const EMAIL = "info@trinetradigitalsolution.com";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's services.")}`;
 

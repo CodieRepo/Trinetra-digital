@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowRight, Clock, Tag, Calendar, MessageCircle } from "luci
 import SEO from "../components/seo/SEO";
 import { getPostBySlug, getRelatedPosts, BLOG_POSTS } from "../data/blogPosts";
 
-const WA_URL = `https://wa.me/919334757759?text=${encodeURIComponent(
+const WA_URL = `https://wa.me/918810721068?text=${encodeURIComponent(
   "Hi, I read your blog and I'd like to learn more about your website and custom CRM services."
  )}`;
 

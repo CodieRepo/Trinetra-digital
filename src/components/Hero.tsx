@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight, ArrowRight, CheckCircle2, MessageSquare, Sparkles, FolderKanban, TrendingUp } from "lucide-react";
 
-const WA_NUMBER = "919334757759";
+const WA_NUMBER = "918810721068";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'd like to get a free consultation from Trinetra Digital Solution.")}`;
 
 export default function Hero() {

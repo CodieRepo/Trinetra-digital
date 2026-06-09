@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Phone, MessageCircle } from "lucide-react";
 
-const WA_NUMBER = "919334757759";
-const PHONE_TEL = "tel:+919334757759";
-const PHONE_NUMBER = "+91 9334757759";
+const WA_NUMBER = "918810721068";
+const PHONE_TEL = "tel:+918810721068";
+const PHONE_NUMBER = "+91 88107 21068";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
   "Hi, I'm interested in Trinetra Digital Solution's AI automation services."
 )}`;

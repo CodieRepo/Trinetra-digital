@@ -49,7 +49,7 @@ setInterval(() => {
   }
 }, 30 * 60 * 1000);
 
-const ADMIN_PHONE = process.env.ADMIN_NOTIFY_PHONE || '+919334757759';
+const ADMIN_PHONE = process.env.ADMIN_NOTIFY_PHONE || '+918810721068';
 const CALENDLY_URL = process.env.CALENDLY_URL || 'https://calendly.com/trinetra-demo';
 
 function generateWaMeLink(phone: string): string {

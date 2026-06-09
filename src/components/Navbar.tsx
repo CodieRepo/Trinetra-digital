@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const WA_NUMBER = "919334757759";
-const PHONE_NUMBER = "+91 9334757759";
-const PHONE_TEL = "tel:+919334757759";
+const WA_NUMBER = "918810721068";
+const PHONE_NUMBER = "+91 88107 21068";
+const PHONE_TEL = "tel:+918810721068";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in Trinetra Digital Solution's services.")}`;
 
 const NAV_LINKS = [

@@ -651,7 +651,7 @@ export async function processWithAI(ctx: AIContext): Promise<AIResponse> {
 
 function emergencyResponse(ctx: AIContext): AIResponse {
   return {
-    reply: `Namaste! 🙏 *Trinetra Digital Solution* mein aapka swagat hai!\n\nHum businesses ke liye build karte hain:\n• Website Development\n• WhatsApp Automation\n• AI Chatbots & CRM\n• Digital Marketing & SEO\n\nMain Trinetra ka AI Assistant hoon. Aap kya dhundh rahe hain? Batayein, main sahi solution suggest karunga! 😊\n\n📞 +91 9334757759\n🌐 trinetradigitalsolution.com`,
+    reply: `Namaste! 🙏 *Trinetra Digital Solution* mein aapka swagat hai!\n\nHum businesses ke liye build karte hain:\n• Website Development\n• WhatsApp Automation\n• AI Chatbots & CRM\n• Digital Marketing & SEO\n\nMain Trinetra ka AI Assistant hoon. Aap kya dhundh rahe hain? Batayein, main sahi solution suggest karunga! 😊\n\n📞 +91 88107 21068\n🌐 trinetradigitalsolution.com`,
     ai_score: 30,
     ai_budget: false,
     ai_summary: 'New contact. Emergency template used — AI service temporarily unavailable.',
@@ -672,7 +672,7 @@ function emergencyResponse(ctx: AIContext): AIResponse {
 
 function handoffResponse(ctx: AIContext, reason: string): AIResponse {
   return {
-    reply: `Bilkul! 🙏 Main aapki baat hamare expert se connect kar raha hoon.\n\nHamari team aapko bahut jaldi contact karegi.\n\nAgar urgent ho toh seedha contact karein:\n📞 +91 9334757759\n✉️ info@trinetradigitalsolution.com\n🌐 trinetradigitalsolution.com`,
+    reply: `Bilkul! 🙏 Main aapki baat hamare expert se connect kar raha hoon.\n\nHamari team aapko bahut jaldi contact karegi.\n\nAgar urgent ho toh seedha contact karein:\n📞 +91 88107 21068\n✉️ info@trinetradigitalsolution.com\n🌐 trinetradigitalsolution.com`,
     ai_score: ctx.currentScore,
     ai_budget: false,
     ai_summary: `Customer requested human assistance. Reason: ${reason}`,

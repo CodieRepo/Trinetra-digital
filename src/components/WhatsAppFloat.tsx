@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 
-const WA_NUMBER = "919334757759";
+const WA_NUMBER = "918810721068";
 const WA_MESSAGE = "Hi, I'm interested in Trinetra Digital Solution's custom web and software services.";
 
 export default function WhatsAppFloat() {
