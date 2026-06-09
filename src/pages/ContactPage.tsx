@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
 import { Phone, MessageCircle, Mail, MapPin, Clock, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
+import { trackLead, trackContact } from "../utils/metaPixel";
 import SEO from "../components/seo/SEO";
 import LocationMap from "../components/LocationMap";
 
@@ -85,6 +86,7 @@ export default function ContactPage() {
         setToast({ message: "Lead captured successfully ✓", type: 'success' });
         setTimeout(() => setToast(null), 4000);
         setSucceeded(true);
+        trackLead();
       } else {
         const errData = await response.json();
         console.error("❌ Backend returned error:", errData);
@@ -113,6 +115,7 @@ export default function ContactPage() {
           if (fallbackResponse.ok) {
             console.log("✅ Fallback Formspree submission succeeded.");
             setSucceeded(true);
+            trackLead();
           } else {
             throw new Error("Formspree submission also failed");
           }
@@ -179,6 +182,7 @@ export default function ContactPage() {
                   href={WA_URL}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackContact()}
                   className="group flex items-start gap-4 p-5 bg-white border border-border/80 rounded-xl hover:border-accent/30 hover:shadow-sm transition-all"
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
@@ -193,6 +197,7 @@ export default function ContactPage() {
 
                 <a
                   href={PHONE_TEL}
+                  onClick={() => trackContact()}
                   className="group flex items-start gap-4 p-5 bg-white border border-border/80 rounded-xl hover:border-accent/30 hover:shadow-sm transition-all"
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-light text-accent">
@@ -261,6 +266,7 @@ export default function ContactPage() {
                   href={WA_URL}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackContact()}
                   className="mt-2 inline-flex items-center gap-2 h-10 rounded-lg bg-slate-900 px-5 text-xs font-bold uppercase tracking-wider text-white hover:bg-slate-800 transition-colors"
                 >
                   Chat on WhatsApp too

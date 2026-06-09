@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Phone, MessageCircle } from "lucide-react";
+import { trackContact } from "../utils/metaPixel";
 
 const WA_NUMBER = "918810721068";
 const PHONE_TEL = "tel:+918810721068";
@@ -38,6 +39,7 @@ export default function MobileStickyCTA() {
               target="_blank"
               rel="noopener noreferrer"
               id="mobile-whatsapp-cta"
+              onClick={() => trackContact()}
               className="flex flex-1 items-center justify-center gap-2.5 py-4.5 text-sm font-bold text-slate-900 bg-slate-50 border-r border-slate-200 active:bg-slate-100 transition-colors duration-150"
               style={{ WebkitTapHighlightColor: "transparent" }}
             >
@@ -54,6 +56,7 @@ export default function MobileStickyCTA() {
             <a
               href={PHONE_TEL}
               id="mobile-call-cta"
+              onClick={() => trackContact()}
               className="flex flex-1 items-center justify-center gap-2.5 py-4.5 text-sm font-bold bg-slate-900 text-white active:bg-slate-800 transition-colors duration-150"
               style={{ WebkitTapHighlightColor: "transparent" }}
             >

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Sparkles, Plus, ArrowRight } from "lucide-react";
 import LazyVideo from "./LazyVideo";
+import { trackContact } from "../utils/metaPixel";
 
 const WA_NUMBER = "918810721068";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'd like to learn more about Trinetra Digital Solution's packages and pricing.")}`;
@@ -310,7 +311,7 @@ export default function Pricing() {
                           ))}
                         </ul>
                       </div>
-                      <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="mt-8 w-full text-xs font-bold uppercase tracking-wider bg-accent text-white hover:bg-accent-hover transition-colors h-11 flex items-center justify-center rounded-lg shadow-sm">
+                      <a href={WA_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackContact()} className="mt-8 w-full text-xs font-bold uppercase tracking-wider bg-accent text-white hover:bg-accent-hover transition-colors h-11 flex items-center justify-center rounded-lg shadow-sm">
                         {plan.cta}
                       </a>
                     </motion.div>
@@ -356,7 +357,7 @@ export default function Pricing() {
                         ))}
                       </ul>
                     </div>
-                    <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="mt-8 w-full text-xs font-bold uppercase tracking-wider border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors h-11 flex items-center justify-center rounded-lg shadow-xs">
+                    <a href={WA_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackContact()} className="mt-8 w-full text-xs font-bold uppercase tracking-wider border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors h-11 flex items-center justify-center rounded-lg shadow-xs">
                       {plan.cta}
                     </a>
                   </motion.div>
@@ -390,7 +391,7 @@ export default function Pricing() {
                     ))}
                   </div>
                 </div>
-                <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="mt-6 flex items-center justify-center gap-2 h-9 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors uppercase tracking-wider font-mono">
+                <a href={WA_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackContact()} className="mt-6 flex items-center justify-center gap-2 h-9 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors uppercase tracking-wider font-mono">
                   Enquire About {group.category}
                 </a>
               </div>

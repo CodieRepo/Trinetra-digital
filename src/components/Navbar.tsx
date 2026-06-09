@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { trackContact } from "../utils/metaPixel";
 
 const WA_NUMBER = "918810721068";
 const PHONE_NUMBER = "+91 88107 21068";
@@ -80,6 +81,7 @@ export default function Navbar() {
         <div className="hidden items-center gap-5 md:flex">
           <a
             href={PHONE_TEL}
+            onClick={() => trackContact()}
             className="text-xs font-mono font-medium text-ink-2 hover:text-accent transition-colors duration-150"
           >
             <span>{PHONE_NUMBER}</span>
@@ -137,7 +139,7 @@ export default function Navbar() {
                 <div className="mt-8 flex flex-col gap-3">
                   <a
                     href={PHONE_TEL}
-                    onClick={() => setOpen(false)}
+                    onClick={() => { setOpen(false); trackContact(); }}
                     className="flex h-11 items-center justify-center rounded-lg border border-border bg-surface-2 text-xs font-mono font-medium text-ink-2 hover:bg-surface-3 transition-colors gap-2"
                   >
                     📞 {PHONE_NUMBER}
@@ -146,7 +148,7 @@ export default function Navbar() {
                     href={WA_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => setOpen(false)}
+                    onClick={() => { setOpen(false); trackContact(); }}
                     className="flex h-11 items-center justify-center rounded-lg border border-border bg-white text-xs font-semibold text-ink-2 hover:bg-surface-2 transition-colors"
                   >
                     💬 WhatsApp Us

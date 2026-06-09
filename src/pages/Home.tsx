@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
+import { trackLead, trackContact } from "../utils/metaPixel";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -298,6 +299,7 @@ export default function Home() {
                 href={WA_URL}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackContact()}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -818,6 +820,7 @@ export default function Home() {
                   href={WA_URL}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackContact()}
                   className="flex items-center gap-4 p-4 border border-border bg-surface-2 hover:border-accent hover:bg-white rounded-xl transition-all shadow-xs group"
                 >
                   <div className="h-9 w-9 rounded-lg bg-white border border-border text-accent flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
@@ -849,6 +852,7 @@ export default function Home() {
               <form
                 action="https://formspree.io/f/mbdbqbwy"
                 method="POST"
+                onSubmit={() => trackLead()}
                 className="space-y-4"
               >
                 <div>

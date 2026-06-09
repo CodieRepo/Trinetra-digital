@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight, ArrowRight, CheckCircle2, MessageSquare, Sparkles, FolderKanban, TrendingUp } from "lucide-react";
+import { trackContact } from "../utils/metaPixel";
 
 const WA_NUMBER = "918810721068";
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'd like to get a free consultation from Trinetra Digital Solution.")}`;
@@ -84,7 +85,7 @@ export default function Hero() {
             transition={{ duration: 0.4, ease: "easeOut", delay: 0.3 }}
             className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 mb-8"
           >
-            <a href="#contact" className="btn-primary-forest text-sm font-semibold tracking-wide gap-2 w-full sm:w-auto">
+            <a href="#contact" onClick={() => trackContact()} className="btn-primary-forest text-sm font-semibold tracking-wide gap-2 w-full sm:w-auto">
               Get Free Consultation <ArrowUpRight size={16} />
             </a>
             <a
@@ -97,6 +98,7 @@ export default function Hero() {
               href={WA_URL}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackContact()}
               className="text-sm font-semibold text-accent hover:text-accent-hover transition-colors flex items-center gap-1.5"
             >
               💬 WhatsApp Us

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle } from "lucide-react";
+import { trackContact } from "../utils/metaPixel";
 
 const WA_NUMBER = "918810721068";
 const WA_MESSAGE = "Hi, I'm interested in Trinetra Digital Solution's custom web and software services.";
@@ -48,7 +49,10 @@ export default function WhatsAppFloat() {
             whileTap={{ scale: 0.95 }}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
-            onClick={() => setShowTooltip(false)}
+            onClick={() => {
+              setShowTooltip(false);
+              trackContact();
+            }}
             className="relative flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-md border border-white/10"
           >
             {/* Glowing Accent Pulse Ring */}

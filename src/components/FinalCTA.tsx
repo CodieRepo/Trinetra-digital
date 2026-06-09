@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Phone, MessageCircle, ArrowRight, MapPin, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import LazyVideo from "./LazyVideo";
+import { trackContact } from "../utils/metaPixel";
 
 const WA_NUMBER = "918810721068";
 const PHONE_TEL = "tel:+918810721068";
@@ -66,6 +67,7 @@ export function FinalCTAFooter() {
                 rel="noopener noreferrer"
                 id="final-cta-whatsapp"
                 aria-label="Chat with Trinetra Digital Solution on WhatsApp"
+                onClick={() => trackContact()}
                 whileHover={{ scale: 1.01, y: -0.5 }}
                 whileTap={{ scale: 0.99 }}
                 className="flex w-full items-center justify-center gap-3 h-12 rounded-lg bg-accent text-white font-semibold text-xs tracking-wider uppercase hover:bg-accent-hover transition-colors mb-3 shadow-sm cursor-pointer text-center"
@@ -79,6 +81,7 @@ export function FinalCTAFooter() {
                 href={PHONE_TEL}
                 id="final-cta-call"
                 aria-label="Call Trinetra Digital Solution"
+                onClick={() => trackContact()}
                 whileHover={{ scale: 1.01, y: -0.5 }}
                 whileTap={{ scale: 0.99 }}
                 className="flex w-full items-center justify-center gap-3 h-11 rounded-lg border border-border text-ink-2 font-mono font-medium text-xs tracking-wider hover:bg-slate-50 transition-colors mb-6 cursor-pointer text-center"

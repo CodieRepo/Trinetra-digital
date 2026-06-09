@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate, useNavigate } from
 import { lazy, Suspense, useEffect } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import PageLayout from "@/layouts/PageLayout";
+import { trackPageView } from "@/utils/metaPixel";
 
 // ── Eager-loaded (above the fold) ─────────────────────────────────────────
 import Home from "@/pages/Home";
@@ -60,6 +61,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AnimatedRoutes() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Track PageView on route change
+  useEffect(() => {
+    trackPageView();
+  }, [location.pathname]);
 
   // Redirect globally on session expiration
   useEffect(() => {
