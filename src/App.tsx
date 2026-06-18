@@ -5,37 +5,38 @@ import PageLayout from "@/layouts/PageLayout";
 import { trackPageView } from "@/utils/metaPixel";
 
 // ── Eager-loaded (above the fold) ─────────────────────────────────────────
-import Home from "@/pages/Home";
+import Home from "@/views/Home";
 
 // ── Lazy-loaded (code-split, improves LCP) ────────────────────────────────
-const ServicesPage     = lazy(() => import("@/pages/ServicesPage"));
-const PricingPage      = lazy(() => import("@/pages/PricingPage"));
-const ContactPage      = lazy(() => import("@/pages/ContactPage"));
-const AboutPage        = lazy(() => import("@/pages/AboutPage"));
-const BlogPage         = lazy(() => import("@/pages/BlogPage"));
-const BlogPostPage     = lazy(() => import("@/pages/BlogPostPage"));
-const PrivacyPage      = lazy(() => import("@/pages/PrivacyPage"));
-const TermsPage        = lazy(() => import("@/pages/TermsPage"));
-const RefundPage       = lazy(() => import("@/pages/RefundPage"));
-const DisclaimerPage   = lazy(() => import("@/pages/DisclaimerPage"));
-const CookiePolicy     = lazy(() => import("@/pages/CookiePolicy"));
-const DataUsageNotice  = lazy(() => import("@/pages/DataUsageNotice"));
-const NotFoundPage     = lazy(() => import("@/pages/NotFoundPage"));
-const AdminCrm         = lazy(() => import("@/pages/admin/AdminCrm"));
+const ServicesPage     = lazy(() => import("@/views/ServicesPage"));
+const PricingPage      = lazy(() => import("@/views/PricingPage"));
+const ContactPage      = lazy(() => import("@/views/ContactPage"));
+const AboutPage        = lazy(() => import("@/views/AboutPage"));
+const BlogPage         = lazy(() => import("@/views/BlogPage"));
+const BlogPostPage     = lazy(() => import("@/views/BlogPostPage"));
+const PrivacyPage      = lazy(() => import("@/views/PrivacyPage"));
+const TermsPage        = lazy(() => import("@/views/TermsPage"));
+const RefundPage       = lazy(() => import("@/views/RefundPage"));
+const DisclaimerPage   = lazy(() => import("@/views/DisclaimerPage"));
+const CookiePolicy     = lazy(() => import("@/views/CookiePolicy"));
+const DataUsageNotice  = lazy(() => import("@/views/DataUsageNotice"));
+const NotFoundPage     = lazy(() => import("@/views/NotFoundPage"));
+const AdminCrm         = lazy(() => import("@/views/admin/AdminCrm"));
+const SuperAdmin       = lazy(() => import("@/views/super-admin/SuperAdmin"));
 
 
 // Service sub-pages
-const FutureSolutions     = lazy(() => import("@/pages/services/FutureSolutions"));
-const CrmDevelopment      = lazy(() => import("@/pages/services/CrmDevelopment"));
-const WebsiteDevelopment  = lazy(() => import("@/pages/services/WebsiteDevelopment"));
-const DigitalMarketing    = lazy(() => import("@/pages/services/DigitalMarketing"));
+const FutureSolutions     = lazy(() => import("@/views/services/FutureSolutions"));
+const CrmDevelopment      = lazy(() => import("@/views/services/CrmDevelopment"));
+const WebsiteDevelopment  = lazy(() => import("@/views/services/WebsiteDevelopment"));
+const DigitalMarketing    = lazy(() => import("@/views/services/DigitalMarketing"));
 
 // Industry pages
 
 
 // Local SEO pages
-const Gorakhpur     = lazy(() => import("@/pages/GorakhpurPage"));
-const UttarPradesh  = lazy(() => import("@/pages/UttarPradeshPage"));
+const Gorakhpur     = lazy(() => import("@/views/GorakhpurPage"));
+const UttarPradesh  = lazy(() => import("@/views/UttarPradeshPage"));
 
 // Loading fallback
 function PageSpinner() {
@@ -46,7 +47,8 @@ function PageSpinner() {
   );
 }
 
-// Protected Route Guard Component
+// Protected Route Guard Component (handled by Next.js middleware now)
+/*
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem("trinetra_jwt");
   const location = useLocation();
@@ -56,6 +58,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
   return <>{children}</>;
 }
+*/
 
 // AnimatePresence needs the key from useLocation
 function AnimatedRoutes() {
@@ -96,11 +99,12 @@ function AnimatedRoutes() {
           <Route path="/cookie-policy"            element={<CookiePolicy />} />
           <Route path="/data-usage-notice"        element={<DataUsageNotice />} />
           
-          {/* Admin Routes with Auth Persistence */}
+          {/* Admin Routes */}
           <Route path="/admin"                    element={<AdminCrm />} />
-          <Route path="/admin/pipeline"           element={<ProtectedRoute><AdminCrm /></ProtectedRoute>} />
-          <Route path="/admin/conversions"        element={<ProtectedRoute><AdminCrm /></ProtectedRoute>} />
-          <Route path="/admin/leads"              element={<ProtectedRoute><AdminCrm /></ProtectedRoute>} />
+          <Route path="/admin/*"                  element={<AdminCrm />} />
+
+          {/* Super Admin */}
+          <Route path="/super-admin"              element={<SuperAdmin />} />
 
           {/* Service Sub-pages */}
           <Route path="/services/whatsapp-automation" element={<FutureSolutions />} />

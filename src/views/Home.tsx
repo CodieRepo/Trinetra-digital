@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { trackLead, trackContact } from "../utils/metaPixel";
 import { motion } from "framer-motion";
@@ -9,21 +9,13 @@ import {
   Zap,
   TrendingUp,
   ShieldCheck,
-  Check,
   Activity,
   Globe,
   Database,
   BarChart3,
   Layers,
   Compass,
-  Users,
-  HelpCircle,
-  FolderKanban,
-  CheckCircle2,
-  MapPin,
-  ExternalLink,
-  Plus,
-  Phone
+  Users
 } from "lucide-react";
 import SEO from "../components/seo/SEO";
 import Pricing from "../components/Pricing";
@@ -35,17 +27,8 @@ import HeroBgVideo from "../components/HeroBgVideo";
 
 export default function Home() {
   const location = useLocation();
-  const [demoStep, setDemoStep] = useState(0);
   const heroRef = useRef<HTMLDivElement>(null);
   const whyTrinetraRef = useRef<HTMLDivElement>(null);
-
-  // Auto-cycle the live lead qualification product demo in hero
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setDemoStep(prev => (prev + 1) % 4);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Handle smooth scrolls to anchors
   useEffect(() => {

@@ -6,6 +6,8 @@ node_modules/
 dist/
 dist-ssr/
 build/
+.next/
+CRM/
 
 # Environment files
 .env

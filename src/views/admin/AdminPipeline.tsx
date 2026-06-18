@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { apiService, PipelineLead, PipelineStageGroup, ForecastData, PipelineAuditEntry } from '../../services/api';
 import { getDisplayName } from '../../utils/contact';
 

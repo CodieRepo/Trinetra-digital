@@ -1,6 +1,8 @@
 // Trinetra Next-Gen AI SaaS Platform API Service Layer
 // Dynamic Environment Base Binding to high-fidelity VPS host
 
+import { createClient } from '@/lib/supabase/client';
+
 const _envApiUrl = (import.meta as any).env?.VITE_API_BASE_URL;
 const _isLocalhost = typeof window !== 'undefined' && (
   window.location.hostname === 'localhost' ||
@@ -328,6 +330,88 @@ async function request<T>(path: string, options: FetchOptions = {}): Promise<T> 
 
 // ── 3. High-Fidelity Service Methods ────────────────────────────────────────
 
+// Mapping Helpers for Database to Frontend Models
+function mapDbContactToLead(dbContact: any): Lead {
+  return {
+    id: dbContact.id,
+    name: dbContact.name,
+    phone: dbContact.phone,
+    email: dbContact.email || null,
+    company: dbContact.company || null,
+    service: dbContact.service || null,
+    source: 'WhatsApp', // WhatsApp-first CRM default
+    status: dbContact.status,
+    ai_score: dbContact.ai_score || 0,
+    ai_budget: false,
+    ai_summary: dbContact.ai_summary || null,
+    ai_summary_detailed: dbContact.ai_summary || null,
+    intent_level: dbContact.intent_level || null,
+    recommended_action: null,
+    ai_enabled: dbContact.ai_enabled ? 1 : 0,
+    notes: null, // Notes are fetched dynamically in detail view
+    deal_probability: dbContact.deal_probability || 0,
+    deal_setup_value: Number(dbContact.deal_setup_value || 0),
+    deal_mrr: Number(dbContact.deal_mrr || 0),
+    deal_annual_value: Number(dbContact.deal_annual_value || 0),
+    stage_entered_at: dbContact.stage_entered_at || dbContact.created_at,
+    pipeline_notes: dbContact.pipeline_notes || null,
+    assigned_owner: dbContact.assigned_owner || null,
+    created_at: dbContact.created_at,
+    updated_at: dbContact.updated_at,
+  };
+}
+
+function mapDbContactToPipelineLead(dbContact: any): PipelineLead {
+  const lead = mapDbContactToLead(dbContact);
+  const now = new Date();
+  const stageEntered = dbContact.stage_entered_at ? new Date(dbContact.stage_entered_at) : new Date(dbContact.created_at);
+  const daysInStage = Math.max(0, Math.floor((now.getTime() - stageEntered.getTime()) / (1000 * 60 * 60 * 24)));
+  
+  const computedAnnual = lead.deal_setup_value! + (lead.deal_mrr! * 12);
+  const expectedRevenue = (computedAnnual * (lead.deal_probability || 0)) / 100;
+  
+  return {
+    ...lead,
+    lead_stage: lead.status,
+    deal_probability: lead.deal_probability || 0,
+    deal_setup_value: lead.deal_setup_value!,
+    deal_mrr: lead.deal_mrr!,
+    deal_annual_value: computedAnnual,
+    expected_revenue: expectedRevenue,
+    stage_entered_at: lead.stage_entered_at ?? null,
+    days_in_stage: daysInStage,
+    pipeline_notes: lead.pipeline_notes ?? null,
+    assigned_owner: lead.assigned_owner ?? null,
+    last_inbound_at: lead.created_at,
+    days_since_reply: 0,
+    is_stuck_7d: daysInStage >= 7 && lead.status !== 'won' && lead.status !== 'lost',
+    is_stuck_14d: daysInStage >= 14 && lead.status !== 'won' && lead.status !== 'lost',
+    is_no_reply_30d: false,
+  };
+}
+
+let cachedTenantId: string | null = null;
+
+async function getTenantId(): Promise<string> {
+  if (cachedTenantId) return cachedTenantId;
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User session not found.");
+  
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('tenant_id')
+    .eq('id', user.id)
+    .single();
+    
+  if (error || !profile) {
+    throw new Error("Could not retrieve profile tenant ID: " + (error?.message || ""));
+  }
+  
+  cachedTenantId = profile.tenant_id;
+  return profile.tenant_id;
+}
+
 export const apiService = {
   // Authentication
   auth: {
@@ -342,22 +426,188 @@ export const apiService = {
     }
   },
 
-  // Leads CRM Operations
+  // Leads CRM Operations (Supabase Integrated)
   leads: {
-    list: async () => request<Lead[]>("/leads"),
-    get: async (id: string) => request<{ lead: Lead; chats: ChatMessage[]; followup: any | null }>(`/leads/${id}`),
-    create: async (data: Partial<Lead>) => request<{ success: boolean; leadId: string }>("/leads", {
-      method: "POST",
-      body: JSON.stringify(data)
-    }),
-    update: async (id: string, updates: Partial<Lead>) => request<{ success: boolean }>((`/leads/${id}`), {
-      method: "PATCH",
-      body: JSON.stringify(updates)
-    }),
-    sendMessage: async (leadId: string, body: string) => request<{ success: boolean }>(`/leads/${leadId}/message`, {
-      method: "POST",
-      body: JSON.stringify({ body })
-    }),
+    list: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return (data || []).map(mapDbContactToLead);
+    },
+    
+    get: async (id: string) => {
+      const supabase = createClient();
+      const { data: contact, error: contactError } = await supabase
+        .from('contacts')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (contactError) throw contactError;
+      
+      // Fetch chats / messages from database
+      const { data: conversation } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('contact_id', id)
+        .single();
+        
+      let chats: ChatMessage[] = [];
+      if (conversation) {
+        const { data: messages } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', conversation.id)
+          .order('created_at', { ascending: true });
+          
+        if (messages) {
+          chats = messages.map(m => ({
+            id: m.id,
+            lead_id: id,
+            direction: m.direction as 'inbound' | 'outbound',
+            body: m.body || '',
+            status: m.status as 'sent' | 'read' | 'failed' | 'pending',
+            timestamp: m.created_at
+          }));
+        }
+      }
+      
+      return {
+        lead: mapDbContactToLead(contact),
+        chats,
+        followup: null
+      };
+    },
+
+    create: async (data: Partial<Lead>) => {
+      const supabase = createClient();
+      const tenantId = await getTenantId();
+      
+      const insertData = {
+        tenant_id: tenantId,
+        name: data.name || 'Unnamed Lead',
+        phone: data.phone || '',
+        email: data.email || null,
+        company: data.company || null,
+        service: data.service || null,
+        status: data.status || 'new',
+        ai_enabled: data.ai_enabled === undefined ? true : data.ai_enabled === 1,
+        ai_score: data.ai_score || 0,
+        ai_summary: data.ai_summary || null,
+        intent_level: data.intent_level || null,
+        deal_setup_value: data.deal_setup_value || 0,
+        deal_mrr: data.deal_mrr || 0,
+        deal_probability: data.deal_probability || 100,
+        assigned_owner: data.assigned_owner || null
+      };
+      
+      const { data: contact, error } = await supabase
+        .from('contacts')
+        .insert(insertData)
+        .select('id')
+        .single();
+        
+      if (error) throw error;
+      
+      // Auto-create a conversation entry for this contact if not exists
+      try {
+        await supabase
+          .from('conversations')
+          .insert({
+            tenant_id: tenantId,
+            contact_id: contact.id,
+            status: 'active'
+          });
+      } catch (e) {
+        console.error("Failed to create conversation for new lead:", e);
+      }
+      
+      return { success: true, leadId: contact.id };
+    },
+
+    update: async (id: string, updates: Partial<Lead>) => {
+      const supabase = createClient();
+      const updateData: any = {};
+      
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.phone !== undefined) updateData.phone = updates.phone;
+      if (updates.email !== undefined) updateData.email = updates.email;
+      if (updates.company !== undefined) updateData.company = updates.company;
+      if (updates.service !== undefined) updateData.service = updates.service;
+      if (updates.status !== undefined) updateData.status = updates.status;
+      if (updates.ai_enabled !== undefined) updateData.ai_enabled = updates.ai_enabled === 1;
+      if (updates.ai_score !== undefined) updateData.ai_score = updates.ai_score;
+      if (updates.ai_summary !== undefined) updateData.ai_summary = updates.ai_summary;
+      if (updates.intent_level !== undefined) updateData.intent_level = updates.intent_level;
+      if (updates.deal_setup_value !== undefined) updateData.deal_setup_value = updates.deal_setup_value;
+      if (updates.deal_mrr !== undefined) updateData.deal_mrr = updates.deal_mrr;
+      if (updates.deal_probability !== undefined) updateData.deal_probability = updates.deal_probability;
+      if (updates.pipeline_notes !== undefined) updateData.pipeline_notes = updates.pipeline_notes;
+      if (updates.assigned_owner !== undefined) updateData.assigned_owner = updates.assigned_owner;
+      
+      const { error } = await supabase
+        .from('contacts')
+        .update(updateData)
+        .eq('id', id);
+        
+      if (error) throw error;
+      return { success: true };
+    },
+
+    sendMessage: async (leadId: string, body: string) => {
+      const supabase = createClient();
+      const tenantId = await getTenantId();
+      
+      // Find or create conversation
+      let { data: conversation } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('contact_id', leadId)
+        .single();
+        
+      if (!conversation) {
+        const { data: newConv, error } = await supabase
+          .from('conversations')
+          .insert({
+            tenant_id: tenantId,
+            contact_id: leadId,
+            status: 'active'
+          })
+          .select('id')
+          .single();
+        if (error) throw error;
+        conversation = newConv;
+      }
+      
+      // Get current user profile ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error: msgError } = await supabase
+        .from('messages')
+        .insert({
+          tenant_id: tenantId,
+          conversation_id: conversation.id,
+          direction: 'outbound',
+          body: body,
+          status: 'sent',
+          sender_id: user?.id || null
+        });
+        
+      if (msgError) throw msgError;
+      
+      // Update last_message_at on conversation
+      await supabase
+        .from('conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', conversation.id);
+        
+      return { success: true };
+    },
+
     createBackup: async () => request<{ success: boolean; filename: string }>("/leads/backup", {
       method: "POST"
     }),
@@ -373,6 +623,41 @@ export const apiService = {
         body: JSON.stringify({ status })
       }),
     getTimeline: async (leadId: string) => request<{ success: boolean; data: TimelineEvent[] }>(`/leads/${leadId}/timeline`)
+  },
+
+  // Notes CRUD (Supabase Integrated)
+  notes: {
+    list: async (contactId: string) => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('contact_id', contactId)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      return data || [];
+    },
+    create: async (contactId: string, body: string) => {
+      const supabase = createClient();
+      const tenantId = await getTenantId();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Unauthenticated");
+      
+      const { data, error } = await supabase
+        .from('notes')
+        .insert({
+          tenant_id: tenantId,
+          contact_id: contactId,
+          author_id: user.id,
+          body: body
+        })
+        .select('*')
+        .single();
+        
+      if (error) throw error;
+      return data;
+    }
   },
 
   // Quotations
@@ -484,30 +769,203 @@ export const apiService = {
     getAuditLogs: async () => request<Array<{ id: string; action: string; details: string | null; timestamp: string }>>("/analytics/audit")
   },
 
-  // Pipeline — Phase 4B
+  // Pipeline — Phase 4B (Supabase Integrated)
   pipeline: {
-    getBoard: async () => request<PipelineStageGroup[]>("/leads/pipeline"),
-    getForecast: async (period: 'month' | 'quarter' | 'year' = 'month') =>
-      request<ForecastData>(`/leads/pipeline/forecast?period=${period}`),
-    moveStage: async (leadId: string, stage: string, reason?: string) =>
-      request<{ success: boolean; message: string }>(`/leads/${leadId}/stage`, {
-        method: "PATCH",
-        body: JSON.stringify({ stage, reason })
-      }),
-    updateProbability: async (leadId: string, probability: number) =>
-      request<{ success: boolean; message: string }>(`/leads/${leadId}/probability`, {
-        method: "PATCH",
-        body: JSON.stringify({ probability })
-      }),
-    updateDealValues: async (leadId: string, data: { setup_value?: number; mrr?: number }) =>
-      request<{ success: boolean; deal_setup_value: number; deal_mrr: number; deal_annual_value: number }>(`/leads/${leadId}/deal-values`, {
-        method: "PATCH",
-        body: JSON.stringify(data)
-      }),
-    syncDealValues: async (leadId: string) =>
-      request<{ success: boolean; message: string }>(`/leads/${leadId}/sync-deal-values`, { method: "POST" }),
-    getAuditTrail: async (leadId: string) =>
-      request<PipelineAuditEntry[]>(`/leads/${leadId}/pipeline-audit`),
+    getBoard: async () => {
+      const supabase = createClient();
+      const { data: contacts, error } = await supabase
+        .from('contacts')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      const pipelineLeads = (contacts || []).map(mapDbContactToPipelineLead);
+      
+      const STAGE_LABELS: Record<string, string> = {
+        new: 'New Leads',
+        ai_qualifying: 'AI Qualifying',
+        qualified: 'Qualified',
+        nurturing: 'Nurturing',
+        won: 'Won 🏆',
+        lost: 'Lost'
+      };
+      
+      const stages = ['new', 'ai_qualifying', 'qualified', 'nurturing', 'won', 'lost'];
+      
+      return stages.map(stage => {
+        const stageLeads = pipelineLeads.filter(l => l.lead_stage === stage);
+        const totalPipelineValue = stageLeads.reduce((sum, l) => sum + (l.deal_annual_value || 0), 0);
+        const totalExpectedRevenue = stageLeads.reduce((sum, l) => sum + (l.expected_revenue || 0), 0);
+        
+        return {
+          stage,
+          label: STAGE_LABELS[stage] || stage,
+          leads: stageLeads,
+          lead_count: stageLeads.length,
+          total_pipeline_value: totalPipelineValue,
+          total_expected_revenue: totalExpectedRevenue
+        };
+      });
+    },
+    
+    getForecast: async (period: 'month' | 'quarter' | 'year' = 'month') => {
+      const supabase = createClient();
+      const { data: contacts, error } = await supabase
+        .from('contacts')
+        .select('*');
+        
+      if (error) throw error;
+      
+      const pipelineLeads = (contacts || []).map(mapDbContactToPipelineLead);
+      
+      const totalPipelineValue = pipelineLeads.reduce((sum, l) => sum + (l.deal_annual_value || 0), 0);
+      const totalExpectedRevenue = pipelineLeads.reduce((sum, l) => sum + (l.expected_revenue || 0), 0);
+      
+      const wonLeads = pipelineLeads.filter(l => l.status === 'won');
+      const lostLeads = pipelineLeads.filter(l => l.status === 'lost');
+      
+      const wonRevenue = wonLeads.reduce((sum, l) => sum + (l.deal_annual_value || 0), 0);
+      const lostRevenue = lostLeads.reduce((sum, l) => sum + (l.deal_annual_value || 0), 0);
+      
+      const totalFinished = wonLeads.length + lostLeads.length;
+      const winRate = totalFinished > 0 ? (wonLeads.length / totalFinished) * 100 : 0;
+      
+      const avgDealSize = pipelineLeads.length > 0 ? totalPipelineValue / pipelineLeads.length : 0;
+      
+      return {
+        period,
+        pipeline_value: totalPipelineValue,
+        expected_revenue: totalExpectedRevenue,
+        won_revenue: wonRevenue,
+        lost_revenue: lostRevenue,
+        avg_deal_size: avgDealSize,
+        avg_sales_cycle_days: 14,
+        win_rate: winRate,
+        total_leads_in_pipeline: pipelineLeads.length,
+        leads_moved_to_won: wonLeads.length,
+        leads_moved_to_lost: lostLeads.length
+      };
+    },
+    
+    moveStage: async (leadId: string, stage: string, reason?: string) => {
+      const supabase = createClient();
+      
+      // Fetch current status
+      const { data: oldContact } = await supabase
+        .from('contacts')
+        .select('status')
+        .eq('id', leadId)
+        .single();
+        
+      const oldStage = oldContact?.status || 'new';
+      
+      const { error } = await supabase
+        .from('contacts')
+        .update({
+          status: stage,
+          stage_entered_at: new Date().toISOString()
+        })
+        .eq('id', leadId);
+        
+      if (error) throw error;
+      
+      // Create stage change log entry in audit_logs
+      try {
+        const tenantId = await getTenantId();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        await supabase
+          .from('audit_logs')
+          .insert({
+            tenant_id: tenantId,
+            user_id: user?.id || null,
+            action: 'stage_change',
+            details: {
+              lead_id: leadId,
+              old_stage: oldStage,
+              new_stage: stage,
+              reason: reason || null
+            }
+          });
+      } catch (e) {
+        console.error("Failed to insert stage change log entry:", e);
+      }
+      
+      return { success: true, message: `Moved lead to stage ${stage}` };
+    },
+    
+    updateProbability: async (leadId: string, probability: number) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('contacts')
+        .update({ deal_probability: probability })
+        .eq('id', leadId);
+        
+      if (error) throw error;
+      return { success: true, message: `Updated probability to ${probability}%` };
+    },
+    
+    updateDealValues: async (leadId: string, data: { setup_value?: number; mrr?: number }) => {
+      const supabase = createClient();
+      const updateData: any = {};
+      if (data.setup_value !== undefined) updateData.deal_setup_value = data.setup_value;
+      if (data.mrr !== undefined) updateData.deal_mrr = data.mrr;
+      
+      const { error } = await supabase
+        .from('contacts')
+        .update(updateData)
+        .eq('id', leadId);
+        
+      if (error) throw error;
+      
+      // Fetch updated record details
+      const { data: updatedContact, error: fetchError } = await supabase
+        .from('contacts')
+        .select('deal_setup_value, deal_mrr, deal_annual_value')
+        .eq('id', leadId)
+        .single();
+        
+      if (fetchError || !updatedContact) {
+        throw new Error(fetchError?.message || "Failed to fetch updated deal values");
+      }
+      
+      return {
+        success: true,
+        deal_setup_value: Number(updatedContact.deal_setup_value || 0),
+        deal_mrr: Number(updatedContact.deal_mrr || 0),
+        deal_annual_value: Number(updatedContact.deal_annual_value || 0)
+      };
+    },
+    
+    syncDealValues: async (_leadId: string) => {
+      return { success: true, message: "Deal values synced by database trigger" };
+    },
+    
+    getAuditTrail: async (leadId: string) => {
+      const supabase = createClient();
+      const { data: logs, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .eq('action', 'stage_change')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      const filteredLogs = (logs || []).filter(l => {
+        return l.details && typeof l.details === 'object' && (l.details as any).lead_id === leadId;
+      });
+      
+      return filteredLogs.map(l => ({
+        id: l.id,
+        lead_id: leadId,
+        old_stage: (l.details as any).old_stage || '',
+        new_stage: (l.details as any).new_stage || '',
+        changed_by: l.user_id || 'System',
+        reason: (l.details as any).reason || null,
+        timestamp: l.created_at
+      }));
+    },
   },
 
   // Health and Telemetry

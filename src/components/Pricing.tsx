@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Sparkles, Plus, ArrowRight } from "lucide-react";
+import { Check, Sparkles, Plus } from "lucide-react";
 import LazyVideo from "./LazyVideo";
 import { trackContact } from "../utils/metaPixel";
 

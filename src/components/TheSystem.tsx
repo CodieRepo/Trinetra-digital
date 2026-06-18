@@ -1,6 +1,6 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Globe, Layout, Layers, Database, ArrowUpRight, ShieldCheck } from "lucide-react";
+import { Check, ArrowUpRight } from "lucide-react";
 import LazyVideo from "./LazyVideo";
 
 const TABS = [

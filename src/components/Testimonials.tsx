@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Sparkles, Tag, ArrowRight, ExternalLink, Check } from "lucide-react";
+import { Tag, ArrowRight, ExternalLink, Check } from "lucide-react";
 import LazyVideo from "./LazyVideo";
 
 // Count Up Helper Component
