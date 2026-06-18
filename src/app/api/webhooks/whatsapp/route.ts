@@ -4,11 +4,15 @@ import crypto from "crypto";
 
 export const runtime = "nodejs";
 
-// Create a Supabase admin client that bypasses RLS policies
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Helper function to lazily initialize the Supabase admin client
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error("Supabase URL and Service Role Key are required environment variables");
+  }
+  return createClient(url, key);
+}
 
 // HMAC SHA-256 signature verification helper
 function verifySignature(payload: string, signature: string, secret: string): boolean {
@@ -63,6 +67,7 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const signature = request.headers.get("x-hub-signature-256") || "";
     const rawBody = await request.text();
 
