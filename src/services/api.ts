@@ -559,53 +559,13 @@ export const apiService = {
     },
 
     sendMessage: async (leadId: string, body: string) => {
-      const supabase = createClient();
-      const tenantId = await getTenantId();
-      
-      // Find or create conversation
-      let { data: conversation } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('contact_id', leadId)
-        .single();
-        
-      if (!conversation) {
-        const { data: newConv, error } = await supabase
-          .from('conversations')
-          .insert({
-            tenant_id: tenantId,
-            contact_id: leadId,
-            status: 'active'
-          })
-          .select('id')
-          .single();
-        if (error) throw error;
-        conversation = newConv;
-      }
-      
-      // Get current user profile ID
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      const { error: msgError } = await supabase
-        .from('messages')
-        .insert({
-          tenant_id: tenantId,
-          conversation_id: conversation.id,
-          direction: 'outbound',
-          body: body,
-          status: 'sent',
-          sender_id: user?.id || null
-        });
-        
-      if (msgError) throw msgError;
-      
-      // Update last_message_at on conversation
-      await supabase
-        .from('conversations')
-        .update({ last_message_at: new Date().toISOString() })
-        .eq('id', conversation.id);
-        
-      return { success: true };
+      return request<{ success: boolean; messageId: string; metaMessageId: string }>(
+        "/whatsapp/send",
+        {
+          method: "POST",
+          body: JSON.stringify({ leadId, body })
+        }
+      );
     },
 
     createBackup: async () => request<{ success: boolean; filename: string }>("/leads/backup", {

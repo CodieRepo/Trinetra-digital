@@ -99,10 +99,52 @@ export async function POST(request: Request) {
 
     const message = change?.messages?.[0];
     const contact = change?.contacts?.[0];
+    const statusUpdate = change?.statuses?.[0];
 
-    // If no message, could be status notification (sent, delivered, read)
-    if (!message) {
-      return NextResponse.json({ success: true, message: "Status update ignored." });
+    // If no message and no status update, return early
+    if (!message && !statusUpdate) {
+      return NextResponse.json({ success: true, message: "Unsupported change event type." });
+    }
+
+    // ── 1. Process Status Update Notification ──
+    if (statusUpdate) {
+      const metaMessageId = statusUpdate.id;
+      const status = statusUpdate.status; // 'sent', 'delivered', 'read', 'failed'
+      const errorMessage = statusUpdate.errors?.[0]?.message || null;
+
+      console.log(`Processing WhatsApp status update: messageId=${metaMessageId}, status=${status}`);
+
+      // Log status update event to message_events
+      try {
+        const eventType = status === "sent" ? "send_attempt" : status;
+        if (eventType === "send_attempt" || eventType === "delivered" || eventType === "read" || eventType === "failed") {
+          await supabaseAdmin.from("message_events").insert({
+            meta_message_id: metaMessageId,
+            event_type: eventType,
+            payload: statusUpdate
+          });
+        }
+      } catch (e) {
+        console.error("Failed writing message_event log for status update:", e);
+      }
+
+      // Update message status in database
+      const updatePayload: any = { status };
+      if (errorMessage) {
+        updatePayload.error_message = errorMessage;
+      }
+
+      const { error } = await supabaseAdmin
+        .from("messages")
+        .update(updatePayload)
+        .eq("meta_message_id", metaMessageId);
+
+      if (error) {
+        console.error("Database failed to update message status:", error);
+        return NextResponse.json({ error: "Failed to update message status" }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, message: "Status updated successfully." });
     }
 
     // 1. Look up Tenant by whatsapp_phone_number_id
