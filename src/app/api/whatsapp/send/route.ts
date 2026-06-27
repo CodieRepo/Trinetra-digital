@@ -1,17 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { getMessagingProvider } from "../../../../services/messaging";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { leadId, body: messageBody } = body;
+    const { leadId, body: messageBody, mediaUrl, mediaType, templateName, templateParams } = body;
 
-    if (!leadId || !messageBody) {
+    if (!leadId || (!messageBody && !mediaUrl && !templateName)) {
       return NextResponse.json(
-        { error: "leadId and body are required fields." },
+        { error: "leadId and at least one content field (body, mediaUrl, or templateName) are required." },
         { status: 400 }
       );
     }
@@ -120,9 +121,11 @@ export async function POST(request: Request) {
         tenant_id: tenantId,
         conversation_id: conversation.id,
         direction: "outbound",
-        body: messageBody,
+        body: messageBody || templateName || "Media Attachment",
         status: "queued",
-        sender_id: user.id
+        sender_id: user.id,
+        media_url: mediaUrl || null,
+        media_type: mediaType || null
       })
       .select("id")
       .single();
@@ -132,87 +135,49 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to queue outbound message." }, { status: 500 });
     }
 
-    // 7. Make outbound Meta Graph API request
-    const metaUrl = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
-    const metaPayload = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
+    // 7. Make outbound request using our Provider Factory
+    const providerType = (tenant as any)?.provider_type || process.env.WHATSAPP_PROVIDER || "bhashsms";
+    const provider = getMessagingProvider(providerType);
+    
+    const sendResult = await provider.sendMessage({
       to: toPhone,
-      type: "text",
-      text: {
-        body: messageBody
+      body: messageBody || "",
+      tenantId: tenantId,
+      mediaUrl: mediaUrl,
+      mediaType: mediaType,
+      templateName: templateName,
+      templateParams: templateParams,
+      credentials: {
+        apiKey: accessToken,
+        phoneNumberId: phoneNumberId,
+        accessToken: accessToken
       }
-    };
+    });
 
-    let metaResponse;
-    let metaData;
-    try {
-      metaResponse = await fetch(metaUrl, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(metaPayload)
-      });
-      metaData = await metaResponse.json();
-    } catch (fetchErr: any) {
-      console.error("Meta Graph API fetch exception:", fetchErr);
+    if (!sendResult.success) {
+      console.error(`${providerType} returned error:`, sendResult.errorMessage);
       
-      // Update message status to failed
       await supabase
         .from("messages")
-        .update({ status: "failed", error_message: fetchErr.message || "Network exception" })
+        .update({ status: "failed", error_message: sendResult.errorMessage || "Provider failed" })
         .eq("id", dbMessage.id);
 
       return NextResponse.json(
-        { error: "Network failed connecting to Meta API." },
+        { error: sendResult.errorMessage || "Provider failed sending message." },
         { status: 502 }
       );
     }
 
-    // 8. Handle Meta API Response
-    if (!metaResponse.ok || metaData.error) {
-      console.error("Meta Graph API returned error:", metaData);
-      
-      const errorMsg = metaData.error?.message || "Meta API error";
-      
-      // Update message status to failed
-      await supabase
-        .from("messages")
-        .update({ status: "failed", error_message: errorMsg })
-        .eq("id", dbMessage.id);
-
-      // Attempt to log failed send attempt in message_events if message ID exists
-      if (metaData.error?.fbtrace_id) {
-        try {
-          await supabase.from("message_events").insert({
-            meta_message_id: `failed-trace-${metaData.error.fbtrace_id}`,
-            event_type: "failed",
-            payload: { request: metaPayload, response: metaData }
-          });
-        } catch (e) {
-          console.error("Failed writing message_event log:", e);
-        }
-      }
-
-      return NextResponse.json(
-        { error: errorMsg, details: metaData.error },
-        { status: metaResponse.status }
-      );
-    }
-
-    // Success! Extract Meta message ID
-    const metaMessageId = metaData.messages?.[0]?.id;
+    const metaMessageId = sendResult.providerMessageId;
 
     if (!metaMessageId) {
       await supabase
         .from("messages")
-        .update({ status: "failed", error_message: "No message ID returned from Meta." })
+        .update({ status: "failed", error_message: "No message ID returned from provider." })
         .eq("id", dbMessage.id);
 
       return NextResponse.json(
-        { error: "Meta API did not return a valid message ID." },
+        { error: "Provider did not return a valid message ID." },
         { status: 502 }
       );
     }
@@ -241,7 +206,7 @@ export async function POST(request: Request) {
       await supabase.from("message_events").insert({
         meta_message_id: metaMessageId,
         event_type: "send_attempt",
-        payload: { request: metaPayload, response: metaData }
+        payload: { provider: providerType, recipient: toPhone, body: messageBody, result: sendResult }
       });
     } catch (e) {
       console.error("Failed writing message_event record:", e);

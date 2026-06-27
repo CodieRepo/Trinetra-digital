@@ -65,11 +65,10 @@ export default function ContactPage() {
 
     console.log("🚀 Form submission started. Payload data:", data);
 
-    const isDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    const apiEndpoint = isDev ? "http://localhost:5000/api/leads" : "/api/leads";
+    const apiEndpoint = "/api/leads";
 
     try {
-      console.log(`📡 Fetching backend lead capture endpoint: ${apiEndpoint}`);
+      console.log(`📡 Fetching lead capture endpoint: ${apiEndpoint}`);
       const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
@@ -82,47 +81,41 @@ export default function ContactPage() {
 
       if (response.ok) {
         const responseData = await response.json();
-        console.log("✅ Lead successfully captured by backend:", responseData);
+        console.log("✅ Lead successfully captured:", responseData);
         setToast({ message: "Lead captured successfully ✓", type: 'success' });
         setTimeout(() => setToast(null), 4000);
         setSucceeded(true);
         trackLead();
       } else {
         const errData = await response.json();
-        console.error("❌ Backend returned error:", errData);
+        console.error("❌ Lead capture returned error:", errData);
         throw new Error(errData.error || "Server submission failed");
       }
-    } catch (err) {
-      console.error("❌ Primary Express backend submission failed:", err);
+    } catch (err: any) {
+      console.error("❌ Primary submission failed:", err);
       
-      if (isDev) {
-        setError("Local backend submission failed. Check that backend server is running on port 5000 and has SQLite initialized.");
-        setToast({ message: "Backend offline. Submission blocked in dev.", type: 'error' });
-        setTimeout(() => setToast(null), 4000);
-      } else {
-        console.warn("⚠️ Production fallback: triggering Formspree...");
-        try {
-          const formspreeUrl = `https://formspree.io/f/${FORMSPREE_ID}`;
-          const fallbackResponse = await fetch(formspreeUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json"
-            },
-            body: JSON.stringify(data)
-          });
+      console.warn("⚠️ Fallback: triggering Formspree...");
+      try {
+        const formspreeUrl = `https://formspree.io/f/${FORMSPREE_ID}`;
+        const fallbackResponse = await fetch(formspreeUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify(data)
+        });
 
-          if (fallbackResponse.ok) {
-            console.log("✅ Fallback Formspree submission succeeded.");
-            setSucceeded(true);
-            trackLead();
-          } else {
-            throw new Error("Formspree submission also failed");
-          }
-        } catch (fallbackErr) {
-          console.error("❌ All submission pathways failed:", fallbackErr);
-          setError("Unable to process your message right now. Please reach out to us on WhatsApp directly.");
+        if (fallbackResponse.ok) {
+          console.log("✅ Fallback Formspree submission succeeded.");
+          setSucceeded(true);
+          trackLead();
+        } else {
+          throw new Error("Formspree submission also failed");
         }
+      } catch (fallbackErr) {
+        console.error("❌ All submission pathways failed:", fallbackErr);
+        setError("Unable to process your message right now. Please reach out to us on WhatsApp directly.");
       }
     } finally {
       setSubmitting(false);

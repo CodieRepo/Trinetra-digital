@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Send, Bot, Phone, Building2, Tag,
   Clock, CheckCheck, Check, AlertCircle, Loader2,
-  MessageSquare, Zap, UserCheck, MoreVertical, Circle, FileText, Calendar, Plus
+  MessageSquare, Zap, UserCheck, MoreVertical, Circle, FileText, Calendar, Plus, Paperclip
 } from "lucide-react";
 import { apiService, type Lead, type ChatMessage } from "@/services/api";
+import { createClient } from "@/lib/supabase/client";
 import { formatPhoneForDisplay, getDisplayName } from "@/utils/contact";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/Modal";
@@ -17,7 +18,14 @@ interface InboxPanelProps {
   selectedLeadId: string | null;
   setSelectedLeadId: (id: string | null) => void;
   leadDetail: { lead: Lead; chats: ChatMessage[]; followup: any | null } | null;
-  sendManualMessage: (id: string, body: string) => Promise<boolean>;
+  sendManualMessage: (
+    id: string, 
+    body: string, 
+    mediaUrl?: string, 
+    mediaType?: string,
+    templateName?: string,
+    templateParams?: string[]
+  ) => Promise<boolean>;
   updateLeadStatus: (id: string, status: Lead["status"]) => Promise<boolean>;
   updateLeadField: (id: string, fields: Partial<Lead>) => Promise<boolean>;
   toggleAI: (id: string, enabled: boolean) => Promise<boolean>;
@@ -39,6 +47,9 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
     return <Circle size={11} className="text-slate-300" />;
   };
 
+  const isImage = msg.media_type?.toLowerCase().includes("image") || msg.media_url?.match(/\.(jpeg|jpg|gif|png|webp)/i);
+  const isVideo = msg.media_type?.toLowerCase().includes("video") || msg.media_url?.match(/\.(mp4|webm|ogg)/i);
+
   return (
     <div className={`flex ${isOut ? "justify-end" : "justify-start"} mb-1`}>
       <div
@@ -48,7 +59,35 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
             : "bg-white text-slate-800 border border-slate-200 rounded-bl-sm shadow-xs"
         }`}
       >
-        <p className="whitespace-pre-wrap break-words">{msg.body}</p>
+        {msg.media_url && (
+          <div className="mb-2 overflow-hidden rounded-xl">
+            {isImage ? (
+              <img 
+                src={msg.media_url} 
+                alt="Attachment" 
+                className="max-w-full max-h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => window.open(msg.media_url!, "_blank")}
+              />
+            ) : isVideo ? (
+              <video src={msg.media_url} controls className="max-w-full max-h-48 rounded-lg" />
+            ) : (
+              <a 
+                href={msg.media_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-bold ${
+                  isOut 
+                    ? "bg-emerald-700/50 border-emerald-500 text-white hover:bg-emerald-700" 
+                    : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                <Paperclip size={13} />
+                <span className="truncate max-w-[150px]">View Attachment</span>
+              </a>
+            )}
+          </div>
+        )}
+        {msg.body && <p className="whitespace-pre-wrap break-words">{msg.body}</p>}
         <div className={`flex items-center gap-1 mt-1 ${isOut ? "justify-end" : "justify-start"}`}>
           <span className={`text-[9px] font-medium ${isOut ? "text-emerald-200" : "text-slate-400"}`}>
             {time}
@@ -340,12 +379,92 @@ export default function InboxPanel({
   const { success, error: toastError, info } = useToast();
   const [msgText, setMsgText] = useState("");
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [confirmHandoff, setConfirmHandoff] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dbTemplates, setDbTemplates] = useState<any[]>([]);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
+  const [templateParams, setTemplateParams] = useState<string[]>([]);
+
+  const extractVariables = (body: string): number => {
+    const matches = body.match(/\{\{\d+\}\}/g);
+    if (!matches) return 0;
+    const unique = new Set(matches.map(m => m.replace(/\D/g, "")));
+    return unique.size;
+  };
+
+  const handleTemplateClick = async () => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("templates")
+        .select("*")
+        .eq("status", "approved");
+        
+      if (error) throw error;
+      setDbTemplates(data || []);
+      setShowTemplateModal(true);
+    } catch (e: any) {
+      toastError("Templates failed", e.message || "Could not fetch templates list");
+    }
+  };
+
+  const handleAttachClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedLeadId) return;
+
+    if (file.size > 15 * 1024 * 1024) {
+      toastError("File too large", "Maximum allowed size is 15MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const supabase = createClient();
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${selectedLeadId}/${Date.now()}.${fileExt}`;
+      
+      console.log(`📤 Uploading file: ${file.name} to media storage bucket...`);
+      
+      const { data, error: uploadErr } = await supabase.storage
+        .from("media")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: true
+        });
+
+      if (uploadErr) throw uploadErr;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("media")
+        .getPublicUrl(data.path);
+
+      console.log(`✅ Media public URL resolved: ${publicUrl}`);
+
+      const ok = await sendManualMessage(selectedLeadId, "", publicUrl, file.type);
+      if (ok) {
+        success("Attachment sent", "WhatsApp attachment delivered");
+      } else {
+        toastError("Send failed", "Failed sending WhatsApp attachment payload");
+      }
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      toastError("Upload failed", err.message || "Failed uploading file to Supabase storage");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   // Filter & sort leads
   const filteredLeads = useMemo(() => {
@@ -559,7 +678,32 @@ export default function InboxPanel({
 
           {/* Message Input */}
           <form onSubmit={handleSend} className="px-4 py-3 border-t border-slate-100 bg-white">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              className="hidden" 
+              accept="image/*,application/pdf,video/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+            />
             <div className="flex items-end gap-2">
+              <button
+                type="button"
+                onClick={handleAttachClick}
+                disabled={uploading || sending}
+                className="h-12 w-12 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+                title="Attach image, video or document"
+              >
+                {uploading ? <Loader2 size={16} className="animate-spin text-emerald-600" /> : <Paperclip size={16} />}
+              </button>
+              <button
+                type="button"
+                onClick={handleTemplateClick}
+                disabled={sending || uploading}
+                className="h-12 w-12 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+                title="Send WhatsApp Template"
+              >
+                <FileText size={16} />
+              </button>
               <div className="flex-1 relative">
                 <textarea
                   value={msgText}
@@ -574,13 +718,13 @@ export default function InboxPanel({
               </div>
               <button
                 type="submit"
-                disabled={sending || !msgText.trim()}
+                disabled={sending || uploading || !msgText.trim()}
                 className="h-12 w-12 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center transition-colors border-0 cursor-pointer disabled:opacity-50 shrink-0"
               >
                 {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               </button>
             </div>
-            <p className="text-[9px] text-slate-400 mt-1.5 pl-1">Enter to send · Shift+Enter for new line</p>
+            <p className="text-[9px] text-slate-400 mt-1.5 pl-1">Enter to send · Shift+Enter for new line · Attach image, PDF or video</p>
           </form>
         </div>
       )}
@@ -619,6 +763,118 @@ export default function InboxPanel({
         confirmLabel="Take Over"
         variant="warning"
       />
+
+      {/* Template Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-md w-full overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <h3 className="text-sm font-black text-slate-800">Send WhatsApp Template</h3>
+              <button 
+                onClick={() => { setShowTemplateModal(false); setSelectedTemplate(null); }}
+                className="text-xs text-slate-400 hover:text-slate-600 font-bold border-0 bg-transparent cursor-pointer"
+              >
+                ✕ Close
+              </button>
+            </div>
+            <div className="p-6 space-y-4 max-h-[30rem] overflow-y-auto">
+              {!selectedTemplate ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500">Select Template</label>
+                  {dbTemplates.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic">No approved templates found in database.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {dbTemplates.map(tpl => (
+                        <button
+                          key={tpl.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedTemplate(tpl);
+                            const varCount = extractVariables(tpl.body);
+                            setTemplateParams(new Array(varCount).fill(""));
+                          }}
+                          className="w-full text-left p-3.5 border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/30 rounded-xl transition-all cursor-pointer bg-white"
+                        >
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs font-black text-slate-700">{tpl.name}</span>
+                            <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">{tpl.language}</span>
+                          </div>
+                          <p className="text-xs text-slate-400 truncate mt-0.5">{tpl.body}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Template Preview</p>
+                    <p className="text-xs text-slate-600 mt-1 whitespace-pre-wrap">{selectedTemplate.body}</p>
+                  </div>
+                  
+                  {templateParams.length > 0 && (
+                    <div className="space-y-3">
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Template Variables</p>
+                      {templateParams.map((param, idx) => (
+                        <div key={idx} className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-600">Variable {idx + 1}</label>
+                          <input
+                            type="text"
+                            value={param}
+                            onChange={e => {
+                              const updated = [...templateParams];
+                              updated[idx] = e.target.value;
+                              setTemplateParams(updated);
+                            }}
+                            placeholder={`Value for {{${idx + 1}}}`}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTemplate(null)}
+                      className="flex-1 py-2 border border-slate-200 text-slate-500 rounded-xl text-xs font-bold bg-white cursor-pointer hover:bg-slate-50"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setShowTemplateModal(false);
+                        setSending(true);
+                        const ok = await sendManualMessage(
+                          selectedLeadId!,
+                          "",
+                          undefined,
+                          undefined,
+                          selectedTemplate.name,
+                          templateParams
+                        );
+                        if (ok) {
+                          success("Template sent", "WhatsApp template message queued");
+                        } else {
+                          toastError("Send failed", "Failed sending WhatsApp template message");
+                        }
+                        setSending(false);
+                        setSelectedTemplate(null);
+                      }}
+                      className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold border-0 cursor-pointer"
+                    >
+                      Send Template
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

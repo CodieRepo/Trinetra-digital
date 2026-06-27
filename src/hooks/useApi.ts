@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { 
   apiService, 
   Lead, 
@@ -73,8 +74,7 @@ export function useDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
   const [latestApiError, setLatestApiError] = useState<string | null>(null);
-  const [backupLoading, setBackupLoading] = useState(false);
-  const [lastSuccessTime, setLastSuccessTime] = useState<string | null>(null);
+  const [tenantId, setTenantId] = useState<string | null>(null);
 
   // Dynamic Login handler
   const login = async (username: string, password: string): Promise<boolean> => {
@@ -138,7 +138,6 @@ export function useDashboard() {
       setWaStatus(wa);
 
       setBackendOnline(true);
-      setLastSuccessTime(new Date().toLocaleTimeString());
     } catch (error: any) {
       console.error("command fetch query failed:", error);
       setBackendOnline(false);
@@ -149,10 +148,17 @@ export function useDashboard() {
   }, []);
 
   // Manual WhatsApp Dispatcher
-  const sendManualMessage = async (leadId: string, body: string): Promise<boolean> => {
+  const sendManualMessage = async (
+    leadId: string, 
+    body: string, 
+    mediaUrl?: string, 
+    mediaType?: string,
+    templateName?: string,
+    templateParams?: string[]
+  ): Promise<boolean> => {
     if (!token) return false;
     try {
-      await apiService.leads.sendMessage(leadId, body);
+      await apiService.leads.sendMessage(leadId, body, mediaUrl, mediaType, templateName, templateParams);
       // Fast refresh lead context
       const freshDetail = await apiService.leads.get(leadId);
       setLeadDetail(freshDetail);
@@ -232,25 +238,6 @@ export function useDashboard() {
     }
   };
 
-  // SQLite Database Backup trigger
-  const triggerDatabaseBackup = async (): Promise<boolean> => {
-    if (!token) return false;
-    setBackupLoading(true);
-    try {
-      const response = await apiService.leads.createBackup();
-      if (response.success) {
-        setLastSuccessTime(new Date().toLocaleTimeString());
-        return true;
-      }
-      return false;
-    } catch (err: any) {
-      setLatestApiError(`[DATABASE] ${err.message || 'SQLite backup failed'}`);
-      return false;
-    } finally {
-      setBackupLoading(false);
-    }
-  };
-
   // Refresh Command telemetry
   const triggerRefresh = () => {
     if (token) {
@@ -259,53 +246,107 @@ export function useDashboard() {
     }
   };
 
-  // Restart WhatsApp Gateway
-  const restartWhatsAppGateway = async (): Promise<boolean> => {
-    if (!token) return false;
-    try {
-      await apiService.whatsapp.restart();
-      await fetchGlobalMetrics();
-      return true;
-    } catch (err: any) {
-      setLatestApiError(`[GATEWAY] ${err.message || 'Failed restarting WhatsApp gateway'}`);
-      return false;
+  // 🔑 Fetch active tenant ID from Supabase on token update
+  useEffect(() => {
+    async function resolveTenantId() {
+      if (!token) {
+        setTenantId(null);
+        return;
+      }
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("tenant_id")
+          .eq("id", user.id)
+          .single();
+          
+        if (profile?.tenant_id) {
+          setTenantId(profile.tenant_id);
+        }
+      } catch (err) {
+        console.error("Failed to resolve tenant ID for realtime:", err);
+      }
     }
-  };
+    resolveTenantId();
+  }, [token]);
 
-  // Fetch Session Backups
-  const fetchBackups = async (): Promise<Array<{ name: string; timestamp: string; reason: string; connectionStatus: string }>> => {
-    if (!token) return [];
-    try {
-      return await apiService.whatsapp.listBackups();
-    } catch (err: any) {
-      setLatestApiError(`[GATEWAY] ${err.message || 'Failed to list backups'}`);
-      return [];
-    }
-  };
+  // 🔔 Tenant-Scoped Supabase Realtime Subscriptions (Phase 3)
+  useEffect(() => {
+    if (!token || !tenantId) return;
 
-  // Restore Rollback Backup
-  const rollbackBackup = async (backupDirName: string): Promise<boolean> => {
-    if (!token) return false;
-    try {
-      const res = await apiService.whatsapp.rollback(backupDirName);
-      await fetchGlobalMetrics();
-      return res.success;
-    } catch (err: any) {
-      setLatestApiError(`[GATEWAY] ${err.message || 'Failed to restore backup'}`);
-      return false;
-    }
-  };
+    console.log(`🔌 Establishing secure tenant-scoped Realtime channel: tenant_id = ${tenantId}`);
+    const supabase = createClient();
+    
+    const channel = supabase
+      .channel(`tenant-scoped-channel-${tenantId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "messages",
+          filter: `tenant_id=eq.${tenantId}`
+        },
+        async (payload) => {
+          console.log("Realtime message event received:", payload);
+          // Refresh global state metrics
+          fetchGlobalMetrics();
+          
+          // If the message belongs to the currently active conversation, fast refresh details
+          if (selectedLeadId) {
+            try {
+              const freshDetails = await apiService.leads.get(selectedLeadId);
+              setLeadDetail(freshDetails);
+            } catch (e) {}
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "contacts",
+          filter: `tenant_id=eq.${tenantId}`
+        },
+        () => {
+          fetchGlobalMetrics();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "bookings",
+          filter: `tenant_id=eq.${tenantId}`
+        },
+        () => {
+          fetchGlobalMetrics();
+        }
+      )
+      .subscribe();
 
-  // ⏰ Periodic Sync telemetries
+    return () => {
+      console.log(`🔌 Cleaning up Realtime channel for tenant_id = ${tenantId}`);
+      supabase.removeChannel(channel);
+    };
+  }, [token, tenantId, selectedLeadId, fetchGlobalMetrics]);
+
+  // ⏰ Slow Fallback Polling (Backs up Realtime in case of connection drop)
   useEffect(() => {
     if (token) {
       fetchGlobalMetrics();
-      const timer = setInterval(() => fetchGlobalMetrics(), 10000);
+      const timer = setInterval(() => fetchGlobalMetrics(), 60000);
       return () => clearInterval(timer);
     }
   }, [token, fetchGlobalMetrics]);
 
-  // ⏰ Conversational chat polling sequence (Fast Poller: 3.5s)
+  // ⏰ Slow Polling active conversation (Fallback if Realtime channel drops)
   useEffect(() => {
     if (selectedLeadId && token) {
       const queryLeadDetail = async () => {
@@ -313,12 +354,12 @@ export function useDashboard() {
           const detail = await apiService.leads.get(selectedLeadId);
           setLeadDetail(detail);
         } catch (err) {
-          console.error("fast poll active chat query failure:", err);
+          console.error("fallback poller active chat failure:", err);
         }
       };
 
       queryLeadDetail();
-      const timer = setInterval(queryLeadDetail, 3500);
+      const timer = setInterval(queryLeadDetail, 20000);
       return () => clearInterval(timer);
     } else {
       setLeadDetail(null);
@@ -366,8 +407,6 @@ export function useDashboard() {
     refreshing,
     backendOnline,
     latestApiError,
-    backupLoading,
-    lastSuccessTime,
     
     // Operations
     sendManualMessage,
@@ -375,10 +414,6 @@ export function useDashboard() {
     renameLead,
     updateLeadField,
     toggleAI,
-    triggerDatabaseBackup,
-    triggerRefresh,
-    restartWhatsAppGateway,
-    fetchBackups,
-    rollbackBackup
+    triggerRefresh
   };
 }

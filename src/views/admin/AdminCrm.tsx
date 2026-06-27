@@ -278,8 +278,7 @@ export default function AdminCrm() {
     selectedLeadId, setSelectedLeadId, leadDetail,
     refreshing, backendOnline,
     sendManualMessage, updateLeadStatus, updateLeadField, toggleAI,
-    triggerDatabaseBackup, triggerRefresh, restartWhatsAppGateway,
-    fetchBackups, rollbackBackup,
+    triggerRefresh,
   } = useDashboard();
 
   const location = useLocation();
@@ -315,8 +314,7 @@ export default function AdminCrm() {
             leads={leads}
             analytics={analytics}
             calendarData={calendarData}
-            backendOnline={backendOnline}
-            waStatus={waStatus}
+            healthTelemetry={healthTelemetry}
             auditLogs={auditLogs}
             onNavigate={v => setActiveView(v as ViewSection)}
           />
@@ -357,15 +355,7 @@ export default function AdminCrm() {
         return <TemplatesPanel />;
       case "settings":
         return (
-          <SettingsPanel
-            waStatus={waStatus}
-            healthTelemetry={healthTelemetry}
-            backendOnline={backendOnline}
-            triggerDatabaseBackup={triggerDatabaseBackup}
-            restartWhatsAppGateway={restartWhatsAppGateway}
-            fetchBackups={fetchBackups}
-            rollbackBackup={rollbackBackup}
-          />
+          <SettingsPanel />
         );
       default:
         return null;

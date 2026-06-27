@@ -13,8 +13,7 @@ interface OverviewPanelProps {
   leads: Lead[];
   analytics: AnalyticsData | null;
   calendarData: { appointments: any[]; slots: any[] };
-  backendOnline: boolean;
-  waStatus: { status: string } | null;
+  healthTelemetry: any;
   auditLogs: Array<{ id: string; action: string; details: string | null; timestamp: string }>;
   onNavigate: (view: string) => void;
 }
@@ -204,44 +203,63 @@ function HotLeadsWidget({ leads, onNavigate }: { leads: Lead[]; onNavigate: (v: 
 // ── System Status ─────────────────────────────────────────────────────────────
 
 function SystemStatus({
-  waStatus,
-  backendOnline,
+  healthTelemetry
 }: {
-  waStatus: { status: string } | null;
-  backendOnline: boolean;
+  healthTelemetry: any;
 }) {
-  const waConnected = waStatus?.status === "connected";
-
   const items = [
     {
-      label: "API Backend",
-      ok: backendOnline,
-      okText: "Online",
-      failText: "Offline",
+      label: "Supabase Database",
+      ok: healthTelemetry?.supabaseConnected ?? false,
+      okText: "Connected",
+      failText: "Disconnected",
     },
     {
-      label: "WhatsApp Gateway",
-      ok: waConnected,
+      label: "BhashSMS WhatsApp",
+      ok: healthTelemetry?.bhashConnected ?? false,
       okText: "Connected",
-      failText: waStatus?.status || "Disconnected",
+      failText: "Credentials Missing",
+    },
+    {
+      label: "AI Engine",
+      ok: healthTelemetry?.aiConnected ?? false,
+      okText: "Connected",
+      failText: "API Key Missing",
     },
   ];
 
+  const lastWebhook = healthTelemetry?.lastWebhookReceived
+    ? new Date(healthTelemetry.lastWebhookReceived).toLocaleTimeString()
+    : "No events";
+
   return (
-    <div className="space-y-2.5">
-      {items.map(item => (
-        <div key={item.label} className="flex items-center justify-between">
-          <span className="text-xs text-slate-600 font-medium">{item.label}</span>
-          <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full ${
-            item.ok
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-              : "bg-rose-50 text-rose-700 border border-rose-100"
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${item.ok ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
-            {item.ok ? item.okText : item.failText}
-          </span>
+    <div className="space-y-3">
+      <div className="space-y-2">
+        {items.map(item => (
+          <div key={item.label} className="flex items-center justify-between">
+            <span className="text-xs text-slate-500 font-medium">{item.label}</span>
+            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+              item.ok
+                ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                : "bg-rose-50 text-rose-700 border-rose-100"
+            }`}>
+              <span className={`w-1 h-1 rounded-full ${item.ok ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
+              {item.ok ? item.okText : item.failText}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-slate-100 pt-2.5 mt-2.5 space-y-1.5 text-[10px] text-slate-400">
+        <div className="flex justify-between">
+          <span>Last Webhook:</span>
+          <span className="font-bold text-slate-600">{lastWebhook}</span>
         </div>
-      ))}
+        <div className="flex justify-between">
+          <span>Pending Messages:</span>
+          <span className="font-bold text-slate-600">{healthTelemetry?.pendingMessages ?? 0}</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -251,8 +269,7 @@ function SystemStatus({
 export default function OverviewPanel({
   leads,
   calendarData,
-  backendOnline,
-  waStatus,
+  healthTelemetry,
   auditLogs,
   onNavigate,
 }: OverviewPanelProps) {
@@ -350,23 +367,23 @@ export default function OverviewPanel({
         </div>
         <div className="flex items-center gap-2">
           <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-full border ${
-            waStatus?.status === "connected"
+            healthTelemetry?.bhashConnected
               ? "bg-emerald-50 text-emerald-700 border-emerald-100"
               : "bg-rose-50 text-rose-700 border-rose-100"
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${waStatus?.status === "connected" ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
-            WhatsApp {waStatus?.status === "connected" ? "Live" : "Offline"}
+            <span className={`w-1.5 h-1.5 rounded-full ${healthTelemetry?.bhashConnected ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
+            WhatsApp {healthTelemetry?.bhashConnected ? "Live" : "Offline"}
           </span>
         </div>
       </div>
 
       {/* Offline Banner */}
-      {!backendOnline && (
+      {healthTelemetry && !healthTelemetry.supabaseConnected && (
         <div className="flex items-center gap-3 bg-rose-50 border border-rose-200 rounded-2xl p-4 text-rose-700">
           <AlertCircle size={18} className="shrink-0" />
           <div>
-            <p className="text-sm font-bold">Backend Offline</p>
-            <p className="text-xs font-medium mt-0.5 opacity-80">Cannot reach the API server. Data shown may be stale.</p>
+            <p className="text-sm font-bold">Supabase Database Disconnected</p>
+            <p className="text-xs font-medium mt-0.5 opacity-80">Cannot reach Supabase database. Data shown may be stale.</p>
           </div>
         </div>
       )}
@@ -418,7 +435,7 @@ export default function OverviewPanel({
               <Activity size={14} className="text-slate-500" />
               <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">System Status</h3>
             </div>
-            <SystemStatus waStatus={waStatus} backendOnline={backendOnline} />
+            <SystemStatus healthTelemetry={healthTelemetry} />
           </div>
 
           {/* Quick Stats */}
