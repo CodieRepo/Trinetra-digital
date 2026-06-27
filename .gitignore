@@ -63,3 +63,5 @@ server/data/
 
 # Zip / backup archives
 *.zip
+.vercel
+.env.production
