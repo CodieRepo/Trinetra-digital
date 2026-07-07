@@ -24,8 +24,20 @@ export class BhashSMSProvider implements MessagingProvider {
       
       const cleanedPhone = cleanPhoneNumber(payload.to);
       
-      // Determine if template message
-      let textParam = payload.body;
+      // Translate interactive layouts to plain-text fallback content
+      let textParam = payload.body || "";
+      if (payload.interactiveType === "button" && payload.interactiveButtons) {
+        const buttonsText = payload.interactiveButtons.map((btn, idx) => `[${idx + 1}] ${btn.title}`).join("\n");
+        textParam += `\n\nChoose:\n${buttonsText}`;
+      } else if (payload.interactiveType === "list" && payload.interactiveSections) {
+        const rowsText = payload.interactiveSections.flatMap(sec => 
+          sec.rows.map(row => `- ${row.title} (${row.description || ""})`)
+        ).join("\n");
+        textParam += `\n\nOptions:\n${rowsText}`;
+      } else if (payload.interactiveType === "flow") {
+        textParam += `\n\n(Link: Please book consultation on our website)`;
+      }
+      
       let extraParams = "";
       
       if (payload.templateName) {
@@ -37,7 +49,7 @@ export class BhashSMSProvider implements MessagingProvider {
       
       const encodedText = encodeURIComponent(textParam);
       
-      // Determine if media message (Phase 4 / 6)
+      // Determine media type
       let htype = "normal";
       let mediaUrlParam = "";
       
@@ -48,18 +60,15 @@ export class BhashSMSProvider implements MessagingProvider {
         } else if (type.includes("video")) {
           htype = "video";
         } else {
-          htype = "document"; // Default fallback
+          htype = "document";
         }
         mediaUrlParam = `&htype=${htype}&url=${encodeURIComponent(payload.mediaUrl)}`;
-      } else {
-        htype = "normal";
       }
       
       // Build BhashSMS GET request URL
-      // If a template is sent, stype=normal, htype is omit or normal.
       const url = `http://bhashsms.com/api/sendmsg.php?user=${user}&pass=${pass}&sender=${sender}&phone=${cleanedPhone}&text=${encodedText}&priority=wa&stype=normal&htype=${htype}${extraParams}${mediaUrlParam}`;
       
-      console.log(`📡 Sending BhashSMS GET request: http://bhashsms.com/api/sendmsg.php?user=${user}&pass=******&sender=${sender}&phone=${cleanedPhone}&priority=wa&stype=normal&htype=${htype}`);
+      console.log(`📡 Sending BhashSMS GET request: http://bhashsms.com/api/sendmsg.php?user=${user}&pass=******&sender=${sender}&phone=${cleanedPhone}`);
       
       const response = await fetch(url, {
         method: "GET"

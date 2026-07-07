@@ -1,7 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import crypto from "crypto";
+import { getMessagingProvider } from "../../../../services/messaging";
+import { processRuleEngine } from "../../../../services/messaging/ruleEngine";
+import { queueBookingWorkflow } from "../../../../services/messaging/workflowEngine";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -10,6 +15,28 @@ function getSupabaseAdmin() {
     throw new Error("Supabase URL and Service Role Key are required environment variables");
   }
   return createClient(url, key);
+}
+
+function verifyMetaSignature(rawBody: string, signature: string | null, appSecret: string): boolean {
+  if (!signature) {
+    console.error("Signature verification failed: Missing x-hub-signature-256 header");
+    return false;
+  }
+  if (!signature.startsWith("sha256=")) {
+    console.error("Signature verification failed: Invalid signature format (expected sha256=)");
+    return false;
+  }
+  const expectedSignature = signature.substring(7);
+  const hmac = crypto.createHmac("sha256", appSecret);
+  const calculatedSignature = hmac.update(rawBody).digest("hex");
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(calculatedSignature, "utf-8"),
+      Buffer.from(expectedSignature, "utf-8")
+    );
+  } catch (e) {
+    return false;
+  }
 }
 
 /**
@@ -26,10 +53,16 @@ export async function GET(request: Request) {
     if (mode && token) {
       if (mode === "subscribe" && token === (process.env.WEBHOOK_VERIFY_TOKEN || "trinetra_token")) {
         console.log("WhatsApp Webhook verified successfully.");
-        return new Response(challenge, { status: 200 });
+        return new Response(challenge, { 
+          status: 200, 
+          headers: { "Content-Type": "text/plain" } 
+        });
       } else {
         console.warn("WhatsApp Webhook verify token mismatch.");
-        return new Response("Forbidden", { status: 403 });
+        return new Response("Forbidden", { 
+          status: 403, 
+          headers: { "Content-Type": "text/plain" } 
+        });
       }
     }
     return new Response("OK", { status: 200 });
@@ -50,7 +83,20 @@ export async function POST(request: Request) {
     // 1. Dynamic Tenant Resolution (Query Params, Headers, or Fallback)
     let tenantId = searchParams.get("tenant_id") || searchParams.get("tenant_slug");
     
+    const signature = request.headers.get("x-hub-signature-256");
     const rawBody = await request.text();
+
+    // Verify webhook signature if secret configured
+    const appSecret = process.env.META_APP_SECRET;
+    if (appSecret) {
+      if (!verifyMetaSignature(rawBody, signature, appSecret)) {
+        console.error("Webhook signature verification failed.");
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      }
+    } else {
+      console.warn("META_APP_SECRET not configured, skipping signature verification.");
+    }
+
     const payload = JSON.parse(rawBody);
     
     // If not uuid, treat as tenant slug mapping
@@ -226,7 +272,7 @@ export async function POST(request: Request) {
       // Look up or create Conversation
       let { data: conversation, error: convError } = await supabaseAdmin
         .from("conversations")
-        .select("id")
+        .select("id, active_flow, flow_state, flow_version")
         .eq("contact_id", dbContact.id)
         .eq("tenant_id", tenantId)
         .maybeSingle();
@@ -245,7 +291,7 @@ export async function POST(request: Request) {
             status: "active",
             last_message_at: timestamp
           })
-          .select("id")
+          .select("id, active_flow, flow_state, flow_version")
           .single();
 
         if (createConvError || !newConv) {
@@ -290,6 +336,99 @@ export async function POST(request: Request) {
         });
       } catch (e) {
         console.error("Failed to write notification:", e);
+      }
+
+      // ── PRIORITY MATCHING RULE ENGINE ──
+      let replyText = "";
+      let stateUpdate = null;
+      let triggerWorkflow = false;
+      let workflowPayload = undefined;
+
+      try {
+        const ruleResult = await processRuleEngine(
+          tenantId,
+          dbContact.id,
+          conversation.active_flow,
+          conversation.flow_state,
+          messageBody,
+          "text", // default type
+          null, // payload
+          supabaseAdmin
+        );
+        replyText = ruleResult.replyText;
+        stateUpdate = ruleResult.stateUpdate;
+        triggerWorkflow = ruleResult.triggerWorkflow;
+        workflowPayload = ruleResult.workflowPayload;
+      } catch (ruleErr) {
+        console.error("Rule Engine execution failed:", ruleErr);
+        replyText = "Thanks for your message! Our team will contact you shortly.";
+      }
+
+      // Persist conversation flow state updates
+      if (stateUpdate) {
+        await supabaseAdmin
+          .from("conversations")
+          .update({
+            active_flow: stateUpdate.active_flow,
+            flow_state: stateUpdate.flow_state
+          })
+          .eq("id", conversation.id);
+      }
+
+      // Dispatch asynchronous workflows
+      if (triggerWorkflow && workflowPayload) {
+        try {
+          await queueBookingWorkflow(tenantId, dbContact.id, workflowPayload, supabaseAdmin);
+        } catch (workErr) {
+          console.error("Failed to queue booking workflow:", workErr);
+        }
+      }
+
+      // Send automated response via Messaging Provider (Meta Cloud API)
+      try {
+        const { data: tenant } = await supabaseAdmin
+          .from("tenants")
+          .select("whatsapp_phone_number_id, whatsapp_access_token_encrypted")
+          .eq("id", tenantId)
+          .single();
+
+        const phoneNumberId = tenant?.whatsapp_phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID;
+        const accessToken = tenant?.whatsapp_access_token_encrypted || process.env.META_PERMANENT_ACCESS_TOKEN;
+
+        if (phoneNumberId && accessToken && replyText) {
+          const provider = getMessagingProvider("meta");
+          console.log(`Sending automated response to ${senderPhone}...`);
+          const sendResult = await provider.sendMessage({
+            to: senderPhone,
+            body: replyText,
+            tenantId: tenantId,
+            credentials: {
+              phoneNumberId,
+              accessToken
+            }
+          });
+
+          if (sendResult.success && sendResult.providerMessageId) {
+            console.log(`Response sent successfully. Message ID: ${sendResult.providerMessageId}`);
+            // Log outbound reply to database
+            await supabaseAdmin
+              .from("messages")
+              .insert({
+                tenant_id: tenantId,
+                conversation_id: conversation.id,
+                direction: "outbound",
+                body: replyText,
+                status: "sent",
+                meta_message_id: sendResult.providerMessageId
+              });
+          } else {
+            console.error("Outbound dispatch failed:", sendResult.errorMessage);
+          }
+        } else {
+          console.warn("Meta credentials missing, skipping response dispatch.");
+        }
+      } catch (e) {
+        console.error("Error executing outbound response dispatch:", e);
       }
 
       return NextResponse.json({ success: true, message: "Message processed successfully." });

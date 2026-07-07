@@ -8,11 +8,17 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { leadId, body: messageBody, mediaUrl, mediaType, templateName, templateParams } = body;
+    const { leadId, to: rawToPhone, body: messageBody, mediaUrl, mediaType, templateName, templateParams } = body;
 
-    if (!leadId || (!messageBody && !mediaUrl && !templateName)) {
+    if (!leadId && !rawToPhone) {
       return NextResponse.json(
-        { error: "leadId and at least one content field (body, mediaUrl, or templateName) are required." },
+        { error: "Either leadId or to field is required." },
+        { status: 400 }
+      );
+    }
+    if (!messageBody && !mediaUrl && !templateName) {
+      return NextResponse.json(
+        { error: "At least one content field (body, mediaUrl, or templateName) is required." },
         { status: 400 }
       );
     }
@@ -52,21 +58,57 @@ export async function POST(request: Request) {
 
     const tenantId = profile.tenant_id;
 
-    // 3. Query the contact details to get the recipient phone number
-    const { data: contact, error: contactError } = await supabase
-      .from("contacts")
-      .select("phone, name")
-      .eq("id", leadId)
-      .eq("tenant_id", tenantId)
-      .single();
+    // 3. Resolve recipient phone and target leadId
+    let targetLeadId = leadId;
+    let recipientPhone = rawToPhone || "";
 
-    if (contactError || !contact) {
-      return NextResponse.json({ error: "Lead not found or access denied." }, { status: 404 });
+    if (targetLeadId) {
+      const { data: contact, error: contactError } = await supabase
+        .from("contacts")
+        .select("phone, name")
+        .eq("id", targetLeadId)
+        .eq("tenant_id", tenantId)
+        .single();
+
+      if (contactError || !contact) {
+        return NextResponse.json({ error: "Lead not found or access denied." }, { status: 404 });
+      }
+      recipientPhone = contact.phone;
+    } else if (rawToPhone) {
+      // Find or create lead contact for the raw phone number
+      const { data: existingContact } = await supabase
+        .from("contacts")
+        .select("id, name")
+        .eq("phone", rawToPhone)
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+
+      if (existingContact) {
+        targetLeadId = existingContact.id;
+      } else {
+        const { data: newContact, error: createError } = await supabase
+          .from("contacts")
+          .insert({
+            tenant_id: tenantId,
+            name: `Diagnostic User (${rawToPhone})`,
+            phone: rawToPhone,
+            status: "new"
+          })
+          .select("id, name")
+          .single();
+
+        if (!createError && newContact) {
+          targetLeadId = newContact.id;
+        }
+      }
     }
 
-    const rawPhone = contact.phone;
-    // Clean phone number (strip spaces, symbols, and leading + for Meta API)
-    const toPhone = rawPhone.replace(/\+/g, "").replace(/\s/g, "").replace(/-/g, "").trim();
+
+    if (!targetLeadId) {
+      return NextResponse.json({ error: "Could not resolve or create Contact." }, { status: 500 });
+    }
+
+    const toPhone = recipientPhone.replace(/\+/g, "").replace(/\s/g, "").replace(/-/g, "").trim();
 
     // 4. Retrieve tenant WhatsApp credentials (fallback to environment variables)
     const { data: tenant } = await supabase
@@ -90,7 +132,7 @@ export async function POST(request: Request) {
     let { data: conversation, error: convError } = await supabase
       .from("conversations")
       .select("id")
-      .eq("contact_id", leadId)
+      .eq("contact_id", targetLeadId)
       .maybeSingle();
 
     if (convError) {
@@ -102,7 +144,7 @@ export async function POST(request: Request) {
         .from("conversations")
         .insert({
           tenant_id: tenantId,
-          contact_id: leadId,
+          contact_id: targetLeadId,
           status: "active"
         })
         .select("id")
@@ -113,6 +155,7 @@ export async function POST(request: Request) {
       }
       conversation = newConv;
     }
+
 
     // 6. Insert message with 'queued' status
     const { data: dbMessage, error: msgInsertError } = await supabase

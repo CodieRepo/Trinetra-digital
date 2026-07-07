@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, MessageSquare, Users, TrendingUp, Calendar,
   Megaphone, Zap, BarChart3, FileText, Settings, LogOut,
-  Menu, X, Shield, Loader2, RefreshCw
+  Menu, X, Shield, Loader2, RefreshCw, Activity
 } from "lucide-react";
 import { useDashboard } from "../../hooks/useApi";
 import { ToastProvider } from "../../components/ui/Toast";
@@ -32,13 +32,14 @@ const AutomationsPanel = lazy(() => import("./panels/AutomationsPanel"));
 const ReportsPanel     = lazy(() => import("./panels/ReportsPanel"));
 const TemplatesPanel   = lazy(() => import("./panels/TemplatesPanel"));
 const SettingsPanel    = lazy(() => import("./panels/SettingsPanel"));
+const DiagnosticsPanel = lazy(() => import("./panels/DiagnosticsPanel"));
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type ViewSection =
   | "overview" | "conversations" | "leads"
   | "pipelines" | "conversions" | "campaigns"
-  | "automations" | "reports" | "templates" | "settings" | "qr";
+  | "automations" | "reports" | "templates" | "settings" | "qr" | "diagnostics";
 
 // ── Sidebar Nav Config ────────────────────────────────────────────────────────
 
@@ -58,6 +59,7 @@ const NAV_ITEMS: Array<{
   { key: "templates",      label: "Templates",     icon: <FileText size={16} />,        group: "growth" },
   { key: "reports",        label: "Reports",       icon: <BarChart3 size={16} />,       group: "growth" },
   { key: "settings",       label: "Settings",      icon: <Settings size={16} />,        group: "system" },
+  { key: "diagnostics",    label: "Meta Test",     icon: <Activity size={16} />,        group: "system" },
 ];
 
 const GROUP_LABELS: Record<string, string> = {
@@ -356,6 +358,10 @@ export default function AdminCrm() {
       case "settings":
         return (
           <SettingsPanel />
+        );
+      case "diagnostics":
+        return (
+          <DiagnosticsPanel />
         );
       default:
         return null;
