@@ -1067,8 +1067,136 @@ export const apiService = {
     },
   },
 
+  // Templates CRUD (Supabase Integrated)
+  templates: {
+    list: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('templates')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      return (data || []).map(mapDbTemplateToTemplate);
+    },
+    create: async (tpl: any) => {
+      const supabase = createClient();
+      const tenantId = await getTenantId();
+      
+      const serializedBody = JSON.stringify({
+        header: tpl.header || "",
+        body: tpl.body,
+        footer: tpl.footer || "",
+        buttons: tpl.buttons || []
+      });
+
+      const { data, error } = await supabase
+        .from('templates')
+        .insert({
+          tenant_id: tenantId,
+          name: tpl.name,
+          category: tpl.category || 'utility',
+          language: tpl.language || 'en',
+          body: serializedBody,
+          status: tpl.status || 'approved'
+        })
+        .select('*')
+        .single();
+        
+      if (error) throw error;
+      return mapDbTemplateToTemplate(data);
+    },
+    delete: async (id: string) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('templates')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      return { success: true };
+    },
+    sync: async () => {
+      const supabase = createClient();
+      const { data: existing } = await supabase.from('templates').select('id').limit(1);
+      
+      if (!existing || existing.length === 0) {
+        const starter = [
+          {
+            name: "welcome_new_lead",
+            category: "marketing",
+            language: "en",
+            status: "approved",
+            header: "Welcome to Trinetra Digital! 🎉",
+            body: "Hello {{1}}! Thank you for reaching out to us. We help businesses grow with WhatsApp automation, CRM, and digital marketing.\n\nOur team will get back to you shortly. Meanwhile, explore our services at trinetradigitalsolution.com",
+            footer: "Trinetra Digital Solutions",
+            buttons: ["Visit Website", "Talk to Team"]
+          },
+          {
+            name: "appointment_reminder",
+            category: "utility",
+            language: "en",
+            status: "approved",
+            header: "Appointment Reminder 📅",
+            body: "Hello {{1}}! This is a reminder about your appointment scheduled on *{{2}}* at *{{3}}*.\n\nPlease confirm your attendance by replying YES or contact us to reschedule.",
+            footer: "Trinetra Digital Solutions",
+            buttons: []
+          },
+          {
+            name: "quotation_followup",
+            category: "marketing",
+            language: "en",
+            status: "approved",
+            header: "",
+            body: "Hello {{1}}! We wanted to follow up on the quotation we sent for *{{2}}*.\n\nHave you had a chance to review it? We'd love to answer any questions and help you get started.\n\nReply to this message or call us anytime!",
+            footer: "",
+            buttons: []
+          }
+        ];
+        
+        for (const tpl of starter) {
+          await apiService.templates.create(tpl);
+        }
+      }
+      
+      const { data } = await supabase.from('templates').select('*').order('created_at', { ascending: false });
+      return (data || []).map(mapDbTemplateToTemplate);
+    }
+  },
+
   // Health and Telemetry
   health: {
     get: async () => request<SystemHealth>("/health")
   }
 };
+
+function mapDbTemplateToTemplate(dbTpl: any): any {
+  let header = "";
+  let body = dbTpl.body;
+  let footer = "";
+  let buttons: string[] = [];
+
+  try {
+    if (dbTpl.body && dbTpl.body.trim().startsWith("{")) {
+      const parsed = JSON.parse(dbTpl.body);
+      header = parsed.header || "";
+      body = parsed.body || dbTpl.body;
+      footer = parsed.footer || "";
+      buttons = parsed.buttons || [];
+    }
+  } catch (e) {}
+
+  return {
+    id: dbTpl.id,
+    name: dbTpl.name,
+    category: dbTpl.category || "utility",
+    language: dbTpl.language || "en",
+    status: dbTpl.status || "approved",
+    body: body,
+    header: header || undefined,
+    footer: footer || undefined,
+    buttons: buttons.length > 0 ? buttons : undefined,
+    usedCount: 0,
+    createdAt: dbTpl.created_at
+  };
+}

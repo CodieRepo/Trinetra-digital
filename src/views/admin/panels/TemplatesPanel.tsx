@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Plus, MessageSquare, Copy, CheckCircle2, Clock, AlertCircle,
-  Edit2, Trash2, Eye
+  Edit2, Trash2, Eye, RefreshCw
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { Modal, ConfirmDialog } from "@/components/ui/Modal";
+import { apiService } from "@/services/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -47,45 +48,7 @@ const CAT_COLORS: Record<string, string> = {
   authentication: "bg-amber-50  text-amber-700",
 };
 
-// ── Starter Templates ─────────────────────────────────────────────────────────
 
-const STARTER_TEMPLATES: Template[] = [
-  {
-    id: "tpl-1",
-    name: "welcome_new_lead",
-    category: "marketing",
-    language: "en",
-    status: "draft",
-    header: "Welcome to Trinetra Digital! 🎉",
-    body: "Hello {{1}}! Thank you for reaching out to us. We help businesses grow with WhatsApp automation, CRM, and digital marketing.\n\nOur team will get back to you shortly. Meanwhile, explore our services at trinetradigitalsolution.com",
-    footer: "Trinetra Digital Solutions",
-    buttons: ["Visit Website", "Talk to Team"],
-    usedCount: 0,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "tpl-2",
-    name: "appointment_reminder",
-    category: "utility",
-    language: "en",
-    status: "draft",
-    header: "Appointment Reminder 📅",
-    body: "Hello {{1}}! This is a reminder about your appointment scheduled on *{{2}}* at *{{3}}*.\n\nPlease confirm your attendance by replying YES or contact us to reschedule.",
-    footer: "Trinetra Digital Solutions",
-    usedCount: 0,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "tpl-3",
-    name: "quotation_followup",
-    category: "marketing",
-    language: "en",
-    status: "draft",
-    body: "Hello {{1}}! We wanted to follow up on the quotation we sent for *{{2}}*.\n\nHave you had a chance to review it? We'd love to answer any questions and help you get started.\n\nReply to this message or call us anytime!",
-    usedCount: 0,
-    createdAt: new Date().toISOString(),
-  },
-];
 
 // ── Template Card ─────────────────────────────────────────────────────────────
 
@@ -296,10 +259,27 @@ function CreateTemplateModal({ open, onClose, onCreate }: {
 
 export default function TemplatesPanel() {
   const { success } = useToast();
-  const [templates, setTemplates] = useState<Template[]>(STARTER_TEMPLATES);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewTemplate, setViewTemplate] = useState<Template | null>(null);
+
+  const loadTemplates = async () => {
+    setLoading(true);
+    try {
+      const list = await apiService.templates.sync();
+      setTemplates(list);
+    } catch (e) {
+      console.error("Failed loading templates:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
 
   return (
     <div className="space-y-6 pb-6">
@@ -307,7 +287,9 @@ export default function TemplatesPanel() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-black text-slate-900">Message Templates</h1>
-          <p className="text-xs text-slate-400 mt-0.5">{templates.length} templates · {templates.filter(t => t.status === "approved").length} approved</p>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {loading ? "Loading..." : `${templates.length} templates · ${templates.filter(t => t.status === "approved").length} approved`}
+          </p>
         </div>
         <button
           onClick={() => setCreateOpen(true)}
@@ -331,7 +313,11 @@ export default function TemplatesPanel() {
       </div>
 
       {/* Grid */}
-      {templates.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <RefreshCw size={24} className="animate-spin text-slate-400" />
+        </div>
+      ) : templates.length === 0 ? (
         <div className="bg-white border border-slate-200/80 rounded-2xl py-20 text-center">
           <MessageSquare size={32} className="mx-auto mb-3 text-slate-300" />
           <p className="font-bold text-slate-600 text-sm">No templates yet</p>
@@ -356,16 +342,30 @@ export default function TemplatesPanel() {
       <CreateTemplateModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        onCreate={t => { setTemplates(prev => [t, ...prev]); success("Template saved", t.name); }}
+        onCreate={async (t) => {
+          try {
+            await apiService.templates.create(t);
+            loadTemplates();
+            success("Template saved", t.name);
+          } catch (e) {
+            console.error(e);
+          }
+        }}
       />
 
       <ConfirmDialog
         open={!!deleteId}
         onClose={() => setDeleteId(null)}
-        onConfirm={() => {
-          setTemplates(prev => prev.filter(t => t.id !== deleteId));
-          setDeleteId(null);
-          success("Deleted", "Template removed");
+        onConfirm={async () => {
+          if (!deleteId) return;
+          try {
+            await apiService.templates.delete(deleteId);
+            setDeleteId(null);
+            loadTemplates();
+            success("Deleted", "Template removed");
+          } catch (e) {
+            console.error(e);
+          }
         }}
         title="Delete Template"
         message="This template will be permanently deleted and removed from any automations using it."
