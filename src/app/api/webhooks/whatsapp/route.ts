@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import crypto from "crypto";
 import { getMessagingProvider } from "../../../../services/messaging";
 import { processRuleEngine } from "../../../../services/messaging/ruleEngine";
 import { queueBookingWorkflow } from "../../../../services/messaging/workflowEngine";
@@ -17,27 +16,6 @@ function getSupabaseAdmin() {
   return createClient(url, key);
 }
 
-function verifyMetaSignature(rawBody: string, signature: string | null, appSecret: string): boolean {
-  if (!signature) {
-    console.error("Signature verification failed: Missing x-hub-signature-256 header");
-    return false;
-  }
-  if (!signature.startsWith("sha256=")) {
-    console.error("Signature verification failed: Invalid signature format (expected sha256=)");
-    return false;
-  }
-  const expectedSignature = signature.substring(7);
-  const hmac = crypto.createHmac("sha256", appSecret);
-  const calculatedSignature = hmac.update(rawBody).digest("hex");
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(calculatedSignature, "utf-8"),
-      Buffer.from(expectedSignature, "utf-8")
-    );
-  } catch (e) {
-    return false;
-  }
-}
 
 /**
  * GET: Webhook Verification Handshake
@@ -83,20 +61,7 @@ export async function POST(request: Request) {
     // 1. Dynamic Tenant Resolution (Query Params, Headers, or Fallback)
     let tenantId = searchParams.get("tenant_id") || searchParams.get("tenant_slug");
     
-    const signature = request.headers.get("x-hub-signature-256");
     const rawBody = await request.text();
-
-    // Verify webhook signature if secret configured
-    const appSecret = process.env.META_APP_SECRET;
-    if (appSecret) {
-      if (!verifyMetaSignature(rawBody, signature, appSecret)) {
-        console.error("Webhook signature verification failed.");
-        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-      }
-    } else {
-      console.warn("META_APP_SECRET not configured, skipping signature verification.");
-    }
-
     const payload = JSON.parse(rawBody);
     
     // If not uuid, treat as tenant slug mapping
@@ -384,7 +349,7 @@ export async function POST(request: Request) {
         }
       }
 
-      // Send automated response via Messaging Provider (Meta Cloud API)
+      // Send automated response via Messaging Provider (BhashSMS REST API)
       try {
         const { data: tenant } = await supabaseAdmin
           .from("tenants")
@@ -392,19 +357,20 @@ export async function POST(request: Request) {
           .eq("id", tenantId)
           .single();
 
-        const phoneNumberId = tenant?.whatsapp_phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID;
-        const accessToken = tenant?.whatsapp_access_token_encrypted || process.env.META_PERMANENT_ACCESS_TOKEN;
+        const phoneNumberId = tenant?.whatsapp_phone_number_id || process.env.BHASHSMS_USER || "Trinetra";
+        const accessToken = tenant?.whatsapp_access_token_encrypted || process.env.BHASHSMS_PASS;
 
-        if (phoneNumberId && accessToken && replyText) {
-          const provider = getMessagingProvider("meta");
-          console.log(`Sending automated response to ${senderPhone}...`);
+        if (accessToken && replyText) {
+          const provider = getMessagingProvider("bhashsms");
+          console.log(`Sending automated response to ${senderPhone} via BhashSMS...`);
           const sendResult = await provider.sendMessage({
             to: senderPhone,
             body: replyText,
             tenantId: tenantId,
             credentials: {
-              phoneNumberId,
-              accessToken
+              apiKey: accessToken,
+              phoneNumberId: phoneNumberId,
+              accessToken: accessToken
             }
           });
 
@@ -425,7 +391,7 @@ export async function POST(request: Request) {
             console.error("Outbound dispatch failed:", sendResult.errorMessage);
           }
         } else {
-          console.warn("Meta credentials missing, skipping response dispatch.");
+          console.warn("BhashSMS credentials missing, skipping response dispatch.");
         }
       } catch (e) {
         console.error("Error executing outbound response dispatch:", e);

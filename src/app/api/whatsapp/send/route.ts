@@ -118,12 +118,12 @@ export async function POST(request: Request) {
       .single();
 
     // Decrypted access token logic fallback
-    const phoneNumberId = tenant?.whatsapp_phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID;
-    const accessToken = tenant?.whatsapp_access_token_encrypted || process.env.META_PERMANENT_ACCESS_TOKEN;
+    const phoneNumberId = tenant?.whatsapp_phone_number_id || process.env.BHASHSMS_USER || "Trinetra";
+    const accessToken = tenant?.whatsapp_access_token_encrypted || process.env.BHASHSMS_PASS;
 
-    if (!phoneNumberId || !accessToken) {
+    if (!accessToken) {
       return NextResponse.json(
-        { error: "WhatsApp credentials not configured for this tenant." },
+        { error: "BhashSMS credentials not configured for this tenant." },
         { status: 500 }
       );
     }
@@ -178,9 +178,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to queue outbound message." }, { status: 500 });
     }
 
-    // 7. Make outbound request using our Provider Factory
-    const providerType = (tenant as any)?.provider_type || process.env.WHATSAPP_PROVIDER || "bhashsms";
-    const provider = getMessagingProvider(providerType);
+    // 7. Make outbound request using BhashSMS Provider
+    const provider = getMessagingProvider("bhashsms");
     
     const sendResult = await provider.sendMessage({
       to: toPhone,
@@ -198,7 +197,7 @@ export async function POST(request: Request) {
     });
 
     if (!sendResult.success) {
-      console.error(`${providerType} returned error:`, sendResult.errorMessage);
+      console.error("BhashSMS returned error:", sendResult.errorMessage);
       
       await supabase
         .from("messages")
@@ -249,7 +248,7 @@ export async function POST(request: Request) {
       await supabase.from("message_events").insert({
         meta_message_id: metaMessageId,
         event_type: "send_attempt",
-        payload: { provider: providerType, recipient: toPhone, body: messageBody, result: sendResult }
+        payload: { provider: "bhashsms", recipient: toPhone, body: messageBody, result: sendResult }
       });
     } catch (e) {
       console.error("Failed writing message_event record:", e);

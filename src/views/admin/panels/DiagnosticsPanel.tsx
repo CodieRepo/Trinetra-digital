@@ -33,7 +33,7 @@ export default function DiagnosticsPanel() {
     setLoadingHealth(true);
     setHealthError(null);
     try {
-      const res = await fetch("/api/health/meta");
+      const res = await fetch("/api/health/bhash");
       const data = await res.json();
       setHealth(data);
       if (!res.ok) {
@@ -130,9 +130,9 @@ export default function DiagnosticsPanel() {
         <div>
           <h1 className="text-2xl font-black text-slate-800 flex items-center gap-2">
             <Activity className="text-indigo-600" />
-            Meta Cloud API Diagnostics
+            Bhash Diagnostics
           </h1>
-          <p className="text-slate-500 text-sm">Verify connections, send direct pings, and view raw webhook integrations.</p>
+          <p className="text-slate-500 text-sm">Verify BhashSMS credentials, check connection, and view raw webhook logs.</p>
         </div>
         <button 
           onClick={() => { fetchHealth(); fetchWebhookLogs(); }}
@@ -181,33 +181,100 @@ export default function DiagnosticsPanel() {
                     </div>
                   </div>
 
-                  {/* Graph API */}
+                  {/* Bhash API connectivity */}
                   <div className="border border-slate-100 rounded-xl p-4 flex items-start gap-3">
-                    <Globe className={health.checks.graphApiReachable ? "text-emerald-500" : "text-rose-500"} size={20} />
+                    <Globe className={health.checks.connectivity ? "text-emerald-500" : "text-rose-500"} size={20} />
                     <div>
-                      <div className="text-xs font-bold text-slate-500 uppercase">Meta Graph API</div>
-                      <div className="text-sm font-black text-slate-800">{health.checks.graphApiReachable ? "Reachable" : "Unreachable"}</div>
-                      <div className="text-[11px] text-slate-400 mt-1">{health.details.accessToken}</div>
+                      <div className="text-xs font-bold text-slate-500 uppercase">Bhash API Connectivity</div>
+                      <div className="text-sm font-black text-slate-800">{health.checks.connectivity ? "Connected" : "Disconnected"}</div>
+                      <div className="text-[11px] text-slate-400 mt-1">{health.details.bhashApi}</div>
                     </div>
                   </div>
 
-                  {/* Phone Number ID */}
+                  {/* API Credentials */}
                   <div className="border border-slate-100 rounded-xl p-4 flex items-start gap-3">
-                    <Activity className={health.checks.phoneConnected ? "text-emerald-500" : "text-rose-500"} size={20} />
+                    <Activity className={health.checks.apiKeyValid ? "text-emerald-500" : "text-rose-500"} size={20} />
                     <div>
-                      <div className="text-xs font-bold text-slate-500 uppercase">Phone Number ID</div>
-                      <div className="text-sm font-black text-slate-800">{health.checks.phoneConnected ? "Verified" : "Invalid"}</div>
-                      <div className="text-[11px] text-slate-400 mt-1">{health.details.phoneNumber}</div>
+                      <div className="text-xs font-bold text-slate-500 uppercase">API Credentials</div>
+                      <div className="text-sm font-black text-slate-800">{health.checks.apiKeyValid ? "Valid" : "Invalid"}</div>
+                      <div className="text-[11px] text-slate-400 mt-1">{health.details.apiKey}</div>
                     </div>
                   </div>
 
-                  {/* WABA ID */}
+                  {/* Sender ID */}
                   <div className="border border-slate-100 rounded-xl p-4 flex items-start gap-3">
-                    <HardDrive className={health.checks.wabaConnected ? "text-emerald-500" : "text-rose-500"} size={20} />
+                    <HardDrive className="text-indigo-500" size={20} />
                     <div>
-                      <div className="text-xs font-bold text-slate-500 uppercase">WABA Account</div>
-                      <div className="text-sm font-black text-slate-800">{health.checks.wabaConnected ? "Connected" : "Disconnected"}</div>
-                      <div className="text-[11px] text-slate-400 mt-1">{health.details.waba}</div>
+                      <div className="text-xs font-bold text-slate-500 uppercase">Sender ID</div>
+                      <div className="text-sm font-black text-slate-800">Active</div>
+                      <div className="text-[11px] text-slate-400 mt-1">{health.details.senderStatus}</div>
+                    </div>
+                  </div>
+
+                  {/* Webhook Status */}
+                  <div className="border border-slate-100 rounded-xl p-4 flex items-start gap-3">
+                    <Globe className={health.checks.webhookActive ? "text-emerald-500" : "text-rose-500"} size={20} />
+                    <div>
+                      <div className="text-xs font-bold text-slate-500 uppercase">Webhook Status</div>
+                      <div className="text-sm font-black text-slate-800">{health.checks.webhookActive ? "Active" : "Inactive"}</div>
+                      <div className="text-[11px] text-slate-400 mt-1">{health.details.webhookUrl}</div>
+                    </div>
+                  </div>
+
+                  {/* Delivery Callback Status */}
+                  <div className="border border-slate-100 rounded-xl p-4 flex items-start gap-3">
+                    <Activity className="text-emerald-500" size={20} />
+                    <div>
+                      <div className="text-xs font-bold text-slate-500 uppercase">Delivery Callback</div>
+                      <div className="text-sm font-black text-slate-800">Active</div>
+                      <div className="text-[11px] text-slate-400 mt-1">{health.details.deliveryCallback}</div>
+                    </div>
+                  </div>
+
+                  {/* Conversation Credits (Only shown if available) */}
+                  {health.credits !== null && health.credits !== undefined && (
+                    <div className="border border-slate-100 rounded-xl p-4 flex items-start gap-3">
+                      <Database className="text-emerald-500" size={20} />
+                      <div>
+                        <div className="text-xs font-bold text-slate-500 uppercase">Conversation Credits</div>
+                        <div className="text-sm font-black text-slate-800">{health.credits}</div>
+                        <div className="text-[11px] text-slate-400 mt-1">Remaining BhashSMS credits</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rate Limit */}
+                  {health.rateLimit && (
+                    <div className="border border-slate-100 rounded-xl p-4 flex items-start gap-3">
+                      <Clock className="text-indigo-500" size={20} />
+                      <div>
+                        <div className="text-xs font-bold text-slate-500 uppercase">Rate Limit</div>
+                        <div className="text-sm font-black text-slate-800">{health.rateLimit}</div>
+                        <div className="text-[11px] text-slate-400 mt-1">Maximum API velocity</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Webhook and Message Timestamps */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-4 mt-4">
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase">Last Webhook Received</div>
+                    <div className="text-xs text-slate-600 font-medium">
+                      {health.lastWebhookReceived ? new Date(health.lastWebhookReceived).toLocaleString() : "No webhooks received yet"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase">Last Message Outbound Response</div>
+                    <div className="text-xs text-slate-600 font-medium">
+                      {health.lastMessageResponse ? (
+                        <>
+                          {new Date(health.lastMessageResponse).toLocaleString()}
+                          <span className={`ml-2 px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${health.lastMessageStatus === "read" ? "bg-indigo-50 text-indigo-600" : health.lastMessageStatus === "delivered" ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-600"}`}>
+                            {health.lastMessageStatus}
+                          </span>
+                        </>
+                      ) : "No outbound messages sent yet"}
                     </div>
                   </div>
                 </div>

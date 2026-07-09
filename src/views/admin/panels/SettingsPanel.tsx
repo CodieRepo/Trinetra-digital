@@ -39,9 +39,10 @@ export default function SettingsPanel() {
   const [businessName, setBusinessName] = useState("Trinetra Digital Solutions");
   const [notifyEmail, setNotifyEmail] = useState("");
   
-  // WhatsApp settings state
-  const [wabaId, setWabaId] = useState("");
-  const [wabaToken, setWabaToken] = useState("");
+  // WhatsApp / BhashSMS settings state
+  const [bhashUser, setBhashUser] = useState("");
+  const [bhashPass, setBhashPass] = useState("");
+  const [bhashSender, setBhashSender] = useState("");
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,14 +65,15 @@ export default function SettingsPanel() {
           setTenantId(profile.tenant_id);
           const { data: tenant } = await supabase
             .from('tenants')
-            .select('whatsapp_phone_number_id, whatsapp_access_token_encrypted, name')
+            .select('whatsapp_phone_number_id, whatsapp_access_token_encrypted, whatsapp_business_account_id, name')
             .eq('id', profile.tenant_id)
             .single();
             
           if (tenant) {
             setBusinessName(tenant.name || "Trinetra Digital Solutions");
-            setWabaId(tenant.whatsapp_phone_number_id || "");
-            setWabaToken(tenant.whatsapp_access_token_encrypted || "");
+            setBhashUser(tenant.whatsapp_phone_number_id || "");
+            setBhashPass(tenant.whatsapp_access_token_encrypted || "");
+            setBhashSender(tenant.whatsapp_business_account_id || "");
           }
         }
       } catch (e) {
@@ -92,13 +94,14 @@ export default function SettingsPanel() {
         .from('tenants')
         .update({
           name: businessName,
-          whatsapp_phone_number_id: wabaId,
-          whatsapp_access_token_encrypted: wabaToken
+          whatsapp_phone_number_id: bhashUser,
+          whatsapp_access_token_encrypted: bhashPass,
+          whatsapp_business_account_id: bhashSender
         })
         .eq('id', tenantId);
         
       if (error) throw error;
-      success("Settings saved", "Business & WhatsApp configurations updated successfully");
+      success("Settings saved", "Business & BhashSMS configurations updated successfully");
     } catch (e: any) {
       toastError("Save failed", e.message || "Could not save tenant settings");
     } finally {
@@ -132,22 +135,31 @@ export default function SettingsPanel() {
               className="w-full sm:max-w-xs px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             />
           </Field>
-          <Field label="WhatsApp Phone Number ID">
+          <Field label="BhashSMS Username">
             <input
               type="text"
-              value={wabaId}
-              onChange={e => setWabaId(e.target.value)}
-              placeholder="e.g. 10928374656"
+              value={bhashUser}
+              onChange={e => setBhashUser(e.target.value)}
+              placeholder="e.g. TrinetraUser"
               className="w-full sm:max-w-xs px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono"
             />
           </Field>
-          <Field label="WhatsApp / BhashSMS Key">
+          <Field label="BhashSMS Password / API Key">
             <input
               type="password"
-              value={wabaToken}
-              onChange={e => setWabaToken(e.target.value)}
+              value={bhashPass}
+              onChange={e => setBhashPass(e.target.value)}
               placeholder="••••••••••••••••"
               className="w-full sm:max-md px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono"
+            />
+          </Field>
+          <Field label="BhashSMS Sender ID">
+            <input
+              type="text"
+              value={bhashSender}
+              onChange={e => setBhashSender(e.target.value)}
+              placeholder="e.g. BUZWAP"
+              className="w-full sm:max-w-xs px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono"
             />
           </Field>
           <div className="pt-3">
