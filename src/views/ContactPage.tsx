@@ -133,7 +133,7 @@ export default function ContactPage() {
       />
 
       {/* Hero */}
-      <section className="bg-surface-2 pt-20 pb-16 md:pt-28 md:pb-20 border-b border-border">
+      <section className="bg-transparent pt-20 pb-16 md:pt-28 md:pb-20 border-b border-white/5">
         <div className="main-container text-center max-w-[600px]">
           <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mixed-headline-eyebrow">
             Get In Touch
@@ -158,7 +158,7 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Grid */}
-      <section className="bg-surface-2 py-20 md:py-28" aria-label="Contact Information and Form">
+      <section className="bg-transparent py-20 md:py-28" aria-label="Contact Information and Form">
         <div className="main-container grid gap-12 lg:grid-cols-[1fr_1.4fr] lg:items-start">
 
           {/* Left: Contact Details */}
@@ -176,10 +176,10 @@ export default function ContactPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackContact()}
-                  className="group flex items-start gap-4 p-5 bg-white border border-border/80 rounded-xl hover:border-accent/30 hover:shadow-sm transition-all"
+                  className="group flex items-start gap-4 p-5 bg-[#1d2022]/40 border border-white/5 rounded-2xl hover:border-accent/30 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] transition-all"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-                    <MessageCircle size={20} className="fill-emerald-600/10" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+                    <MessageCircle size={20} className="fill-emerald-500/10" />
                   </div>
                   <div>
                     <p className="text-xs font-bold text-ink-1 mb-0.5">WhatsApp (Fastest)</p>
@@ -191,9 +191,9 @@ export default function ContactPage() {
                 <a
                   href={PHONE_TEL}
                   onClick={() => trackContact()}
-                  className="group flex items-start gap-4 p-5 bg-white border border-border/80 rounded-xl hover:border-accent/30 hover:shadow-sm transition-all"
+                  className="group flex items-start gap-4 p-5 bg-[#1d2022]/40 border border-white/5 rounded-2xl hover:border-accent/30 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] transition-all"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-light text-accent">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
                     <Phone size={20} />
                   </div>
                   <div>
@@ -205,9 +205,9 @@ export default function ContactPage() {
 
                 <a
                   href={`mailto:${EMAIL}`}
-                  className="group flex items-start gap-4 p-5 bg-white border border-border/80 rounded-xl hover:border-accent/30 hover:shadow-sm transition-all"
+                  className="group flex items-start gap-4 p-5 bg-[#1d2022]/40 border border-white/5 rounded-2xl hover:border-accent/30 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] transition-all"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-650">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-ink-2">
                     <Mail size={20} />
                   </div>
                   <div>
@@ -220,7 +220,7 @@ export default function ContactPage() {
             </div>
 
             {/* Location */}
-            <div className="flex flex-col gap-3 p-5 bg-white border border-border/80 rounded-xl">
+            <div className="flex flex-col gap-3 p-5 bg-[#1d2022]/40 border border-white/5 rounded-2xl">
               <div className="flex items-center gap-3">
                 <MapPin size={16} className="text-accent shrink-0" />
                 <p className="text-xs font-bold text-ink-1">Gorakhpur, Uttar Pradesh, India</p>
@@ -239,7 +239,7 @@ export default function ContactPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white border border-border/80 rounded-2xl p-8 md:p-10 shadow-xs"
+            className="glass-panel border-white/5 bg-[#1d2022]/30 rounded-2xl p-8 md:p-10 shadow-2xl"
           >
             {succeeded ? (
               /* ── Success State ── */
@@ -248,10 +248,10 @@ export default function ContactPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex flex-col items-center text-center py-8 gap-4"
               >
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400">
                   <CheckCircle size={32} />
                 </div>
-                <h2 className="heading-sm text-ink-1">Message sent!</h2>
+                <h2 className="heading-sm text-white">Message sent!</h2>
                 <p className="text-sm text-ink-2 max-w-[320px]">
                   Thanks for reaching out. We've captured your details and our team will get back to you with a consultation schedule shortly!
                 </p>
@@ -260,7 +260,7 @@ export default function ContactPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackContact()}
-                  className="mt-2 inline-flex items-center gap-2 h-10 rounded-lg bg-slate-900 px-5 text-xs font-bold uppercase tracking-wider text-white hover:bg-slate-800 transition-colors"
+                  className="mt-2 inline-flex items-center gap-2 h-11 rounded-lg bg-accent px-5 text-xs font-bold uppercase tracking-wider text-[#101415] hover:bg-accent-hover glow-hover transition-all"
                 >
                   Chat on WhatsApp too
                 </a>
@@ -268,8 +268,8 @@ export default function ContactPage() {
             ) : (
               /* ── Form ── */
               <>
-                <h2 className="heading-sm text-ink-1 mb-2">Tell us about your business</h2>
-                <p className="text-xs text-ink-3 mb-8">We'll get back within 2 hours on WhatsApp or email.</p>
+                <h2 className="heading-sm text-white mb-2 font-mono uppercase tracking-wider">Tell us about your business</h2>
+                <p className="text-xs text-slate-400 mb-8">We'll get back within 2 hours on WhatsApp or email.</p>
 
                 <form
                   onSubmit={handleSubmit}
@@ -278,7 +278,7 @@ export default function ContactPage() {
                 >
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="flex flex-col gap-1.5">
-                      <label htmlFor="contact-name" className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">Full Name *</label>
+                      <label htmlFor="contact-name" className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Full Name *</label>
                       <input
                         id="contact-name"
                         type="text"
@@ -286,11 +286,11 @@ export default function ContactPage() {
                         required
                         autoComplete="name"
                         placeholder="Rajesh Kumar"
-                        className="h-11 rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                        className="h-11 rounded-lg border border-white/10 bg-[#101415]/60 px-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-all placeholder-slate-500 font-semibold focus:bg-[#101415]/90"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label htmlFor="contact-phone" className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">WhatsApp / Phone Number *</label>
+                      <label htmlFor="contact-phone" className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest block mb-1.5">WhatsApp / Phone Number *</label>
                       <input
                         id="contact-phone"
                         type="tel"
@@ -298,52 +298,52 @@ export default function ContactPage() {
                         required
                         autoComplete="tel"
                         placeholder="+91 98765 43210"
-                        className="h-11 rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                        className="h-11 rounded-lg border border-white/10 bg-[#101415]/60 px-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-all placeholder-slate-500 font-semibold focus:bg-[#101415]/90"
                       />
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="contact-business" className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">Business Name</label>
+                    <label htmlFor="contact-business" className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Business Name</label>
                     <input
                       id="contact-business"
                       type="text"
                       name="business"
                       autoComplete="organization"
                       placeholder="Your Business Name"
-                      className="h-11 rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                      className="h-11 rounded-lg border border-white/10 bg-[#101415]/60 px-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-all placeholder-slate-500 font-semibold focus:bg-[#101415]/90"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="contact-service" className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">Service Interested In *</label>
+                    <label htmlFor="contact-service" className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Service Interested In *</label>
                     <select
                       id="contact-service"
                       name="service"
                       required
                       defaultValue={presetService}
-                      className="h-11 rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all cursor-pointer font-semibold"
+                      className="h-11 rounded-lg border border-white/10 bg-[#101415]/60 px-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-all cursor-pointer font-semibold focus:bg-[#101415]/90"
                     >
-                      <option value="">Select a service…</option>
-                      <option value="Website Development">Website Development</option>
-                      <option value="SEO & Digital Marketing">SEO & Digital Marketing</option>
-                      <option value="Social Media Management">Social Media Management</option>
-                      <option value="Automation & CRM">Automation & CRM</option>
-                      <option value="Custom Software Development">Custom Software Development</option>
-                      <option value="Google Ads / Meta Ads Management">Google Ads / Meta Ads Management</option>
-                      <option value="Growth Package">Growth Package</option>
-                      <option value="Custom Requirement">Custom Requirement</option>
+                      <option value="" className="bg-[#101415] text-white">Select a service…</option>
+                      <option value="Website Development" className="bg-[#101415] text-white">Website Development</option>
+                      <option value="SEO & Digital Marketing" className="bg-[#101415] text-white">SEO & Digital Marketing</option>
+                      <option value="Social Media Management" className="bg-[#101415] text-white">Social Media Management</option>
+                      <option value="Automation & CRM" className="bg-[#101415] text-white">Automation & CRM</option>
+                      <option value="Custom Software Development" className="bg-[#101415] text-white">Custom Software Development</option>
+                      <option value="Google Ads / Meta Ads Management" className="bg-[#101415] text-white">Google Ads / Meta Ads Management</option>
+                      <option value="Growth Package" className="bg-[#101415] text-white">Growth Package</option>
+                      <option value="Custom Requirement" className="bg-[#101415] text-white">Custom Requirement</option>
                     </select>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="contact-message" className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">Tell us about your business</label>
+                    <label htmlFor="contact-message" className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Tell us about your business</label>
                     <textarea
                       id="contact-message"
                       name="message"
                       rows={4}
                       placeholder="What does your business do? How many leads do you get per day? What's your biggest challenge?"
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none"
+                      className="w-full rounded-lg border border-white/10 bg-[#101415]/60 px-3.5 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-all resize-none placeholder-slate-500 font-semibold focus:bg-[#101415]/90"
                     />
                   </div>
 
@@ -353,7 +353,7 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="mt-2 btn-primary-forest w-full disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                    className="mt-2 btn-primary-forest w-full h-11 bg-cta hover:bg-cta-hover text-[#101415] flex items-center justify-center gap-2 cursor-pointer shadow-2xl glow-hover rounded-lg text-xs font-semibold uppercase tracking-wider transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {submitting ? (
                       <><Loader2 size={15} className="animate-spin" /> Sending…</>
@@ -380,16 +380,16 @@ export default function ContactPage() {
       <LocationMap variant="full" />
 
       {/* Related links */}
-      <section className="bg-surface-2 py-12 border-t border-border">
+      <section className="bg-transparent py-12 border-t border-white/5">
         <div className="main-container text-center">
-          <p className="text-xs text-slate-450 mb-4">Explore what we can build for you</p>
+          <p className="text-xs text-ink-3 mb-4">Explore what we can build for you</p>
           <div className="flex flex-wrap gap-3 justify-center">
             {[
               { label: "Website Development", href: "/services/website-development" },
               { label: "SEO & Digital Marketing", href: "/services/digital-marketing" },
               { label: "View All Packages", href: "/pricing" },
             ].map((l) => (
-              <Link key={l.href} to={l.href} className="text-xs font-semibold text-accent border border-accent/20 bg-accent-light px-4 py-2 rounded-full hover:bg-accent-light/80 transition-colors">
+              <Link key={l.href} to={l.href} className="text-xs font-semibold text-accent border border-accent/20 bg-accent/5 px-4 py-2 rounded-full hover:bg-accent/15 transition-colors">
                 {l.label} →
               </Link>
             ))}
@@ -406,8 +406,8 @@ export default function ContactPage() {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl px-5 py-4 shadow-xl backdrop-blur-md border ${
               toast.type === 'success'
-                ? 'bg-emerald-50/95 text-emerald-800 border-emerald-250'
-                : 'bg-red-50/90 text-red-800 border-red-200'
+                ? 'bg-emerald-950/90 text-emerald-200 border-emerald-500/20'
+                : 'bg-red-950/90 text-red-200 border-red-500/20'
             }`}
           >
             <span className="text-xs font-bold uppercase tracking-wider">{toast.message}</span>

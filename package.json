@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@formspree/react": "^3.0.0",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@studio-freight/lenis": "^1.0.42",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.0",
@@ -26,7 +28,8 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.15.1",
     "remark-gfm": "^4.0.1",
-    "tailwind-merge": "3.4.0"
+    "tailwind-merge": "3.4.0",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.17",
@@ -34,6 +37,7 @@
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.185.1",
     "@vitejs/plugin-react": "^5.1.1",
     "postcss": "^8.4.38",
     "sharp": "^0.34.5",

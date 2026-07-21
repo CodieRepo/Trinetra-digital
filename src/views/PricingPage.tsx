@@ -25,7 +25,7 @@ export default function PricingPage() {
       />
 
       {/* Page Hero */}
-      <section className="bg-white pt-20 pb-6 md:pt-28 md:pb-10 border-b border-border">
+      <section className="bg-transparent pt-20 pb-6 md:pt-28 md:pb-10 border-b border-white/5">
         <div className="main-container text-center max-w-[600px]">
           <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mixed-headline-eyebrow">
             Simple, Transparent Pricing
@@ -53,7 +53,7 @@ export default function PricingPage() {
       <Pricing />
 
       {/* FAQ Strip */}
-      <section className="bg-surface-2 py-16 border-t border-border">
+      <section className="bg-transparent py-16 border-t border-white/5">
         <div className="main-container max-w-[680px]">
           <h2 className="heading-md text-ink-1 mb-8 text-center font-semibold">Common questions about pricing</h2>
           <div className="flex flex-col gap-6 text-left">
@@ -63,14 +63,14 @@ export default function PricingPage() {
               { q: "How are milestone payments structured?", a: "For custom developments, we bill 50% upfront to commit server staging and initial design resources, and 50% upon final client sign-off, prior to actual live domain launching." },
               { q: "Is there a long-term contract commitment?", a: "No contract locks. Monthly support options operate on simple month-to-month upfront retainer cycles. You can cancel at any point with a 7-day written notice." },
             ].map((faq, i) => (
-              <div key={i} className="border-b border-border/80 pb-6">
+              <div key={i} className="border-b border-white/5 pb-6">
                 <h3 className="text-sm font-semibold text-ink-1 mb-2">{faq.q}</h3>
                 <p className="text-sm text-ink-2 font-semibold leading-relaxed">{faq.a}</p>
               </div>
             ))}
           </div>
           <div className="mt-10 text-center">
-            <Link to="/contact" className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-cta px-6 text-white hover:bg-cta-hover transition-colors cursor-pointer">
+            <Link to="/contact" className="btn-primary-forest text-xs font-semibold tracking-wider uppercase inline-flex h-11 items-center justify-center rounded-lg bg-cta px-6 text-[#101415] hover:bg-cta-hover glow-hover transition-all cursor-pointer">
               Book Free Consultation — No Commitment
             </Link>
           </div>

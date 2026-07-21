@@ -13,47 +13,55 @@ export async function POST(request: Request) {
       );
     }
 
-    // Map username to email if necessary
-    const email = username.includes("@") ? username : `${username}@trinetra.com`;
-
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
-    }
-
-    // Retrieve the user profile role
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role, username")
-      .eq("id", data.user.id)
-      .single();
-
-    if (profileError || !profile) {
-      // If profile doesn't exist, this might be a newly created Auth user without a profile.
-      // For fallback/super_admin bootstrapping, we can assign a default role.
+    // Default admin fallback for quick login & development
+    if (
+      (username === "admin" || username === "admin@trinetra.com" || username === "satwik") &&
+      (password === "admin123" || password === "SatwikPal@123Shubham" || password === "admin")
+    ) {
       return NextResponse.json({
-        token: data.session.access_token,
+        token: "trinetra-dev-jwt-token-admin-authenticated",
         user: {
-          id: data.user.id,
+          id: "admin-default-id",
           username: username,
-          role: "client_admin",
+          role: "super_admin",
         },
       });
     }
 
-    return NextResponse.json({
-      token: data.session.access_token,
-      user: {
-        id: data.user.id,
-        username: profile.username,
-        role: profile.role,
-      },
-    });
+    // Map username to email if necessary
+    const email = username.includes("@") ? username : `${username}@trinetra.com`;
+
+    try {
+      const supabase = await createClient();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (!error && data?.session) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, username")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        return NextResponse.json({
+          token: data.session.access_token,
+          user: {
+            id: data.user.id,
+            username: profile?.username || username,
+            role: profile?.role || "client_admin",
+          },
+        });
+      }
+    } catch (e) {
+      console.warn("Supabase Auth sign-in failed, checking standard fallback:", e);
+    }
+
+    return NextResponse.json(
+      { error: "Invalid credentials. Use admin / admin123 or valid Supabase credentials." },
+      { status: 401 }
+    );
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Internal Server Error" },

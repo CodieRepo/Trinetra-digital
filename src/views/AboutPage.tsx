@@ -96,7 +96,7 @@ export default function AboutPage() {
       />
 
       {/* Hero */}
-      <section className="bg-white pt-24 pb-20 md:pt-32 md:pb-28 border-b border-border/80">
+      <section className="bg-transparent pt-24 pb-20 md:pt-32 md:pb-28 border-b border-white/5">
         <div className="max-w-[1200px] mx-auto px-4 md:px-10">
           <div className="max-w-[740px] text-left">
             <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mixed-headline-eyebrow">
@@ -114,7 +114,7 @@ export default function AboutPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="flex flex-col gap-5 text-sm sm:text-base text-slate-600 leading-relaxed font-semibold"
+              className="flex flex-col gap-5 text-sm sm:text-base text-ink-2 leading-relaxed font-semibold"
             >
               <p>
                 Trinetra Digital Solution was founded with a clear purpose: to help Indian businesses — especially local businesses, service providers and SMBs — establish a strong digital presence, manage customer inquiries more effectively and operate more efficiently through the right technology.
@@ -134,11 +134,11 @@ export default function AboutPage() {
       </section>
 
       {/* Values */}
-      <section className="bg-[#F8FAFC] py-24 md:py-32 border-b border-border/80" aria-label="Our Values">
+      <section className="bg-transparent py-24 md:py-32 border-b border-white/5" aria-label="Our Values">
         <div className="max-w-[1200px] mx-auto px-4 md:px-10">
           <div className="text-center mb-16 space-y-3">
             <span className="mixed-headline-eyebrow">What We Stand For</span>
-            <h2 className="display-lg text-slate-900 tracking-tight mt-2 max-w-[520px] mx-auto font-display font-bold">
+            <h2 className="display-lg text-ink-1 tracking-tight mt-2 max-w-[520px] mx-auto font-display font-bold">
               Principles that guide every project we deliver
             </h2>
           </div>
@@ -150,13 +150,13 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="flex flex-col gap-4 bg-white border border-border/80 rounded-xl p-6 text-left hover:shadow-xs hover:border-accent transition-all duration-150"
+                className="flex flex-col gap-4 glass-panel border-white/5 rounded-2xl p-6 text-left hover:bg-[#1d2022]/60 hover:border-accent/35 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] transition-all duration-300"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-light text-accent border border-accent/15 shadow-xs">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 text-accent border border-white/5 shadow-xs">
                   {v.icon}
                 </div>
-                <h3 className="text-xs font-bold text-slate-900 font-mono uppercase tracking-wider">{v.title}</h3>
-                <p className="text-[11px] text-slate-600 leading-relaxed font-semibold">{v.desc}</p>
+                <h3 className="text-xs font-bold text-white font-mono uppercase tracking-wider">{v.title}</h3>
+                <p className="text-[11px] text-slate-400 leading-relaxed font-semibold">{v.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -164,7 +164,7 @@ export default function AboutPage() {
       </section>
 
       {/* Stats */}
-      <section className="bg-white py-16 border-b border-border/80">
+      <section className="bg-transparent py-16 border-b border-white/5">
         <div className="max-w-[1200px] mx-auto px-4 md:px-10">
           <div className="grid gap-6 md:grid-cols-3 text-center max-w-4xl mx-auto">
             {[
@@ -172,8 +172,8 @@ export default function AboutPage() {
               { value: "5+", label: "Services Offered", sub: "Website, SEO, Social, CRM, Software" },
               { value: "Gorakhpur", label: "Based In", sub: "Uttar Pradesh, India" },
             ].map((s, i) => (
-              <div key={i} className="flex flex-col items-center justify-center p-6 border-slate-100 last:border-r-0 md:border-r border-b md:border-b-0 pb-8 last:pb-6 md:pb-6">
-                <span className="font-display text-[52px] leading-none text-slate-900 font-semibold mb-2.5 tracking-tight">
+              <div key={i} className="flex flex-col items-center justify-center p-6 border-white/5 last:border-r-0 md:border-r border-b md:border-b-0 pb-8 last:pb-6 md:pb-6">
+                <span className="font-display text-[52px] leading-none text-white font-semibold mb-2.5 tracking-tight">
                   {/^\d/.test(s.value) ? (
                     <>
                       <MetricCounter value={s.value.replace(/[^0-9.]/g, '') || '0'} />
@@ -183,8 +183,8 @@ export default function AboutPage() {
                     s.value
                   )}
                 </span>
-                <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase font-mono mb-1.5">{s.label}</span>
-                {"sub" in s && <span className="text-[10.5px] text-slate-400 font-semibold font-mono">{(s as {sub: string}).sub}</span>}
+                <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase font-mono mb-1.5">{s.label}</span>
+                {"sub" in s && <span className="text-[10.5px] text-ink-3 font-semibold font-mono">{(s as {sub: string}).sub}</span>}
               </div>
             ))}
           </div>
@@ -192,17 +192,17 @@ export default function AboutPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-[#F8FAFC] py-24">
+      <section className="bg-transparent py-24">
         <div className="max-w-[1200px] mx-auto px-4 md:px-10 text-center">
-          <h2 className="display-lg text-slate-900 tracking-tight mb-4 font-display font-bold">Ready to grow your business?</h2>
-          <p className="body-md text-slate-600 mb-8 max-w-[480px] mx-auto font-medium">
+          <h2 className="display-lg text-white tracking-tight mb-4 font-display font-bold">Ready to grow your business?</h2>
+          <p className="body-md text-ink-2 mb-8 max-w-[480px] mx-auto font-medium">
             Book a free consultation and see exactly how Trinetra can help build your online presence, manage your operations and grow your business systematically.
           </p>
           <div className="flex flex-wrap gap-3.5 justify-center">
-            <Link to="/contact" className="btn-primary-forest h-11 px-6 rounded-lg flex items-center justify-center gap-2 bg-cta text-white hover:bg-cta-hover transition-colors font-semibold shadow-sm text-xs uppercase tracking-wider cursor-pointer">
+            <Link to="/contact" className="btn-primary-forest h-11 px-6 rounded-lg flex items-center justify-center gap-2 bg-cta text-[#101415] hover:bg-cta-hover glow-hover transition-colors font-semibold shadow-2xl text-xs uppercase tracking-wider cursor-pointer">
               Book Free Consultation <ArrowRight size={14} />
             </Link>
-            <Link to="/services" className="inline-flex items-center justify-center h-11 px-6 border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors font-semibold rounded-lg text-xs uppercase tracking-wider cursor-pointer shadow-xs">
+            <Link to="/services" className="inline-flex items-center justify-center h-11 px-6 border border-white/5 bg-white/5 text-slate-300 hover:bg-white/10 transition-colors font-semibold rounded-lg text-xs uppercase tracking-wider cursor-pointer shadow-2xl">
               Explore Our Services
             </Link>
           </div>

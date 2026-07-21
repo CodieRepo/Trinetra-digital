@@ -8,8 +8,8 @@ import { BLOG_POSTS } from "../data/blogPosts";
 // Tag colour mapping
 const TAG_STYLES: Record<string, string> = {
   copper: "bg-accent-light text-accent",
-  green:  "bg-emerald-50 text-emerald-700",
-  slate:  "bg-slate-100 text-slate-700",
+  green:  "bg-emerald-500/10 text-emerald-450",
+  slate:  "bg-white/5 text-slate-400 border border-white/5",
 };
 
 // Schema — built dynamically from central data
@@ -44,7 +44,7 @@ export default function BlogPage() {
       />
 
       {/* Hero */}
-      <section className="bg-white pt-20 pb-16 md:pt-28 md:pb-20 border-b border-border">
+      <section className="bg-transparent pt-20 pb-16 md:pt-28 md:pb-20 border-b border-white/5">
         <div className="main-container text-center max-w-[600px]">
           <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mixed-headline-eyebrow">
             The Trinetra Blog
@@ -69,7 +69,7 @@ export default function BlogPage() {
       </section>
 
       {/* Blog Grid */}
-      <section className="bg-surface-2 py-20 md:py-28" aria-label="Blog posts">
+      <section className="bg-transparent py-20 md:py-28" aria-label="Blog posts">
         <div className="main-container">
           <div className="grid gap-6 md:grid-cols-2">
             {BLOG_POSTS.map((post, i) => (
@@ -79,14 +79,14 @@ export default function BlogPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.07 }}
-                className="group flex flex-col bg-white border border-border/85 rounded-2xl p-8 hover:shadow-md hover:border-accent/40 transition-all duration-300"
+                className="group flex flex-col glass-panel bg-[#1d2022]/30 border-white/5 rounded-2xl p-8 hover:bg-[#1d2022]/60 hover:border-accent/35 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] transition-all duration-300"
               >
                 {/* Tags + meta */}
                 <div className="flex flex-wrap items-center gap-2 mb-4">
                   <span className={`text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${TAG_STYLES[post.tagColor]}`}>
                     {post.tag}
                   </span>
-                  <span className="text-[9px] font-bold uppercase tracking-widest bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full">
+                  <span className="text-[9px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-450 px-2.5 py-1 rounded-full">
                     Published
                   </span>
                   <span className="ml-auto flex items-center gap-1 text-[10px] text-ink-4">
@@ -119,14 +119,14 @@ export default function BlogPage() {
           </div>
 
           {/* Newsletter / CTA strip */}
-          <div className="mt-16 text-center bg-white border border-border/80 rounded-2xl p-10 max-w-[560px] mx-auto shadow-3xs">
+          <div className="mt-16 text-center glass-panel bg-[#1d2022]/30 border-white/5 rounded-2xl p-10 max-w-[560px] mx-auto shadow-2xl">
             <h2 className="heading-md text-ink-1 mb-3 font-semibold">Want us to build this for your business?</h2>
             <p className="body-sm text-ink-2 mb-6 font-semibold">
               Everything we write about, we build. Book a free 30-minute demo and see exactly how these systems work for your industry.
             </p>
             <Link
               to="/contact"
-              className="inline-flex items-center gap-2 h-11 rounded-lg bg-cta px-6 text-xs font-bold uppercase tracking-wider text-white hover:bg-cta-hover transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 h-11 rounded-lg bg-cta px-6 text-xs font-bold uppercase tracking-wider text-[#101415] hover:bg-cta-hover glow-hover transition-colors cursor-pointer"
             >
               Book Free Demo <ArrowRight size={14} />
             </Link>

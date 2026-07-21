@@ -21,7 +21,7 @@ const PROBLEMS = [
 
 export default function TheProblem() {
   return (
-    <section className="relative overflow-hidden bg-white py-24 md:py-32 border-b border-border/80">
+    <section className="relative overflow-hidden bg-transparent py-24 md:py-32 border-b border-white/5">
       <div className="absolute inset-0 grid-pattern opacity-[0.01] pointer-events-none" />
       
       <div className="main-container relative z-10">
@@ -65,15 +65,15 @@ export default function TheProblem() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.4, delay: i * 0.08 }}
-              className="bg-surface-1 border border-border p-8 rounded-xl flex flex-col items-start text-left hover:shadow-xs transition-shadow duration-150"
+              className="glass-panel p-8 rounded-2xl flex flex-col items-start text-left transition-all duration-300 hover:bg-[#1d2022]/60 hover:border-warning/30 hover:shadow-[0_0_30px_rgba(245,158,11,0.08)] group"
             >
               {/* Icon Container with Warning colors */}
-              <div className="mb-6 flex h-9 w-9 items-center justify-center rounded-lg bg-warning-light text-warning border border-warning/10 shadow-xs">
+              <div className="mb-6 flex h-9 w-9 items-center justify-center rounded-lg bg-warning-light text-warning border border-warning/10 shadow-xs transition-transform duration-300 group-hover:scale-105">
                 {prob.icon}
               </div>
 
               {/* Title */}
-              <h3 className="text-xs font-bold text-ink-1 mb-3 font-mono uppercase tracking-wider">{prob.title}</h3>
+              <h3 className="text-xs font-bold text-ink-1 mb-3 font-mono uppercase tracking-wider group-hover:text-warning transition-colors">{prob.title}</h3>
 
               {/* Description */}
               <p className="text-[11.5px] text-ink-2 leading-relaxed font-semibold">

@@ -276,10 +276,9 @@ function Sidebar({
 export default function AdminCrm() {
   const {
     token, login, logout, loginLoading, loginError,
-    leads, analytics, waStatus, healthTelemetry, auditLogs,
-    selectedLeadId, setSelectedLeadId, leadDetail,
+    leads, analytics, waStatus,
     refreshing, backendOnline,
-    sendManualMessage, updateLeadStatus, updateLeadField, toggleAI,
+    updateLeadStatus, updateLeadField,
     triggerRefresh,
   } = useDashboard();
 
@@ -292,12 +291,10 @@ export default function AdminCrm() {
     return "overview";
   });
   const [collapsed, setCollapsed] = useState(false);
-  const [calendarData] = useState<{ appointments: any[]; slots: any[] }>({ appointments: [], slots: [] });
 
   // Navigate to conversation when lead selected from inbox
-  const handleSetSelectedLeadId = (id: string | null) => {
-    setSelectedLeadId(id);
-    if (id) setActiveView("conversations");
+  const handleSetSelectedLeadId = (_id: string | null) => {
+    setActiveView("conversations");
   };
 
   if (!token) {
@@ -311,29 +308,9 @@ export default function AdminCrm() {
   const renderPanel = () => {
     switch (activeView) {
       case "overview":
-        return (
-          <OverviewPanel
-            leads={leads}
-            analytics={analytics}
-            calendarData={calendarData}
-            healthTelemetry={healthTelemetry}
-            auditLogs={auditLogs}
-            onNavigate={v => setActiveView(v as ViewSection)}
-          />
-        );
+        return <OverviewPanel />;
       case "conversations":
-        return (
-          <InboxPanel
-            leads={leads}
-            selectedLeadId={selectedLeadId}
-            setSelectedLeadId={handleSetSelectedLeadId}
-            leadDetail={leadDetail}
-            sendManualMessage={sendManualMessage}
-            updateLeadStatus={updateLeadStatus}
-            updateLeadField={updateLeadField}
-            toggleAI={toggleAI}
-          />
-        );
+        return <InboxPanel />;
       case "leads":
         return (
           <LeadsPanel

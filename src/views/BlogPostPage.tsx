@@ -14,8 +14,8 @@ const WA_URL = `https://wa.me/918810721068?text=${encodeURIComponent(
 // Tag colour mapping
 const TAG_STYLES: Record<string, string> = {
   copper: "bg-accent-light text-accent",
-  green:  "bg-emerald-50 text-emerald-700",
-  slate:  "bg-slate-100 text-slate-700",
+  green:  "bg-emerald-500/10 text-emerald-450",
+  slate:  "bg-white/5 text-slate-400 border border-white/5",
 };
 
 // ── Markdown component overrides (Tailwind-free, uses inline styles + classes) ──
@@ -54,7 +54,7 @@ const mdComponents = {
     </li>
   ),
   blockquote: ({ children }: { children?: React.ReactNode }) => (
-    <blockquote className="border-l-4 border-accent bg-slate-50 rounded-r-xl px-5 py-4 my-6 text-[0.9rem] text-ink-2 italic leading-relaxed font-semibold">
+    <blockquote className="border-l-4 border-accent bg-[#1d2022]/40 rounded-r-xl px-5 py-4 my-6 text-[0.9rem] text-ink-2 italic leading-relaxed font-semibold">
       {children}
     </blockquote>
   ),
@@ -91,7 +91,7 @@ const mdComponents = {
   ),
   // Bold FAQs — render **Q** as a visible FAQ entry
   code: ({ children }: { children?: React.ReactNode }) => (
-    <code className="bg-slate-150 text-accent px-1.5 py-0.5 rounded text-[0.85em] font-mono">
+    <code className="bg-white/5 text-accent px-1.5 py-0.5 rounded text-[0.85em] font-mono">
       {children}
     </code>
   ),
@@ -147,7 +147,7 @@ export default function BlogPostPage() {
       />
 
       {/* ── Hero ──────────────────────────────────────────────────────── */}
-      <section className="bg-white pt-20 pb-12 md:pt-28 md:pb-16 border-b border-border">
+      <section className="bg-transparent pt-20 pb-12 md:pt-28 md:pb-16 border-b border-white/5">
         <div className="main-container max-w-[800px]">
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-6 text-[11px] text-ink-4 font-medium">
@@ -196,9 +196,9 @@ export default function BlogPostPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.25 }}
-            className="flex items-center gap-3 mt-7 pt-6 border-t border-border"
+            className="flex items-center gap-3 mt-7 pt-6 border-t border-white/5"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 border border-white/5">
               <svg viewBox="0 0 32 32" fill="none" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg">
                 <polygon points="16,3 3,27 29,27" stroke="white" strokeWidth="2.5" strokeLinejoin="round" />
                 <circle cx="16" cy="11" r="2.5" fill="var(--color-accent)" />
@@ -213,7 +213,7 @@ export default function BlogPostPage() {
       </section>
 
       {/* ── Body + Sidebar ─────────────────────────────────────────────── */}
-      <section className="bg-surface-2 py-14 md:py-20">
+      <section className="bg-transparent py-14 md:py-20">
         <div className="main-container">
           <div className="grid gap-12 lg:grid-cols-[1fr_300px] lg:items-start">
 
@@ -222,7 +222,7 @@ export default function BlogPostPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white border border-border/80 rounded-2xl px-7 py-10 md:px-12 md:py-14 shadow-xs"
+              className="glass-panel bg-[#1d2022]/30 border-white/5 rounded-2xl px-7 py-10 md:px-12 md:py-14 shadow-2xl"
               itemScope
               itemType="https://schema.org/Article"
             >
@@ -238,12 +238,12 @@ export default function BlogPostPage() {
               </div>
 
               {/* End CTA */}
-              <div className="mt-14 pt-8 border-t border-border">
-                <div className="bg-slate-50 border border-accent/25 rounded-2xl p-7 md:p-9 shadow-3xs">
+              <div className="mt-14 pt-8 border-t border-white/5">
+                <div className="glass-panel bg-[#1c2e30]/30 border border-accent/20 rounded-2xl p-7 md:p-9 shadow-2xl">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-accent mb-2 font-mono">
                     Ready to grow your business online?
                   </p>
-                  <h2 className="heading-sm text-ink-1 mb-3 font-semibold">
+                  <h2 className="heading-sm text-white mb-3 font-semibold">
                     Book a free 30-minute demo with Trinetra Digital Solution
                   </h2>
                   <p className="text-sm text-ink-2 mb-6 leading-relaxed font-semibold">
@@ -252,7 +252,7 @@ export default function BlogPostPage() {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Link
                       to="/contact"
-                      className="flex items-center justify-center gap-2 h-11 rounded-xl bg-cta px-6 text-xs font-bold uppercase tracking-wider text-white hover:bg-cta-hover transition-colors cursor-pointer"
+                      className="flex items-center justify-center gap-2 h-11 rounded-xl bg-cta px-6 text-xs font-bold uppercase tracking-wider text-[#101415] hover:bg-cta-hover glow-hover transition-colors cursor-pointer"
                     >
                       Book Free Demo <ArrowRight size={13} />
                     </Link>
@@ -260,7 +260,7 @@ export default function BlogPostPage() {
                       href={WA_URL}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-white px-6 text-xs font-semibold text-ink-1 hover:bg-surface-2 transition-colors"
+                      className="flex items-center justify-center gap-2 h-11 rounded-xl border border-white/5 bg-white/5 px-6 text-xs font-semibold text-slate-300 hover:bg-white/10 transition-colors cursor-pointer"
                     >
                       <MessageCircle size={13} /> Chat on WhatsApp
                     </a>
@@ -288,7 +288,7 @@ export default function BlogPostPage() {
                   initial={{ opacity: 0, x: 16 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="bg-white border border-border/80 rounded-2xl p-6 shadow-3xs"
+                  className="glass-panel bg-[#1d2022]/30 border-white/5 rounded-2xl p-6 shadow-2xl"
                 >
                   <p className="text-[10px] font-bold uppercase tracking-widest text-ink-4 mb-4 font-mono">
                     Related Articles
@@ -298,7 +298,7 @@ export default function BlogPostPage() {
                       <Link
                         key={rp.slug}
                         to={`/blog/${rp.slug}`}
-                        className="group flex flex-col gap-1.5 pb-4 border-b border-border/80 last:border-0 last:pb-0"
+                        className="group flex flex-col gap-1.5 pb-4 border-b border-white/5 last:border-0 last:pb-0"
                       >
                         <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full w-fit ${TAG_STYLES[rp.tagColor]}`}>
                           {rp.tag}
@@ -318,7 +318,7 @@ export default function BlogPostPage() {
                 initial={{ opacity: 0, x: 16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.28 }}
-                className="bg-white border border-border/80 rounded-2xl p-6 shadow-3xs"
+                className="glass-panel bg-[#1d2022]/30 border-white/5 rounded-2xl p-6 shadow-2xl"
               >
                 <p className="text-[10px] font-bold uppercase tracking-widest text-ink-4 mb-4 font-mono">
                   All Articles
@@ -345,7 +345,7 @@ export default function BlogPostPage() {
                 initial={{ opacity: 0, x: 16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.34 }}
-                className="bg-slate-900 rounded-2xl p-6 text-white"
+                className="glass-panel bg-[#1c2e30]/30 border border-accent/20 rounded-2xl p-6 shadow-2xl text-white"
               >
                 <p className="text-[10px] font-bold uppercase tracking-widest text-accent mb-2 font-mono">
                   Free Demo
@@ -355,7 +355,7 @@ export default function BlogPostPage() {
                 </p>
                 <Link
                   to="/contact"
-                  className="flex items-center justify-center gap-2 h-10 rounded-xl bg-accent px-4 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-accent-hover transition-colors cursor-pointer"
+                  className="flex items-center justify-center gap-2 h-10 rounded-xl bg-accent px-4 text-[11px] font-bold uppercase tracking-wider text-[#101415] hover:bg-accent-hover glow-hover transition-colors cursor-pointer"
                 >
                   Book Now <ArrowRight size={12} />
                 </Link>

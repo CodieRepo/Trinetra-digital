@@ -212,15 +212,15 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
           {/* Left: Map Container */}
           <div className="flex flex-col gap-4">
             {/* Elegant Browser Frame Mockup */}
-            <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm relative w-full hover:border-accent/40 transition-all duration-300 group">
+            <div className="glass-panel bg-[#1d2022]/30 border-white/5 rounded-2xl overflow-hidden shadow-2xl relative w-full hover:border-accent/40 transition-all duration-300 group">
               {/* Browser Header Bar */}
-              <div className="bg-slate-50 border-b border-slate-200/60 px-4 py-2.5 flex items-center justify-between shrink-0">
+              <div className="bg-[#0b0f10]/80 border-b border-white/5 px-4 py-2.5 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-white/10" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-white/10" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-white/10" />
                 </div>
-                <div className="bg-white border border-slate-200/60 rounded px-4 py-0.5 text-[8px] font-mono text-slate-400 font-semibold tracking-wide">
+                <div className="bg-white/5 border border-white/5 rounded px-4 py-0.5 text-[8px] font-mono text-ink-2 font-semibold tracking-wide">
                   maps.google.com/trinetra-digital
                 </div>
                 <div className="w-[18px]" /> {/* Balancing spacer */}
@@ -231,14 +231,14 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
               </div>
 
               {/* Map Action Bar */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-4 pt-2.5 border-t border-slate-100">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-4 pt-2.5 border-t border-white/5">
                 <a
                   href={MAPS_DIRECTIONS}
                   target="_blank"
                   rel="noopener noreferrer"
                   id="map-get-directions"
                   aria-label="Get directions to Trinetra Digital Solution on Google Maps"
-                  className="flex flex-1 items-center justify-center gap-2 h-10 rounded-lg bg-cta text-white text-xs font-bold uppercase tracking-wider hover:bg-cta-hover transition-colors cursor-pointer"
+                  className="flex flex-1 items-center justify-center gap-2 h-10 rounded-lg bg-cta text-[#101415] text-xs font-bold uppercase tracking-wider hover:bg-cta-hover glow-hover transition-all cursor-pointer"
                 >
                   <Navigation size={13} /> Get Directions
                 </a>
@@ -248,7 +248,7 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
                   rel="noopener noreferrer"
                   id="map-open-google-maps"
                   aria-label="Open Trinetra Digital Solution in Google Maps"
-                  className="flex flex-1 items-center justify-center gap-2 h-10 rounded-lg border border-border bg-slate-50 text-xs font-semibold text-ink-1 hover:bg-slate-100 transition-colors"
+                  className="flex flex-1 items-center justify-center gap-2 h-10 rounded-lg border border-white/5 bg-white/5 text-xs font-semibold text-ink-1 hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   <ExternalLink size={13} /> Open in Google Maps
                 </a>
@@ -283,7 +283,7 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
                     href={card.href}
                     target={card.external ? "_blank" : undefined}
                     rel={card.external ? "noopener noreferrer" : undefined}
-                    className="group flex items-start gap-4 p-4 bg-white border border-border/80 rounded-xl hover:border-accent/30 hover:shadow-sm transition-all duration-200"
+                    className="group flex items-start gap-4 p-4 glass-panel bg-[#1d2022]/40 border-white/5 rounded-2xl hover:border-accent/30 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] transition-all duration-300"
                     aria-label={card.label}
                   >
                     <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${card.iconBg}`}>
@@ -301,7 +301,7 @@ export default function LocationMap({ variant = "full" }: LocationMapProps) {
                     </div>
                   </a>
                 ) : (
-                  <div className="flex items-start gap-4 p-4 bg-white border border-border/80 rounded-xl">
+                  <div className="flex items-start gap-4 p-4 glass-panel bg-[#1d2022]/40 border-white/5 rounded-2xl">
                     <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${card.iconBg}`}>
                       {card.icon}
                     </div>

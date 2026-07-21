@@ -203,7 +203,7 @@ export default function Pricing() {
   ];
 
   return (
-    <section id="pricing" aria-label="Pricing Plans — Software and Growth Staged Packages" className="relative overflow-hidden bg-[#F8FAFC] py-24 md:py-32 border-b border-border/80">
+    <section id="pricing" aria-label="Pricing Plans — Software and Growth Staged Packages" className="relative overflow-hidden bg-transparent py-24 md:py-32 border-b border-white/5">
       <div className="absolute inset-0 grid-pattern opacity-[0.01] pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto px-4 md:px-10 relative z-10">
@@ -217,21 +217,21 @@ export default function Pricing() {
             <h2 className="display-lg text-ink-1 tracking-tight font-display font-bold">
               Transparent pricing. Clear project scope.
             </h2>
-            <p className="body-lg text-[#5C5A52] font-medium max-w-xl">
+            <p className="body-lg text-ink-2 font-medium max-w-xl">
               Choose a solution suited to your current business stage. Honest prices, no hidden charges, no unrealistic claims.
             </p>
             
             {/* Tab Switcher on the left */}
             <div className="pt-2">
-              <div className="inline-flex items-center gap-1 bg-slate-100/85 border border-slate-200/80 p-1.5 rounded-xl z-10 max-w-full overflow-x-auto shadow-xs backdrop-blur-xs">
+              <div className="inline-flex items-center gap-1 bg-[#1d2022]/40 border border-white/5 p-1.5 rounded-xl z-10 max-w-full overflow-x-auto shadow-2xl backdrop-blur-md">
                 {(["packages", "addons"] as ServiceCategory[]).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`px-5 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap ${
                       activeTab === tab
-                        ? "bg-white text-slate-900 border border-slate-200/85 shadow-xs"
-                        : "text-slate-500 hover:text-slate-900"
+                        ? "bg-white/10 text-white border border-white/10 shadow-lg"
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
                     {tab === "packages" ? "Growth Packages" : "Add-On Services"}
@@ -242,15 +242,15 @@ export default function Pricing() {
           </div>
 
           {/* Grayscale Video Container */}
-          <div className="w-full max-w-[380px] mx-auto lg:mr-0 bg-white border border-slate-200 rounded-2xl p-4 shadow-xs relative group transition-all duration-300 hover:border-slate-300">
-            <div className="flex items-center justify-between border-b border-slate-150 pb-2 mb-3">
+          <div className="w-full max-w-[380px] mx-auto lg:mr-0 glass-panel bg-[#1d2022]/30 border-white/5 rounded-2xl p-4 shadow-2xl relative group transition-all duration-300 hover:border-accent/40">
+            <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
               <span className="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-widest">Pricing Infrastructure</span>
-              <div className="flex gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-200" />
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-200" />
+              <div className="flex gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-white/10" />
+                <span className="h-1.5 w-1.5 rounded-full bg-white/10" />
               </div>
             </div>
-            <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg overflow-hidden border border-slate-150 grayscale opacity-75 hover:grayscale-0 hover:opacity-100 transition-all duration-500 ease-out shadow-inner">
+            <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg overflow-hidden border border-white/5 grayscale opacity-75 hover:grayscale-0 hover:opacity-100 transition-all duration-500 ease-out shadow-inner">
               <LazyVideo src="/videos/pricing.mp4" className="absolute inset-0 w-full h-full" />
             </div>
             <div className="mt-2.5 text-center">
@@ -324,7 +324,7 @@ export default function Pricing() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -16 }}
                     transition={{ duration: 0.3, delay: i * 0.05 }}
-                    className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 md:p-8 shadow-xs hover:shadow-md transition-all duration-300 text-left"
+                    className="flex flex-col justify-between rounded-2xl border border-white/5 bg-[#1d2022]/30 p-6 md:p-8 shadow-2xl hover:border-accent/40 hover:bg-[#1d2022]/60 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] transition-all duration-300 text-left"
                   >
                     <div>
                       <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 font-mono">{plan.name}</span>
@@ -333,23 +333,23 @@ export default function Pricing() {
                         <div>
                           <p className="text-[9px] uppercase tracking-widest font-bold text-accent font-mono">{plan.setupLabel}</p>
                           <div className="flex items-baseline gap-1.5 mt-1">
-                            <span className="font-display text-[28px] font-bold text-slate-900 tracking-tight">{plan.price}</span>
+                            <span className="font-display text-[28px] font-bold text-white tracking-tight">{plan.price}</span>
                           </div>
                         </div>
-                        <div className="h-px bg-slate-100" />
+                        <div className="h-px bg-white/5" />
                         <div>
                           <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400 font-mono">Monthly</p>
                           <div className="flex items-baseline gap-1.5 mt-1">
-                            <span className="font-display text-[22px] font-bold text-slate-900 tracking-tight">{plan.monthlyPrice}</span>
+                            <span className="font-display text-[22px] font-bold text-white tracking-tight">{plan.monthlyPrice}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="w-full h-px bg-slate-100 my-5" />
-                      <p className="text-[11px] text-slate-500 mb-6 leading-relaxed font-semibold">{plan.desc}</p>
-                      <ul className="space-y-3.5 text-[11.5px] text-slate-600">
+                      <div className="w-full h-px bg-white/5 my-5" />
+                      <p className="text-[11px] text-slate-400 mb-6 leading-relaxed font-semibold">{plan.desc}</p>
+                      <ul className="space-y-3.5 text-[11.5px] text-slate-300">
                         {plan.features.map((feat, f) => (
                           <li key={f} className="flex items-start gap-3">
-                            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#E2F2E9] text-[#137A3E] mt-0.5 border border-[#A3E0BA]">
+                            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 mt-0.5 border border-emerald-500/20">
                               <Check size={10} strokeWidth={3} />
                             </span>
                             <span className="font-semibold">{feat}</span>
@@ -357,7 +357,7 @@ export default function Pricing() {
                         ))}
                       </ul>
                     </div>
-                    <a href={WA_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackContact()} className="mt-8 w-full text-xs font-bold uppercase tracking-wider border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors h-11 flex items-center justify-center rounded-lg shadow-xs">
+                    <a href={WA_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackContact()} className="mt-8 w-full text-xs font-bold uppercase tracking-wider border border-white/5 bg-white/5 text-slate-300 hover:bg-white/10 transition-all h-11 flex items-center justify-center rounded-lg shadow-2xl cursor-pointer">
                       {plan.cta}
                     </a>
                   </motion.div>
@@ -376,7 +376,7 @@ export default function Pricing() {
             className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto"
           >
             {addonGroups.map((group, gi) => (
-              <div key={gi} className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs flex flex-col justify-between">
+              <div key={gi} className="glass-panel bg-[#1d2022]/30 border-white/5 rounded-2xl p-6 shadow-2xl flex flex-col justify-between hover:border-accent/35 hover:bg-[#1d2022]/50 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] transition-all duration-300">
                 <div>
                   <div className="flex items-center gap-2 mb-4">
                     <Plus size={13} className="text-accent" />
@@ -384,14 +384,14 @@ export default function Pricing() {
                   </div>
                   <div className="flex flex-col gap-3">
                     {group.items.map((item, ii) => (
-                      <div key={ii} className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 last:pb-0">
-                        <span className="text-[11.5px] font-semibold text-slate-800">{item.name}</span>
+                      <div key={ii} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                        <span className="text-[11.5px] font-semibold text-slate-300">{item.name}</span>
                         <span className="text-[11px] font-bold text-accent font-mono shrink-0 ml-3">{item.price}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <a href={WA_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackContact()} className="mt-6 flex items-center justify-center gap-2 h-9 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors uppercase tracking-wider font-mono">
+                <a href={WA_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackContact()} className="mt-6 flex items-center justify-center gap-2 h-10 rounded-lg border border-white/5 bg-white/5 text-[11px] font-bold text-slate-300 hover:bg-white/10 transition-colors uppercase tracking-wider font-mono cursor-pointer">
                   Enquire About {group.category}
                 </a>
               </div>
@@ -403,7 +403,7 @@ export default function Pricing() {
         <div className="mt-12 text-center">
           <button
             onClick={() => setShowMatrix(!showMatrix)}
-            className="inline-flex items-center gap-2 px-6 py-3 border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:border-slate-350 transition-colors font-semibold rounded-xl text-xs uppercase tracking-wider cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-2 px-6 py-3 border border-white/5 bg-white/5 text-slate-300 hover:bg-white/10 hover:border-accent/40 transition-colors font-semibold rounded-xl text-xs uppercase tracking-wider cursor-pointer shadow-2xl glow-hover"
           >
             <span>{showMatrix ? "Hide Detailed Comparison" : "Show Detailed Comparison"}</span>
             <motion.span animate={{ rotate: showMatrix ? 180 : 0 }} className="inline-block text-[9px] text-slate-500">
@@ -421,14 +421,14 @@ export default function Pricing() {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              <div className="mt-8 border border-slate-200 rounded-2xl bg-white shadow-xs overflow-x-auto custom-scrollbar relative">
+              <div className="mt-8 border border-white/5 rounded-2xl bg-[#1d2022]/30 shadow-2xl overflow-x-auto custom-scrollbar relative backdrop-blur-md">
                 {/* Visual fading scroll mask gradient overlay */}
-                <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none md:hidden" />
-                <div className="absolute top-0 left-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none md:hidden" />
+                <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-[#101415] to-transparent pointer-events-none md:hidden" />
+                <div className="absolute top-0 left-0 bottom-0 w-8 bg-gradient-to-r from-[#101415] to-transparent pointer-events-none md:hidden" />
                 
                 <table className="w-full text-left border-collapse text-xs md:text-sm" style={{ minWidth: "760px" }}>
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-900 font-semibold font-mono">
+                    <tr className="bg-[#0e1112] border-b border-white/5 text-white font-semibold font-mono">
                       <th className="px-6 py-4 font-bold">Deliverables &amp; Features</th>
                       <th className="px-4 py-4 font-bold">Starter Presence</th>
                       <th className="px-4 py-4 font-bold text-accent">Growth Engine</th>
@@ -436,10 +436,10 @@ export default function Pricing() {
                       <th className="px-4 py-4 font-bold">Business OS</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-650 font-semibold">
+                  <tbody className="divide-y divide-white/5 text-slate-300 font-semibold">
                     {MATRIX_ROWS.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4 font-bold text-slate-900">{row.feature}</td>
+                      <tr key={idx} className="hover:bg-white/5 transition-colors">
+                        <td className="px-6 py-4 font-bold text-white">{row.feature}</td>
                         <td className="px-4 py-4">{row.starter}</td>
                         <td className="px-4 py-4 text-accent">{row.growth}</td>
                         <td className="px-4 py-4">{row.sales}</td>

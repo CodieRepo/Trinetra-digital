@@ -13,7 +13,7 @@ const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm in
 // ── Shared Footer (used on all pages via PageLayout) ──────────────────────
 export function FinalCTAFooter() {
   return (
-    <footer className="relative overflow-hidden bg-white z-10 border-t border-border">
+    <footer className="relative overflow-hidden bg-transparent z-10 border-t border-white/5">
       {/* Structural visual quiet backdrop */}
       <div className="absolute inset-0 z-0 grid-pattern opacity-[0.02] pointer-events-none" />
 
@@ -84,7 +84,7 @@ export function FinalCTAFooter() {
                 onClick={() => trackContact()}
                 whileHover={{ scale: 1.01, y: -0.5 }}
                 whileTap={{ scale: 0.99 }}
-                className="flex w-full items-center justify-center gap-3 h-11 rounded-lg border border-border text-ink-2 font-mono font-medium text-xs tracking-wider hover:bg-slate-50 transition-colors mb-6 cursor-pointer text-center"
+                className="flex w-full items-center justify-center gap-3 h-11 rounded-lg border border-white/5 bg-white/5 text-ink-2 font-mono font-medium text-xs tracking-wider hover:bg-white/10 transition-colors mb-6 cursor-pointer text-center"
               >
                 <Phone size={13} />
                 {PHONE_NUMBER} — Call Now
@@ -97,15 +97,15 @@ export function FinalCTAFooter() {
           </div>
 
           {/* Right Column: Split transformation visual panel */}
-          <div className="w-full max-w-[440px] mx-auto lg:mr-0 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm relative group transition-all duration-300 hover:border-slate-300 hover:shadow-md">
-            <div className="flex items-center justify-between border-b border-slate-150 pb-2 mb-3">
+          <div className="w-full max-w-[440px] mx-auto lg:mr-0 glass-panel bg-[#1d2022]/30 border-white/5 rounded-2xl p-4 shadow-2xl relative group transition-all duration-300 hover:border-accent/40">
+            <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
               <span className="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-widest">Active Scale Integration</span>
               <div className="flex gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-200" />
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-200" />
+                <span className="h-1.5 w-1.5 rounded-full bg-white/10" />
+                <span className="h-1.5 w-1.5 rounded-full bg-white/10" />
               </div>
             </div>
-            <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg overflow-hidden border border-slate-150 shadow-inner">
+            <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg overflow-hidden border border-white/5 shadow-2xl">
               <LazyVideo src="/videos/build-growth-automate.mp4" className="absolute inset-0 w-full h-full" />
             </div>
           </div>
@@ -134,7 +134,7 @@ export function FinalCTAFooter() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Open Trinetra Digital Solution on Google Maps"
-            className="flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-white px-4 text-[10px] font-bold text-ink-2 hover:bg-slate-50 transition-all whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
+            className="flex items-center justify-center gap-2 h-9 rounded-lg border border-white/5 bg-white/5 px-4 text-[10px] font-bold text-ink-2 hover:bg-white/10 transition-all whitespace-nowrap shrink-0 cursor-pointer shadow-2xl"
           >
             <ExternalLink size={11} /> View on Google Maps
           </a>

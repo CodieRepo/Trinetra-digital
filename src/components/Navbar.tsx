@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Sun, Moon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { trackContact } from "../utils/metaPixel";
 
@@ -20,9 +20,18 @@ const NAV_LINKS = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
     setOpen(false);
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    const initialTheme = savedTheme || "dark";
+    setTheme(initialTheme);
+    if (initialTheme === "light") {
+      document.documentElement.classList.add("light");
+    } else {
+      document.documentElement.classList.remove("light");
+    }
   }, []);
 
   useEffect(() => {
@@ -43,7 +52,10 @@ export default function Navbar() {
         <line x1="11.5" y1="20.5" x2="20.5" y2="20.5" stroke="var(--color-ink-1)" strokeWidth="1" strokeDasharray="1 1" />
       </svg>
       <div className="flex flex-col leading-none text-left">
-        <span className="text-[13px] font-bold tracking-[0.25em] text-ink-1 font-display">TRINETRA</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[13px] font-bold tracking-[0.25em] text-ink-1 font-display">TRINETRA</span>
+          <span className="w-1.5 h-1.5 bg-[#00e5ff] rounded-full animate-pulse" title="AI OS Active"></span>
+        </div>
         <span className="text-[8px] tracking-[0.18em] text-ink-3 mt-0.5 uppercase font-mono font-medium">Digital Solution</span>
       </div>
     </Link>
@@ -54,10 +66,10 @@ export default function Navbar() {
       initial={{ y: -8, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-200 ${
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white/80 backdrop-blur-md border-b border-border shadow-xs"
-          : "bg-white/50 backdrop-blur-xs border-b border-border-subtle"
+          ? "bg-base/75 backdrop-blur-2xl border-b border-border shadow-2xl shadow-accent/5"
+          : "bg-base/30 backdrop-blur-md border-b border-border/40"
       }`}
       style={{ height: "60px" }}
     >
@@ -79,6 +91,22 @@ export default function Navbar() {
 
         {/* Desktop CTA */}
         <div className="hidden items-center gap-5 md:flex">
+          <button
+            onClick={() => {
+              const nextTheme = theme === "dark" ? "light" : "dark";
+              setTheme(nextTheme);
+              localStorage.setItem("theme", nextTheme);
+              if (nextTheme === "light") {
+                document.documentElement.classList.add("light");
+              } else {
+                document.documentElement.classList.remove("light");
+              }
+            }}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white/5 text-ink-2 hover:bg-white/10 transition-colors focus:outline-none cursor-pointer"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-indigo-400" />}
+          </button>
           <a
             href={PHONE_TEL}
             onClick={() => trackContact()}
@@ -88,20 +116,38 @@ export default function Navbar() {
           </a>
           <Link
             to="/contact"
-            className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-cta text-white hover:bg-cta-hover transition-all"
+            className="btn-primary-forest text-xs font-semibold tracking-wider uppercase flex h-9 items-center justify-center rounded-lg bg-cta text-[#101415] hover:bg-cta-hover glow-hover transition-all"
           >
             Book Consultation
           </Link>
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          onClick={() => setOpen(!open)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-1 md:hidden focus:outline-none"
-          aria-label="Toggle menu"
-        >
-          {open ? <X size={18} /> : <Menu size={18} />}
-        </button>
+        {/* Theme switcher and Mobile toggle */}
+        <div className="flex items-center gap-2 md:hidden">
+          <button
+            onClick={() => {
+              const nextTheme = theme === "dark" ? "light" : "dark";
+              setTheme(nextTheme);
+              localStorage.setItem("theme", nextTheme);
+              if (nextTheme === "light") {
+                document.documentElement.classList.add("light");
+              } else {
+                document.documentElement.classList.remove("light");
+              }
+            }}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white/5 text-ink-1 hover:bg-white/10 transition-colors focus:outline-none cursor-pointer"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-indigo-400" />}
+          </button>
+          <button
+            onClick={() => setOpen(!open)}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-1 focus:outline-none"
+            aria-label="Toggle menu"
+          >
+            {open ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
       </nav>
 
       {/* Mobile Drawer */}
@@ -120,7 +166,7 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", bounce: 0, duration: 0.25 }}
-              className="absolute right-0 top-0 h-[calc(100vh-60px)] w-64 sm:w-72 bg-white border-l border-border p-5 shadow-lg overflow-y-auto"
+              className="absolute right-0 top-0 h-[calc(100vh-60px)] w-64 sm:w-72 bg-base/95 border-l border-border p-5 shadow-2xl overflow-y-auto backdrop-blur-3xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex flex-col gap-1 text-left">
