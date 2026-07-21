@@ -112,7 +112,7 @@ export async function queueBookingWorkflow(
  * This ensures the execution runs in the background and is non-blocking to the webhook thread.
  */
 async function triggerAsyncJobRunner(tenantId: string) {
-  const host = process.env.NEXT_PUBLIC_APP_URL || "https://trinetra-digital.vercel.app";
+  const host = process.env.NEXT_PUBLIC_APP_URL || "https://trinetradigitalsolution.com";
   
   // Call internal run-jobs API in the background (non-blocking)
   fetch(`${host}/api/jobs/run?tenant_id=${tenantId}`, {
