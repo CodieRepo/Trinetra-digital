@@ -47,11 +47,11 @@ export async function POST(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  if (searchParams.toString() && Object.keys(jsonBody).length === 0) {
-    searchParams.forEach((value, key) => {
+  searchParams.forEach((value, key) => {
+    if (!jsonBody[key]) {
       jsonBody[key] = value;
-    });
-  }
+    }
+  });
 
   const payload = bhashProvider.parseWebhookPayload(jsonBody);
   if (!payload) {

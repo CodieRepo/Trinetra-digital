@@ -44,14 +44,44 @@ export class BhashSMSProvider implements MessagingProvider {
   parseWebhookPayload(jsonBody: any): IngestedPayload | null {
     if (!jsonBody) return null;
 
+    // Expand key matching for BhashSMS variations (phone, mobile, mobile_no, contact, sender, num, etc.)
     const phone = String(
-      jsonBody.phone || jsonBody.mobile || jsonBody.from || jsonBody.wa_id || ""
+      jsonBody.phone ||
+      jsonBody.mobile ||
+      jsonBody.mobile_no ||
+      jsonBody.mob ||
+      jsonBody.contact ||
+      jsonBody.contact_no ||
+      jsonBody.from ||
+      jsonBody.wa_id ||
+      jsonBody.sender ||
+      jsonBody.num ||
+      jsonBody.number ||
+      jsonBody.phone_number ||
+      jsonBody.user_phone ||
+      ""
     ).trim();
 
     if (!phone) return null;
 
-    const name = jsonBody.name || jsonBody.sender_name || jsonBody.pushname || "WhatsApp User";
-    const text = jsonBody.text || jsonBody.message || jsonBody.body || jsonBody.msg || "";
+    const name =
+      jsonBody.name ||
+      jsonBody.sender_name ||
+      jsonBody.pushname ||
+      jsonBody.user_name ||
+      `WhatsApp Lead (${phone.slice(-4)})`;
+
+    const text =
+      jsonBody.text ||
+      jsonBody.message ||
+      jsonBody.body ||
+      jsonBody.msg ||
+      jsonBody.sms ||
+      jsonBody.content ||
+      jsonBody.query ||
+      jsonBody.user_text ||
+      "Incoming text message";
+
     const flow_node = jsonBody.node || jsonBody.flow_node || jsonBody.current_node || "6206";
     const button_clicked = jsonBody.button_clicked || jsonBody.button || null;
     const meta_message_id = jsonBody.meta_message_id || jsonBody.msg_id || jsonBody.id || null;
