@@ -48,6 +48,38 @@ export class ConversationRepository {
     return data as ConversationMessage;
   }
 
+  async updateMessageStatus(
+    metaMessageId: string, 
+    status: 'sent' | 'delivered' | 'read' | 'failed',
+    errorMessage?: string
+  ): Promise<boolean> {
+    const updatePayload: any = { status };
+    if (errorMessage) {
+      updatePayload.error_message = errorMessage;
+    }
+
+    try {
+      const { error: err1 } = await this.db
+        .from("bhash_conversations")
+        .update(updatePayload)
+        .eq("meta_message_id", metaMessageId);
+
+      // Also update standard messages table if present
+      await this.db
+        .from("messages")
+        .update(updatePayload)
+        .eq("meta_message_id", metaMessageId);
+
+      if (err1) {
+        console.warn("bhash_conversations status update note:", err1.message);
+      }
+      return true;
+    } catch (e) {
+      console.error("ConversationRepository.updateMessageStatus error:", e);
+      return false;
+    }
+  }
+
   async getMessagesByLeadId(leadId: string, limit = 100): Promise<ConversationMessage[]> {
     const { data, error } = await this.db
       .from("bhash_conversations")

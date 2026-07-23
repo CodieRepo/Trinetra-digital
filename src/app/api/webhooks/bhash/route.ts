@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit } from "../../../../lib/security/rateLimiter";
-import { verifyBhashSignature, validateAndNormalizePayload } from "../../../../lib/bhash/validator";
+import { 
+  verifyBhashSignature, 
+  validateAndNormalizePayload, 
+  parseStatusUpdatePayload 
+} from "../../../../lib/bhash/validator";
 import { leadService } from "../../../../services/leadService";
+import { conversationRepository } from "../../../../repositories/conversationRepository";
 import { getSupabaseAdmin } from "../../../../lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -31,7 +36,7 @@ export async function GET(request: Request) {
 
 /**
  * POST /api/webhooks/bhash
- * Incoming Webhook for BhashSMS WhatsApp Flow Events (Nodes 6206 - 6232)
+ * Incoming Webhook for BhashSMS WhatsApp Flow Events, Messages & Delivery Status Updates
  */
 export async function POST(request: Request) {
   const db = getSupabaseAdmin();
@@ -77,9 +82,9 @@ export async function POST(request: Request) {
     }
   }
 
-  // Fallback: Check Query Params if body was empty or missing phone
+  // Fallback: Check Query Params if body was empty
   const { searchParams } = new URL(request.url);
-  if (searchParams.toString() && (!jsonBody.phone && !jsonBody.sender && !jsonBody.mobile && !jsonBody.from)) {
+  if (searchParams.toString() && Object.keys(jsonBody).length === 0) {
     searchParams.forEach((value, key) => {
       jsonBody[key] = value;
     });
@@ -94,14 +99,50 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized: Invalid Signature" }, { status: 401 });
   }
 
-  // 3. Payload Normalization
+  // ── CASE A: MESSAGE STATUS UPDATE CALLBACK (sent, delivered, read, failed) ──
+  const statusUpdate = parseStatusUpdatePayload(jsonBody);
+  if (statusUpdate) {
+    console.log(`⚡ [Bhash Status Update Received] messageId=${statusUpdate.meta_message_id}, status=${statusUpdate.status}`);
+
+    try {
+      await conversationRepository.updateMessageStatus(
+        statusUpdate.meta_message_id, 
+        statusUpdate.status, 
+        statusUpdate.errorMessage
+      );
+
+      // Audit Log
+      await db.from("bhash_webhook_logs").insert({
+        idempotency_key: `status-${statusUpdate.meta_message_id}-${statusUpdate.status}`,
+        source: "bhash_status_update",
+        payload: jsonBody,
+        status: "processed",
+      });
+
+      console.log(`✅ [Status Update Saved] ID: ${statusUpdate.meta_message_id} -> ${statusUpdate.status}`);
+      console.log(`=================================================================\n`);
+
+      // NOTE: Status updates MUST NOT trigger AI automation or send automated replies!
+      return NextResponse.json({ 
+        success: true, 
+        message: "Status update processed successfully",
+        status: statusUpdate.status,
+        metaMessageId: statusUpdate.meta_message_id
+      }, { status: 200 });
+    } catch (statusErr: any) {
+      console.error("❌ [Bhash Status Update Error]:", statusErr);
+      return NextResponse.json({ success: true, warning: statusErr.message }, { status: 200 });
+    }
+  }
+
+  // ── CASE B: INBOUND USER MESSAGE / FLOW CALLBACK ──
   const payload = validateAndNormalizePayload(jsonBody);
   if (!payload) {
     console.error("❌ [Bhash Webhook] Payload validation failed. Required phone field missing:", jsonBody);
     return NextResponse.json({ error: "Invalid payload format: phone field missing" }, { status: 400 });
   }
 
-  // 4. Idempotency & Duplicate Check
+  // 3. Idempotency & Duplicate Check
   const idempotencyKey = payload.meta_message_id || `bhash-${payload.phone}-${payload.flow_node}-${payload.timestamp}`;
 
   try {
@@ -119,7 +160,7 @@ export async function POST(request: Request) {
     console.error("⚠️ [Bhash Webhook] Error checking idempotency log:", dbErr);
   }
 
-  // 5. Core Processing Pipeline (Lead, Conversation, Timeline, Task Triggers)
+  // 4. Core Inbound Processing Pipeline (Lead Creation/Update, Messages, Timelines, Node 6232 Trigger)
   try {
     const result = await leadService.processInboundBhashPayload(payload);
 
@@ -140,9 +181,9 @@ export async function POST(request: Request) {
       isNewLead: result.isNewLead,
       currentNode: payload.flow_node,
       leadStatus: result.lead.status,
-    });
+    }, { status: 200 });
   } catch (err: any) {
-    console.error("❌ [Bhash Webhook Fatal Processing Error]:", err);
+    console.error("❌ [Bhash Webhook Processing Error]:", err);
 
     try {
       await db.from("bhash_webhook_logs").insert({
@@ -154,9 +195,10 @@ export async function POST(request: Request) {
       });
     } catch {}
 
+    // Guarantee HTTP 200 response format so Bhash gateway never retries due to 500 status
     return NextResponse.json(
-      { error: "Internal processing error", details: err.message },
-      { status: 500 }
+      { success: false, error: "Internal processing error", details: err.message },
+      { status: 200 }
     );
   }
 }
