@@ -278,25 +278,17 @@ export function useDashboard() {
   useEffect(() => {
     if (!token || !tenantId) return;
 
-    console.log(`🔌 Establishing secure tenant-scoped Realtime channel: tenant_id = ${tenantId}`);
+    console.log(`🔌 Establishing Realtime CRM sync channel...`);
     const supabase = createClient();
     
     const channel = supabase
-      .channel(`tenant-scoped-channel-${tenantId}`)
+      .channel(`crm-global-realtime-channel`)
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "messages",
-          filter: `tenant_id=eq.${tenantId}`
-        },
+        { event: "*", schema: "public", table: "bhash_conversations" },
         async (payload) => {
-          console.log("Realtime message event received:", payload);
-          // Refresh global state metrics
+          console.log("⚡ Realtime Bhash Conversation Event:", payload);
           fetchGlobalMetrics();
-          
-          // If the message belongs to the currently active conversation, fast refresh details
           if (selectedLeadId) {
             try {
               const freshDetails = await apiService.leads.get(selectedLeadId);
@@ -307,24 +299,28 @@ export function useDashboard() {
       )
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "contacts",
-          filter: `tenant_id=eq.${tenantId}`
-        },
+        { event: "*", schema: "public", table: "leads" },
         () => {
+          console.log("⚡ Realtime Lead Event");
           fetchGlobalMetrics();
         }
       )
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "bookings",
-          filter: `tenant_id=eq.${tenantId}`
-        },
+        { event: "*", schema: "public", table: "messages" },
+        async () => {
+          fetchGlobalMetrics();
+          if (selectedLeadId) {
+            try {
+              const freshDetails = await apiService.leads.get(selectedLeadId);
+              setLeadDetail(freshDetails);
+            } catch (e) {}
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "contacts" },
         () => {
           fetchGlobalMetrics();
         }

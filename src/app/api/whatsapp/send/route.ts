@@ -14,31 +14,45 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { leadId, phone, text, template, params, htype, mediaUrl, fname } = body;
+    let { leadId, phone, text, body: messageBody, template, templateName, params, templateParams, htype, mediaType, mediaUrl, fname } = body;
 
-    if (!phone || (!text && !template)) {
-      return NextResponse.json({ error: "Missing required parameters (phone, text or template)" }, { status: 400 });
+    const messageText = text || messageBody;
+    const activeTemplate = template || templateName;
+    const activeParams = params || templateParams;
+    const activeHtype = htype || (mediaType?.includes("image") ? "image" : mediaType?.includes("video") ? "video" : mediaType ? "document" : "normal");
+
+    // Auto-resolve phone number from leadId if phone is missing
+    let targetLeadId = leadId;
+    if (!phone && targetLeadId) {
+      const lead = await leadRepository.findById(targetLeadId);
+      if (lead && lead.phone) {
+        phone = lead.phone;
+      }
     }
 
-    let targetLeadId = leadId;
-
-    if (!targetLeadId) {
-      const lead = await leadRepository.findByPhone(phone);
+    if (!phone && text) {
+      // Secondary fallback: lookup by phone directly if leadId was actually a phone number
+      const lead = await leadRepository.findByPhone(leadId);
       if (lead) {
+        phone = lead.phone;
         targetLeadId = lead.id;
       }
     }
 
+    if (!phone || (!messageText && !activeTemplate)) {
+      return NextResponse.json({ error: "Missing required parameters (phone or valid leadId, and text or template)" }, { status: 400 });
+    }
+
     let result;
 
-    if (template) {
+    if (activeTemplate) {
       // Send Official BhashSMS Utility Template
       result = await bhashClient.sendUtilityTemplate({
         phone,
-        text,
-        template: template as BhashTemplateType,
-        params,
-        htype,
+        text: messageText || activeTemplate,
+        template: activeTemplate as BhashTemplateType,
+        params: activeParams,
+        htype: activeHtype as any,
         mediaUrl,
         fname
       });
@@ -46,8 +60,8 @@ export async function POST(request: Request) {
       // Send Normal Outbound Text / Media Message
       result = await bhashClient.sendMessage({
         phone,
-        text,
-        htype,
+        text: messageText,
+        htype: activeHtype as any,
         mediaUrl,
         fname
       });
@@ -57,18 +71,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: result.error || "Failed sending message via BhashSMS" }, { status: 500 });
     }
 
-    // Record outbound message in CRM database if leadId exists
+    // Record outbound message in CRM database if targetLeadId exists
     if (targetLeadId) {
       await conversationRepository.saveMessage({
         lead_id: targetLeadId,
         direction: "outbound",
-        message: text || `Template: ${template}`,
+        message: messageText || `Template: ${activeTemplate}`,
         meta_message_id: result.messageId,
       });
 
       // Update lead's last message
       await leadRepository.updateLead(targetLeadId, {
-        last_message: text || `Template: ${template}`,
+        last_message: messageText || `Template: ${activeTemplate}`,
         last_message_at: new Date().toISOString()
       });
     }

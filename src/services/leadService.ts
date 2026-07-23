@@ -12,6 +12,7 @@ export class LeadService {
     const { phone, name, message, flow_node, button_clicked, meta_message_id, timestamp } = payload;
     const node = String(flow_node || "6206");
     const nodeMapping = mapBhashNodeToCRM(node, button_clicked);
+    const db = getSupabaseAdmin();
 
     let lead = await leadRepository.findByPhone(phone);
     let isNewLead = false;
@@ -28,6 +29,18 @@ export class LeadService {
         status: nodeMapping.leadStatusUpdate || "new",
         source: "WhatsApp",
       });
+
+      // Mirror to legacy contacts table if exists
+      try {
+        await db.from("contacts").insert({
+          id: lead.id,
+          name: lead.name,
+          phone: lead.phone,
+          status: lead.status,
+          service: lead.service_interest,
+          source: "WhatsApp"
+        });
+      } catch (e) {}
 
       // Log Lead Created Timeline event
       await timelineRepository.createEvent({
@@ -54,6 +67,15 @@ export class LeadService {
       }
 
       lead = await leadRepository.updateLead(lead.id, updateData);
+
+      // Mirror update to legacy contacts table
+      try {
+        await db.from("contacts").update({
+          name: lead.name,
+          status: lead.status,
+          service: lead.service_interest
+        }).eq("phone", phone);
+      } catch (e) {}
     }
 
     // 2. Save Conversation Message
@@ -66,6 +88,25 @@ export class LeadService {
       meta_message_id: meta_message_id || null,
       timestamp: typeof timestamp === "string" ? timestamp : new Date().toISOString(),
     });
+
+    // Mirror to legacy messages table
+    try {
+      const { data: conv } = await db.from("conversations").select("id").eq("contact_id", lead.id).maybeSingle();
+      let conversationId = conv?.id;
+      if (!conversationId) {
+        const { data: newConv } = await db.from("conversations").insert({ contact_id: lead.id, status: "active" }).select("id").single();
+        conversationId = newConv?.id;
+      }
+      if (conversationId) {
+        await db.from("messages").insert({
+          conversation_id: conversationId,
+          direction: "inbound",
+          body: message || `Navigated to Node ${node}`,
+          meta_message_id: meta_message_id || null,
+          status: "read"
+        });
+      }
+    } catch (e) {}
 
     // 3. Automatically Create Timeline Event
     await timelineRepository.createEvent({
@@ -95,7 +136,6 @@ export class LeadService {
 
       // Write CRM system notification
       try {
-        const db = getSupabaseAdmin();
         await db.from("notifications").insert({
           type: "contact_requested",
           message: `🔥 HIGH INTENT LEAD: ${lead.name} (${lead.phone}) requested direct contact at Node 6232!`,

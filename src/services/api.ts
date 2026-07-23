@@ -424,60 +424,105 @@ export const apiService = {
     }
   },
 
-  // Leads CRM Operations (Supabase Integrated)
+  // Leads CRM Operations (Supabase Integrated - Unified for Bhash & Native CRM)
   leads: {
     list: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from('contacts')
-        .select('*')
-        .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return (data || []).map(mapDbContactToLead);
+      // Query primary Bhash/CRM leads table
+      let { data: leadsData, error: leadsError } = await supabase
+        .from('leads')
+        .select('*')
+        .order('last_message_at', { ascending: false });
+
+      if (leadsError || !leadsData || leadsData.length === 0) {
+        // Fallback: Query legacy contacts table if leads table is empty
+        const { data: contactsData } = await supabase
+          .from('contacts')
+          .select('*')
+          .order('created_at', { ascending: false });
+        leadsData = contactsData || [];
+      }
+      
+      return (leadsData || []).map(mapDbContactToLead);
     },
     
     get: async (id: string) => {
       const supabase = createClient();
-      const { data: contact, error: contactError } = await supabase
-        .from('contacts')
+      
+      // 1. Fetch Lead details from primary leads table
+      let leadData: any = null;
+      const { data: leadFromLeads } = await supabase
+        .from('leads')
         .select('*')
         .eq('id', id)
-        .single();
-        
-      if (contactError) throw contactError;
-      
-      // Fetch chats / messages from database
-      const { data: conversation } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('contact_id', id)
-        .single();
-        
-      let chats: ChatMessage[] = [];
-      if (conversation) {
-        const { data: messages } = await supabase
-          .from('messages')
+        .maybeSingle();
+
+      if (leadFromLeads) {
+        leadData = leadFromLeads;
+      } else {
+        // Fallback: query contacts table
+        const { data: leadFromContacts } = await supabase
+          .from('contacts')
           .select('*')
-          .eq('conversation_id', conversation.id)
-          .order('created_at', { ascending: true });
-          
-        if (messages) {
-          chats = messages.map(m => ({
-            id: m.id,
-            lead_id: id,
-            direction: m.direction as 'inbound' | 'outbound',
-            body: m.body || '',
-            status: m.status as 'sent' | 'read' | 'failed' | 'pending',
-            timestamp: m.created_at,
-            media_url: m.media_url,
-            media_type: m.media_type
-          }));
+          .eq('id', id)
+          .maybeSingle();
+        leadData = leadFromContacts;
+      }
+
+      if (!leadData) {
+        throw new Error(`Lead not found with ID ${id}`);
+      }
+
+      // 2. Fetch chats / messages from bhash_conversations
+      let chats: ChatMessage[] = [];
+      const { data: bhashMessages } = await supabase
+        .from('bhash_conversations')
+        .select('*')
+        .eq('lead_id', id)
+        .order('timestamp', { ascending: true });
+
+      if (bhashMessages && bhashMessages.length > 0) {
+        chats = bhashMessages.map(m => ({
+          id: m.id,
+          lead_id: id,
+          direction: m.direction as 'inbound' | 'outbound',
+          body: m.message || '',
+          status: (m.status || 'sent') as 'sent' | 'read' | 'failed' | 'pending',
+          timestamp: m.timestamp || m.created_at,
+        }));
+      } else {
+        // Fallback: Fetch from legacy messages table
+        const { data: conversation } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('contact_id', id)
+          .maybeSingle();
+
+        if (conversation) {
+          const { data: messages } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('conversation_id', conversation.id)
+            .order('created_at', { ascending: true });
+
+          if (messages) {
+            chats = messages.map(m => ({
+              id: m.id,
+              lead_id: id,
+              direction: m.direction as 'inbound' | 'outbound',
+              body: m.body || '',
+              status: (m.status || 'sent') as 'sent' | 'read' | 'failed' | 'pending',
+              timestamp: m.created_at,
+              media_url: m.media_url,
+              media_type: m.media_type
+            }));
+          }
         }
       }
       
       return {
-        lead: mapDbContactToLead(contact),
+        lead: mapDbContactToLead(leadData),
         chats,
         followup: null
       };
