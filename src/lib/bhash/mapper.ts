@@ -62,7 +62,7 @@ export function mapBhashNodeToCRM(nodeId: string, buttonTitle?: string | null): 
       eventType: 'viewed_pricing',
       eventTitle: 'Viewed Pricing',
       eventDescription: `Lead requested package pricing breakdown at Node ${node}.`,
-      leadStatusUpdate: 'nurturing',
+      leadStatusUpdate: 'contacted',
       isContactRequested: false,
     };
   }
@@ -83,7 +83,7 @@ export function mapBhashNodeToCRM(nodeId: string, buttonTitle?: string | null): 
       eventType: 'requested_contact',
       eventTitle: 'Requested Contact / Callback',
       eventDescription: 'Lead completed WhatsApp flow and requested direct agent consultation.',
-      leadStatusUpdate: 'Interested',
+      leadStatusUpdate: 'qualified',
       isContactRequested: true,
     };
   }

@@ -1,11 +1,17 @@
-'use client'
+import ClientApp from './ClientApp';
 
-import dynamic from 'next/dynamic'
-
-const AppWithNoSSR = dynamic(() => import('../../App'), {
-  ssr: false,
-})
+export function generateStaticParams() {
+  return [
+    { slug: [] },
+    { slug: ['services'] },
+    { slug: ['pricing'] },
+    { slug: ['contact'] },
+    { slug: ['about'] },
+    { slug: ['gorakhpur'] },
+    { slug: ['uttar-pradesh'] }
+  ];
+}
 
 export default function CatchAllPage() {
-  return <AppWithNoSSR />
+  return <ClientApp />;
 }

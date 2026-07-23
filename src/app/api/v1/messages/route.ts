@@ -1,0 +1,93 @@
+import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "../../../../lib/supabase/admin";
+import { bhashProvider } from "../../../../services/providers/bhashProvider";
+import { sendMessageSchema } from "../../../../lib/validation/schemas";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+export async function POST(request: Request) {
+  const db = getSupabaseAdmin();
+  const body = await request.json();
+
+  try {
+    const validated = sendMessageSchema.parse(body);
+    const tenant_id = body.tenant_id || "00000000-0000-0000-0000-000000000001";
+
+    // Send via Provider Interface
+    const sendResult = await bhashProvider.sendMessage({
+      tenant_id,
+      to: validated.phone,
+      body: validated.text,
+    });
+
+    if (!sendResult.success) {
+      return NextResponse.json({ success: false, error: sendResult.error }, { status: 400 });
+    }
+
+    // Save conversation & message
+    let { data: conv } = await db
+      .from("conversations")
+      .select("id")
+      .eq("tenant_id", tenant_id)
+      .eq("lead_id", validated.lead_id)
+      .maybeSingle();
+
+    if (!conv) {
+      const { data: newConv } = await db
+        .from("conversations")
+        .insert({
+          tenant_id,
+          lead_id: validated.lead_id,
+          channel: "whatsapp",
+          provider: "bhash",
+          status: "active",
+        })
+        .select("id")
+        .single();
+      conv = newConv;
+    }
+
+    const { data: savedMsg } = await db
+      .from("messages")
+      .insert({
+        tenant_id,
+        conversation_id: conv?.id,
+        lead_id: validated.lead_id,
+        direction: "outbound",
+        body: validated.text,
+        provider_message_id: sendResult.messageId || null,
+      })
+      .select("*")
+      .single();
+
+    // Update lead last message timestamp
+    await db
+      .from("leads")
+      .update({
+        last_message: validated.text,
+        last_message_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", validated.lead_id);
+
+    // Log timeline event
+    await db.from("timeline_events").insert({
+      tenant_id,
+      lead_id: validated.lead_id,
+      event_type: "message_sent",
+      title: "Outbound Message Sent",
+      description: validated.text,
+      metadata: { message_id: savedMsg?.id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: savedMsg,
+      messageId: sendResult.messageId,
+    });
+  } catch (err: any) {
+    console.error("Outbound Message Error:", err);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}

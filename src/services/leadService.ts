@@ -121,8 +121,8 @@ export class LeadService {
     if (nodeMapping.isContactRequested) {
       console.log(`🚨 Node 6232 Reached for Lead ${lead.phone}! Executing automated contact trigger...`);
 
-      // Update Lead Status to 'Interested'
-      lead = await leadRepository.updateLead(lead.id, { status: "Interested" });
+      // Update Lead Status to 'qualified'
+      lead = await leadRepository.updateLead(lead.id, { status: "qualified" });
 
       // Automatically create follow-up task
       await taskRepository.createTask({

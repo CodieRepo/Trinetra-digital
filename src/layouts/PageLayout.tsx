@@ -6,6 +6,7 @@ import { FinalCTAFooter } from "../components/FinalCTA";
 import WebGLBackground from "../components/WebGLBackground";
 import SmoothScroll from "../components/SmoothScroll";
 import Cursor from "../components/Cursor";
+import { ChatWidget } from "../components/chat/ChatWidget";
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -36,6 +37,8 @@ export default function PageLayout({ children, hideFooter = false }: PageLayoutP
       {!hideFooter && <FinalCTAFooter />}
       <WhatsAppFloat />
       <MobileStickyCTA />
+      <ChatWidget />
     </div>
   );
 }
+

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Lead, ConversationMessage } from "../../types/crm";
 import { BhashTemplateType } from "../../types/bhash";
-import { Send, FileText, Bot, User, CheckCheck, Loader2 } from "lucide-react";
+import { Send, FileText, Bot, User, Loader2 } from "lucide-react";
 
 interface ChatViewProps {
   lead: Lead | null;
@@ -94,7 +94,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ lead, messages, onSendMessag
                 </div>
 
                 <div className={`p-3 rounded-2xl text-sm ${isInbound ? "bg-slate-900 text-slate-100 border border-slate-800 rounded-tl-none" : "bg-emerald-900/40 text-emerald-100 border border-emerald-800/60 rounded-tr-none"}`}>
-                  <div className="whitespace-pre-wrap">{msg.message}</div>
+                  <div className="whitespace-pre-wrap">{msg.body || msg.message}</div>
 
                   {msg.flow_node && (
                     <div className="mt-2 text-[10px] font-mono text-emerald-400/80 bg-slate-950/60 px-2 py-0.5 rounded w-fit border border-slate-800">
@@ -103,8 +103,8 @@ export const ChatView: React.FC<ChatViewProps> = ({ lead, messages, onSendMessag
                   )}
 
                   <div className="mt-1 flex items-center justify-between gap-4 text-[10px] text-slate-400">
-                    <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    {!isInbound && <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />}
+                    <span>{new Date(msg.timestamp || msg.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    {!isInbound && <span className="text-[9px] text-slate-400 font-mono">Sent</span>}
                   </div>
                 </div>
               </div>

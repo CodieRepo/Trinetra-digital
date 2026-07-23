@@ -1,5 +1,19 @@
 # Trinetra OS — Changelog
 
+## [v1.1.0-offline-ai-assistant] — 2026-07-23
+
+### Phase 5: Enterprise Offline AI Assistant & Search Engine
+* **100% Local Classical NLP Engine:** Built an offline AI advisor running entirely in the client browser with zero cloud AI API dependencies (No OpenAI, Gemini, Claude, Groq, or OpenRouter).
+* **Hybrid Semantic Search Engine:** Multi-vector retrieval fusing Okapi BM25 (30%), TF-IDF Cosine Similarity (30%), Keyword Title Ratio (20%), Synonym Matching (10%), and Levenshtein Edit Distance (10%) to output confidence scores (0–100%).
+* **Multi-Label Intent Detection:** 19 Primary Intents and 6 Secondary Intents evaluated locally via regex patterns, keyword clusters, and TF-IDF exemplar similarity.
+* **Knowledge Base & Knowledge Graph:** Extended structured JSON KB with relational graph nodes (`related_services`, `prerequisites`, `next_step`, `upsell`, `cross_sell`) guiding clients through canonical service growth pathways.
+* **Conversation Memory Manager:** Local storage context preservation (`trinetra_chat_user_memory_v1`) tracking Name, Phone, Email, Business Type, City, Budget, Preferred Service, and sliding 20-message window.
+* **Interactive In-Chat Lead Capture & Booking Cards:** Embedded form cards for lead collection and 1-on-1 strategy call bookings with input validation and confirmation UI.
+* **Offline Mini CRM Engine:** Local CRM storage (`trinetra_crm_appointments_v1`) supporting status updates (*Upcoming, Completed, Cancelled*), search, deletion, and 1-click CSV Export.
+* **Continuous Learning System & Analytics:** Local tracking of low-confidence queries (&lt; 35%) allowing administrators to convert unhandled user questions into new KB articles in 1 click.
+* **Glassmorphism Floating Widget & Admin Portal:** Modern floating UI widget mounted across all pages with Web Speech API voice STT/TTS controls, typing indicator, sound toggles, and full-featured Admin Portal.
+* **Complete System Documentation:** Comprehensive architectural whitepaper ([AI_ARCHITECTURE.md](file:///c:/Users/ASUS/OneDrive/Desktop/Trinetra%20digital/AI_ARCHITECTURE.md)) detailing math formulas, NLP pipeline, and plug-and-play LLM integration strategy.
+
 ## [v1.0.0-trinetra-crm] — 2026-06-05
 
 ### Phase 1: WhatsApp Stabilization

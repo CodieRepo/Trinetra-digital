@@ -1,3 +1,5 @@
+import { LeadStatus } from "./crm";
+
 export type BhashFlowNode = 
   | '6206' // Welcome
   | '6207' // Explore Services
@@ -33,7 +35,7 @@ export interface BhashMappedNodeResult {
   eventTitle: string;
   eventDescription: string;
   serviceInterest?: string;
-  leadStatusUpdate?: 'new' | 'nurturing' | 'Interested' | 'hot' | 'converted' | 'lost';
+  leadStatusUpdate?: LeadStatus;
   isContactRequested: boolean;
 }
 

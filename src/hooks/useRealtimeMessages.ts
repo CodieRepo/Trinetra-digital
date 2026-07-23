@@ -15,7 +15,7 @@ export function useRealtimeMessages(selectedLeadId: string | null) {
     if (!selectedLeadId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/leads?leadId=${selectedLeadId}`);
+      const res = await fetch(`/api/v1/leads?leadId=${selectedLeadId}`);
       const data = await res.json();
       if (data.success) {
         setLead(data.lead);
@@ -36,9 +36,25 @@ export function useRealtimeMessages(selectedLeadId: string | null) {
 
     if (!selectedLeadId) return;
 
-    // Realtime channel for conversations, timeline, tasks, notes
+    // Realtime channel for messages, conversations, timeline, tasks, notes
     const channel = supabase
       .channel(`lead-details-${selectedLeadId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `lead_id=eq.${selectedLeadId}` },
+        (payload) => {
+          const msg = payload.new;
+          const formattedMsg: ConversationMessage = {
+            id: msg.id,
+            lead_id: msg.lead_id,
+            direction: msg.direction,
+            message: msg.body,
+            timestamp: msg.created_at,
+            created_at: msg.created_at,
+          };
+          setMessages((prev) => [...prev, formattedMsg]);
+        }
+      )
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "bhash_conversations", filter: `lead_id=eq.${selectedLeadId}` },
@@ -48,21 +64,21 @@ export function useRealtimeMessages(selectedLeadId: string | null) {
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "bhash_timeline_events", filter: `lead_id=eq.${selectedLeadId}` },
+        { event: "INSERT", schema: "public", table: "timeline_events", filter: `lead_id=eq.${selectedLeadId}` },
         (payload) => {
           setTimeline((prev) => [payload.new as TimelineEvent, ...prev]);
         }
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "bhash_tasks", filter: `lead_id=eq.${selectedLeadId}` },
+        { event: "*", schema: "public", table: "tasks", filter: `lead_id=eq.${selectedLeadId}` },
         () => {
           loadLeadDetails();
         }
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "bhash_lead_notes", filter: `lead_id=eq.${selectedLeadId}` },
+        { event: "INSERT", schema: "public", table: "lead_notes", filter: `lead_id=eq.${selectedLeadId}` },
         (payload) => {
           setNotes((prev) => [payload.new as LeadNote, ...prev]);
         }
