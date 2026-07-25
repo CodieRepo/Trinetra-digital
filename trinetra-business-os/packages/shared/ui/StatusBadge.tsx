@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '../core/loggingutils'; 
+import { cn } from '../utils'; 
 
 type StatusType = 'active' | 'draft' | 'paused' | 'completed' | 'redeemed';
 

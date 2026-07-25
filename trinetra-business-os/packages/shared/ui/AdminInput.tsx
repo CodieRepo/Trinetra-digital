@@ -1,7 +1,7 @@
 "use client";
 
 import { InputHTMLAttributes, ReactNode, forwardRef } from "react";
-import { cn } from "../core/loggingutils";
+import { cn } from "../utils";
 
 interface AdminInputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;

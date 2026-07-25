@@ -553,28 +553,30 @@ export default function RestaurantDashboard({
   );
 
   return (
-    <div className="min-h-screen bg-stone-950 px-4 py-8 text-stone-50 md:px-8">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <section className="rounded-[32px] border border-amber-300/15 bg-[linear-gradient(135deg,#0f172a_0%,#111827_45%,#1c1917_100%)] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.35)]">
+    <div className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100 md:px-6">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <section className="rounded-3xl border border-indigo-500/20 bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-900 p-6 shadow-xl shadow-indigo-950/20">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-amber-200/70">
-                Restaurant Mode
-              </p>
-              <h1 className="mt-3 text-3xl font-semibold text-white md:text-4xl">
-                {restaurantName}
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                <p className="text-xs uppercase tracking-widest text-indigo-400 font-bold">
+                  Trinetra Business OS • Vertical Module
+                </p>
+              </div>
+              <h1 className="mt-2 text-3xl font-black text-white md:text-4xl">
+                Restaurant OS
               </h1>
-              <p className="mt-3 max-w-2xl text-sm text-stone-300 md:text-base">
-                Live operations, menu controls, table QR management, and staff
-                access stay isolated under this restaurant owner account.
+              <p className="mt-2 max-w-2xl text-sm text-slate-400">
+                Live table management, QR digital menu, kitchen KDS queue, waiter ops, and real-time settlement for {restaurantName || "Default Organization"}.
               </p>
             </div>
             <button
               type="button"
               onClick={() => void loadAll(true)}
-              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-stone-100 hover:bg-white/10"
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
             >
-              Refresh
+              Refresh Module
             </button>
           </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { cn } from "../core/loggingutils";
+import { cn } from "../utils";
 
 interface AdminCardProps {
   children: ReactNode;

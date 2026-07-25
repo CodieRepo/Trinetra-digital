@@ -2,7 +2,7 @@
 
 import { ButtonHTMLAttributes, ReactNode } from "react";
 import { Loader2 } from "lucide-react";
-import { cn } from "../core/loggingutils";
+import { cn } from "../utils";
 
 type ButtonVariant = "primary" | "secondary" | "success" | "danger" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";

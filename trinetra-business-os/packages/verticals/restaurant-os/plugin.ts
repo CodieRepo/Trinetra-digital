@@ -1,120 +1,88 @@
-export interface RouteEntry {
-  path: string;
-  component: string;
-  isPublic: boolean;
-}
+import type {
+  BusinessOSPlugin,
+  PluginContext,
+  RouteEntry,
+  NavItem,
+  PermissionRule,
+  EventListenerEntry,
+  WebhookDefinition,
+} from "../../core/config";
 
-export interface NavItem {
-  label: string;
-  icon: string;
-  path: string;
-  permission: string;
-}
-
-export interface PermissionRule {
-  role: string;
-  actions: string[];
-}
-
-export interface EventListenerEntry {
-  event: string;
-  handler: string;
-}
-
-export interface WebhookDefinition {
-  url: string;
-  event: string;
-}
-
-export interface MigrationConfig {
-  version: string;
-  file: string;
-}
-
-export interface PluginContext {
-  organizationId: string;
-  tenantSchema: string;
-}
-
-export interface BusinessOSPlugin {
-  id: string;
-  name: string;
-  version: string;
-  install(ctx: PluginContext): Promise<void>;
-  uninstall(ctx: PluginContext): Promise<void>;
-  migrate(ctx: PluginContext): Promise<void>;
-  seed(ctx: PluginContext): Promise<void>;
-  healthCheck(ctx: PluginContext): Promise<{ status: "healthy" | "degraded"; details?: string }>;
-  registerRoutes(): RouteEntry[];
-  registerNavigation(): NavItem[];
-  registerPermissions(): PermissionRule[];
-  registerEvents(): EventListenerEntry[];
-  registerWebhooks(): WebhookDefinition[];
-}
+export type {
+  BusinessOSPlugin,
+  PluginContext,
+  RouteEntry,
+  NavItem,
+  PermissionRule,
+  EventListenerEntry,
+  WebhookDefinition,
+};
 
 export const RestaurantOSPlugin: BusinessOSPlugin = {
   id: "restaurant-os",
   name: "Restaurant OS",
   version: "1.0.0",
 
-  async install(ctx: PluginContext) {
-    console.log(`Installing Restaurant OS for Tenant: ${ctx.organizationId}`);
+  async install(ctx: PluginContext): Promise<void> {
+    console.log(`[Trinetra Core] Installing Restaurant OS module for Tenant: ${ctx.organizationId}`);
   },
 
-  async uninstall(ctx: PluginContext) {
-    console.log(`Uninstalling Restaurant OS for Tenant: ${ctx.organizationId}`);
+  async uninstall(ctx: PluginContext): Promise<void> {
+    console.log(`[Trinetra Core] Uninstalling Restaurant OS module for Tenant: ${ctx.organizationId}`);
   },
 
-  async migrate(ctx: PluginContext) {
-    console.log(`Running Restaurant OS migrations for Schema: ${ctx.tenantSchema}`);
+  async migrate(ctx: PluginContext): Promise<void> {
+    console.log(`[Trinetra Core] Running Restaurant OS schema migrations for Tenant: ${ctx.organizationId}`);
   },
 
-  async seed(ctx: PluginContext) {
-    console.log(`Seeding baseline restaurant parameters for Tenant: ${ctx.organizationId}`);
+  async seed(ctx: PluginContext): Promise<void> {
+    console.log(`[Trinetra Core] Seeding default menu and tables for Tenant: ${ctx.organizationId}`);
   },
 
-  async healthCheck(ctx: PluginContext) {
+  async healthCheck(_ctx: PluginContext): Promise<{ status: "healthy" | "degraded"; details?: string }> {
     return { status: "healthy" };
   },
 
-  registerRoutes() {
+  registerRoutes(): RouteEntry[] {
     return [
-      { path: "/restaurant/dashboard", component: "RestaurantDashboard", isPublic: false },
-      { path: "/restaurant/menu", component: "MenuManager", isPublic: false },
-      { path: "/restaurant/orders", component: "StaffOrdersPanel", isPublic: false },
+      { path: "/admin/restaurant", component: "RestaurantDashboard", isPublic: false },
       { path: "/r/:tableToken", component: "PublicRestaurantMenu", isPublic: true },
-      { path: "/r/:tableToken/order/:orderId", component: "OrderStatus", isPublic: true }
+      { path: "/r/:tableToken/order/:orderId", component: "OrderStatus", isPublic: true },
+      { path: "/staff/ops", component: "StaffOpsPanel", isPublic: false },
     ];
   },
 
-  registerNavigation() {
+  registerNavigation(): NavItem[] {
     return [
       {
         label: "Restaurant OS",
         icon: "UtensilsCrossed",
-        path: "/restaurant/dashboard",
-        permission: "restaurant:view"
-      }
+        path: "/admin?view=restaurant-os",
+        permission: "restaurant:view",
+        group: "verticals",
+      },
     ];
   },
 
-  registerPermissions() {
+  registerPermissions(): PermissionRule[] {
     return [
-      { role: "owner", actions: ["menu:create", "menu:delete", "tables:create", "billing:settle"] },
+      { role: "owner", actions: ["menu:manage", "tables:manage", "sessions:close", "billing:settle"] },
+      { role: "admin", actions: ["menu:manage", "tables:manage", "sessions:close"] },
       { role: "kitchen", actions: ["orders:prepare", "orders:ready"] },
-      { role: "waiter", actions: ["orders:serve", "sessions:view"] }
+      { role: "waiter", actions: ["orders:serve", "sessions:view", "sessions:close"] },
     ];
   },
 
-  registerEvents() {
+  registerEvents(): EventListenerEntry[] {
     return [
       { event: "OrderPlaced", handler: "onOrderPlaced" },
       { event: "OrderReady", handler: "onOrderReady" },
-      { event: "PaymentCompleted", handler: "onPaymentCompleted" }
+      { event: "PaymentCompleted", handler: "onPaymentCompleted" },
+      { event: "CustomerRegistered", handler: "onCustomerRegistered" },
     ];
   },
 
-  registerWebhooks() {
+  registerWebhooks(): WebhookDefinition[] {
     return [];
-  }
+  },
 };

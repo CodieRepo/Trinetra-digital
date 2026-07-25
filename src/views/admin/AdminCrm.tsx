@@ -1,12 +1,7 @@
 /**
  * AdminCrm.tsx — CRM Shell
  *
- * This file is intentionally kept thin (~250 lines).
  * All business logic lives in the panel files under ./panels/
- *
- * Navigation sections:
- *   overview | conversations | leads | pipelines | conversions
- *   campaigns | automations | reports | templates | settings
  */
 
 import { useState, lazy, Suspense } from "react";
@@ -15,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, MessageSquare, Users, TrendingUp, Calendar,
   Megaphone, Zap, BarChart3, FileText, Settings, LogOut,
-  Menu, X, Shield, Loader2, RefreshCw, Activity
+  Menu, X, Shield, Loader2, RefreshCw, Activity, Radio
 } from "lucide-react";
 import { useDashboard } from "../../hooks/useApi";
 import { ToastProvider } from "../../components/ui/Toast";
@@ -33,13 +28,14 @@ const ReportsPanel     = lazy(() => import("./panels/ReportsPanel"));
 const TemplatesPanel   = lazy(() => import("./panels/TemplatesPanel"));
 const SettingsPanel    = lazy(() => import("./panels/SettingsPanel"));
 const DiagnosticsPanel = lazy(() => import("./panels/DiagnosticsPanel"));
+const BhashMonitorPanel = lazy(() => import("./panels/BhashMonitorPanel"));
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type ViewSection =
   | "overview" | "conversations" | "leads"
   | "pipelines" | "conversions" | "campaigns"
-  | "automations" | "reports" | "templates" | "settings" | "qr" | "diagnostics";
+  | "automations" | "reports" | "templates" | "settings" | "qr" | "diagnostics" | "bhash";
 
 // ── Sidebar Nav Config ────────────────────────────────────────────────────────
 
@@ -54,6 +50,7 @@ const NAV_ITEMS: Array<{
   { key: "leads",          label: "Leads",         icon: <Users size={16} />,           group: "main" },
   { key: "pipelines",      label: "Pipeline",      icon: <TrendingUp size={16} />,      group: "main" },
   { key: "conversions",    label: "Bookings",      icon: <Calendar size={16} />,        group: "main" },
+  { key: "bhash",          label: "Bhash Monitor", icon: <Radio size={16} />,           group: "growth" },
   { key: "campaigns",      label: "Campaigns",     icon: <Megaphone size={16} />,       group: "growth" },
   { key: "automations",    label: "Automations",   icon: <Zap size={16} />,             group: "growth" },
   { key: "templates",      label: "Templates",     icon: <FileText size={16} />,        group: "growth" },
@@ -73,179 +70,102 @@ const GROUP_LABELS: Record<string, string> = {
 function PanelLoader() {
   return (
     <div className="flex items-center justify-center h-64">
-      <Loader2 size={24} className="animate-spin text-slate-600" />
+      <Loader2 className="animate-spin text-indigo-600" size={24} />
     </div>
   );
 }
 
-// ── Login Screen ──────────────────────────────────────────────────────────────
+// ── Sidebar Component ─────────────────────────────────────────────────────────
 
-function LoginScreen({ onLogin, loading, error }: {
-  onLogin: (u: string, p: string) => void;
-  loading: boolean;
-  error: string | null;
-}) {
-  const [u, setU] = useState("");
-  const [p, setP] = useState("");
-
-  return (
-    <div className="min-h-screen bg-[#09090B] flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm"
-      >
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-900/30">
-            <Shield size={28} className="text-white" />
-          </div>
-          <h1 className="text-xl font-black text-white">Trinetra CRM</h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">Admin Access</p>
-        </div>
-
-        <form
-          onSubmit={e => { e.preventDefault(); onLogin(u, p); }}
-          className="bg-white/5 border border-white/10 rounded-3xl p-7 space-y-4"
-        >
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Username</label>
-            <input
-              type="text"
-              value={u}
-              onChange={e => setU(e.target.value)}
-              autoComplete="username"
-              required
-              className="w-full h-10 px-4 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:bg-white/10 transition-all placeholder:text-slate-600"
-              placeholder="admin"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Password</label>
-            <input
-              type="password"
-              value={p}
-              onChange={e => setP(e.target.value)}
-              autoComplete="current-password"
-              required
-              className="w-full h-10 px-4 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:bg-white/10 transition-all placeholder:text-slate-600"
-              placeholder="••••••••"
-            />
-          </div>
-
-          {error && (
-            <p className="text-xs text-rose-400 font-medium text-center bg-rose-950/40 border border-rose-900/50 rounded-xl px-3 py-2">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-10 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl text-sm font-bold transition-all border-0 cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            {loading ? <Loader2 size={16} className="animate-spin" /> : null}
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
-      </motion.div>
-    </div>
-  );
-}
-
-// ── Sidebar ───────────────────────────────────────────────────────────────────
-
-function Sidebar({
-  activeView,
-  setActiveView,
-  onLogout,
-  waConnected,
-  refreshing,
-  onRefresh,
-  collapsed,
-  setCollapsed,
-}: {
+interface SidebarProps {
   activeView: ViewSection;
   setActiveView: (v: ViewSection) => void;
   onLogout: () => void;
-  waConnected: boolean;
   refreshing: boolean;
   onRefresh: () => void;
   collapsed: boolean;
-  setCollapsed: (v: boolean) => void;
-}) {
-  const groups = ["main", "growth", "system"];
+  setCollapsed: (c: boolean) => void;
+}
+
+function Sidebar({
+  activeView, setActiveView, onLogout,
+  refreshing, onRefresh,
+  collapsed, setCollapsed,
+}: SidebarProps) {
+  const grouped = NAV_ITEMS.reduce((acc, item) => {
+    const g = item.group || "main";
+    if (!acc[g]) acc[g] = [];
+    acc[g].push(item);
+    return acc;
+  }, {} as Record<string, typeof NAV_ITEMS>);
 
   return (
     <motion.div
       animate={{ width: collapsed ? 64 : 220 }}
-      transition={{ duration: 0.2 }}
-      className="h-screen bg-[#09090B] border-r border-white/5 flex flex-col overflow-hidden shrink-0"
+      transition={{ duration: 0.2, ease: "easeInOut" }}
+      className="shrink-0 bg-slate-900 text-slate-300 flex flex-col h-full z-20 select-none border-r border-slate-800"
     >
-      {/* Header */}
-      <div className={`flex items-center ${collapsed ? "justify-center px-3" : "justify-between px-4"} py-4 border-b border-white/5`}>
+      {/* Brand */}
+      <div className="h-14 px-3.5 flex items-center justify-between border-b border-slate-800">
         {!collapsed && (
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shrink-0">
-              <Shield size={14} className="text-white" />
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-black text-xs shrink-0 shadow-md">
+              T
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-black text-white truncate">Trinetra CRM</p>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${waConnected ? "bg-emerald-500 animate-pulse" : "bg-slate-600"}`} />
-                <span className="text-[9px] text-slate-500 font-medium">{waConnected ? "Live" : "Offline"}</span>
-              </div>
-            </div>
+            <span className="font-bold text-sm text-white tracking-wide truncate">
+              Trinetra <span className="text-indigo-400 font-normal text-xs">CRM</span>
+            </span>
           </div>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white/10 text-slate-500 transition-colors border-0 cursor-pointer bg-transparent shrink-0"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors border-0 cursor-pointer ml-auto"
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <Menu size={14} /> : <X size={14} />}
+          {collapsed ? <Menu size={16} /> : <X size={16} />}
         </button>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 py-3 overflow-y-auto space-y-4 px-2">
-        {groups.map(group => {
-          const items = NAV_ITEMS.filter(n => n.group === group);
-          return (
-            <div key={group}>
-              {!collapsed && (
-                <p className="text-[9px] font-black text-slate-600 uppercase tracking-wider px-2 mb-1">
-                  {GROUP_LABELS[group]}
-                </p>
-              )}
-              <div className="space-y-0.5">
-                {items.map(item => (
+      {/* Nav Groups */}
+      <div className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+        {Object.entries(grouped).map(([groupKey, items]) => (
+          <div key={groupKey}>
+            {!collapsed && (
+              <p className="px-2.5 mb-1.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
+                {GROUP_LABELS[groupKey] || groupKey}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {items.map(item => {
+                const isActive = activeView === item.key;
+                return (
                   <button
                     key={item.key}
                     onClick={() => setActiveView(item.key)}
-                    className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2.5"} px-2.5 py-2 rounded-xl text-xs font-bold transition-all border-0 cursor-pointer ${
-                      activeView === item.key
-                        ? "bg-indigo-600 text-white"
-                        : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+                    className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2.5"} px-2.5 py-2 rounded-xl text-xs font-medium transition-all border-0 cursor-pointer ${
+                      isActive
+                        ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-600/30"
+                        : "text-slate-400 hover:text-white hover:bg-slate-800/60"
                     }`}
                     title={collapsed ? item.label : undefined}
                   >
-                    {item.icon}
+                    <span className={isActive ? "text-white" : "text-slate-400"}>{item.icon}</span>
                     {!collapsed && <span>{item.label}</span>}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          );
-        })}
-      </nav>
+          </div>
+        ))}
+      </div>
 
-      {/* Footer */}
-      <div className="border-t border-white/5 p-2 space-y-0.5">
+      {/* Footer controls */}
+      <div className="p-2 border-t border-slate-800 space-y-1">
         <button
           onClick={onRefresh}
           disabled={refreshing}
-          className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2.5"} px-2.5 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all border-0 cursor-pointer disabled:opacity-50`}
-          title={collapsed ? "Refresh" : undefined}
+          className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2.5"} px-2.5 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-all border-0 cursor-pointer disabled:opacity-50`}
+          title={collapsed ? "Refresh data" : undefined}
         >
           <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
           {!collapsed && "Refresh"}
@@ -292,23 +212,78 @@ export default function AdminCrm() {
   });
   const [collapsed, setCollapsed] = useState(false);
 
-  // Navigate to conversation when lead selected from inbox
   const handleSetSelectedLeadId = (_id: string | null) => {
     setActiveView("conversations");
   };
 
   if (!token) {
     return (
-      <ToastProvider>
-        <LoginScreen onLogin={login} loading={loginLoading} error={loginError} />
-      </ToastProvider>
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-sm bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-2xl space-y-5"
+        >
+          <div className="flex flex-col items-center text-center space-y-2">
+            <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-600/30">
+              T
+            </div>
+            <h1 className="text-xl font-bold text-white">Trinetra CRM Admin</h1>
+            <p className="text-xs text-slate-400">Sign in to access your dashboard</p>
+          </div>
+
+          {loginError && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs text-center font-medium">
+              {loginError}
+            </div>
+          )}
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              login(fd.get("username") as string, fd.get("password") as string);
+            }}
+            className="space-y-3"
+          >
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Username / Email</label>
+              <input
+                type="text"
+                name="username"
+                defaultValue="admin"
+                required
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+              <input
+                type="password"
+                name="password"
+                defaultValue="admin123"
+                required
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loginLoading}
+              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-semibold text-sm rounded-xl transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 border-0 cursor-pointer disabled:opacity-50"
+            >
+              {loginLoading && <Loader2 size={16} className="animate-spin" />}
+              <span>Sign In</span>
+            </button>
+          </form>
+        </motion.div>
+      </div>
     );
   }
 
   const renderPanel = () => {
     switch (activeView) {
       case "overview":
-        return <OverviewPanel />;
+        return <OverviewPanel analytics={analytics} leads={leads} onSelectView={setActiveView} />;
       case "conversations":
         return <InboxPanel />;
       case "leads":
@@ -324,6 +299,8 @@ export default function AdminCrm() {
         return <AdminPipeline />;
       case "conversions":
         return <BookingsPanel />;
+      case "bhash":
+        return <BhashMonitorPanel />;
       case "campaigns":
         return <CampaignsPanel />;
       case "automations":
@@ -333,13 +310,9 @@ export default function AdminCrm() {
       case "templates":
         return <TemplatesPanel />;
       case "settings":
-        return (
-          <SettingsPanel />
-        );
+        return <SettingsPanel />;
       case "diagnostics":
-        return (
-          <DiagnosticsPanel />
-        );
+        return <DiagnosticsPanel />;
       default:
         return null;
     }
@@ -353,7 +326,6 @@ export default function AdminCrm() {
           activeView={activeView}
           setActiveView={setActiveView}
           onLogout={logout}
-          waConnected={waStatus?.status === "connected"}
           refreshing={refreshing}
           onRefresh={triggerRefresh}
           collapsed={collapsed}
@@ -392,7 +364,7 @@ export default function AdminCrm() {
           </div>
 
           {/* Panel Area */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 bg-slate-900">
             <Suspense fallback={<PanelLoader />}>
               <AnimatePresence mode="wait">
                 <motion.div

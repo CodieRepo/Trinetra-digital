@@ -1,0 +1,27 @@
+name: BhashSMS Automated Lead Sync
+
+on:
+  schedule:
+    # Run every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  sync-bhash-leads:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Run BhashSMS Lead Scraper
+        env:
+          BHASHSMS_USER: ${{ secrets.BHASHSMS_USER }}
+          BHASHSMS_PASS: ${{ secrets.BHASHSMS_PASS }}
+          CRM_SYNC_URL: "https://trinetradigitalsolution.com/api/v1/bhash/sync"
+          SCRAPER_SECRET: "trinetra-scraper-secret-2026"
+        run: node scripts/scrapeBhash.js
