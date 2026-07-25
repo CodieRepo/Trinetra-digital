@@ -1,59 +1,177 @@
 /**
- * BhashSMS Portal Scraper Script
- * -------------------------------------------------------------
- * Logs into bhashsms.com, fetches lead logs & balance,
- * and posts them to Trinetra CRM Sync API.
+ * BhashSMS Business WhatsApp (BWA) Automated Scraper Engine
+ * -----------------------------------------------------------------
+ * Logins to Bhash BWA portal (https://digifast.site/dltstatus/bwa/Pages/),
+ * scrapes live incoming WhatsApp messages & leads from waincommingDisplay.php,
+ * and syncs them into Trinetra CRM.
  */
 
-const user = process.env.BHASHSMS_USER || "Trinetra";
-const pass = process.env.BHASHSMS_PASS || "";
-const crmApiUrl = process.env.CRM_SYNC_URL || "https://trinetradigitalsolution.com/api/v1/bhash/sync";
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
+
+// Load .env variables if running locally
+const envPath = path.resolve(process.cwd(), '.env');
+if (fs.existsSync(envPath)) {
+  const envConfig = fs.readFileSync(envPath, 'utf8');
+  envConfig.split('\n').forEach(line => {
+    const eq = line.indexOf('=');
+    if (eq > 0) {
+      const key = line.slice(0, eq).trim();
+      const value = line.slice(eq + 1).trim();
+      if (key && value) process.env[key] = value;
+    }
+  });
+}
+
+const username = process.env.BHASHSMS_USER || "Trinetra";
+const password = process.env.BHASHSMS_PASS || "SatwikPal@123Shubham";
+const crmSyncUrl = process.env.CRM_SYNC_URL || "https://trinetradigitalsolution.com/api/v1/bhash/sync";
 const secret = process.env.SCRAPER_SECRET || "trinetra-scraper-secret-2026";
 
-async function runScraper() {
-  console.log("🚀 Starting BhashSMS Automated Scraper...");
-  console.log(`👤 Bhash Account User: ${user}`);
+function postForm(urlStr, formData, cookieStr = '', refererUrl = '') {
+  return new Promise((resolve) => {
+    const url = new URL(urlStr);
+    const postData = new URLSearchParams(formData).toString();
 
-  if (!pass) {
-    console.log("⚠️ BHASHSMS_PASS environment variable not set. Aborting run.");
-    return;
-  }
+    const options = {
+      hostname: url.hostname,
+      port: 443,
+      path: url.pathname + url.search,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': Buffer.byteLength(postData),
+        'Cookie': cookieStr,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': refererUrl || 'https://digifast.site/dltstatus/bwa/Pages/login.php',
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      const cookies = res.headers['set-cookie'];
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => resolve({ statusCode: res.statusCode, headers: res.headers, cookies, body: data }));
+    });
+
+    req.on('error', (e) => resolve({ error: e.message }));
+    req.write(postData);
+    req.end();
+  });
+}
+
+export async function runScraper() {
+  console.log("🚀 Starting BhashSMS BWA Portal Scraper...");
+  console.log(`👤 User: ${username}`);
 
   try {
-    // 1. Fetch balance & gateway check via Bhash API
-    const checkUrl = `https://bhashsms.com/api/sendmsg.php?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}&sender=BUZWAP&phone=9999999999&text=ping&priority=wa&stype=normal&htype=normal`;
-    console.log("📡 Checking gateway connection to BhashSMS...");
+    // 1. Authenticate with BWA Portal
+    console.log("🔐 Logging into BWA Portal at digifast.site...");
+    const loginRes = await postForm(
+      'https://digifast.site/dltstatus/bwa/Pages/loginHandle.php',
+      { username, password },
+      '',
+      'https://digifast.site/dltstatus/bwa/Pages/login.php'
+    );
 
-    const checkRes = await fetch(checkUrl);
-    const checkText = await checkRes.text();
-    console.log(`📥 Bhash Gateway Response: ${checkText}`);
+    const cookieHeader = loginRes.cookies ? loginRes.cookies.map(c => c.split(';')[0]).join('; ') : '';
+    console.log(`✅ Login Status: ${loginRes.statusCode}, Cookie: ${cookieHeader}`);
 
-    // 2. Mock / Scraped leads payload structure
-    const scrapedData = [
-      {
-        phone: "9606916617",
-        name: "Satwik Pal",
-        message: "SEO Inquiry",
-        timestamp: new Date().toISOString(),
+    // 2. Fetch Incoming Replies Report (current month)
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const fromdate = `${yyyy}-${mm}-01`;
+    const todate = `${yyyy}-${mm}-${dd}`;
+
+    console.log(`📡 Fetching Incoming WhatsApp Reports from ${fromdate} to ${todate}...`);
+    const reportRes = await postForm(
+      'https://digifast.site/dltstatus/bwa/Pages/waincommingDisplay.php',
+      { fromdate, todate },
+      cookieHeader,
+      'https://digifast.site/dltstatus/bwa/Pages/waincomingreplies.php'
+    );
+
+    console.log(`📥 Report Status: ${reportRes.statusCode}, Body Length: ${reportRes.body?.length || 0}`);
+
+    if (!reportRes.body) {
+      console.log("⚠️ Empty response received from BWA report page.");
+      return;
+    }
+
+    // 3. Extract Table Rows from HTML
+    const rows = reportRes.body.match(/<tr[\s\S]*?<\/tr>/gi);
+    console.log(`📊 Raw table rows found: ${rows ? rows.length : 0}`);
+
+    if (!rows || rows.length <= 1) {
+      console.log("ℹ️ No incoming WhatsApp messages found in portal for selected date range.");
+      return;
+    }
+
+    console.log(`✨ Found ${rows.length - 1} message records in BWA Portal! Parsing data...`);
+
+    const scrapedLeads = [];
+    for (let i = 1; i < rows.length; i++) {
+      const rowHtml = rows[i];
+      const cols = rowHtml.match(/<td[\s\S]*?<\/td>/gi);
+      if (cols && cols.length >= 3) {
+        const cleanCols = cols.map(c => c.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim());
+        const rawPhone = cleanCols[0] ? cleanCols[0].replace(/\D/g, '') : '';
+        const phone = rawPhone.slice(-10);
+        const name = cleanCols[1] || `WhatsApp Lead (${phone.slice(-4)})`;
+        const message = cleanCols[2] || 'Incoming WhatsApp Message';
+        const timeStr = cleanCols[3] || 'Recently';
+
+        if (phone && phone.length === 10) {
+          scrapedLeads.push({
+            id: `bwa-${phone}-${message.replace(/\W/g, '').slice(0, 15)}-${i}`,
+            phone,
+            name: (name && name !== 'Recipient Name') ? name : `Lead (${phone.slice(-4)})`,
+            message,
+            timestamp: new Date().toISOString(),
+            timeStr,
+          });
+        }
       }
-    ];
+    }
 
-    // 3. Post scraped leads to Trinetra Sync Endpoint
-    console.log(`📤 Sending ${scrapedData.length} records to CRM Sync API: ${crmApiUrl}`);
-    const syncRes = await fetch(crmApiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    console.log(`📋 Successfully extracted ${scrapedLeads.length} clean leads!`);
+    if (scrapedLeads.length > 0) {
+      console.log(`   Sample: ${scrapedLeads[0].name} (${scrapedLeads[0].phone}) — "${scrapedLeads[0].message}"`);
+    }
+
+    // 5. Deduplicate — group by phone, keep latest message per unique phone
+    const uniqueByPhone = new Map();
+    for (const lead of scrapedLeads) {
+      const existing = uniqueByPhone.get(lead.phone);
+      if (!existing) {
+        uniqueByPhone.set(lead.phone, lead);
+      }
+      // Keep first occurrence (most recent in report)
+    }
+    const dedupedLeads = Array.from(uniqueByPhone.values());
+    console.log(`📌 Unique leads by phone: ${dedupedLeads.length}`);
+
+    // 6. Sync leads with Trinetra CRM Endpoint
+    console.log(`📤 Syncing ${dedupedLeads.length} leads to CRM (${crmSyncUrl})...`);
+    const syncRes = await fetch(crmSyncUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         secret,
-        leads: scrapedData,
+        leads: dedupedLeads,
       }),
     });
 
     const syncJson = await syncRes.json();
-    console.log("✅ Sync Result:", syncJson);
+    console.log("🎉 Sync Completed Successfully!", syncJson);
+    return syncJson;
   } catch (err) {
-    console.error("❌ Scraper Error:", err.message);
+    console.error("❌ BWA Scraper Error:", err.message);
   }
 }
 
+// Run if executed directly via node
 runScraper();
