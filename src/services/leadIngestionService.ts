@@ -11,6 +11,26 @@ export class LeadIngestionService {
     const cleanPhone = payload.phone.replace(/\D/g, "");
     const formattedPhone = cleanPhone.length > 10 ? cleanPhone.slice(-10) : cleanPhone;
 
+    // 0. Check if this exact message has already been ingested
+    if (payload.meta_message_id) {
+      const { data: existingMsg } = await db
+        .from("bhash_conversations")
+        .select("id, lead_id")
+        .eq("meta_message_id", payload.meta_message_id)
+        .maybeSingle();
+
+      if (existingMsg) {
+        const { data: existingLead } = await db
+          .from("leads")
+          .select("*")
+          .eq("id", existingMsg.lead_id)
+          .maybeSingle();
+        if (existingLead) {
+          return { lead: existingLead as Lead, isNewLead: false };
+        }
+      }
+    }
+
     let lead: Lead | null = null;
     let isNewLead = false;
 

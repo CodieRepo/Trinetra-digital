@@ -61,6 +61,13 @@ function postForm(urlStr, formData, cookieStr = '', refererUrl = '') {
   });
 }
 
+function formatDate(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export async function runScraper() {
   console.log("🚀 Starting BhashSMS BWA Portal Scraper...");
   console.log(`👤 User: ${username}`);
@@ -78,13 +85,11 @@ export async function runScraper() {
     const cookieHeader = loginRes.cookies ? loginRes.cookies.map(c => c.split(';')[0]).join('; ') : '';
     console.log(`✅ Login Status: ${loginRes.statusCode}, Cookie: ${cookieHeader}`);
 
-    // 2. Fetch Incoming Replies Report (current month)
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const fromdate = `${yyyy}-${mm}-01`;
-    const todate = `${yyyy}-${mm}-${dd}`;
+    // 2. Fetch Incoming Replies Report (dynamic range - past 90 days to today)
+    const today = new Date();
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    const fromdate = formatDate(ninetyDaysAgo);
+    const todate = formatDate(today);
 
     console.log(`📡 Fetching Incoming WhatsApp Reports from ${fromdate} to ${todate}...`);
     const reportRes = await postForm(
@@ -126,7 +131,7 @@ export async function runScraper() {
 
         if (phone && phone.length === 10) {
           scrapedLeads.push({
-            id: `bwa-${phone}-${message.replace(/\W/g, '').slice(0, 15)}-${i}`,
+            id: `bwa-${phone}-${message.replace(/\W/g, '').slice(0, 15)}-${timeStr.replace(/\W/g, '')}`,
             phone,
             name: (name && name !== 'Recipient Name') ? name : `Lead (${phone.slice(-4)})`,
             message,
@@ -138,30 +143,18 @@ export async function runScraper() {
     }
 
     console.log(`📋 Successfully extracted ${scrapedLeads.length} clean leads!`);
-    if (scrapedLeads.length > 0) {
-      console.log(`   Sample: ${scrapedLeads[0].name} (${scrapedLeads[0].phone}) — "${scrapedLeads[0].message}"`);
-    }
+    
+    // Reverse array so that oldest messages are processed first, ensuring newest message is synced last
+    const chronologicalLeads = scrapedLeads.reverse();
 
-    // 5. Deduplicate — group by phone, keep latest message per unique phone
-    const uniqueByPhone = new Map();
-    for (const lead of scrapedLeads) {
-      const existing = uniqueByPhone.get(lead.phone);
-      if (!existing) {
-        uniqueByPhone.set(lead.phone, lead);
-      }
-      // Keep first occurrence (most recent in report)
-    }
-    const dedupedLeads = Array.from(uniqueByPhone.values());
-    console.log(`📌 Unique leads by phone: ${dedupedLeads.length}`);
-
-    // 6. Sync leads with Trinetra CRM Endpoint
-    console.log(`📤 Syncing ${dedupedLeads.length} leads to CRM (${crmSyncUrl})...`);
+    // 4. Sync leads with Trinetra CRM Endpoint
+    console.log(`📤 Syncing ${chronologicalLeads.length} leads in chronological order to CRM (${crmSyncUrl})...`);
     const syncRes = await fetch(crmSyncUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         secret,
-        leads: dedupedLeads,
+        leads: chronologicalLeads,
       }),
     });
 
