@@ -78,13 +78,15 @@ export async function POST(request: Request) {
     const duration = Date.now() - startTime;
 
     // Record idempotency log
-    await db.from("webhook_logs").insert({
-      tenant_id: payload.tenant_id,
-      idempotency_key: idempotencyKey,
-      provider: "bhash",
-      payload: jsonBody,
-      status: "processed",
-    });
+    try {
+      await db.from("webhook_logs").insert({
+        tenant_id: payload.tenant_id,
+        idempotency_key: idempotencyKey,
+        provider: "bhash",
+        payload: jsonBody,
+        status: "processed",
+      });
+    } catch (e) {}
 
     console.log(`⚡ [Webhook Processed in ${duration}ms] Lead ID: ${result.lead.id}`);
 
