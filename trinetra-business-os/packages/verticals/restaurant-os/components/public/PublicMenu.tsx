@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Minus, Plus, QrCode, ShoppingBag, User } from "lucide-react";
 import SessionSummaryBar, {
   type SessionOrderSummary,
-} from "@/components/restaurant/SessionSummaryBar";
+} from "./SessionSummaryBar";
 
 type MenuCategory = {
   id: string;

@@ -267,7 +267,7 @@ export default function RestaurantDashboard({
     };
   }, [orders]);
 
-  async function createTable(event: React.FormEvent<HTMLFormElement>) {
+  async function _createTable(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
       setBusyKey("table:create");
@@ -290,7 +290,7 @@ export default function RestaurantDashboard({
     }
   }
 
-  async function deleteTable(id: string) {
+  async function _deleteTable(id: string) {
     try {
       setBusyKey(`table:${id}`);
       const response = await fetch("/api/client/restaurant/tables", {
@@ -311,7 +311,7 @@ export default function RestaurantDashboard({
     }
   }
 
-  async function generateQrs() {
+  async function _generateQrs() {
     try {
       setBusyKey("tables:qrs");
       const response = await fetch(
@@ -960,14 +960,43 @@ export default function RestaurantDashboard({
           <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.28em] text-stone-500">
+                <p className="text-xs uppercase tracking-[0.28em] text-slate-400 font-bold">
                   Tables
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">
-                  QR stations
+                <h2 className="mt-1 text-2xl font-black text-white">
+                  QR Stations
                 </h2>
               </div>
+              <button
+                type="button"
+                onClick={() => void generateQrs()}
+                disabled={busyKey === "tables:qrs" || !tables.length}
+                className="rounded-xl border border-indigo-500/30 bg-indigo-600/20 px-3 py-1.5 text-xs font-bold text-indigo-300 hover:bg-indigo-600/30 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              >
+                {busyKey === "tables:qrs" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                Export QRs
+              </button>
             </div>
+
+            <form onSubmit={createTable} className="mt-4 flex gap-2">
+              <input
+                type="text"
+                value={tableNumber}
+                onChange={(e) => setTableNumber(e.target.value)}
+                placeholder="Table No. (e.g. T-12)"
+                required
+                className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+              />
+              <button
+                type="submit"
+                disabled={busyKey === "table:create"}
+                className="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-500 disabled:opacity-50 cursor-pointer flex items-center gap-1"
+              >
+                {busyKey === "table:create" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                Add Table
+              </button>
+            </form>
+
             <div className="mt-5 space-y-3">
               {[...tables]
                 .sort((a, b) => {
@@ -979,16 +1008,25 @@ export default function RestaurantDashboard({
                 .map((table) => (
                   <div
                     key={table.id}
-                    className="flex items-center justify-between rounded-3xl border border-white/8 bg-black/20 px-4 py-4 text-sm"
+                    className="flex items-center justify-between rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm"
                   >
                     <div>
-                      <p className="font-medium text-white">
+                      <p className="font-semibold text-white">
                         {table.table_number}
                       </p>
-                      <p className="mt-1 text-stone-500">
-                        Token {table.table_token.slice(0, 8)}...
+                      <p className="mt-0.5 text-xs text-slate-400">
+                        Token: {table.table_token.slice(0, 8)}...
                       </p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => void deleteTable(table.id)}
+                      disabled={busyKey === `table:${table.id}`}
+                      className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-500/20 hover:text-rose-300 transition-colors border-0 cursor-pointer"
+                      title="Delete Table"
+                    >
+                      {busyKey === `table:${table.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    </button>
                   </div>
                 ))}
             </div>

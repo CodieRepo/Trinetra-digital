@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, MessageSquare, Users, TrendingUp, Calendar,
   Megaphone, Zap, BarChart3, FileText, Settings, LogOut,
-  Menu, X, Shield, Loader2, RefreshCw, Activity, Radio
+  Menu, X, Shield, Loader2, RefreshCw, Activity, Radio, UtensilsCrossed
 } from "lucide-react";
 import { useDashboard } from "../../hooks/useApi";
 import { ToastProvider } from "../../components/ui/Toast";
@@ -29,13 +29,14 @@ const TemplatesPanel   = lazy(() => import("./panels/TemplatesPanel"));
 const SettingsPanel    = lazy(() => import("./panels/SettingsPanel"));
 const DiagnosticsPanel = lazy(() => import("./panels/DiagnosticsPanel"));
 const BhashMonitorPanel = lazy(() => import("./panels/BhashMonitorPanel"));
+const RestaurantPanel = lazy(() => import("./panels/RestaurantPanel"));
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type ViewSection =
   | "overview" | "conversations" | "leads"
   | "pipelines" | "conversions" | "campaigns"
-  | "automations" | "reports" | "templates" | "settings" | "qr" | "diagnostics" | "bhash";
+  | "automations" | "reports" | "templates" | "settings" | "qr" | "diagnostics" | "bhash" | "restaurant-os";
 
 // ── Sidebar Nav Config ────────────────────────────────────────────────────────
 
@@ -50,6 +51,7 @@ const NAV_ITEMS: Array<{
   { key: "leads",          label: "Leads",         icon: <Users size={16} />,           group: "main" },
   { key: "pipelines",      label: "Pipeline",      icon: <TrendingUp size={16} />,      group: "main" },
   { key: "conversions",    label: "Bookings",      icon: <Calendar size={16} />,        group: "main" },
+  { key: "restaurant-os",  label: "Restaurant OS", icon: <UtensilsCrossed size={16} />, group: "verticals" },
   { key: "bhash",          label: "Bhash Monitor", icon: <Radio size={16} />,           group: "growth" },
   { key: "campaigns",      label: "Campaigns",     icon: <Megaphone size={16} />,       group: "growth" },
   { key: "automations",    label: "Automations",   icon: <Zap size={16} />,             group: "growth" },
@@ -60,9 +62,10 @@ const NAV_ITEMS: Array<{
 ];
 
 const GROUP_LABELS: Record<string, string> = {
-  main:   "CRM",
-  growth: "Growth",
-  system: "System",
+  main:      "CRM",
+  verticals: "Vertical Modules",
+  growth:    "Growth",
+  system:    "System",
 };
 
 // ── Loading Fallback ──────────────────────────────────────────────────────────
@@ -299,6 +302,8 @@ export default function AdminCrm() {
         return <AdminPipeline />;
       case "conversions":
         return <BookingsPanel />;
+      case "restaurant-os":
+        return <RestaurantPanel />;
       case "bhash":
         return <BhashMonitorPanel />;
       case "campaigns":

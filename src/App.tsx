@@ -24,6 +24,12 @@ const NotFoundPage     = lazy(() => import("@/views/NotFoundPage"));
 const AdminCrm         = lazy(() => import("@/views/admin/AdminCrm"));
 const SuperAdmin       = lazy(() => import("@/views/super-admin/SuperAdmin"));
 
+// Vertical Module Public & Staff Pages
+const PublicRestaurantMenuPage = lazy(() => import("@/views/public/PublicRestaurantMenuPage"));
+const OrderStatusPage          = lazy(() => import("@/views/public/OrderStatusPage"));
+const StaffOpsPage             = lazy(() => import("@/views/staff/StaffOpsPage"));
+
+
 
 // Service sub-pages
 const FutureSolutions     = lazy(() => import("@/views/services/FutureSolutions"));
@@ -105,6 +111,12 @@ function AnimatedRoutes() {
 
           {/* Super Admin */}
           <Route path="/super-admin"              element={<SuperAdmin />} />
+
+          {/* Vertical Module Routes — Restaurant OS */}
+          <Route path="/r/:tableToken"                        element={<PublicRestaurantMenuPage />} />
+          <Route path="/r/:tableToken/order/:orderId"        element={<OrderStatusPage />} />
+          <Route path="/staff/ops"                            element={<StaffOpsPage />} />
+
 
           {/* Service Sub-pages */}
           <Route path="/services/whatsapp-automation" element={<FutureSolutions />} />
