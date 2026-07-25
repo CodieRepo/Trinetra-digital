@@ -13,7 +13,6 @@ export function useRealtimeMessages(selectedLeadId: string | null) {
 
   const loadLeadDetails = useCallback(async () => {
     if (!selectedLeadId) return;
-    setLoading(true);
     try {
       const res = await fetch(`/api/v1/leads?leadId=${selectedLeadId}`);
       const data = await res.json();
@@ -36,56 +35,43 @@ export function useRealtimeMessages(selectedLeadId: string | null) {
 
     if (!selectedLeadId) return;
 
-    // Realtime channel for messages, conversations, timeline, tasks, notes
+    // 1. Polling interval fallback for active lead messages (every 3 seconds)
+    const interval = setInterval(() => {
+      loadLeadDetails();
+    }, 3000);
+
+    // 2. Realtime channel for messages, conversations, timeline, tasks, notes
     const channel = supabase
       .channel(`lead-details-${selectedLeadId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `lead_id=eq.${selectedLeadId}` },
-        (payload) => {
-          const msg = payload.new;
-          const formattedMsg: ConversationMessage = {
-            id: msg.id,
-            lead_id: msg.lead_id,
-            direction: msg.direction,
-            message: msg.body,
-            timestamp: msg.created_at,
-            created_at: msg.created_at,
-          };
-          setMessages((prev) => [...prev, formattedMsg]);
-        }
+        () => loadLeadDetails()
       )
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "bhash_conversations", filter: `lead_id=eq.${selectedLeadId}` },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as ConversationMessage]);
-        }
+        () => loadLeadDetails()
       )
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "timeline_events", filter: `lead_id=eq.${selectedLeadId}` },
-        (payload) => {
-          setTimeline((prev) => [payload.new as TimelineEvent, ...prev]);
-        }
+        () => loadLeadDetails()
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "tasks", filter: `lead_id=eq.${selectedLeadId}` },
-        () => {
-          loadLeadDetails();
-        }
+        () => loadLeadDetails()
       )
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "lead_notes", filter: `lead_id=eq.${selectedLeadId}` },
-        (payload) => {
-          setNotes((prev) => [payload.new as LeadNote, ...prev]);
-        }
+        () => loadLeadDetails()
       )
       .subscribe();
 
     return () => {
+      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, [selectedLeadId, loadLeadDetails]);

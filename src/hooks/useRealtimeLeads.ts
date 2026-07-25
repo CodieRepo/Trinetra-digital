@@ -9,7 +9,7 @@ export function useRealtimeLeads() {
 
   const fetchLeads = async () => {
     try {
-      const res = await fetch("/api/leads");
+      const res = await fetch("/api/v1/leads");
       const data = await res.json();
       if (data.success && Array.isArray(data.leads)) {
         setLeads(data.leads);
@@ -24,7 +24,12 @@ export function useRealtimeLeads() {
   useEffect(() => {
     fetchLeads();
 
-    // Subscribe to Supabase Realtime changes on 'leads' table
+    // 1. Polling interval fallback for instant UI updates (every 3 seconds)
+    const interval = setInterval(() => {
+      fetchLeads();
+    }, 3000);
+
+    // 2. Subscribe to Supabase Realtime changes on 'leads' table
     const channel = supabase
       .channel("realtime-leads-channel")
       .on(
@@ -32,20 +37,13 @@ export function useRealtimeLeads() {
         { event: "*", schema: "public", table: "leads" },
         (payload) => {
           console.log("⚡ Realtime Lead Event:", payload);
-          if (payload.eventType === "INSERT") {
-            setLeads((prev) => [payload.new as Lead, ...prev]);
-          } else if (payload.eventType === "UPDATE") {
-            setLeads((prev) =>
-              prev.map((l) => (l.id === payload.new.id ? (payload.new as Lead) : l))
-            );
-          } else if (payload.eventType === "DELETE") {
-            setLeads((prev) => prev.filter((l) => l.id === payload.old.id));
-          }
+          fetchLeads();
         }
       )
       .subscribe();
 
     return () => {
+      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, []);
