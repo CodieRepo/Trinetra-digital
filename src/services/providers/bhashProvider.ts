@@ -15,7 +15,8 @@ export class BhashSMSProvider implements MessagingProvider {
   async sendMessage(req: OutboundMessageRequest): Promise<OutboundMessageResponse> {
     const user = process.env.BHASHSMS_USER;
     const pass = process.env.BHASHSMS_PASS;
-    const sender = process.env.BHASHSMS_SENDER || "TRINTR";
+    const sender = process.env.BHASHSMS_SENDER || "BUZWAP";
+    const priority = process.env.BHASHSMS_PRIORITY || "wa";
 
     if (!user || !pass) {
       console.warn("⚠️ BhashSMS credentials missing. Simulating output.");
@@ -24,7 +25,7 @@ export class BhashSMSProvider implements MessagingProvider {
 
     try {
       const cleanPhone = req.to.replace(/\D/g, "").slice(-10);
-      const url = `https://bhashsms.com/api/sendmsg.php?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}&sender=${encodeURIComponent(sender)}&phone=${cleanPhone}&text=${encodeURIComponent(req.body)}&priority=ndnd&stype=normal`;
+      const url = `https://bhashsms.com/api/sendmsg.php?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}&sender=${encodeURIComponent(sender)}&phone=${cleanPhone}&text=${encodeURIComponent(req.body)}&priority=${encodeURIComponent(priority)}&stype=normal&htype=normal`;
 
       const response = await fetch(url);
       const responseText = await response.text();

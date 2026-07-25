@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@trinetra/core/*": ["packages/core/*"],
+      "@trinetra/shared/*": ["packages/shared/*"],
+      "@trinetra/restaurant-os/*": ["packages/verticals/restaurant-os/*"]
+    }
+  },
+  "exclude": ["node_modules"]
+}

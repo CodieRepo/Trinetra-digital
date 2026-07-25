@@ -1,0 +1,14 @@
+{
+  "name": "@trinetra/restaurant-os",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@trinetra/core-database": "*",
+    "@trinetra/core-auth": "*",
+    "@trinetra/shared-ui": "*",
+    "lucide-react": "^0.300.0",
+    "react": "^18.2.0",
+    "next": "^14.0.0"
+  }
+}

@@ -1,0 +1,1292 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Copy,
+  Download,
+  Loader2,
+  Plus,
+  Trash2,
+  UtensilsCrossed,
+  Users,
+  LayoutGrid,
+  ChefHat,
+  CreditCard,
+} from "lucide-react";
+
+type DashboardOrder = {
+  id: string;
+  status: string;
+  notes: string | null;
+  total_amount: number;
+  created_at: string;
+  updated_at: string;
+  table: {
+    id: string;
+    table_number: string;
+  } | null;
+  items: Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    price: number;
+    notes: string | null;
+  }>;
+};
+
+type TableRecord = {
+  id: string;
+  table_number: string;
+  table_token: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+type MenuCategory = {
+  id: string;
+  name: string;
+  display_order: number;
+  is_active: boolean;
+};
+
+type MenuItem = {
+  id: string;
+  category_id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  image_url: string | null;
+  is_available: boolean;
+  is_veg: boolean;
+  display_order: number;
+};
+
+type StaffRecord = {
+  id: string;
+  name: string;
+  role: "kitchen" | "waiter";
+  access_token: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+// ---------------------------------------------------------------------------
+// Session types (Live Tables)
+// ---------------------------------------------------------------------------
+
+type SessionOrderItem = {
+  id: string;
+  name: string;
+  quantity: number;
+  notes: string | null;
+};
+
+type SessionOrder = {
+  id: string;
+  status: string;
+  total_amount: number;
+  created_at: string;
+  items: SessionOrderItem[];
+};
+
+type DashboardSession = {
+  id: string;
+  table: { id: string; table_number: string } | null;
+  status: string;
+  opened_at: string;
+  customer_name: string | null;
+  customer_phone: string | null;
+  payment_status: string;
+  paid_at: string | null;
+  order_count: number;
+  session_total: number;
+  all_orders_terminal: boolean;
+  orders: SessionOrder[];
+};
+
+function formatCurrency(amount: number, currency: string) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: currency || "INR",
+    maximumFractionDigits: 0,
+  }).format(amount ?? 0);
+}
+
+function timeAgo(isoString: string) {
+  const diff = Date.now() - new Date(isoString).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  return `${hrs}h ${mins % 60}m ago`;
+}
+
+const SESSION_STATUS_BADGE: Record<string, string> = {
+  placed: "bg-amber-400/10 text-amber-200 border-amber-400/20",
+  accepted: "bg-sky-400/10 text-sky-200 border-sky-400/20",
+  preparing: "bg-violet-400/10 text-violet-200 border-violet-400/20",
+  ready: "bg-emerald-400/10 text-emerald-200 border-emerald-400/20",
+  served: "bg-teal-400/10 text-teal-200 border-teal-400/20",
+  closed: "bg-slate-400/10 text-slate-300 border-slate-400/20",
+  cancelled: "bg-rose-400/10 text-rose-300 border-rose-400/20",
+};
+
+async function readJson<T>(response: Response): Promise<T> {
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Request failed");
+  }
+  return data as T;
+}
+
+export default function RestaurantDashboard({
+  restaurantId,
+  restaurantName,
+  currency,
+}: {
+  restaurantId: string;
+  restaurantName: string;
+  currency: string;
+}) {
+  const [orders, setOrders] = useState<DashboardOrder[]>([]);
+  const [tables, setTables] = useState<TableRecord[]>([]);
+  const [categories, setCategories] = useState<MenuCategory[]>([]);
+  const [items, setItems] = useState<MenuItem[]>([]);
+  const [staff, setStaff] = useState<StaffRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [tableNumber, setTableNumber] = useState("");
+  const [categoryName, setCategoryName] = useState("");
+  const [itemForm, setItemForm] = useState({
+    category_id: "",
+    name: "",
+    description: "",
+    price: "",
+    is_veg: true,
+  });
+  const [staffForm, setStaffForm] = useState({
+    name: "",
+    role: "kitchen" as "kitchen" | "waiter",
+  });
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+
+  // --- Sessions state (Live Tables) ---
+  const [sessions, setSessions] = useState<DashboardSession[]>([]);
+  const [paymentActionId, setPaymentActionId] = useState<string | null>(null);
+  const [closingSessionId, setClosingSessionId] = useState<string | null>(null);
+  const [confirmForceClose, setConfirmForceClose] = useState<string | null>(
+    null,
+  );
+  const [confirmUnpaidClose, setConfirmUnpaidClose] = useState<string | null>(
+    null,
+  );
+
+  async function loadAll(showLoading = false) {
+    if (showLoading) {
+      setLoading(true);
+    }
+
+    try {
+      const [ordersRes, tablesRes, menuRes, staffRes, sessionsRes] =
+        await Promise.all([
+          fetch("/api/client/restaurant/orders?limit=30", {
+            cache: "no-store",
+          }),
+          fetch("/api/client/restaurant/tables", { cache: "no-store" }),
+          fetch("/api/client/restaurant/menu", { cache: "no-store" }),
+          fetch("/api/client/restaurant/staff", { cache: "no-store" }),
+          fetch("/api/client/restaurant/sessions", { cache: "no-store" }),
+        ]);
+
+      const [ordersData, tablesData, menuData, staffData, sessionsData] =
+        await Promise.all([
+          readJson<{ orders: DashboardOrder[] }>(ordersRes),
+          readJson<{ tables: TableRecord[] }>(tablesRes),
+          readJson<{ categories: MenuCategory[]; items: MenuItem[] }>(menuRes),
+          readJson<{ staff: StaffRecord[] }>(staffRes),
+          readJson<{ sessions: DashboardSession[] }>(sessionsRes),
+        ]);
+
+      setOrders(ordersData.orders);
+      setTables(tablesData.tables);
+      setCategories(menuData.categories);
+      setItems(menuData.items);
+      setStaff(staffData.staff);
+      setSessions(sessionsData.sessions);
+      setError(null);
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Failed to load restaurant dashboard.",
+      );
+    } finally {
+      if (showLoading) {
+        setLoading(false);
+      }
+    }
+  }
+
+  useEffect(() => {
+    void loadAll(true);
+    const interval = window.setInterval(() => {
+      void loadAll(false);
+    }, 15000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  const groupedMenu = useMemo(
+    () =>
+      categories.map((category) => ({
+        ...category,
+        items: items.filter((item) => item.category_id === category.id),
+      })),
+    [categories, items],
+  );
+
+  const metrics = useMemo(() => {
+    const activeOrders = orders.filter(
+      (order) => !["closed", "cancelled"].includes(order.status),
+    );
+    const readyOrders = orders.filter(
+      (order) => order.status === "ready",
+    ).length;
+    const kitchenQueue = orders.filter((order) =>
+      ["placed", "accepted", "preparing"].includes(order.status),
+    ).length;
+    const revenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
+
+    return {
+      activeOrders: activeOrders.length,
+      readyOrders,
+      kitchenQueue,
+      revenue,
+    };
+  }, [orders]);
+
+  async function createTable(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      setBusyKey("table:create");
+      const response = await fetch("/api/client/restaurant/tables", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table_number: tableNumber }),
+      });
+      await readJson(response);
+      setTableNumber("");
+      await loadAll(false);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to create table.",
+      );
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function deleteTable(id: string) {
+    try {
+      setBusyKey(`table:${id}`);
+      const response = await fetch("/api/client/restaurant/tables", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table_id: id }),
+      });
+      await readJson(response);
+      await loadAll(false);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to delete table.",
+      );
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function generateQrs() {
+    try {
+      setBusyKey("tables:qrs");
+      const response = await fetch(
+        "/api/client/restaurant/tables/generate-qrs",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ table_ids: tables.map((table) => table.id) }),
+        },
+      );
+      const data = await readJson<{ download_url: string }>(response);
+      window.open(data.download_url, "_blank", "noopener,noreferrer");
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to generate QRs.",
+      );
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function createCategory(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      setBusyKey("category:create");
+      const response = await fetch("/api/client/restaurant/menu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "category", name: categoryName }),
+      });
+      await readJson(response);
+      setCategoryName("");
+      await loadAll(false);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to create category.",
+      );
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function createItem(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      setBusyKey("item:create");
+      const response = await fetch("/api/client/restaurant/menu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "item",
+          category_id: itemForm.category_id,
+          name: itemForm.name,
+          description: itemForm.description,
+          price: Number(itemForm.price),
+          is_veg: itemForm.is_veg,
+        }),
+      });
+      await readJson(response);
+      setItemForm({
+        category_id: itemForm.category_id,
+        name: "",
+        description: "",
+        price: "",
+        is_veg: true,
+      });
+      await loadAll(false);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to create item.",
+      );
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function deleteMenuEntity(type: "category" | "item", id: string) {
+    try {
+      setBusyKey(`${type}:${id}`);
+      const response = await fetch("/api/client/restaurant/menu", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, id }),
+      });
+      await readJson(response);
+      await loadAll(false);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : `Failed to delete ${type}.`,
+      );
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function toggleItemAvailability(item: MenuItem) {
+    try {
+      setBusyKey(`item:toggle:${item.id}`);
+      const response = await fetch("/api/client/restaurant/menu", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "item",
+          id: item.id,
+          is_available: !item.is_available,
+        }),
+      });
+      await readJson(response);
+      await loadAll(false);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to update item.",
+      );
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function createStaff(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      setBusyKey("staff:create");
+      const response = await fetch("/api/client/restaurant/staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(staffForm),
+      });
+      await readJson(response);
+      setStaffForm({ name: "", role: "kitchen" });
+      await loadAll(false);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to create staff access.",
+      );
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function deleteStaff(id: string) {
+    try {
+      setBusyKey(`staff:${id}`);
+      const response = await fetch("/api/client/restaurant/staff", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ staff_id: id }),
+      });
+      await readJson(response);
+      await loadAll(false);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to delete staff member.",
+      );
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function copyAccessLink(member: StaffRecord) {
+    const accessUrl = `${window.location.origin}/${member.role}/${restaurantId}?token=${member.access_token}`;
+    await navigator.clipboard.writeText(accessUrl);
+  }
+
+  // --- Session actions (Live Tables) ---
+
+  const togglePayment = useCallback(
+    async (sessionId: string, action: "mark_paid" | "undo_paid") => {
+      try {
+        setPaymentActionId(sessionId);
+        const res = await fetch("/api/client/restaurant/sessions/payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sessionId, action }),
+        });
+        const data = await res.json();
+        if (!res.ok)
+          throw new Error(data.error || "Failed to update payment status.");
+        await loadAll(false);
+      } catch (paymentError) {
+        setError(
+          paymentError instanceof Error
+            ? paymentError.message
+            : "Failed to update payment status.",
+        );
+      } finally {
+        setPaymentActionId(null);
+      }
+    },
+    [],
+  );
+
+  const closeSession = useCallback(
+    async (sessionId: string, force: boolean) => {
+      try {
+        setClosingSessionId(sessionId);
+        const res = await fetch("/api/client/restaurant/sessions/close", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sessionId, force }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (data.requires_force) {
+            setConfirmForceClose(sessionId);
+            return;
+          }
+          throw new Error(data.error || "Failed to close session.");
+        }
+
+        setConfirmForceClose(null);
+        setConfirmUnpaidClose(null);
+        await loadAll(false);
+      } catch (closeError) {
+        setError(
+          closeError instanceof Error
+            ? closeError.message
+            : "Failed to close session.",
+        );
+      } finally {
+        setClosingSessionId(null);
+      }
+    },
+    [],
+  );
+
+  return (
+    <div className="min-h-screen bg-stone-950 px-4 py-8 text-stone-50 md:px-8">
+      <div className="mx-auto max-w-7xl space-y-8">
+        <section className="rounded-[32px] border border-amber-300/15 bg-[linear-gradient(135deg,#0f172a_0%,#111827_45%,#1c1917_100%)] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.35)]">
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.35em] text-amber-200/70">
+                Restaurant Mode
+              </p>
+              <h1 className="mt-3 text-3xl font-semibold text-white md:text-4xl">
+                {restaurantName}
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm text-stone-300 md:text-base">
+                Live operations, menu controls, table QR management, and staff
+                access stay isolated under this restaurant owner account.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadAll(true)}
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-stone-100 hover:bg-white/10"
+            >
+              Refresh
+            </button>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {[
+              {
+                label: "Active orders",
+                value: metrics.activeOrders,
+                icon: <UtensilsCrossed className="h-5 w-5" />,
+              },
+              {
+                label: "Kitchen queue",
+                value: metrics.kitchenQueue,
+                icon: <ChefHat className="h-5 w-5" />,
+              },
+              {
+                label: "Ready to serve",
+                value: metrics.readyOrders,
+                icon: <LayoutGrid className="h-5 w-5" />,
+              },
+              {
+                label: "Active tables",
+                value: sessions.length,
+                icon: <CreditCard className="h-5 w-5" />,
+              },
+              {
+                label: "Revenue tracked",
+                value: formatCurrency(metrics.revenue, currency),
+                icon: <Users className="h-5 w-5" />,
+              },
+            ].map((metric) => (
+              <div
+                key={metric.label}
+                className="rounded-[24px] border border-white/10 bg-white/5 p-5 backdrop-blur"
+              >
+                <div className="flex items-center justify-between text-stone-300">
+                  <span className="text-sm">{metric.label}</span>
+                  {metric.icon}
+                </div>
+                <p className="mt-4 text-3xl font-semibold text-white">
+                  {metric.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {loading ? (
+          <div className="rounded-[28px] border border-white/10 bg-white/5 px-6 py-16 text-center text-stone-300">
+            <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+            <p className="mt-4">Loading restaurant dashboard...</p>
+          </div>
+        ) : null}
+
+        {error ? (
+          <div className="rounded-3xl border border-rose-400/25 bg-rose-400/10 px-5 py-4 text-sm text-rose-100">
+            {error}
+          </div>
+        ) : null}
+
+        <section className="grid gap-5 xl:grid-cols-3">
+          {orders.map((order) => (
+            <article
+              key={order.id}
+              className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_22px_55px_rgba(0,0,0,0.22)]"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.28em] text-stone-500">
+                    Table
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold text-white">
+                    {order.table?.table_number ?? "Unknown"}
+                  </h2>
+                </div>
+                <span className="rounded-full border border-amber-200/20 bg-amber-300/10 px-3 py-1 text-xs uppercase tracking-[0.26em] text-amber-100">
+                  {order.status}
+                </span>
+              </div>
+              <div className="mt-4 space-y-3">
+                {order.items.slice(0, 4).map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between text-sm text-stone-300"
+                  >
+                    <span>{item.name}</span>
+                    <span>x{item.quantity}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-sm text-stone-400">
+                <span>{new Date(order.created_at).toLocaleString()}</span>
+                <span className="font-semibold text-white">
+                  {formatCurrency(order.total_amount, currency)}
+                </span>
+              </div>
+            </article>
+          ))}
+          {!loading && !orders.length ? (
+            <div className="rounded-[28px] border border-dashed border-white/12 px-6 py-12 text-center text-stone-400 xl:col-span-3">
+              No restaurant orders yet.
+            </div>
+          ) : null}
+        </section>
+
+        {/* ============================================================= */}
+        {/* LIVE TABLES — session cards with payment + close controls      */}
+        {/* ============================================================= */}
+        <section>
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.28em] text-stone-500">
+                Live Tables
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">
+                Active sessions
+              </h2>
+            </div>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-2">
+            {sessions.map((session) => {
+              const latestOrder = session.orders[session.orders.length - 1];
+              const latestStatus = latestOrder?.status ?? "—";
+              const isForceConfirm = confirmForceClose === session.id;
+              const isUnpaidConfirm = confirmUnpaidClose === session.id;
+              const isUnpaid = session.payment_status !== "paid";
+
+              return (
+                <div
+                  key={session.id}
+                  className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_22px_55px_rgba(0,0,0,0.22)]"
+                >
+                  {/* Session header */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-stone-500">
+                        Table
+                      </p>
+                      <h3 className="mt-2 text-2xl font-semibold text-white">
+                        {session.table?.table_number ?? "Unknown"}
+                      </h3>
+                      {session.customer_name && (
+                        <p className="mt-1 text-sm text-amber-200">
+                          {session.customer_name}
+                          {session.customer_phone && (
+                            <span className="ml-2 text-xs text-stone-400">
+                              {session.customer_phone}
+                            </span>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5">
+                      <div className="flex items-center gap-1.5">
+                        {session.payment_status === "paid" && (
+                          <span className="rounded-full border border-emerald-400/30 bg-emerald-400/20 px-3 py-1 text-xs uppercase tracking-[0.24em] text-emerald-100">
+                            Paid
+                          </span>
+                        )}
+                        <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-emerald-200">
+                          Active
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-stone-500">
+                        {timeAgo(session.opened_at)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Session metrics */}
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    <div className="rounded-2xl border border-white/8 bg-white/5 px-3 py-2.5 text-center">
+                      <p className="text-[11px] uppercase tracking-wider text-stone-500">
+                        Orders
+                      </p>
+                      <p className="mt-1 text-lg font-semibold text-white">
+                        {session.order_count}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-white/8 bg-white/5 px-3 py-2.5 text-center">
+                      <p className="text-[11px] uppercase tracking-wider text-stone-500">
+                        Total
+                      </p>
+                      <p className="mt-1 text-lg font-semibold text-amber-200">
+                        {formatCurrency(session.session_total, currency)}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-white/8 bg-white/5 px-3 py-2.5 text-center">
+                      <p className="text-[11px] uppercase tracking-wider text-stone-500">
+                        Latest
+                      </p>
+                      <p
+                        className={`mt-1 text-sm font-medium ${SESSION_STATUS_BADGE[latestStatus]?.split(" ").find((c: string) => c.startsWith("text-")) ?? "text-stone-200"}`}
+                      >
+                        {latestStatus}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Order breakdown */}
+                  <div className="mt-4 max-h-48 space-y-2.5 overflow-y-auto">
+                    {session.orders.map((order, idx) => (
+                      <div
+                        key={order.id}
+                        className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-stone-500">
+                              Order {idx + 1}
+                            </span>
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider ${SESSION_STATUS_BADGE[order.status] ?? "bg-amber-300/10 text-amber-100 border-amber-300/20"}`}
+                            >
+                              {order.status}
+                            </span>
+                          </div>
+                          <span className="text-sm font-semibold text-stone-200">
+                            {formatCurrency(order.total_amount, currency)}
+                          </span>
+                        </div>
+                        <div className="mt-2 space-y-1">
+                          {order.items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between text-xs text-stone-400"
+                            >
+                              <span>
+                                {item.name}{" "}
+                                <span className="text-stone-600">
+                                  x{item.quantity}
+                                </span>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Payment action */}
+                  <div className="mt-5 flex items-center justify-between border-t border-white/8 pt-4">
+                    <p className="text-xs text-stone-400">
+                      {session.payment_status === "paid"
+                        ? "Bill settled"
+                        : "Bill unpaid"}
+                    </p>
+                    <button
+                      type="button"
+                      disabled={paymentActionId === session.id}
+                      onClick={() =>
+                        void togglePayment(
+                          session.id,
+                          session.payment_status === "paid"
+                            ? "undo_paid"
+                            : "mark_paid",
+                        )
+                      }
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                        session.payment_status === "paid"
+                          ? "border border-stone-400/30 bg-stone-400/15 text-stone-200 hover:bg-stone-400/25"
+                          : "border border-emerald-400/30 bg-emerald-400/15 text-emerald-100 hover:bg-emerald-400/25"
+                      }`}
+                    >
+                      {paymentActionId === session.id
+                        ? "Updating..."
+                        : session.payment_status === "paid"
+                          ? "Undo Paid"
+                          : "Mark Paid"}
+                    </button>
+                  </div>
+
+                  {/* Close session action */}
+                  <div className="mt-3 border-t border-white/8 pt-4">
+                    {isForceConfirm ? (
+                      <div className="space-y-3">
+                        <p className="text-sm text-rose-200">
+                          This session has active orders that will be{" "}
+                          <strong>cancelled</strong>. Are you sure?
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={closingSessionId === session.id}
+                            onClick={() => void closeSession(session.id, true)}
+                            className="rounded-full border border-rose-400/30 bg-rose-400/15 px-4 py-2 text-sm font-medium text-rose-100 hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {closingSessionId === session.id
+                              ? "Closing..."
+                              : "Yes, force close"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmForceClose(null)}
+                            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-stone-300 hover:bg-white/10"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : isUnpaidConfirm ? (
+                      <div className="space-y-3">
+                        <p className="text-sm text-rose-200">
+                          This session is <strong>unpaid</strong> (
+                          {formatCurrency(session.session_total, currency)}).
+                          Close without collecting payment?
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={closingSessionId === session.id}
+                            onClick={() => {
+                              setConfirmUnpaidClose(null);
+                              void closeSession(session.id, false);
+                            }}
+                            className="rounded-full border border-rose-400/30 bg-rose-400/15 px-4 py-2 text-sm font-medium text-rose-100 hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {closingSessionId === session.id
+                              ? "Closing..."
+                              : "Yes, close unpaid"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmUnpaidClose(null)}
+                            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-stone-300 hover:bg-white/10"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          {session.all_orders_terminal ? (
+                            <p className="text-xs text-emerald-300/80">
+                              All orders complete — safe to close
+                            </p>
+                          ) : (
+                            <p className="text-xs text-amber-300/80">
+                              Has active orders — will require confirmation
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          disabled={closingSessionId === session.id}
+                          onClick={() => {
+                            if (isUnpaid) {
+                              setConfirmUnpaidClose(session.id);
+                            } else {
+                              void closeSession(session.id, false);
+                            }
+                          }}
+                          className={`rounded-full px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                            session.all_orders_terminal
+                              ? "border border-emerald-400/30 bg-emerald-400/15 text-emerald-100 hover:bg-emerald-400/25"
+                              : "border border-amber-400/30 bg-amber-400/15 text-amber-100 hover:bg-amber-400/25"
+                          }`}
+                        >
+                          {closingSessionId === session.id
+                            ? "Closing..."
+                            : "Close Table Session"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {!loading && !sessions.length ? (
+            <div className="rounded-[28px] border border-dashed border-white/12 px-6 py-12 text-center text-stone-400">
+              No active table sessions right now.
+            </div>
+          ) : null}
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.28em] text-stone-500">
+                  Tables
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">
+                  QR stations
+                </h2>
+              </div>
+            </div>
+            <div className="mt-5 space-y-3">
+              {[...tables]
+                .sort((a, b) => {
+                  const numA = parseInt(a.table_number.replace(/\D/g, ""), 10);
+                  const numB = parseInt(b.table_number.replace(/\D/g, ""), 10);
+                  if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                  return a.table_number.localeCompare(b.table_number);
+                })
+                .map((table) => (
+                  <div
+                    key={table.id}
+                    className="flex items-center justify-between rounded-3xl border border-white/8 bg-black/20 px-4 py-4 text-sm"
+                  >
+                    <div>
+                      <p className="font-medium text-white">
+                        {table.table_number}
+                      </p>
+                      <p className="mt-1 text-stone-500">
+                        Token {table.table_token.slice(0, 8)}...
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+            <div>
+              <p className="text-xs uppercase tracking-[0.28em] text-stone-500">
+                Menu
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">
+                Categories and items
+              </h2>
+            </div>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <form
+                onSubmit={createCategory}
+                className="rounded-3xl border border-white/8 bg-black/20 p-4"
+              >
+                <label className="text-sm font-medium text-white">
+                  Create category
+                </label>
+                <input
+                  value={categoryName}
+                  onChange={(event) => setCategoryName(event.target.value)}
+                  placeholder="Starters"
+                  className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500"
+                />
+                <button
+                  type="submit"
+                  disabled={busyKey === "category:create"}
+                  className="mt-4 rounded-full bg-white px-4 py-2 text-sm font-semibold text-stone-950 disabled:opacity-60"
+                >
+                  Add category
+                </button>
+              </form>
+
+              <form
+                onSubmit={createItem}
+                className="rounded-3xl border border-white/8 bg-black/20 p-4"
+              >
+                <label className="text-sm font-medium text-white">
+                  Create menu item
+                </label>
+                <select
+                  value={itemForm.category_id}
+                  onChange={(event) =>
+                    setItemForm((current) => ({
+                      ...current,
+                      category_id: event.target.value,
+                    }))
+                  }
+                  className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                >
+                  <option value="">Select category</option>
+                  {categories.map((category) => (
+                    <option
+                      key={category.id}
+                      value={category.id}
+                      className="bg-stone-900"
+                    >
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  value={itemForm.name}
+                  onChange={(event) =>
+                    setItemForm((current) => ({
+                      ...current,
+                      name: event.target.value,
+                    }))
+                  }
+                  placeholder="Paneer Tikka"
+                  className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500"
+                />
+                <input
+                  value={itemForm.description}
+                  onChange={(event) =>
+                    setItemForm((current) => ({
+                      ...current,
+                      description: event.target.value,
+                    }))
+                  }
+                  placeholder="Smoked cottage cheese skewers"
+                  className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500"
+                />
+                <div className="mt-3 flex gap-3">
+                  <input
+                    value={itemForm.price}
+                    onChange={(event) =>
+                      setItemForm((current) => ({
+                        ...current,
+                        price: event.target.value,
+                      }))
+                    }
+                    placeholder="Price"
+                    className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500"
+                  />
+                  <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-stone-300">
+                    <input
+                      type="checkbox"
+                      checked={itemForm.is_veg}
+                      onChange={(event) =>
+                        setItemForm((current) => ({
+                          ...current,
+                          is_veg: event.target.checked,
+                        }))
+                      }
+                    />
+                    Veg
+                  </label>
+                </div>
+                <button
+                  type="submit"
+                  disabled={busyKey === "item:create"}
+                  className="mt-4 rounded-full bg-amber-300 px-4 py-2 text-sm font-semibold text-stone-950 disabled:opacity-60"
+                >
+                  Add item
+                </button>
+              </form>
+            </div>
+            <div className="mt-6 space-y-4">
+              {groupedMenu.map((category) => (
+                <div
+                  key={category.id}
+                  className="rounded-3xl border border-white/8 bg-black/20 p-4"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">
+                        {category.name}
+                      </h3>
+                      <p className="text-sm text-stone-400">
+                        {category.items.length} items
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={busyKey === `category:${category.id}`}
+                      onClick={() =>
+                        void deleteMenuEntity("category", category.id)
+                      }
+                      className="rounded-full border border-rose-400/25 bg-rose-400/10 p-2 text-rose-100 hover:bg-rose-400/20 disabled:opacity-60"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    {category.items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-2xl border border-white/8 bg-white/5 px-4 py-4"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="font-medium text-white">
+                              {item.name}
+                            </p>
+                            <p className="mt-1 text-sm text-stone-400">
+                              {item.description || "No description yet."}
+                            </p>
+                            <p className="mt-2 text-sm font-semibold text-amber-100">
+                              {formatCurrency(item.price, currency)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              disabled={busyKey === `item:toggle:${item.id}`}
+                              onClick={() => void toggleItemAvailability(item)}
+                              className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.24em] text-white disabled:opacity-60"
+                            >
+                              {item.is_available ? "Available" : "Hidden"}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busyKey === `item:${item.id}`}
+                              onClick={() =>
+                                void deleteMenuEntity("item", item.id)
+                              }
+                              className="rounded-full border border-rose-400/25 bg-rose-400/10 p-2 text-rose-100 hover:bg-rose-400/20 disabled:opacity-60"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {!category.items.length ? (
+                      <p className="text-sm text-stone-500">
+                        No items in this category yet.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.28em] text-stone-500">
+                Staff
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">
+                Kitchen and waiter access
+              </h2>
+            </div>
+          </div>
+          <form
+            onSubmit={createStaff}
+            className="mt-5 grid gap-3 md:grid-cols-[1fr_180px_140px]"
+          >
+            <input
+              value={staffForm.name}
+              onChange={(event) =>
+                setStaffForm((current) => ({
+                  ...current,
+                  name: event.target.value,
+                }))
+              }
+              placeholder="Staff member name"
+              className="rounded-full border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500"
+            />
+            <select
+              value={staffForm.role}
+              onChange={(event) =>
+                setStaffForm((current) => ({
+                  ...current,
+                  role: event.target.value as "kitchen" | "waiter",
+                }))
+              }
+              className="rounded-full border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none"
+            >
+              <option value="kitchen" className="bg-stone-900">
+                Kitchen
+              </option>
+              <option value="waiter" className="bg-stone-900">
+                Waiter
+              </option>
+            </select>
+            <button
+              type="submit"
+              disabled={busyKey === "staff:create"}
+              className="rounded-full bg-white px-4 py-3 text-sm font-semibold text-stone-950 disabled:opacity-60"
+            >
+              Add staff
+            </button>
+          </form>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {staff.map((member) => (
+              <div
+                key={member.id}
+                className="rounded-3xl border border-white/8 bg-black/20 p-4"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-lg font-semibold text-white">
+                      {member.name}
+                    </p>
+                    <p className="mt-1 text-sm uppercase tracking-[0.24em] text-stone-400">
+                      {member.role}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={busyKey === `staff:${member.id}`}
+                    onClick={() => void deleteStaff(member.id)}
+                    className="rounded-full border border-rose-400/25 bg-rose-400/10 p-2 text-rose-100 hover:bg-rose-400/20 disabled:opacity-60"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="mt-4 space-y-3 rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-stone-300">
+                  <p>
+                    Panel path: /{member.role}/{restaurantId}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void copyAccessLink(member)}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Copy access link
+                  </button>
+                </div>
+              </div>
+            ))}
+            {!staff.length ? (
+              <div className="rounded-3xl border border-dashed border-white/12 px-6 py-12 text-center text-stone-400 md:col-span-2 xl:col-span-3">
+                No staff access links created yet.
+              </div>
+            ) : null}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
