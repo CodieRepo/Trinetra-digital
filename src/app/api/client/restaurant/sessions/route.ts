@@ -48,6 +48,13 @@ export async function GET(request: Request) {
           })
         );
 
+        // Fetch session-level bill info if paid or prepared
+        const { data: bill } = await db
+          .from("restaurant_bills")
+          .select("*")
+          .eq("session_id", session.id)
+          .maybeSingle();
+
         const orderCount = enrichedOrders.length;
         const sessionTotal = enrichedOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
         const terminalStatuses = ["closed", "cancelled", "served"];
@@ -61,6 +68,7 @@ export async function GET(request: Request) {
           order_count: orderCount,
           session_total: sessionTotal,
           all_orders_terminal: allOrdersTerminal,
+          bill: bill || null
         };
       })
     );

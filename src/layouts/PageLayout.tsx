@@ -15,9 +15,14 @@ interface PageLayoutProps {
 
 export default function PageLayout({ children, hideFooter = false }: PageLayoutProps) {
   const location = useLocation();
-  const isAdmin = location.pathname.startsWith("/admin");
+  const isStandalone = 
+    location.pathname.startsWith("/admin") || 
+    location.pathname.startsWith("/super-admin") || 
+    location.pathname.startsWith("/restaurant") || 
+    location.pathname.startsWith("/staff/ops") ||
+    location.pathname.startsWith("/r/");
 
-  if (isAdmin) {
+  if (isStandalone) {
     return (
       <div className="bg-[#09090B] text-slate-100 antialiased selection:bg-accent/25 selection:text-slate-100 min-h-screen">
         {children}

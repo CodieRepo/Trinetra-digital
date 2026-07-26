@@ -102,6 +102,18 @@ type DashboardSession = {
   session_total: number;
   all_orders_terminal: boolean;
   orders: SessionOrder[];
+  bill?: {
+    id: string;
+    subtotal: number;
+    discount_type: "percentage" | "flat" | "none";
+    discount_value: number;
+    discount_amount: number;
+    discount_reason: string | null;
+    tax_amount: number;
+    service_charge: number;
+    round_off: number;
+    grand_total: number;
+  } | null;
 };
 
 function formatCurrency(amount: number, currency: string) {
@@ -150,11 +162,13 @@ export default function RestaurantDashboard({
   restaurantName,
   currency,
   tenantId,
+  userRole = "waiter",
 }: {
   restaurantId: string;
   restaurantName: string;
   currency: string;
   tenantId?: string;
+  userRole?: string;
 }) {
   // Shadow global fetch to automatically inject tenant and restaurant context
   const fetch = (input: RequestInfo | URL, init?: RequestInit) => {
@@ -176,6 +190,30 @@ export default function RestaurantDashboard({
       ...init,
       headers,
     });
+  };
+
+  // Discount / Auditing States
+  const [sessionDiscounts, setSessionDiscounts] = useState<Record<string, { type: "percentage" | "flat"; value: number; reason: string }>>({});
+
+  const getSessionDiscount = (sessionId: string) => {
+    return sessionDiscounts[sessionId] || { type: "percentage", value: 0, reason: "" };
+  };
+
+  const updateDiscount = (sessionId: string, field: string, val: any) => {
+    setSessionDiscounts(prev => ({
+      ...prev,
+      [sessionId]: {
+        ...getSessionDiscount(sessionId),
+        [field]: val
+      }
+    }));
+  };
+
+  const calculateDiscountAmount = (subtotal: number, discount: { type: "percentage" | "flat"; value: number }) => {
+    if (discount.type === "percentage") {
+      return (subtotal * discount.value) / 100;
+    }
+    return Math.min(subtotal, discount.value);
   };
   const [orders, setOrders] = useState<DashboardOrder[]>([]);
   const [tables, setTables] = useState<TableRecord[]>([]);
@@ -352,7 +390,16 @@ export default function RestaurantDashboard({
         },
       );
       const data = await readJson<{ download_url: string }>(response);
-      window.open(data.download_url, "_blank", "noopener,noreferrer");
+      if (data.download_url && data.download_url.startsWith("data:")) {
+        const link = document.createElement("a");
+        link.href = data.download_url;
+        link.download = `Tables_QR_Codes_${restaurantName.replace(/\s+/g, "_")}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        window.open(data.download_url, "_blank", "noopener,noreferrer");
+      }
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -524,14 +571,31 @@ export default function RestaurantDashboard({
     async (sessionId: string, action: "mark_paid" | "undo_paid") => {
       try {
         setPaymentActionId(sessionId);
+        const discount = sessionDiscounts[sessionId];
+        const body: any = { session_id: sessionId, action };
+        
+        if (action === "mark_paid" && discount && discount.value > 0) {
+          body.discount_type = discount.type;
+          body.discount_value = discount.value;
+          body.discount_reason = discount.reason || "Manager discount";
+        }
+
         const res = await fetch("/api/client/restaurant/sessions/payment", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ session_id: sessionId, action }),
+          body: JSON.stringify(body),
         });
         const data = await res.json();
         if (!res.ok)
           throw new Error(data.error || "Failed to update payment status.");
+        
+        if (action === "mark_paid") {
+          setSessionDiscounts((prev) => {
+            const next = { ...prev };
+            delete next[sessionId];
+            return next;
+          });
+        }
         await loadAll(false);
       } catch (paymentError) {
         setError(
@@ -543,7 +607,7 @@ export default function RestaurantDashboard({
         setPaymentActionId(null);
       }
     },
-    [],
+    [sessionDiscounts, loadAll],
   );
 
   const closeSession = useCallback(
@@ -846,6 +910,128 @@ export default function RestaurantDashboard({
                       </div>
                     ))}
                   </div>
+
+                  {/* Billing Details & Discount Controls */}
+                  {session.payment_status === "paid" && session.bill ? (
+                    <div className="mt-4 border-t border-white/5 pt-4 space-y-1.5 text-xs text-stone-400">
+                      <div className="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span className="font-mono">{formatCurrency(session.bill.subtotal, currency)}</span>
+                      </div>
+                      {Number(session.bill.discount_amount) > 0 && (
+                        <div className="flex justify-between text-emerald-400">
+                          <span>Discount ({session.bill.discount_type === "percentage" ? `${session.bill.discount_value}%` : "flat"}):</span>
+                          <span className="font-mono">-{formatCurrency(session.bill.discount_amount, currency)}</span>
+                        </div>
+                      )}
+                      {session.bill.discount_reason && (
+                        <div className="text-[10px] text-stone-500 italic">Reason: {session.bill.discount_reason}</div>
+                      )}
+                      <div className="flex justify-between">
+                        <span>Taxes (5% GST):</span>
+                        <span className="font-mono">{formatCurrency(session.bill.tax_amount, currency)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-white/5 pt-2 text-sm font-semibold text-white">
+                        <span>Grand Total Paid:</span>
+                        <span className="text-amber-200 font-mono">{formatCurrency(session.bill.grand_total, currency)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4 border-t border-white/5 pt-4 space-y-3">
+                      {/* Discount Input Form */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-stone-400 font-bold">Billing Discount</span>
+                          <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/10">
+                            <button
+                              type="button"
+                              onClick={() => updateDiscount(session.id, "type", "percentage")}
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold border-0 cursor-pointer ${
+                                getSessionDiscount(session.id).type === "percentage"
+                                  ? "bg-violet-600 text-white"
+                                  : "text-stone-400 hover:text-white"
+                              }`}
+                            >
+                              %
+                            </button>
+                            <button
+                              type="button"
+                              disabled={userRole === "waiter"}
+                              onClick={() => updateDiscount(session.id, "type", "flat")}
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold border-0 cursor-pointer ${
+                                getSessionDiscount(session.id).type === "flat"
+                                  ? "bg-violet-600 text-white"
+                                  : "text-stone-400 hover:text-white"
+                              } disabled:opacity-30 disabled:cursor-not-allowed`}
+                              title={userRole === "waiter" ? "Waiters cannot apply flat discounts" : ""}
+                            >
+                              ₹
+                            </button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder={getSessionDiscount(session.id).type === "percentage" ? `Max ${userRole === "waiter" ? "5%" : userRole === "manager" ? "20%" : "100%"}` : "Value"}
+                            value={getSessionDiscount(session.id).value || ""}
+                            onChange={(e) => {
+                              let val = parseFloat(e.target.value) || 0;
+                              // Validate role-based constraints on the frontend
+                              if (getSessionDiscount(session.id).type === "percentage") {
+                                if (userRole === "waiter" && val > 5) val = 5;
+                                if (userRole === "manager" && val > 20) val = 20;
+                              } else {
+                                if (userRole === "waiter") val = 0;
+                                const maxFlat = session.session_total * 0.20;
+                                if (userRole === "manager" && val > maxFlat) val = maxFlat;
+                              }
+                              updateDiscount(session.id, "value", val);
+                            }}
+                            className="col-span-1 h-8 px-2.5 text-xs bg-black/40 border border-white/10 rounded-xl text-stone-200 focus:outline-none focus:border-violet-500 placeholder:text-stone-600"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Reason (e.g. Promo, Staff)"
+                            value={getSessionDiscount(session.id).reason}
+                            onChange={(e) => updateDiscount(session.id, "reason", e.target.value)}
+                            className="col-span-2 h-8 px-2.5 text-xs bg-black/40 border border-white/10 rounded-xl text-stone-200 focus:outline-none focus:border-violet-500 placeholder:text-stone-600"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Math Summary */}
+                      {(() => {
+                        const discObj = getSessionDiscount(session.id);
+                        const discAmt = calculateDiscountAmount(session.session_total, discObj);
+                        const netPayable = Math.max(0, session.session_total - discAmt);
+                        const tax = (netPayable * 0.05); // 5% GST
+                        const totalPayable = Math.round(netPayable + tax);
+                        return (
+                          <div className="bg-black/30 border border-white/5 rounded-2xl p-3 text-xs text-stone-400 space-y-1.5 font-medium">
+                            <div className="flex justify-between">
+                              <span>Subtotal:</span>
+                              <span>{formatCurrency(session.session_total, currency)}</span>
+                            </div>
+                            {discAmt > 0 && (
+                              <div className="flex justify-between text-emerald-400">
+                                <span>Discount ({discObj.type === "percentage" ? `${discObj.value}%` : "flat"}):</span>
+                                <span>-{formatCurrency(discAmt, currency)}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between">
+                              <span>Taxes (5% GST):</span>
+                              <span>{formatCurrency(tax, currency)}</span>
+                            </div>
+                            <div className="flex justify-between border-t border-white/5 pt-2 text-sm font-semibold text-white">
+                              <span>Estimated Payable:</span>
+                              <span className="text-amber-200 font-mono">{formatCurrency(totalPayable, currency)}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
 
                   {/* Payment action */}
                   <div className="mt-5 flex items-center justify-between border-t border-white/8 pt-4">

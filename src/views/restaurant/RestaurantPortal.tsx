@@ -280,6 +280,7 @@ export default function RestaurantPortal() {
           restaurantId={restaurant.id}
           restaurantName={restaurant.name}
           currency={restaurant.currency}
+          userRole={userRole || "waiter"}
         />
       </main>
     </div>
