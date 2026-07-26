@@ -7,7 +7,7 @@ dist/
 dist-ssr/
 build/
 .next/
-CRM/
+/CRM/
 
 # Environment files
 .env
