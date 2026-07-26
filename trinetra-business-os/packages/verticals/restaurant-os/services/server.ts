@@ -112,7 +112,7 @@ export async function syncSessionCustomerToCrmLead(
           phone: cleanPhone,
           is_customer: true,
           source: "Restaurant OS",
-          status: "won",
+          status: "new",
           score: 80,
           service_interest: "Restaurant OS",
           ai_summary: "Customer acquired via Restaurant OS QR Menu",

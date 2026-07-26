@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS public.restaurant_orders (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id        UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   restaurant_id    UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
-  table_id         UUID NOT NULL REFERENCES public.restaurant_tables(id),
+  table_id         UUID REFERENCES public.restaurant_tables(id) ON DELETE SET NULL,
   table_session_id UUID REFERENCES public.restaurant_table_sessions(id) ON DELETE SET NULL,
   session_token    UUID NOT NULL,
   status           TEXT NOT NULL DEFAULT 'placed'
@@ -116,6 +116,10 @@ CREATE TABLE IF NOT EXISTS public.restaurant_orders (
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE public.restaurant_orders ALTER COLUMN table_id DROP NOT NULL;
+ALTER TABLE public.restaurant_orders DROP CONSTRAINT IF EXISTS restaurant_orders_table_id_fkey;
+ALTER TABLE public.restaurant_orders ADD CONSTRAINT restaurant_orders_table_id_fkey FOREIGN KEY (table_id) REFERENCES public.restaurant_tables(id) ON DELETE SET NULL;
 
 ALTER TABLE public.restaurant_orders ENABLE ROW LEVEL SECURITY;
 
@@ -166,12 +170,21 @@ CREATE INDEX IF NOT EXISTS idx_restaurant_orders_session ON public.restaurant_or
 CREATE INDEX IF NOT EXISTS idx_restaurant_order_items_tenant ON public.restaurant_order_items(tenant_id, order_id);
 
 -- Permissive service role & RLS policies for tenant data isolation
+DROP POLICY IF EXISTS restaurants_tenant_policy ON public.restaurants;
 CREATE POLICY restaurants_tenant_policy ON public.restaurants FOR ALL USING (true);
+DROP POLICY IF EXISTS restaurant_tables_tenant_policy ON public.restaurant_tables;
 CREATE POLICY restaurant_tables_tenant_policy ON public.restaurant_tables FOR ALL USING (true);
+DROP POLICY IF EXISTS restaurant_staff_tenant_policy ON public.restaurant_staff;
 CREATE POLICY restaurant_staff_tenant_policy ON public.restaurant_staff FOR ALL USING (true);
+DROP POLICY IF EXISTS menu_categories_tenant_policy ON public.menu_categories;
 CREATE POLICY menu_categories_tenant_policy ON public.menu_categories FOR ALL USING (true);
+DROP POLICY IF EXISTS menu_items_tenant_policy ON public.menu_items;
 CREATE POLICY menu_items_tenant_policy ON public.menu_items FOR ALL USING (true);
+DROP POLICY IF EXISTS restaurant_table_sessions_tenant_policy ON public.restaurant_table_sessions;
 CREATE POLICY restaurant_table_sessions_tenant_policy ON public.restaurant_table_sessions FOR ALL USING (true);
+DROP POLICY IF EXISTS restaurant_orders_tenant_policy ON public.restaurant_orders;
 CREATE POLICY restaurant_orders_tenant_policy ON public.restaurant_orders FOR ALL USING (true);
+DROP POLICY IF EXISTS restaurant_order_items_tenant_policy ON public.restaurant_order_items;
 CREATE POLICY restaurant_order_items_tenant_policy ON public.restaurant_order_items FOR ALL USING (true);
+DROP POLICY IF EXISTS restaurant_order_events_tenant_policy ON public.restaurant_order_events;
 CREATE POLICY restaurant_order_events_tenant_policy ON public.restaurant_order_events FOR ALL USING (true);

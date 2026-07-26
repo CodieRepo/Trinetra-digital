@@ -267,7 +267,7 @@ export default function RestaurantDashboard({
     };
   }, [orders]);
 
-  async function _createTable(event: React.FormEvent<HTMLFormElement>) {
+  async function createTable(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
       setBusyKey("table:create");
@@ -290,7 +290,7 @@ export default function RestaurantDashboard({
     }
   }
 
-  async function _deleteTable(id: string) {
+  async function deleteTable(id: string) {
     try {
       setBusyKey(`table:${id}`);
       const response = await fetch("/api/client/restaurant/tables", {
@@ -311,7 +311,7 @@ export default function RestaurantDashboard({
     }
   }
 
-  async function _generateQrs() {
+  async function generateQrs() {
     try {
       setBusyKey("tables:qrs");
       const response = await fetch(

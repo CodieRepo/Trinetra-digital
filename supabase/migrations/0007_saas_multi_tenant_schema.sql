@@ -11,17 +11,21 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 CREATE TABLE IF NOT EXISTS tenants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
-    slug TEXT UNIQUE NOT NULL,
+    slug TEXT UNIQUE,
     plan TEXT NOT NULL DEFAULT 'pro',
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'trial')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS slug TEXT;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'pro';
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+
 -- Default system tenant for backwards compatibility / local dev
 INSERT INTO tenants (id, name, slug)
 VALUES ('00000000-0000-0000-0000-000000000001', 'Default Organization', 'default-org')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET slug = EXCLUDED.slug;
 
 -- 2. USER ROLES (RBAC)
 CREATE TABLE IF NOT EXISTS users_roles (
@@ -63,6 +67,18 @@ CREATE TABLE IF NOT EXISTS leads (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS tenant_id UUID DEFAULT '00000000-0000-0000-0000-000000000001' REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS is_customer BOOLEAN DEFAULT false;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS score INTEGER DEFAULT 50;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS lead_temperature TEXT DEFAULT 'warm';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS ai_summary TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS ai_intent TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS ai_suggested_action TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS assigned_to TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS deleted_by TEXT;
 
 -- 4. CONVERSATIONS (Generic & Provider Agnostic)
 CREATE TABLE IF NOT EXISTS conversations (
@@ -222,6 +238,25 @@ CREATE TABLE IF NOT EXISTS system_error_logs (
 -- INDEXES FOR HIGH PERFORMANCE (< 50ms Queries & FTS)
 -- =========================================================================
 
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS company TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS fts TSVECTOR GENERATED ALWAYS AS (
+  to_tsvector('english', coalesce(name, '') || ' ' || coalesce(phone, '') || ' ' || coalesce(company, '') || ' ' || coalesce(last_message, ''))
+) STORED;
+
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS tenant_id UUID DEFAULT '00000000-0000-0000-0000-000000000001' REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS lead_id UUID REFERENCES leads(id) ON DELETE CASCADE;
+
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS tenant_id UUID DEFAULT '00000000-0000-0000-0000-000000000001' REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS lead_id UUID REFERENCES leads(id) ON DELETE CASCADE;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+
+ALTER TABLE timeline_events ADD COLUMN IF NOT EXISTS tenant_id UUID DEFAULT '00000000-0000-0000-0000-000000000001' REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE timeline_events ADD COLUMN IF NOT EXISTS lead_id UUID REFERENCES leads(id) ON DELETE CASCADE;
+
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS tenant_id UUID DEFAULT '00000000-0000-0000-0000-000000000001' REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS lead_id UUID REFERENCES leads(id) ON DELETE CASCADE;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+
 CREATE INDEX IF NOT EXISTS idx_leads_fts ON leads USING GIN(fts);
 CREATE INDEX IF NOT EXISTS idx_leads_trgm_name ON leads USING GIN(name gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_leads_tenant_phone ON leads(tenant_id, phone);
@@ -252,18 +287,33 @@ ALTER TABLE ai_prompts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE system_error_logs ENABLE ROW LEVEL SECURITY;
 
 -- Permissive policies for service role & default tenant access
+DROP POLICY IF EXISTS tenants_all ON tenants;
 CREATE POLICY tenants_all ON tenants FOR ALL USING (true);
+DROP POLICY IF EXISTS users_roles_all ON users_roles;
 CREATE POLICY users_roles_all ON users_roles FOR ALL USING (true);
+DROP POLICY IF EXISTS leads_all ON leads;
 CREATE POLICY leads_all ON leads FOR ALL USING (true);
+DROP POLICY IF EXISTS conversations_all ON conversations;
 CREATE POLICY conversations_all ON conversations FOR ALL USING (true);
+DROP POLICY IF EXISTS messages_all ON messages;
 CREATE POLICY messages_all ON messages FOR ALL USING (true);
+DROP POLICY IF EXISTS timeline_all ON timeline_events;
 CREATE POLICY timeline_all ON timeline_events FOR ALL USING (true);
+DROP POLICY IF EXISTS tasks_all ON tasks;
 CREATE POLICY tasks_all ON tasks FOR ALL USING (true);
+DROP POLICY IF EXISTS lead_notes_all ON lead_notes;
 CREATE POLICY lead_notes_all ON lead_notes FOR ALL USING (true);
+DROP POLICY IF EXISTS webhook_logs_all ON webhook_logs;
 CREATE POLICY webhook_logs_all ON webhook_logs FOR ALL USING (true);
+DROP POLICY IF EXISTS background_jobs_all ON background_jobs;
 CREATE POLICY background_jobs_all ON background_jobs FOR ALL USING (true);
+DROP POLICY IF EXISTS audit_logs_all ON audit_logs;
 CREATE POLICY audit_logs_all ON audit_logs FOR ALL USING (true);
+DROP POLICY IF EXISTS notifications_all ON notifications;
 CREATE POLICY notifications_all ON notifications FOR ALL USING (true);
+DROP POLICY IF EXISTS provider_configs_all ON provider_configs;
 CREATE POLICY provider_configs_all ON provider_configs FOR ALL USING (true);
+DROP POLICY IF EXISTS ai_prompts_all ON ai_prompts;
 CREATE POLICY ai_prompts_all ON ai_prompts FOR ALL USING (true);
+DROP POLICY IF EXISTS system_error_logs_all ON system_error_logs;
 CREATE POLICY system_error_logs_all ON system_error_logs FOR ALL USING (true);

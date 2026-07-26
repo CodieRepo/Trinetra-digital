@@ -90,10 +90,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_update_leads_updated_at ON leads;
 CREATE TRIGGER trg_update_leads_updated_at 
     BEFORE UPDATE ON leads 
     FOR EACH ROW EXECUTE FUNCTION update_bhash_modified_column();
 
+DROP TRIGGER IF EXISTS trg_update_bhash_tasks_updated_at ON bhash_tasks;
 CREATE TRIGGER trg_update_bhash_tasks_updated_at 
     BEFORE UPDATE ON bhash_tasks 
     FOR EACH ROW EXECUTE FUNCTION update_bhash_modified_column();
@@ -124,11 +126,17 @@ ALTER TABLE bhash_lead_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bhash_webhook_logs ENABLE ROW LEVEL SECURITY;
 
 -- Allow full access for service role and standard authenticated read/write
+DROP POLICY IF EXISTS bhash_leads_all ON leads;
 CREATE POLICY bhash_leads_all ON leads FOR ALL USING (true);
+DROP POLICY IF EXISTS bhash_conv_all ON bhash_conversations;
 CREATE POLICY bhash_conv_all ON bhash_conversations FOR ALL USING (true);
+DROP POLICY IF EXISTS bhash_timeline_all ON bhash_timeline_events;
 CREATE POLICY bhash_timeline_all ON bhash_timeline_events FOR ALL USING (true);
+DROP POLICY IF EXISTS bhash_tasks_all ON bhash_tasks;
 CREATE POLICY bhash_tasks_all ON bhash_tasks FOR ALL USING (true);
+DROP POLICY IF EXISTS bhash_notes_all ON bhash_lead_notes;
 CREATE POLICY bhash_notes_all ON bhash_lead_notes FOR ALL USING (true);
+DROP POLICY IF EXISTS bhash_webhook_logs_all ON bhash_webhook_logs;
 CREATE POLICY bhash_webhook_logs_all ON bhash_webhook_logs FOR ALL USING (true);
 
 -- Enable Supabase Realtime publication for tables

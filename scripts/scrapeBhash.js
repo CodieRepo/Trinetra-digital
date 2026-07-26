@@ -9,6 +9,7 @@
 import https from 'https';
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
 
 // Load .env variables if running locally
 const envPath = path.resolve(process.cwd(), '.env');
@@ -147,14 +148,58 @@ export async function runScraper() {
     // Reverse array so that oldest messages are processed first, ensuring newest message is synced last
     const chronologicalLeads = scrapedLeads.reverse();
 
-    // 4. Sync leads with Trinetra CRM Endpoint
-    console.log(`📤 Syncing ${chronologicalLeads.length} leads in chronological order to CRM (${crmSyncUrl})...`);
+    // 4. Run Python ML Classifier on each lead locally to avoid Vercel timeouts/API costs
+    console.log("🧠 Running local Python ML Classifier on scraped leads...");
+    const enrichedLeads = [];
+    for (const lead of chronologicalLeads) {
+      try {
+        const history = enrichedLeads
+          .filter(l => l.phone === lead.phone)
+          .map(l => l.ml_metadata?.flow_node || '6206');
+
+        const payload = {
+          message: lead.message,
+          phone: lead.phone,
+          flow_node: '6206',
+          history: history
+        };
+
+        const jsonArg = JSON.stringify(payload);
+        let cmd = '';
+        if (process.platform === 'win32') {
+          const escapedJsonArg = jsonArg.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+          cmd = `python scripts/classify_leads.py "${escapedJsonArg}"`;
+        } else {
+          cmd = `python3 scripts/classify_leads.py '${jsonArg}'`;
+        }
+
+        const stdout = execSync(cmd, { encoding: 'utf8' });
+        const mlResult = JSON.parse(stdout.trim());
+
+        enrichedLeads.push({
+          ...lead,
+          ml_intent: mlResult.intent,
+          ml_probability: mlResult.probability,
+          ml_score: mlResult.score,
+          ml_temperature: mlResult.leadTemperature,
+          ml_summary: mlResult.summary,
+          ml_suggested_action: mlResult.suggestedAction,
+          ml_metadata: mlResult.metadata
+        });
+      } catch (mlErr) {
+        console.warn(`⚠️ ML classification failed for lead ${lead.phone}:`, mlErr.message);
+        enrichedLeads.push(lead);
+      }
+    }
+
+    // 5. Sync leads with Trinetra CRM Endpoint
+    console.log(`📤 Syncing ${enrichedLeads.length} leads in chronological order to CRM (${crmSyncUrl})...`);
     const syncRes = await fetch(crmSyncUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         secret,
-        leads: chronologicalLeads,
+        leads: enrichedLeads,
       }),
     });
 

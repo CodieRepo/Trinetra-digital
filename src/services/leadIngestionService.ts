@@ -156,29 +156,60 @@ export class LeadIngestionService {
     const targetLeadId = lead.id;
     const incomingText = messageBody;
 
-    setTimeout(async () => {
-      try {
-        const aiResult = await aiService.analyzeLead("default", "", incomingText);
+    const hasPrecomputedML = payload.rawPayload && payload.rawPayload.ml_intent;
 
+    if (hasPrecomputedML) {
+      const mlResult = {
+        summary: payload.rawPayload.ml_summary,
+        score: Number(payload.rawPayload.ml_score) || 50,
+        intent: payload.rawPayload.ml_intent,
+        leadTemperature: payload.rawPayload.ml_temperature || "warm",
+        suggestedAction: payload.rawPayload.ml_suggested_action,
+      };
+
+      (async () => {
         try {
           await db
             .from("leads")
             .update({
-              ai_summary: aiResult.summary,
-              score: aiResult.score,
-              ai_intent: aiResult.intent,
-              lead_temperature: aiResult.leadTemperature,
-              ai_suggested_action: aiResult.suggestedAction,
+              ai_summary: mlResult.summary,
+              score: mlResult.score,
+              ai_intent: mlResult.intent,
+              lead_temperature: mlResult.leadTemperature,
+              ai_suggested_action: mlResult.suggestedAction,
               updated_at: new Date().toISOString(),
             })
             .eq("id", targetLeadId);
-        } catch (e) {}
+          eventBus.publish("AI_ANALYSIS_UPDATED", { lead_id: targetLeadId, aiResult: mlResult });
+        } catch (e) {
+          console.error("Failed to save precomputed ML data:", e);
+        }
+      })();
+    } else {
+      setTimeout(async () => {
+        try {
+          const aiResult = await aiService.analyzeLead("default", "", incomingText);
 
-        eventBus.publish("AI_ANALYSIS_UPDATED", { lead_id: targetLeadId, aiResult });
-      } catch (aiErr) {
-        console.error("Async AI Background Error:", aiErr);
-      }
-    }, 0);
+          try {
+            await db
+              .from("leads")
+              .update({
+                ai_summary: aiResult.summary,
+                score: aiResult.score,
+                ai_intent: aiResult.intent,
+                lead_temperature: aiResult.leadTemperature,
+                ai_suggested_action: aiResult.suggestedAction,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", targetLeadId);
+          } catch (e) {}
+
+          eventBus.publish("AI_ANALYSIS_UPDATED", { lead_id: targetLeadId, aiResult });
+        } catch (aiErr) {
+          console.error("Async AI Background Error:", aiErr);
+        }
+      }, 0);
+    }
 
     return { lead, isNewLead };
   }

@@ -1,0 +1,51 @@
+{
+  "samples": [
+    { "text": "hi", "label": "GENERAL_INQUIRY" },
+    { "text": "hello", "label": "GENERAL_INQUIRY" },
+    { "text": "hey there", "label": "GENERAL_INQUIRY" },
+    { "text": "good morning", "label": "GENERAL_INQUIRY" },
+    { "text": "what services do you offer", "label": "GENERAL_INQUIRY" },
+    { "text": "tell me about your company", "label": "GENERAL_INQUIRY" },
+    { "text": "options", "label": "GENERAL_INQUIRY" },
+    { "text": "help me", "label": "GENERAL_INQUIRY" },
+    { "text": "are you online", "label": "GENERAL_INQUIRY" },
+
+    { "text": "i need a website for my business", "label": "WEBSITE_DEV" },
+    { "text": "website development cost", "label": "WEBSITE_DEV" },
+    { "text": "wordpress site designer", "label": "WEBSITE_DEV" },
+    { "text": "how much to design a landing page", "label": "WEBSITE_DEV" },
+    { "text": "e-commerce portal development", "label": "WEBSITE_DEV" },
+    { "text": "shopify store setup charges", "label": "WEBSITE_DEV" },
+    { "text": "need website development", "label": "WEBSITE_DEV" },
+    { "text": "portfolio website price", "label": "WEBSITE_DEV" },
+    { "text": "cost of web development", "label": "WEBSITE_DEV" },
+    { "text": "looking for a web developer", "label": "WEBSITE_DEV" },
+
+    { "text": "want to build custom crm software", "label": "CRM_INQUIRY" },
+    { "text": "lead management system integration", "label": "CRM_INQUIRY" },
+    { "text": "sales tracking crm price", "label": "CRM_INQUIRY" },
+    { "text": "integrate whatsapp in my crm", "label": "CRM_INQUIRY" },
+    { "text": "customer relationship management tools", "label": "CRM_INQUIRY" },
+    { "text": "software to manage clients and leads", "label": "CRM_INQUIRY" },
+    { "text": "crm deployment price list", "label": "CRM_INQUIRY" },
+    { "text": "need crm for sales team", "label": "CRM_INQUIRY" },
+    { "text": "best local crm solution", "label": "CRM_INQUIRY" },
+
+    { "text": "seo charges for website ranking", "label": "DIGITAL_MARKETING" },
+    { "text": "google ads campaign setup cost", "label": "DIGITAL_MARKETING" },
+    { "text": "social media marketing pricing", "label": "DIGITAL_MARKETING" },
+    { "text": "instagram growth services", "label": "DIGITAL_MARKETING" },
+    { "text": "increase web traffic seo", "label": "DIGITAL_MARKETING" },
+    { "text": "facebook lead generation ad budget", "label": "DIGITAL_MARKETING" },
+    { "text": "digital marketing packages", "label": "DIGITAL_MARKETING" },
+    { "text": "hire a marketing agency", "label": "DIGITAL_MARKETING" },
+
+    { "text": "earn extra cash working from home", "label": "SPAM" },
+    { "text": "claim your free lottery prize", "label": "SPAM" },
+    { "text": "bitcoin investment double returns", "label": "SPAM" },
+    { "text": "invest now become rich guaranteed", "label": "SPAM" },
+    { "text": "loans approved instantly low interest rates", "label": "SPAM" },
+    { "text": "casino online play now win cash", "label": "SPAM" },
+    { "text": "buy youtube views cheap package", "label": "SPAM" }
+  ]
+}
