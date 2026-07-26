@@ -1,38 +1,27 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { resolveRestaurantContext } from "../context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
-
-async function getRestaurantId(db: ReturnType<typeof getSupabaseAdmin>) {
-  const { data } = await db
-    .from("restaurants")
-    .select("id")
-    .eq("tenant_id", TENANT_ID)
-    .limit(1)
-    .maybeSingle();
-  return data?.id || null;
-}
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const db = getSupabaseAdmin();
-    const restaurantId = await getRestaurantId(db);
+    const { tenantId, restaurantId } = await resolveRestaurantContext(request);
     if (!restaurantId) return NextResponse.json({ categories: [], items: [] });
 
     const [catResult, itemResult] = await Promise.all([
       db
         .from("menu_categories")
         .select("id, name, display_order, is_active")
-        .eq("tenant_id", TENANT_ID)
+        .eq("tenant_id", tenantId)
         .eq("restaurant_id", restaurantId)
         .order("display_order", { ascending: true }),
       db
         .from("menu_items")
         .select("id, category_id, name, description, price, image_url, is_available, is_veg, display_order")
-        .eq("tenant_id", TENANT_ID)
+        .eq("tenant_id", tenantId)
         .eq("restaurant_id", restaurantId)
         .order("display_order", { ascending: true }),
     ]);
@@ -53,22 +42,21 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const db = getSupabaseAdmin();
-    const restaurantId = await getRestaurantId(db);
-    if (!restaurantId) return NextResponse.json({ error: "No restaurant found" }, { status: 404 });
-
     const body = await request.json();
+    const { tenantId, restaurantId } = await resolveRestaurantContext(request, body);
+    if (!restaurantId) return NextResponse.json({ error: "No restaurant found" }, { status: 404 });
 
     if (body.type === "category") {
       const { count } = await db
         .from("menu_categories")
         .select("*", { count: "exact", head: true })
-        .eq("tenant_id", TENANT_ID)
+        .eq("tenant_id", tenantId)
         .eq("restaurant_id", restaurantId);
 
       const { data, error } = await db
         .from("menu_categories")
         .insert({
-          tenant_id: TENANT_ID,
+          tenant_id: tenantId,
           restaurant_id: restaurantId,
           name: body.name,
           display_order: (count || 0) + 1,
@@ -84,7 +72,7 @@ export async function POST(request: Request) {
       const { data, error } = await db
         .from("menu_items")
         .insert({
-          tenant_id: TENANT_ID,
+          tenant_id: tenantId,
           restaurant_id: restaurantId,
           category_id: body.category_id,
           name: body.name,
@@ -111,6 +99,7 @@ export async function PATCH(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
+    const { tenantId } = await resolveRestaurantContext(request, body);
 
     if (body.type === "item") {
       const updates: Record<string, unknown> = {};
@@ -122,7 +111,7 @@ export async function PATCH(request: Request) {
         .from("menu_items")
         .update(updates)
         .eq("id", body.id)
-        .eq("tenant_id", TENANT_ID);
+        .eq("tenant_id", tenantId);
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ success: true });
@@ -139,13 +128,14 @@ export async function DELETE(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
+    const { tenantId } = await resolveRestaurantContext(request, body);
     const table = body.type === "category" ? "menu_categories" : "menu_items";
 
     const { error } = await db
       .from(table)
       .delete()
       .eq("id", body.id)
-      .eq("tenant_id", TENANT_ID);
+      .eq("tenant_id", tenantId);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });

@@ -132,9 +132,15 @@ const SESSION_STATUS_BADGE: Record<string, string> = {
 };
 
 async function readJson<T>(response: Response): Promise<T> {
-  const data = await response.json();
+  const text = await response.text();
+  let data: any;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    throw new Error(text || `Request failed with HTTP status ${response.status}`);
+  }
   if (!response.ok) {
-    throw new Error(data.error || "Request failed");
+    throw new Error(data?.error || "Request failed");
   }
   return data as T;
 }
@@ -143,11 +149,34 @@ export default function RestaurantDashboard({
   restaurantId,
   restaurantName,
   currency,
+  tenantId,
 }: {
   restaurantId: string;
   restaurantName: string;
   currency: string;
+  tenantId?: string;
 }) {
+  // Shadow global fetch to automatically inject tenant and restaurant context
+  const fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    const urlStr = typeof input === "string" ? input : input.toString();
+    const url = new URL(urlStr, window.location.origin);
+    
+    if (tenantId) {
+      url.searchParams.set("tenant_id", tenantId);
+    }
+    if (restaurantId && restaurantId !== "default") {
+      url.searchParams.set("restaurant_id", restaurantId);
+    }
+    
+    const headers = new Headers(init?.headers);
+    if (tenantId) headers.set("x-tenant-id", tenantId);
+    if (restaurantId && restaurantId !== "default") headers.set("x-restaurant-id", restaurantId);
+    
+    return window.fetch(url.toString(), {
+      ...init,
+      headers,
+    });
+  };
   const [orders, setOrders] = useState<DashboardOrder[]>([]);
   const [tables, setTables] = useState<TableRecord[]>([]);
   const [categories, setCategories] = useState<MenuCategory[]>([]);

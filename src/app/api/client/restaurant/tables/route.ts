@@ -1,31 +1,20 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { resolveRestaurantContext } from "../context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
-
-async function getRestaurantId(db: ReturnType<typeof getSupabaseAdmin>) {
-  const { data } = await db
-    .from("restaurants")
-    .select("id")
-    .eq("tenant_id", TENANT_ID)
-    .limit(1)
-    .maybeSingle();
-  return data?.id || null;
-}
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const db = getSupabaseAdmin();
-    const restaurantId = await getRestaurantId(db);
+    const { tenantId, restaurantId } = await resolveRestaurantContext(request);
     if (!restaurantId) return NextResponse.json({ tables: [] });
 
     const { data, error } = await db
       .from("restaurant_tables")
       .select("id, table_number, table_token, is_active, created_at")
-      .eq("tenant_id", TENANT_ID)
+      .eq("tenant_id", tenantId)
       .eq("restaurant_id", restaurantId)
       .order("table_number", { ascending: true });
 
@@ -40,14 +29,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const db = getSupabaseAdmin();
-    const restaurantId = await getRestaurantId(db);
+    const body = await request.json();
+    const { tenantId, restaurantId } = await resolveRestaurantContext(request, body);
     if (!restaurantId) return NextResponse.json({ error: "No restaurant found" }, { status: 404 });
 
-    const body = await request.json();
     const { data, error } = await db
       .from("restaurant_tables")
       .insert({
-        tenant_id: TENANT_ID,
+        tenant_id: tenantId,
         restaurant_id: restaurantId,
         table_number: body.table_number,
       })
@@ -66,6 +55,7 @@ export async function DELETE(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
+    const { tenantId } = await resolveRestaurantContext(request, body);
     const tableId = body.table_id;
 
     if (!tableId) {
@@ -77,7 +67,7 @@ export async function DELETE(request: Request) {
       .from("restaurant_orders")
       .select("id")
       .eq("table_id", tableId)
-      .eq("tenant_id", TENANT_ID);
+      .eq("tenant_id", tenantId);
 
     if (linkedOrders && linkedOrders.length > 0) {
       const orderIds = linkedOrders.map((o) => o.id);
@@ -91,14 +81,14 @@ export async function DELETE(request: Request) {
       .from("restaurant_table_sessions")
       .delete()
       .eq("table_id", tableId)
-      .eq("tenant_id", TENANT_ID);
+      .eq("tenant_id", tenantId);
 
     // 3. Delete the table record
     const { error } = await db
       .from("restaurant_tables")
       .delete()
       .eq("id", tableId)
-      .eq("tenant_id", TENANT_ID);
+      .eq("tenant_id", tenantId);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });

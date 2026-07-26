@@ -23,6 +23,7 @@ const DataUsageNotice  = lazy(() => import("@/views/DataUsageNotice"));
 const NotFoundPage     = lazy(() => import("@/views/NotFoundPage"));
 const AdminCrm         = lazy(() => import("@/views/admin/AdminCrm"));
 const SuperAdmin       = lazy(() => import("@/views/super-admin/SuperAdmin"));
+const RestaurantPortal = lazy(() => import("@/views/restaurant/RestaurantPortal"));
 
 // Vertical Module Public & Staff Pages
 const PublicRestaurantMenuPage = lazy(() => import("@/views/public/PublicRestaurantMenuPage"));
@@ -111,6 +112,10 @@ function AnimatedRoutes() {
 
           {/* Super Admin */}
           <Route path="/super-admin"              element={<SuperAdmin />} />
+
+          {/* Restaurant Portal */}
+          <Route path="/restaurant"              element={<RestaurantPortal />} />
+          <Route path="/restaurant/*"            element={<RestaurantPortal />} />
 
           {/* Vertical Module Routes — Restaurant OS */}
           <Route path="/r/:tableToken"                        element={<PublicRestaurantMenuPage />} />

@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { resolveRestaurantContext } from "../../context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
 export async function POST(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
+    const { tenantId } = await resolveRestaurantContext(request, body);
     const { session_id, action } = body;
 
     if (!session_id || !action) {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         .from("restaurant_table_sessions")
         .update({ payment_status: "paid", paid_at: new Date().toISOString() })
         .eq("id", session_id)
-        .eq("tenant_id", TENANT_ID);
+        .eq("tenant_id", tenantId);
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ success: true });
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         .from("restaurant_table_sessions")
         .update({ payment_status: "unpaid", paid_at: null })
         .eq("id", session_id)
-        .eq("tenant_id", TENANT_ID);
+        .eq("tenant_id", tenantId);
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ success: true });
