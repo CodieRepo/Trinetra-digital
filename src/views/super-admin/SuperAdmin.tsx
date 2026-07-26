@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Shield, Users, MessageSquare,
@@ -282,6 +282,27 @@ export default function SuperAdmin() {
   const [viewClient, setViewClient] = useState<TenantClient | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  // SaaS Tab Switch
+  const [activeTab, setActiveTab] = useState<"crm" | "restaurant">("crm");
+  const [restaurantInsights, setRestaurantInsights] = useState<any[]>([]);
+  const [loadingInsights, setLoadingInsights] = useState(false);
+
+  // Fetch restaurant insights from DB
+  useEffect(() => {
+    if (activeTab === "restaurant") {
+      setLoadingInsights(true);
+      fetch("/api/v1/admin/restaurant-insights")
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && Array.isArray(data.insights)) {
+            setRestaurantInsights(data.insights);
+          }
+        })
+        .catch(err => console.error(err))
+        .finally(() => setLoadingInsights(false));
+    }
+  }, [activeTab]);
+
   const filtered = useMemo(() => {
     let r = clients;
     if (filterStatus !== "all") r = r.filter(c => c.status === filterStatus);
@@ -340,114 +361,247 @@ export default function SuperAdmin() {
       {/* Content */}
       <div className="px-8 py-8 space-y-8">
 
-        {/* Platform KPIs */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          {[
-            { label: "Total Clients",    value: stats.totalClients,                     color: "from-violet-600 to-indigo-600",   icon: <Building2 size={18} /> },
-            { label: "Active Clients",   value: stats.activeClients,                    color: "from-emerald-600 to-teal-600",    icon: <CheckCircle2 size={18} /> },
-            { label: "Platform MRR",     value: `₹${(stats.totalMRR / 1000).toFixed(1)}K`, color: "from-amber-500 to-orange-600", icon: <DollarSign size={18} /> },
-            { label: "Total Leads",      value: stats.totalLeads.toLocaleString(),        color: "from-blue-600 to-cyan-600",       icon: <Users size={18} /> },
-            { label: "Messages/Month",   value: stats.totalMessages.toLocaleString(),     color: "from-rose-600 to-pink-600",       icon: <MessageSquare size={18} /> },
-          ].map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06 }}
-              className={`bg-gradient-to-br ${s.color} rounded-2xl p-5 text-white`}
-            >
-              <div className="opacity-70 mb-3">{s.icon}</div>
-              <p className="text-2xl font-black font-mono leading-none">{s.value}</p>
-              <p className="text-xs font-bold opacity-70 mt-1">{s.label}</p>
-            </motion.div>
-          ))}
+        {/* Module Switcher Tabs */}
+        <div className="flex border-b border-white/5 pb-4 gap-4">
+          <button
+            onClick={() => setActiveTab("crm")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border-0 cursor-pointer ${
+              activeTab === "crm"
+                ? "bg-violet-600 text-white shadow-lg shadow-violet-600/20"
+                : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            CRM SaaS Tenants
+          </button>
+          <button
+            onClick={() => setActiveTab("restaurant")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border-0 cursor-pointer ${
+              activeTab === "restaurant"
+                ? "bg-violet-600 text-white shadow-lg shadow-violet-600/20"
+                : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            Restaurant OS Products
+          </button>
         </div>
 
-        {/* Client Table */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-          {/* Table Header */}
-          <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1">
-              <div className="relative flex-1 max-w-xs">
-                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="Search clients..."
-                  className="w-full h-9 pl-8 pr-3 text-xs bg-white/5 border border-white/10 rounded-xl text-slate-300 focus:outline-none focus:border-violet-500 placeholder:text-slate-600"
-                />
+        {/* Tab 1: CRM Tenants */}
+        {activeTab === "crm" && (
+          <>
+            {/* Platform KPIs */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              {[
+                { label: "Total Clients",    value: stats.totalClients,                     color: "from-violet-600 to-indigo-600",   icon: <Building2 size={18} /> },
+                { label: "Active Clients",   value: stats.activeClients,                    color: "from-emerald-600 to-teal-600",    icon: <CheckCircle2 size={18} /> },
+                { label: "Platform MRR",     value: `₹${(stats.totalMRR / 1000).toFixed(1)}K`, color: "from-amber-500 to-orange-600", icon: <DollarSign size={18} /> },
+                { label: "Total Leads",      value: stats.totalLeads.toLocaleString(),        color: "from-blue-600 to-cyan-600",       icon: <Users size={18} /> },
+                { label: "Messages/Month",   value: stats.totalMessages.toLocaleString(),     color: "from-rose-600 to-pink-600",       icon: <MessageSquare size={18} /> },
+              ].map((s, i) => (
+                <motion.div
+                  key={s.label}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.06 }}
+                  className={`bg-gradient-to-br ${s.color} rounded-2xl p-5 text-white`}
+                >
+                  <div className="opacity-70 mb-3">{s.icon}</div>
+                  <p className="text-2xl font-black font-mono leading-none">{s.value}</p>
+                  <p className="text-xs font-bold opacity-70 mt-1">{s.label}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Client Table */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              {/* Table Header */}
+              <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="relative flex-1 max-w-xs">
+                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      placeholder="Search clients..."
+                      className="w-full h-9 pl-8 pr-3 text-xs bg-white/5 border border-white/10 rounded-xl text-slate-300 focus:outline-none focus:border-violet-500 placeholder:text-slate-600"
+                    />
+                  </div>
+                  <div className="flex gap-1">
+                    {["all", "active", "trial", "suspended", "churned"].map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setFilterStatus(s)}
+                        className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-colors border-0 cursor-pointer capitalize ${
+                          filterStatus === s
+                            ? "bg-violet-600 text-white"
+                            : "bg-white/5 text-slate-400 hover:bg-white/10"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setAddOpen(true)}
+                  className="flex items-center gap-2 h-9 px-4 bg-violet-600 hover:bg-violet-700 rounded-xl text-xs font-bold text-white transition-colors cursor-pointer border-0"
+                >
+                  <Plus size={13} />
+                  Add Client
+                </button>
               </div>
-              <div className="flex gap-1">
-                {["all", "active", "trial", "suspended", "churned"].map(s => (
-                  <button
-                    key={s}
-                    onClick={() => setFilterStatus(s)}
-                    className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-colors border-0 cursor-pointer capitalize ${
-                      filterStatus === s
-                        ? "bg-violet-600 text-white"
-                        : "bg-white/5 text-slate-400 hover:bg-white/10"
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
+
+              {/* Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-white/5">
+                      {["Client", "Plan", "Status", "Leads / Messages", "MRR", "WhatsApp", "Actions"].map(h => (
+                        <th key={h} className={`px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-wider ${
+                          h === "Leads / Messages" ? "hidden md:table-cell" :
+                          h === "MRR" ? "hidden lg:table-cell" :
+                          h === "WhatsApp" ? "hidden lg:table-cell" : ""
+                        }`}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="[&_td]:text-slate-300 [&_tr:hover]:bg-white/3 [&_tr]:border-b [&_tr]:border-white/5">
+                    {filtered.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-5 py-16 text-center text-slate-500">
+                          <Building2 size={28} className="mx-auto mb-3 opacity-30" />
+                          <p className="text-sm font-bold">No clients found</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      filtered.map(client => (
+                        <ClientRow
+                          key={client.id}
+                          client={client}
+                          onView={() => setViewClient(client)}
+                          onToggleSuspend={() => toggleSuspend(client.id)}
+                          onDelete={() => setDeleteId(client.id)}
+                        />
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="px-5 py-3 border-t border-white/5">
+                <p className="text-[10px] text-slate-500 font-medium">
+                  Showing {filtered.length} of {clients.length} clients
+                </p>
               </div>
             </div>
-            <button
-              onClick={() => setAddOpen(true)}
-              className="flex items-center gap-2 h-9 px-4 bg-violet-600 hover:bg-violet-700 rounded-xl text-xs font-bold text-white transition-colors cursor-pointer border-0"
-            >
-              <Plus size={13} />
-              Add Client
-            </button>
-          </div>
+          </>
+        )}
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-white/5">
-                  {["Client", "Plan", "Status", "Leads / Messages", "MRR", "WhatsApp", "Actions"].map(h => (
-                    <th key={h} className={`px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-wider ${
-                      h === "Leads / Messages" ? "hidden md:table-cell" :
-                      h === "MRR" ? "hidden lg:table-cell" :
-                      h === "WhatsApp" ? "hidden lg:table-cell" : ""
-                    }`}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="[&_td]:text-slate-300 [&_tr:hover]:bg-white/3 [&_tr]:border-b [&_tr]:border-white/5">
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-16 text-center text-slate-500">
-                      <Building2 size={28} className="mx-auto mb-3 opacity-30" />
-                      <p className="text-sm font-bold">No clients found</p>
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map(client => (
-                    <ClientRow
-                      key={client.id}
-                      client={client}
-                      onView={() => setViewClient(client)}
-                      onToggleSuspend={() => toggleSuspend(client.id)}
-                      onDelete={() => setDeleteId(client.id)}
-                    />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        {/* Tab 2: Restaurant OS Clients */}
+        {activeTab === "restaurant" && (
+          <>
+            {/* Restaurant KPIs */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              {[
+                { label: "Active Restaurants", value: restaurantInsights.length, color: "from-violet-600 to-indigo-600", icon: <Building2 size={18} /> },
+                { label: "Active Tables", value: restaurantInsights.reduce((sum, r) => sum + r.tableCount, 0), color: "from-emerald-600 to-teal-600", icon: <CheckCircle2 size={18} /> },
+                { label: "Live Dining Sessions", value: restaurantInsights.reduce((sum, r) => sum + r.activeSessions, 0), color: "from-amber-500 to-orange-600", icon: <Users size={18} /> },
+                { label: "Total Orders Processed", value: restaurantInsights.reduce((sum, r) => sum + r.totalOrders, 0), color: "from-blue-600 to-cyan-600", icon: <MessageSquare size={18} /> },
+                { label: "Gross Dining Sales", value: `₹${(restaurantInsights.reduce((sum, r) => sum + r.totalRevenue, 0) / 1000).toFixed(1)}K`, color: "from-rose-600 to-pink-600", icon: <DollarSign size={18} /> },
+              ].map((s, i) => (
+                <motion.div
+                  key={s.label}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.06 }}
+                  className={`bg-gradient-to-br ${s.color} rounded-2xl p-5 text-white`}
+                >
+                  <div className="opacity-70 mb-3">{s.icon}</div>
+                  <p className="text-2xl font-black font-mono leading-none">{s.value}</p>
+                  <p className="text-xs font-bold opacity-70 mt-1">{s.label}</p>
+                </motion.div>
+              ))}
+            </div>
 
-          <div className="px-5 py-3 border-t border-white/5">
-            <p className="text-[10px] text-slate-500 font-medium">
-              Showing {filtered.length} of {clients.length} clients
-            </p>
-          </div>
-        </div>
+            {/* Restaurant Table list */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">
+                  Appointed Restaurants OS SaaS Accounts
+                </h3>
+                <div className="text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded-full font-bold">
+                  SaaS Revenue Mode
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-white/5">
+                      {["Restaurant / Organization", "Plan", "Status", "Operational Scale", "Live Sessions", "Total Sales", "MRR (Sub Fee)"].map(h => (
+                        <th key={h} className="px-5 py-3 text-[9px] font-black text-slate-500 uppercase tracking-wider">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="[&_td]:text-slate-300 [&_tr:hover]:bg-white/3 [&_tr]:border-b [&_tr]:border-white/5">
+                    {loadingInsights ? (
+                      <tr>
+                        <td colSpan={7} className="px-5 py-16 text-center text-slate-500">
+                          <div className="w-6 h-6 border-2 border-violet-500/20 border-t-violet-500 rounded-full animate-spin mx-auto mb-3" />
+                          <p className="text-xs font-bold">Loading insights...</p>
+                        </td>
+                      </tr>
+                    ) : restaurantInsights.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-5 py-16 text-center text-slate-500">
+                          <Building2 size={28} className="mx-auto mb-3 opacity-30" />
+                          <p className="text-sm font-bold">No active restaurants found</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      restaurantInsights.map(r => (
+                        <tr key={r.id}>
+                          <td className="px-5 py-4">
+                            <div className="font-bold text-white text-xs">{r.businessName}</div>
+                            <div className="text-[10px] text-slate-400 font-medium mt-0.5">{r.tenantName}</div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="px-2 py-1 rounded text-[10px] font-bold bg-indigo-950/60 text-indigo-400 border border-indigo-800/40 uppercase">
+                              {r.plan}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="px-2 py-1 rounded text-[10px] font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 uppercase">
+                              {r.status}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-xs font-medium">
+                            {r.tableCount} Dining Tables
+                          </td>
+                          <td className="px-5 py-4 text-xs font-medium">
+                            <span className={r.activeSessions > 0 ? "text-emerald-400 font-bold" : ""}>
+                              {r.activeSessions} Active
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 font-mono text-xs font-bold text-white">
+                            ₹{r.totalRevenue.toLocaleString()}
+                          </td>
+                          <td className="px-5 py-4 text-xs font-bold text-violet-400">
+                            ₹{r.plan === 'enterprise' ? '8,999/mo' : '2,999/mo'}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Modals */}
