@@ -48,8 +48,8 @@ function formatDate(date: Date): string {
 
 async function fetchAndParseBhashLeads() {
   const db = getSupabaseAdmin();
-  const username = process.env.BHASHSMS_USER || "Trinetra";
-  const password = process.env.BHASHSMS_PASS || "SatwikPal@123Shubham";
+  const username = (process.env.BHASHSMS_USER || "Trinetra").trim();
+  const password = (process.env.BHASHSMS_PASS || "SatwikPal@123Shubham").trim();
 
   console.log(`[BhashSyncEngine] Authenticating username: ${username}...`);
   const loginRes = await postForm(
@@ -114,7 +114,7 @@ async function fetchAndParseBhashLeads() {
     throw new Error("Empty response received from BWA report page.");
   }
 
-  const rows = reportRes.body.match(/<tr[\s\S]*?<\/tr>/gi);
+  const rows = reportRes.body.match(new RegExp("<tr[\\s\\S]*?<\\/tr>", "gi"));
   if (!rows || rows.length <= 1) {
     console.log("[BhashSyncEngine] No inbound records found in dashboard.");
     return [];
@@ -123,7 +123,7 @@ async function fetchAndParseBhashLeads() {
   const leads: any[] = [];
   for (let i = 1; i < rows.length; i++) {
     const rowHtml = rows[i];
-    const cols = rowHtml.match(/<td[\s\S]*?<\/td>/gi);
+    const cols = rowHtml.match(new RegExp("<td[\\s\\S]*?<\\/td>", "gi"));
     if (cols && cols.length >= 3) {
       const cleanCols = cols.map((c: string) => c.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim());
       const rawPhone = cleanCols[0] ? cleanCols[0].replace(/\D/g, "") : "";
