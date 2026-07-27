@@ -47,6 +47,7 @@ function formatDate(date: Date): string {
 }
 
 async function fetchAndParseBhashLeads() {
+  const db = getSupabaseAdmin();
   const username = process.env.BHASHSMS_USER || "Trinetra";
   const password = process.env.BHASHSMS_PASS || "SatwikPal@123Shubham";
 
@@ -59,6 +60,24 @@ async function fetchAndParseBhashLeads() {
   );
 
   const cookieHeader = loginRes.cookies ? loginRes.cookies.map((c: string) => c.split(";")[0]).join("; ") : "";
+  
+  // Log login result to database for Vercel troubleshooting
+  try {
+    await db.from("webhook_logs").insert({
+      tenant_id: "00000000-0000-0000-0000-000000000001",
+      idempotency_key: `login-debug-${Date.now()}-${Math.random()}`,
+      provider: "bhash-login-debug",
+      payload: {
+        username,
+        passwordLength: password ? password.length : 0,
+        statusCode: loginRes.statusCode,
+        cookiesCount: loginRes.cookies ? loginRes.cookies.length : 0,
+        cookieHeader: cookieHeader
+      },
+      status: "processed"
+    });
+  } catch (e) {}
+
   if (!cookieHeader) {
     throw new Error("Bhash authentication login session failed.");
   }
@@ -75,6 +94,21 @@ async function fetchAndParseBhashLeads() {
     cookieHeader,
     "https://digifast.site/dltstatus/bwa/Pages/waincomingreplies.php"
   );
+
+  // Log report result to database for Vercel troubleshooting
+  try {
+    await db.from("webhook_logs").insert({
+      tenant_id: "00000000-0000-0000-0000-000000000001",
+      idempotency_key: `report-debug-${Date.now()}-${Math.random()}`,
+      provider: "bhash-report-debug",
+      payload: {
+        statusCode: reportRes.statusCode,
+        bodyLength: reportRes.body?.length || 0,
+        bodySnippet: reportRes.body ? reportRes.body.slice(0, 300) : ""
+      },
+      status: "processed"
+    });
+  } catch (e) {}
 
   if (!reportRes.body) {
     throw new Error("Empty response received from BWA report page.");
