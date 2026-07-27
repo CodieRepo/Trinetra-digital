@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/v1/bhash/sync?secret=trinetra-scraper-secret-2026",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
