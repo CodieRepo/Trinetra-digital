@@ -83,8 +83,8 @@ async function fetchAndParseBhashLeads() {
   }
 
   const today = new Date();
-  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-  const fromdate = formatDate(ninetyDaysAgo);
+  const oneDayAgo = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
+  const fromdate = formatDate(oneDayAgo);
   const todate = formatDate(today);
 
   console.log(`[BhashSyncEngine] Fetching dynamic list from ${fromdate} to ${todate}...`);
