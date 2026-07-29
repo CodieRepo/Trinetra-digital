@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { leadIngestionService } from "@/services/leadIngestionService";
 import { classifyInboundMessage } from "@/services/leadClassifierService";
+import { generateFingerprint } from "@/utils/bhashHelper";
 import https from "https";
 
 export const runtime = "nodejs";
@@ -46,12 +47,19 @@ function formatDate(date: Date): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-async function fetchAndParseBhashLeads() {
-  const db = getSupabaseAdmin();
-  const username = (process.env.BHASHSMS_USER || "Trinetra").trim();
-  const password = (process.env.BHASHSMS_PASS || "SatwikPal@123Shubham").trim();
+async function fetchAndParseBhashLeads(db: any, tenantId: string) {
+  // Resolve Bhash credentials
+  const { data: tenant } = await db
+    .from("tenants")
+    .select("whatsapp_phone_number_id, whatsapp_access_token_encrypted")
+    .eq("id", tenantId)
+    .maybeSingle();
 
-  console.log(`[BhashSyncEngine] Authenticating username: ${username}...`);
+  const username = tenant?.whatsapp_phone_number_id || process.env.BHASHSMS_USER || "Trinetra";
+  const password = tenant?.whatsapp_access_token_encrypted || process.env.BHASHSMS_PASS;
+
+  console.log(`[BhashSyncEngine] Authenticating Bhash portal: user=${username}...`);
+  
   const loginRes = await postForm(
     "https://digifast.site/dltstatus/bwa/Pages/loginHandle.php",
     { username, password },
@@ -61,33 +69,20 @@ async function fetchAndParseBhashLeads() {
 
   const cookieHeader = loginRes.cookies ? loginRes.cookies.map((c: string) => c.split(";")[0]).join("; ") : "";
   
-  // Log login result to database for Vercel troubleshooting
-  try {
-    await db.from("webhook_logs").insert({
-      tenant_id: "00000000-0000-0000-0000-000000000001",
-      idempotency_key: `login-debug-${Date.now()}-${Math.random()}`,
-      provider: "bhash-login-debug",
-      payload: {
-        username,
-        passwordLength: password ? password.length : 0,
-        statusCode: loginRes.statusCode,
-        cookiesCount: loginRes.cookies ? loginRes.cookies.length : 0,
-        cookieHeader: cookieHeader
-      },
-      status: "processed"
-    });
-  } catch (e) {}
-
-  if (!cookieHeader) {
+  if (!cookieHeader || loginRes.statusCode !== 302) {
+    await updateScraperStatusTelemetry(db, tenantId, "degraded", "Auth login failed");
     throw new Error("Bhash authentication login session failed.");
   }
+
+  // Update status telemetry to connected
+  await updateScraperStatusTelemetry(db, tenantId, "connected", "Auth login success");
 
   const today = new Date();
   const oneDayAgo = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
   const fromdate = formatDate(oneDayAgo);
   const todate = formatDate(today);
 
-  console.log(`[BhashSyncEngine] Fetching dynamic list from ${fromdate} to ${todate}...`);
+  console.log(`[BhashSyncEngine] Fetching displays: ${fromdate} to ${todate}...`);
   const reportRes = await postForm(
     "https://digifast.site/dltstatus/bwa/Pages/waincommingDisplay.php",
     { fromdate, todate },
@@ -95,28 +90,13 @@ async function fetchAndParseBhashLeads() {
     "https://digifast.site/dltstatus/bwa/Pages/waincomingreplies.php"
   );
 
-  // Log report result to database for Vercel troubleshooting
-  try {
-    await db.from("webhook_logs").insert({
-      tenant_id: "00000000-0000-0000-0000-000000000001",
-      idempotency_key: `report-debug-${Date.now()}-${Math.random()}`,
-      provider: "bhash-report-debug",
-      payload: {
-        statusCode: reportRes.statusCode,
-        bodyLength: reportRes.body?.length || 0,
-        bodySnippet: reportRes.body ? reportRes.body.slice(0, 300) : ""
-      },
-      status: "processed"
-    });
-  } catch (e) {}
-
   if (!reportRes.body) {
-    throw new Error("Empty response received from BWA report page.");
+    throw new Error("Empty response received from BWA portal replies display page.");
   }
 
   const rows = reportRes.body.match(new RegExp("<tr[\\s\\S]*?<\\/tr>", "gi"));
   if (!rows || rows.length <= 1) {
-    console.log("[BhashSyncEngine] No inbound records found in dashboard.");
+    console.log("[BhashSyncEngine] No inbound records found in dashboard table.");
     return [];
   }
 
@@ -134,19 +114,16 @@ async function fetchAndParseBhashLeads() {
 
       if (phone && phone.length === 10) {
         leads.push({
-          id: `bwa-${phone}-${message.replace(/\W/g, "").slice(0, 15)}-${timeStr.replace(/\W/g, "")}`,
           phone,
           name: (name && name !== "Recipient Name") ? name : `Lead (${phone.slice(-4)})`,
           message,
-          timestamp: new Date().toISOString(),
           timeStr,
         });
       }
     }
   }
 
-  console.log(`[BhashSyncEngine] Parsed ${leads.length} records. Returning oldest first.`);
-  return leads.reverse();
+  return leads.reverse(); // oldest first
 }
 
 export async function GET(request: Request) {
@@ -155,160 +132,230 @@ export async function GET(request: Request) {
   const cron = url.searchParams.get("cron");
 
   const expectedSecret = process.env.SCRAPER_SECRET || "trinetra-scraper-secret-2026";
-  
-  if (secret === expectedSecret || cron === "true") {
-    // Trigger live scraper on GET requests for cron/refresh events!
-    try {
-      console.log("[BhashSync] GET cron trigger detected. Running live HTTPS scrape...");
-      const scrapedLeads = await fetchAndParseBhashLeads();
-      
-      let newLeadsDetected = 0;
-      const processedResults = [];
-
-      for (const item of scrapedLeads) {
-        const phone = String(item.phone || item.mobile || "").replace(/\D/g, "").slice(-10);
-        if (!phone || phone.length < 10) continue;
-
-        // Run JavaScript Naive Bayes Lead Classifier natively
-        const mlResult = classifyInboundMessage(item.message, phone, item.node || "6206", []);
-
-        const result = await leadIngestionService.processInboundMessage({
-          tenant_id: "00000000-0000-0000-0000-000000000001",
-          phone,
-          name: item.name || `WhatsApp Lead (${phone.slice(-4)})`,
-          message: item.message || item.last_message || "Incoming lead from Bhash Portal",
-          flow_node: item.node || "6206",
-          meta_message_id: item.id || `scrape-${phone}-${Date.now()}`,
-          timestamp: item.timestamp || new Date().toISOString(),
-          rawPayload: {
-            ...item,
-            ml_intent: mlResult.intent,
-            ml_probability: mlResult.probability,
-            ml_score: mlResult.score,
-            ml_temperature: mlResult.leadTemperature,
-            ml_summary: mlResult.summary,
-            ml_suggested_action: mlResult.suggestedAction,
-            ml_metadata: mlResult.metadata
-          },
-        });
-
-        if (result.isNewLead) {
-          newLeadsDetected++;
-        }
-        processedResults.push(result);
-      }
-
-      return NextResponse.json({
-        success: true,
-        syncedCount: processedResults.length,
-        newLeadsDetected,
-        message: `Successfully synced ${processedResults.length} records. ${newLeadsDetected} new leads detected!`,
-      });
-    } catch (err: any) {
-      console.error("❌ Bhash Sync Cron Error:", err);
-      return NextResponse.json({ success: false, error: err.message }, { status: 500 });
-    }
+  if (secret !== expectedSecret && cron !== "true") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Standard behavior: return dashboard data
+  const tenantId = "00000000-0000-0000-0000-000000000001";
   const db = getSupabaseAdmin();
-  try {
-    const { data: leads } = await db
-      .from("leads")
-      .select("*")
-      .order("last_message_at", { ascending: false })
-      .limit(50);
 
-    const { data: messages } = await db
-      .from("bhash_conversations")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
+  try {
+    const scrapedLeads = await fetchAndParseBhashLeads(db, tenantId);
+    let duplicatesPrevented = 0;
+    let recoveryImports = 0;
+
+    for (const item of scrapedLeads) {
+      const phone = item.phone;
+      const message = item.message;
+      
+      // Parse the portal row timestamp safely
+      const parsedTime = item.timeStr && item.timeStr !== "Recently" ? new Date(item.timeStr) : new Date();
+      const messageTimestamp = parsedTime.toISOString();
+
+      // Compute normalized row fingerprint
+      const fingerprint = generateFingerprint(phone, message, messageTimestamp);
+
+      // Check if message already exists by fingerprint
+      const { data: existingMsg } = await db
+        .from("messages")
+        .select("id")
+        .eq("fingerprint", fingerprint)
+        .maybeSingle();
+
+      if (existingMsg) {
+        duplicatesPrevented++;
+        continue;
+      }
+
+      // Record recovery import sync statistics
+      recoveryImports++;
+
+      // Run Naive Bayes Lead Classifier on the recovered message
+      const mlResult = classifyInboundMessage(message, phone, "6206", []);
+
+      // Ingest the missing message
+      await leadIngestionService.processInboundMessage({
+        tenant_id: tenantId,
+        phone,
+        name: item.name,
+        message,
+        flow_node: "6206",
+        meta_message_id: fingerprint, // unique log reference ID
+        timestamp: messageTimestamp,
+        rawPayload: {
+          ...item,
+          source: "SCRAPER",
+          provider: "bhash_scraper",
+          ml_intent: mlResult.intent,
+          ml_probability: mlResult.probability,
+          ml_score: mlResult.score,
+          ml_temperature: mlResult.leadTemperature,
+          ml_summary: mlResult.summary,
+          ml_suggested_action: mlResult.suggestedAction,
+          ml_metadata: mlResult.metadata
+        }
+      });
+    }
+
+    // Save telemetry stats to config_json
+    await updateScraperRunTelemetry(db, tenantId, duplicatesPrevented, recoveryImports);
 
     return NextResponse.json({
       success: true,
-      leads: leads || [],
-      messages: messages || [],
-      syncStatus: {
-        lastSyncedAt: new Date().toISOString(),
-        totalLeads: leads?.length || 0,
-      },
+      scrapedCount: scrapedLeads.length,
+      duplicatesPrevented,
+      recoveryImports,
+      message: `Reconciliation complete. Prevented: ${duplicatesPrevented}, Recovered: ${recoveryImports}`
     });
   } catch (err: any) {
+    console.error("❌ Bhash Sync Cron GET Error:", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
+  const db = getSupabaseAdmin();
+  let body: any = {};
   try {
-    let body: any = {};
-    try {
-      body = await request.json();
-    } catch (e) {
-      body = {};
-    }
+    body = await request.json();
+  } catch (e) {
+    body = {};
+  }
 
-    const { secret } = body;
-    let scrapedLeads = body.leads;
+  const { secret, leads } = body;
+  const expectedSecret = process.env.SCRAPER_SECRET || "trinetra-scraper-secret-2026";
+  if (secret && secret !== expectedSecret) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    // Optional secret check if triggered by GitHub Actions scraper (skip if manual sync)
-    const expectedSecret = process.env.SCRAPER_SECRET || "trinetra-scraper-secret-2026";
-    if (secret && secret !== expectedSecret) {
-      return NextResponse.json({ error: "Unauthorized scraper request" }, { status: 401 });
-    }
+  const tenantId = "00000000-0000-0000-0000-000000000001";
 
-    // Trigger local server scraper if no leads array passed in body (e.g. manual sync button click)
+  try {
+    let scrapedLeads = leads;
     if (!scrapedLeads || !Array.isArray(scrapedLeads) || scrapedLeads.length === 0) {
-      console.log("[BhashSync] Empty leads array. Triggering live HTTPS scrape...");
-      scrapedLeads = await fetchAndParseBhashLeads();
+      scrapedLeads = await fetchAndParseBhashLeads(db, tenantId);
     }
 
-    let newLeadsDetected = 0;
-    const processedResults = [];
+    let duplicatesPrevented = 0;
+    let recoveryImports = 0;
 
-    if (Array.isArray(scrapedLeads)) {
-      for (const item of scrapedLeads) {
-        const phone = String(item.phone || item.mobile || "").replace(/\D/g, "").slice(-10);
-        if (!phone || phone.length < 10) continue;
+    for (const item of scrapedLeads) {
+      const phone = item.phone;
+      const message = item.message;
+      
+      const parsedTime = item.timeStr && item.timeStr !== "Recently" ? new Date(item.timeStr) : new Date();
+      const messageTimestamp = parsedTime.toISOString();
+      const fingerprint = generateFingerprint(phone, message, messageTimestamp);
 
-        // Run JavaScript Naive Bayes Lead Classifier natively
-        const mlResult = classifyInboundMessage(item.message, phone, item.node || "6206", []);
+      const { data: existingMsg } = await db
+        .from("messages")
+        .select("id")
+        .eq("fingerprint", fingerprint)
+        .maybeSingle();
 
-        const result = await leadIngestionService.processInboundMessage({
-          tenant_id: "00000000-0000-0000-0000-000000000001",
-          phone,
-          name: item.name || `WhatsApp Lead (${phone.slice(-4)})`,
-          message: item.message || item.last_message || "Incoming lead from Bhash Portal",
-          flow_node: item.node || "6206",
-          meta_message_id: item.id || `scrape-${phone}-${Date.now()}`,
-          timestamp: item.timestamp || new Date().toISOString(),
-          rawPayload: {
-            ...item,
-            ml_intent: mlResult.intent,
-            ml_probability: mlResult.probability,
-            ml_score: mlResult.score,
-            ml_temperature: mlResult.leadTemperature,
-            ml_summary: mlResult.summary,
-            ml_suggested_action: mlResult.suggestedAction,
-            ml_metadata: mlResult.metadata
-          },
-        });
-
-        if (result.isNewLead) {
-          newLeadsDetected++;
-        }
-        processedResults.push(result);
+      if (existingMsg) {
+        duplicatesPrevented++;
+        continue;
       }
+
+      recoveryImports++;
+      const mlResult = classifyInboundMessage(message, phone, "6206", []);
+
+      await leadIngestionService.processInboundMessage({
+        tenant_id: tenantId,
+        phone,
+        name: item.name,
+        message,
+        flow_node: "6206",
+        meta_message_id: fingerprint,
+        timestamp: messageTimestamp,
+        rawPayload: {
+          ...item,
+          source: "SCRAPER",
+          provider: "bhash_scraper",
+          ml_intent: mlResult.intent,
+          ml_probability: mlResult.probability,
+          ml_score: mlResult.score,
+          ml_temperature: mlResult.leadTemperature,
+          ml_summary: mlResult.summary,
+          ml_suggested_action: mlResult.suggestedAction,
+          ml_metadata: mlResult.metadata
+        }
+      });
     }
+
+    await updateScraperRunTelemetry(db, tenantId, duplicatesPrevented, recoveryImports);
 
     return NextResponse.json({
       success: true,
-      syncedCount: processedResults.length,
-      newLeadsDetected,
-      message: `Successfully synced ${processedResults.length} records. ${newLeadsDetected} new leads detected!`,
+      scrapedCount: scrapedLeads.length,
+      duplicatesPrevented,
+      recoveryImports,
+      message: `Reconciliation complete. Prevented: ${duplicatesPrevented}, Recovered: ${recoveryImports}`
     });
   } catch (err: any) {
-    console.error("❌ Bhash Sync Error:", err);
+    console.error("❌ Bhash Sync Cron POST Error:", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
+
+async function updateScraperStatusTelemetry(db: any, tenantId: string, status: string, details: string) {
+  try {
+    const { data: config } = await db
+      .from("provider_configs")
+      .select("config_json")
+      .eq("tenant_id", tenantId)
+      .eq("provider_key", "whatsapp_bhash")
+      .maybeSingle();
+
+    const configJson = config?.config_json || {};
+    const health = configJson.health || {};
+    
+    health.scraper_status = status;
+    health.portal_login_status = details;
+    health.updated_at = new Date().toISOString();
+    configJson.health = health;
+
+    await db
+      .from("provider_configs")
+      .upsert({
+        tenant_id: tenantId,
+        provider_key: "whatsapp_bhash",
+        config_json: configJson,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "tenant_id,provider_key" });
+  } catch (e) {
+    console.error("Scraper status telemetry update error:", e);
+  }
+}
+
+async function updateScraperRunTelemetry(db: any, tenantId: string, duplicates: number, imports: number) {
+  try {
+    const { data: config } = await db
+      .from("provider_configs")
+      .select("config_json")
+      .eq("tenant_id", tenantId)
+      .eq("provider_key", "whatsapp_bhash")
+      .maybeSingle();
+
+    const configJson = config?.config_json || {};
+    const health = configJson.health || {};
+    
+    health.last_scrape_at = new Date().toISOString();
+    health.duplicates_prevented_count = (health.duplicates_prevented_count || 0) + duplicates;
+    health.recovery_imports_count = (health.recovery_imports_count || 0) + imports;
+    health.updated_at = new Date().toISOString();
+    configJson.health = health;
+
+    await db
+      .from("provider_configs")
+      .upsert({
+        tenant_id: tenantId,
+        provider_key: "whatsapp_bhash",
+        config_json: configJson,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "tenant_id,provider_key" });
+  } catch (e) {
+    console.error("Scraper run telemetry update error:", e);
   }
 }

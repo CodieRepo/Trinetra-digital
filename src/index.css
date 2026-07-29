@@ -42,41 +42,41 @@
   --font-mono: "JetBrains Mono", monospace;
   --font-editorial: "Instrument Serif", Georgia, serif;
 
-  --shadow-xs: 0 1px 2px rgba(0, 229, 255, 0.02);
-  --shadow-sm: 0 1px 3px rgba(0, 229, 255, 0.03);
-  --shadow-md: 0 4px 12px rgba(0, 229, 255, 0.05);
-  --shadow-lg: 0 10px 25px rgba(0, 229, 255, 0.08);
-  --shadow-xl: 0 20px 40px rgba(0, 229, 255, 0.12);
+  --shadow-xs: 0 1px 2px rgba(194, 109, 92, 0.02);
+  --shadow-sm: 0 1px 3px rgba(194, 109, 92, 0.03);
+  --shadow-md: 0 4px 12px rgba(194, 109, 92, 0.05);
+  --shadow-lg: 0 10px 25px rgba(194, 109, 92, 0.08);
+  --shadow-xl: 0 20px 40px rgba(194, 109, 92, 0.12);
   --shadow-inner: inset 0 2px 4px rgba(255, 255, 255, 0.02);
-  --shadow-focus: 0 0 0 3px rgba(0, 229, 255, 0.15);
+  --shadow-focus: 0 0 0 3px rgba(194, 109, 92, 0.15);
 }
 
 :root {
   color-scheme: dark;
   
-  --base: #101415;
-  --surface-1: #1d2022;
-  --surface-2: #191c1e;
-  --surface-3: #0b0f10;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-subtle: rgba(255, 255, 255, 0.04);
-  --glass-bg: rgba(29, 32, 34, 0.35);
+  --base: #090808;
+  --surface-1: #111010;
+  --surface-2: #191717;
+  --surface-3: #050404;
+  --border: rgba(194, 109, 92, 0.08);
+  --border-subtle: rgba(194, 109, 92, 0.04);
+  --glass-bg: rgba(17, 16, 16, 0.4);
 
-  --ink-1: #e0e3e5;
-  --ink-2: #bac9cc;
-  --ink-3: #849396;
-  --ink-4: #3b494c;
-  --ink-inverse: #101415;
+  --ink-1: #f2ece9;
+  --ink-2: #a69a96;
+  --ink-3: #7c716e;
+  --ink-4: #4a4240;
+  --ink-inverse: #090808;
 
-  --accent: #00e5ff;
-  --accent-hover: #00daf3;
-  --accent-active: #00c2ff;
-  --accent-light: rgba(0, 229, 255, 0.12);
-  --accent-lighter: rgba(0, 229, 255, 0.06);
+  --accent: #c26d5c;
+  --accent-hover: #d18272;
+  --accent-active: #b35c4b;
+  --accent-light: rgba(194, 109, 92, 0.12);
+  --accent-lighter: rgba(194, 109, 92, 0.06);
 
-  --cta: #00e5ff;
-  --cta-hover: #00daf3;
-  --cta-light: #1d2022;
+  --cta: #c26d5c;
+  --cta-hover: #d18272;
+  --cta-light: #111010;
 
   --grid-opacity: 0.2;
   --glow-opacity-1: 0.06;
@@ -109,29 +109,29 @@
 .light {
   color-scheme: light;
   
-  --base: #f8fafc;
+  --base: #f9f7f5;
   --surface-1: #ffffff;
-  --surface-2: #f1f5f9;
-  --surface-3: #e2e8f0;
-  --border: rgba(15, 23, 42, 0.08);
-  --border-subtle: rgba(15, 23, 42, 0.04);
+  --surface-2: #f0ebe6;
+  --surface-3: #e6ded7;
+  --border: rgba(124, 69, 58, 0.08);
+  --border-subtle: rgba(124, 69, 58, 0.04);
   --glass-bg: rgba(255, 255, 255, 0.65);
 
-  --ink-1: #0f172a;
-  --ink-2: #334155;
-  --ink-3: #64748b;
-  --ink-4: #94a3b8;
+  --ink-1: #241916;
+  --ink-2: #52423e;
+  --ink-3: #806e6a;
+  --ink-4: #ab9a96;
   --ink-inverse: #ffffff;
 
-  --accent: #0f766e;
-  --accent-hover: #0d9488;
-  --accent-active: #115e59;
-  --accent-light: rgba(13, 148, 136, 0.1);
-  --accent-lighter: rgba(13, 148, 136, 0.05);
+  --accent: #ac5646;
+  --accent-hover: #c46d5c;
+  --accent-active: #914132;
+  --accent-light: rgba(172, 86, 70, 0.1);
+  --accent-lighter: rgba(172, 86, 70, 0.05);
 
-  --cta: #0f766e;
-  --cta-hover: #0d9488;
-  --cta-light: #f1f5f9;
+  --cta: #ac5646;
+  --cta-hover: #c46d5c;
+  --cta-light: #f0ebe6;
 
   --grid-opacity: 0.06;
   --glow-opacity-1: 0.02;
@@ -589,7 +589,7 @@ body {
   transition: all 300ms var(--ease-out);
 }
 .glow-hover:hover {
-  box-shadow: 0 0 30px rgba(0, 229, 255, 0.25);
+  box-shadow: 0 0 30px rgba(194, 109, 92, 0.2);
   border-color: var(--color-accent);
 }
 
@@ -599,7 +599,7 @@ body {
   border: 1px solid var(--border);
 }
 .saas-card-glow:hover {
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--color-accent);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--color-accent);
   transform: translateY(-2px);
   background: var(--glass-bg);
 }
@@ -607,7 +607,7 @@ body {
 .ambient-light {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 229, 255, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+  background: radial-gradient(circle, rgba(194, 109, 92, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
   filter: blur(80px);
   z-index: 0;
   pointer-events: none;
@@ -642,7 +642,7 @@ body {
 .cursor-ring {
   width: 32px;
   height: 32px;
-  border: 1px solid rgba(0, 229, 255, 0.3);
+  border: 1px solid rgba(194, 109, 92, 0.3);
   border-radius: 50%;
   position: fixed;
   transform: translate(-50%, -50%);
@@ -655,6 +655,6 @@ body {
   width: 48px;
   height: 48px;
   border-color: var(--color-accent);
-  background: rgba(0, 229, 255, 0.05);
+  background: rgba(194, 109, 92, 0.05);
 }
 

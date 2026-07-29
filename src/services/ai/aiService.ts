@@ -55,7 +55,12 @@ export class GeminiAiProvider implements AiProvider {
 - "score": lead score 0 to 100.
 - "intent": main client intent (e.g. Website, CRM, Pricing, General Inquiry).
 - "leadTemperature": one of "hot", "warm", "cold".
-- "suggestedAction": clear immediate action for sales rep under 10 words.`;
+- "suggestedAction": clear immediate action for sales rep under 10 words.
+- "appointmentIntent": boolean (true if customer wants to book/schedule call/appointment).
+- "quotationIntent": boolean (true if customer requests quote/pricing/estimates).
+- "humanHandoff": boolean (true if customer requests human rep or shows high frustration).
+- "serviceInquiry": boolean (true if customer inquires about services or portfolio).
+- "followUpRequired": boolean (true if user query requires callback/follow-up).`;
       }
 
       const fullPrompt = `${promptTemplate}\n\nConversation History:\n${conversationHistory}\n\nLast Message: ${lastMessage}\n\nResponse MUST be valid JSON ONLY.`;
@@ -88,6 +93,11 @@ export class GeminiAiProvider implements AiProvider {
         intent: parsed.intent || "General Inquiry",
         leadTemperature,
         suggestedAction: parsed.suggestedAction || "Follow up with client",
+        appointmentIntent: !!parsed.appointmentIntent,
+        quotationIntent: !!parsed.quotationIntent,
+        humanHandoff: !!parsed.humanHandoff,
+        serviceInquiry: !!parsed.serviceInquiry,
+        followUpRequired: !!parsed.followUpRequired,
       };
     } catch (err: any) {
       console.error("❌ AI Analysis Error:", err);
@@ -112,12 +122,27 @@ export class GeminiAiProvider implements AiProvider {
     let score = 50;
     let intent = "Inquiry";
     let action = "Call customer within 24h";
+    let appointment = false;
+    let quotation = false;
+    let handoff = false;
+    let service = false;
+    let followup = true;
 
-    if (text.includes("price") || text.includes("cost") || text.includes("urgent") || text.includes("buy")) {
+    if (text.includes("price") || text.includes("cost") || text.includes("urgent") || text.includes("buy") || text.includes("quote")) {
       temp = "hot";
       score = 85;
       intent = "High Intent Purchase";
       action = "Send quotation & call immediately";
+      quotation = true;
+    }
+    if (text.includes("book") || text.includes("schedule") || text.includes("appointment") || text.includes("call")) {
+      appointment = true;
+    }
+    if (text.includes("human") || text.includes("speak") || text.includes("agent") || text.includes("talk")) {
+      handoff = true;
+    }
+    if (text.includes("service") || text.includes("web") || text.includes("seo") || text.includes("app")) {
+      service = true;
     }
 
     return {
@@ -126,6 +151,11 @@ export class GeminiAiProvider implements AiProvider {
       intent,
       leadTemperature: temp,
       suggestedAction: action,
+      appointmentIntent: appointment,
+      quotationIntent: quotation,
+      humanHandoff: handoff,
+      serviceInquiry: service,
+      followUpRequired: followup,
     };
   }
 }

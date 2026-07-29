@@ -10,13 +10,14 @@ export class LeadIngestionService {
     const db = getSupabaseAdmin();
     const cleanPhone = payload.phone.replace(/\D/g, "");
     const formattedPhone = cleanPhone.length > 10 ? cleanPhone.slice(-10) : cleanPhone;
+    const tenantId = payload.tenant_id || "00000000-0000-0000-0000-000000000001";
 
-    // 0. Check if this exact message has already been ingested
+    // 0. Check if this exact message has already been ingested in messages or bhash_conversations
     if (payload.meta_message_id) {
       const { data: existingMsg } = await db
-        .from("bhash_conversations")
+        .from("messages")
         .select("id, lead_id")
-        .eq("meta_message_id", payload.meta_message_id)
+        .eq("fingerprint", payload.meta_message_id)
         .maybeSingle();
 
       if (existingMsg) {
@@ -27,6 +28,24 @@ export class LeadIngestionService {
           .maybeSingle();
         if (existingLead) {
           return { lead: existingLead as Lead, isNewLead: false };
+        }
+      }
+
+      // Check fallback legacy table
+      const { data: legacyMsg } = await db
+        .from("bhash_conversations")
+        .select("id, lead_id")
+        .eq("meta_message_id", payload.meta_message_id)
+        .maybeSingle();
+
+      if (legacyMsg) {
+        const { data: legacyLead } = await db
+          .from("leads")
+          .select("*")
+          .eq("id", legacyMsg.lead_id)
+          .maybeSingle();
+        if (legacyLead) {
+          return { lead: legacyLead as Lead, isNewLead: false };
         }
       }
     }
@@ -45,6 +64,7 @@ export class LeadIngestionService {
       isNewLead = true;
 
       const coreLeadPayload = {
+        tenant_id: tenantId,
         phone: formattedPhone,
         name: payload.name || `WhatsApp Lead (${formattedPhone.slice(-4)})`,
         last_message: payload.message || "Incoming Message",
@@ -65,9 +85,10 @@ export class LeadIngestionService {
 
       lead = newLead as Lead;
 
-      // Log Lead Created Timeline event if table exists
+      // Log Lead Created Timeline event
       try {
         await db.from("timeline_events").insert({
+          tenant_id: tenantId,
           lead_id: lead.id,
           event_type: "lead_created",
           title: "Lead Created",
@@ -131,17 +152,25 @@ export class LeadIngestionService {
 
     try {
       await db.from("messages").insert({
+        tenant_id: tenantId,
         lead_id: lead.id,
         direction: "inbound",
         body: messageBody,
         provider_message_id: payload.meta_message_id || null,
+        fingerprint: payload.meta_message_id || null,
         created_at: timestampStr,
+        source: payload.rawPayload?.source || "WEBHOOK",
+        provider: payload.rawPayload?.provider || "bhash_api",
+        status: "delivered"
       });
-    } catch (e) {}
+    } catch (e) {
+      console.error("Failed inserting messages record:", e);
+    }
 
     // 3. Log Message Received Timeline Event
     try {
       await db.from("timeline_events").insert({
+        tenant_id: tenantId,
         lead_id: lead.id,
         event_type: "message_received",
         title: "Incoming Message",
@@ -150,6 +179,7 @@ export class LeadIngestionService {
       });
     } catch (e) {}
 
+    // Broadcast WebSocket & Redux Ingestion events to dashboard
     eventBus.publish("MESSAGE_RECEIVED", { lead, message: messageBody });
 
     // 4. ASYNCHRONOUS NON-BLOCKING AI ANALYSIS
@@ -165,6 +195,11 @@ export class LeadIngestionService {
         intent: payload.rawPayload.ml_intent,
         leadTemperature: payload.rawPayload.ml_temperature || "warm",
         suggestedAction: payload.rawPayload.ml_suggested_action,
+        appointmentIntent: !!payload.rawPayload.ml_metadata?.appointmentIntent,
+        quotationIntent: !!payload.rawPayload.ml_metadata?.quotationIntent,
+        humanHandoff: !!payload.rawPayload.ml_metadata?.humanHandoff,
+        serviceInquiry: !!payload.rawPayload.ml_metadata?.serviceInquiry,
+        followUpRequired: !!payload.rawPayload.ml_metadata?.followUpRequired,
       };
 
       (async () => {
@@ -177,6 +212,13 @@ export class LeadIngestionService {
               ai_intent: mlResult.intent,
               lead_temperature: mlResult.leadTemperature,
               ai_suggested_action: mlResult.suggestedAction,
+              ai_intelligence: {
+                appointmentIntent: mlResult.appointmentIntent,
+                quotationIntent: mlResult.quotationIntent,
+                humanHandoff: mlResult.humanHandoff,
+                serviceInquiry: mlResult.serviceInquiry,
+                followUpRequired: mlResult.followUpRequired
+              },
               updated_at: new Date().toISOString(),
             })
             .eq("id", targetLeadId);
@@ -188,7 +230,7 @@ export class LeadIngestionService {
     } else {
       setTimeout(async () => {
         try {
-          const aiResult = await aiService.analyzeLead("default", "", incomingText);
+          const aiResult = await aiService.analyzeLead(tenantId, "", incomingText);
 
           try {
             await db
@@ -199,6 +241,13 @@ export class LeadIngestionService {
                 ai_intent: aiResult.intent,
                 lead_temperature: aiResult.leadTemperature,
                 ai_suggested_action: aiResult.suggestedAction,
+                ai_intelligence: {
+                  appointmentIntent: aiResult.appointmentIntent,
+                  quotationIntent: aiResult.quotationIntent,
+                  humanHandoff: aiResult.humanHandoff,
+                  serviceInquiry: aiResult.serviceInquiry,
+                  followUpRequired: aiResult.followUpRequired
+                },
                 updated_at: new Date().toISOString(),
               })
               .eq("id", targetLeadId);

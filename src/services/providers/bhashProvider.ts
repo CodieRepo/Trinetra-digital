@@ -1,3 +1,4 @@
+import { getSupabaseAdmin } from "../../lib/supabase/admin";
 import { MessagingProvider, OutboundMessageRequest, OutboundMessageResponse, IngestedPayload, ProviderCapabilities } from "./providerInterfaces";
 
 export class BhashSMSProvider implements MessagingProvider {
@@ -6,73 +7,151 @@ export class BhashSMSProvider implements MessagingProvider {
   capabilities: ProviderCapabilities = {
     hasTextMessaging: true,
     hasTemplates: true,
-    hasMedia: false,
+    hasMedia: true,
     hasDeliveryReceipts: false,
     hasReadReceipts: false,
     hasInteractiveButtons: false,
   };
 
   async sendMessage(req: OutboundMessageRequest): Promise<OutboundMessageResponse> {
-    const user = process.env.BHASHSMS_USER;
-    const pass = process.env.BHASHSMS_PASS;
-    const sender = process.env.BHASHSMS_SENDER || "BUZWAP";
-    const priority = process.env.BHASHSMS_PRIORITY || "wa";
+    const db = getSupabaseAdmin();
+    
+    // 1. Resolve credentials from tenants table, fallback to env vars
+    const { data: tenant } = await db
+      .from("tenants")
+      .select("whatsapp_phone_number_id, whatsapp_access_token_encrypted, whatsapp_business_account_id")
+      .eq("id", req.tenant_id)
+      .maybeSingle();
 
-    if (!user || !pass) {
-      console.warn("⚠️ BhashSMS credentials missing. Simulating output.");
-      return { success: true, messageId: `sim-bhash-${Date.now()}` };
+    const user = tenant?.whatsapp_phone_number_id || process.env.BHASHSMS_USER || "Trinetra";
+    const pass = tenant?.whatsapp_access_token_encrypted || process.env.BHASHSMS_PASS;
+    const sender = tenant?.whatsapp_business_account_id || process.env.BHASHSMS_SENDER || "BUZWAP";
+
+    if (!pass) {
+      console.warn("⚠️ BhashSMS credentials missing (API Key/Password).");
+      return { success: false, error: "BhashSMS credentials are not configured." };
+    }
+
+    const priority = "wa";
+    const cleanPhone = req.to.replace(/\D/g, "");
+    let phoneParam = cleanPhone;
+    if (phoneParam.startsWith("91") && phoneParam.length === 12) {
+      phoneParam = phoneParam.substring(2);
+    }
+
+    // 2. Check 24-hour session window
+    let inside24Hours = false;
+    try {
+      const { data: lead } = await db
+        .from("leads")
+        .select("id")
+        .eq("phone", phoneParam)
+        .maybeSingle();
+
+      if (lead) {
+        const { data: lastInbound } = await db
+          .from("messages")
+          .select("created_at")
+          .eq("lead_id", lead.id)
+          .eq("direction", "inbound")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (lastInbound) {
+          const lastInboundTime = new Date(lastInbound.created_at).getTime();
+          inside24Hours = (Date.now() - lastInboundTime) <= 24 * 60 * 60 * 1000;
+        }
+      }
+    } catch (dbErr) {
+      console.error("Error checking session window in database:", dbErr);
+    }
+
+    // 3. Determine endpoint & parameterization based on session window
+    let url = "";
+    const isTemplateSend = !!req.template || !inside24Hours;
+
+    if (isTemplateSend) {
+      // Must use Utility Template
+      const templateName = req.template || "fallback_msg";
+      const paramsCSV = req.params && req.params.length > 0 ? req.params.join(",") : "";
+      
+      const baseUrl = "https://bhashsms.com/api/sendmsgutil.php";
+      const queryParams = new URLSearchParams({
+        user,
+        pass,
+        sender,
+        phone: phoneParam,
+        text: templateName,
+        priority,
+        stype: "normal",
+      });
+
+      if (paramsCSV) {
+        queryParams.append("Params", paramsCSV);
+      }
+
+      // Add media attachment if provided
+      if (req.mediaUrl) {
+        const type = (req.mediaType || "normal").toLowerCase();
+        let htype = "normal";
+        if (type.includes("image")) htype = "image";
+        else if (type.includes("video")) htype = "video";
+        else if (type.includes("document")) htype = "document";
+
+        if (htype !== "normal") {
+          queryParams.append("htype", htype);
+          queryParams.append("url", req.mediaUrl);
+        }
+      }
+
+      url = `${baseUrl}?${queryParams.toString()}`;
+    } else {
+      // Inside 24h window -> Send Session Free-text reply
+      const replyUrl = "https://bhashsms.com/api/sendmsgutilreply.php";
+      const queryParams = new URLSearchParams({
+        user,
+        pass,
+        sender,
+        phone: phoneParam,
+        text: req.body,
+        priority,
+        stype: "normal",
+        htype: "normal",
+      });
+
+      url = `${replyUrl}?${queryParams.toString()}`;
     }
 
     try {
-      const cleanPhone = req.to.replace(/\D/g, "").slice(-10);
-      const url = `https://bhashsms.com/api/sendmsg.php?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}&sender=${encodeURIComponent(sender)}&phone=${cleanPhone}&text=${encodeURIComponent(req.body)}&priority=${encodeURIComponent(priority)}&stype=normal&htype=normal`;
+      console.log(`📡 Sending BhashSMS Request: ${url.split("?")[0]}?user=${user}&phone=${phoneParam}`);
+      const response = await fetch(url, { method: "GET" });
+      const responseText = (await response.text()).trim();
+      console.log(`[BhashSMS Response]: ${responseText}`);
 
-      const response = await fetch(url);
-      const responseText = await response.text();
+      // BhashSMS Response Format: s.896541 (success) or e.<reason> (error)
+      const success = responseText.startsWith("s.");
+      
+      // Update health telemetry in provider_configs
+      await updateTelemetryStats(db, req.tenant_id, success, responseText);
 
-      console.log(`[BhashSMS Gateway Response]:`, responseText);
-
-      return {
-        success: true,
-        messageId: `bhash-${Date.now()}`,
-      };
+      if (success) {
+        const messageId = responseText.substring(2);
+        return { success: true, messageId };
+      } else {
+        return { success: false, error: responseText };
+      }
     } catch (err: any) {
-      console.error("❌ BhashSMS send error:", err);
-      return { success: false, error: err.message };
+      console.error("❌ BhashSMS Send Request Exception:", err);
+      await updateTelemetryStats(db, req.tenant_id, false, err.message || "Network Timeout");
+      return { success: false, error: err.message || "Failed calling BhashSMS API" };
     }
   }
 
-  parseWebhookPayload(jsonBody: any): IngestedPayload | null {
-    if (!jsonBody) return null;
+  parseWebhookPayload(payload: any): IngestedPayload | null {
+    if (!payload || !payload.mobile) return null;
 
-    // Extract nested WABA Meta message structure if present
-    const metaValue = jsonBody.entry?.[0]?.changes?.[0]?.value;
-    const metaMessage = metaValue?.messages?.[0];
-    const metaContact = metaValue?.contacts?.[0];
-
-    // Extract phone
-    const rawPhone = 
-      jsonBody.phone ||
-      jsonBody.mobile ||
-      jsonBody.mobile_no ||
-      jsonBody.mob ||
-      jsonBody.contact ||
-      jsonBody.contact_no ||
-      jsonBody.from ||
-      jsonBody.wa_id ||
-      jsonBody.wa_number ||
-      jsonBody.phonenumber ||
-      jsonBody.sender ||
-      jsonBody.num ||
-      jsonBody.number ||
-      jsonBody.phone_number ||
-      jsonBody.user_phone ||
-      metaMessage?.from ||
-      metaContact?.wa_id;
-
-    if (!rawPhone) return null;
-
-    const phoneStr = String(rawPhone).trim();
+    const phoneStr = String(payload.mobile).trim();
     let cleanedPhone = phoneStr.replace(/\D/g, "");
     
     // Normalize 91 prefix for Indian mobile numbers
@@ -82,122 +161,55 @@ export class BhashSMSProvider implements MessagingProvider {
 
     if (cleanedPhone.length < 10) return null;
 
-    // Extract Interactive replies / Button clicked
-    let buttonClicked: string | undefined = undefined;
-    let rawNode = 
-      jsonBody.flow_node || 
-      jsonBody.node_id || 
-      jsonBody.nodeId || 
-      jsonBody.node || 
-      jsonBody.current_node;
-
-    if (metaMessage) {
-      if (metaMessage.type === "interactive") {
-        const interactive = metaMessage.interactive;
-        if (interactive?.type === "button_reply") {
-          buttonClicked = interactive.button_reply?.title || undefined;
-          if (!rawNode) rawNode = interactive.button_reply?.id;
-        } else if (interactive?.type === "list_reply") {
-          buttonClicked = interactive.list_reply?.title || undefined;
-          if (!rawNode) rawNode = interactive.list_reply?.id;
-        } else if (interactive?.type === "nfm_reply") {
-          buttonClicked = "Flow Submitted";
-          if (!rawNode) rawNode = interactive.nfm_reply?.response_json?.node_id || "6232";
-        }
-      } else if (metaMessage.type === "button") {
-        buttonClicked = metaMessage.button?.text || undefined;
-        if (!rawNode) rawNode = metaMessage.button?.payload;
-      }
-    }
-
-    if (!buttonClicked) {
-      buttonClicked = 
-        jsonBody.button_clicked || 
-        jsonBody.button_title || 
-        jsonBody.button || 
-        jsonBody.option || 
-        jsonBody.title ||
-        undefined;
-    }
-
-    const flow_node = String(rawNode || "6206").trim();
-
-    // Extract Message / Media / Text
-    let text = "";
-
-    if (metaMessage) {
-      if (metaMessage.type === "text") {
-        text = metaMessage.text?.body || "";
-      } else if (metaMessage.type === "image") {
-        text = `[Image Attachment${metaMessage.image?.caption ? `: ${metaMessage.image.caption}` : ""}]`;
-      } else if (metaMessage.type === "document") {
-        text = `[Document Attachment${metaMessage.document?.filename ? `: ${metaMessage.document.filename}` : ""}]`;
-      } else if (metaMessage.type === "video") {
-        text = `[Video Attachment${metaMessage.video?.caption ? `: ${metaMessage.video.caption}` : ""}]`;
-      } else if (metaMessage.type === "audio" || metaMessage.type === "voice") {
-        text = `[Voice / Audio Message]`;
-      } else if (metaMessage.type === "location") {
-        text = `[Location Pin: ${metaMessage.location?.latitude}, ${metaMessage.location?.longitude}]`;
-      } else if (metaMessage.type === "contacts") {
-        text = `[Contact Shared: ${metaMessage.contacts?.[0]?.name?.formatted_name || "Contact Card"}]`;
-      } else if (metaMessage.type === "sticker") {
-        text = `[Sticker]`;
-      } else if (buttonClicked) {
-        text = buttonClicked;
-      }
-    }
-
-    if (!text) {
-      const rawMessage = 
-        jsonBody.text ||
-        jsonBody.message ||
-        jsonBody.body ||
-        jsonBody.msg ||
-        jsonBody.sms ||
-        jsonBody.content ||
-        jsonBody.query ||
-        jsonBody.user_text ||
-        (buttonClicked ? buttonClicked : `Interacted with Node ${flow_node}`);
-      text = String(rawMessage);
-    }
-
-    // Extract Name
-    const name = String(
-      jsonBody.name ||
-      jsonBody.sender_name ||
-      jsonBody.profile_name ||
-      jsonBody.push_name ||
-      jsonBody.pushname ||
-      jsonBody.user_name ||
-      metaContact?.profile?.name ||
-      `WhatsApp Lead (${cleanedPhone.slice(-4)})`
-    );
-
-    // Extract Message ID for idempotency & deduplication
-    const meta_message_id = String(
-      jsonBody.meta_message_id ||
-      jsonBody.msg_id ||
-      jsonBody.id ||
-      jsonBody.message_id ||
-      metaMessage?.id ||
-      `bhash-${cleanedPhone}-${flow_node}-${Date.now()}`
-    );
-
-    // Timestamp
-    const rawTimestamp = jsonBody.timestamp || jsonBody.time || metaMessage?.timestamp || new Date().toISOString();
-    const timestamp = typeof rawTimestamp === "number" ? new Date(rawTimestamp * 1000).toISOString() : String(rawTimestamp);
+    const meta_message_id = payload.meta_message_id || `bhash-msg-${cleanedPhone}-${Date.now()}`;
+    const timestamp = payload.timestamp || new Date().toISOString();
 
     return {
-      tenant_id: jsonBody.tenant_id || "00000000-0000-0000-0000-000000000001",
+      tenant_id: payload.tenant_id || "00000000-0000-0000-0000-000000000001",
       phone: cleanedPhone,
-      name,
-      message: text,
-      flow_node,
-      button_clicked: buttonClicked,
+      name: payload.name || `WhatsApp Lead (${cleanedPhone.slice(-4)})`,
+      message: payload.message || "",
       meta_message_id,
       timestamp,
-      rawPayload: jsonBody,
+      rawPayload: payload,
     };
+  }
+}
+
+async function updateTelemetryStats(db: any, tenantId: string, success: boolean, rawResponse: string) {
+  try {
+    const { data: config } = await db
+      .from("provider_configs")
+      .select("config_json")
+      .eq("tenant_id", tenantId)
+      .eq("provider_key", "whatsapp_bhash")
+      .maybeSingle();
+
+    const configJson = config?.config_json || {};
+    const health = configJson.health || {};
+    
+    health.api_health = success ? "connected" : "degraded";
+    if (!success) {
+      health.api_failures_count = (health.api_failures_count || 0) + 1;
+      health.last_api_failure_at = new Date().toISOString();
+    }
+    health.last_api_response = {
+      timestamp: new Date().toISOString(),
+      raw: rawResponse
+    };
+    health.updated_at = new Date().toISOString();
+    configJson.health = health;
+
+    await db
+      .from("provider_configs")
+      .upsert({
+        tenant_id: tenantId,
+        provider_key: "whatsapp_bhash",
+        config_json: configJson,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "tenant_id,provider_key" });
+  } catch (err) {
+    console.error("Failed to update telemetry configs:", err);
   }
 }
 

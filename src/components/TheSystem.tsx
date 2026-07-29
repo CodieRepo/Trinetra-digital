@@ -1,423 +1,223 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Check, ArrowUpRight } from "lucide-react";
+import { useRef } from "react";
+import { Check, ArrowUpRight, Globe, Cpu, BarChart } from "lucide-react";
+import { gsap, useGSAP } from "../lib/gsap";
 import LazyVideo from "./LazyVideo";
 
-const TABS = [
-  { id: "digital", label: "Digital Presence" },
-  { id: "crm", label: "Automation & CRM" },
-  { id: "growth", label: "SEO & Growth" },
-];
-
 export default function TheSystem() {
-  const [activeTab, setActiveTab] = useState("digital");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (!containerRef.current || !railRef.current) return;
+
+    // Responsive: only run horizontal pin on desktop screens (>=1024px)
+    const mm = gsap.matchMedia();
+
+    mm.add("(min-width: 1024px)", () => {
+      const scrollWidth = railRef.current!.scrollWidth;
+      const windowWidth = window.innerWidth;
+      
+      gsap.to(railRef.current, {
+        x: -(scrollWidth - windowWidth),
+        ease: "none",
+        scrollTrigger: {
+          trigger: containerRef.current,
+          pin: true,
+          scrub: 1,
+          start: "top top",
+          end: () => `+=${scrollWidth - windowWidth}`,
+          invalidateOnRefresh: true,
+        },
+      });
+    });
+
+    return () => mm.revert();
+  }, { scope: containerRef });
+
+  const systemSteps = [
+    {
+      num: "01",
+      tag: "DIGITAL PRESENCE",
+      icon: <Globe size={18} />,
+      title: "Establishing digital legitimacy",
+      desc: "We construct high-end, responsive websites from scratch that establish trust instantly and convert random traffic into highly qualified lead calls.",
+      bullets: [
+        "SEO-ready code architecture for organic visibility",
+        "Fine animations and clean glassmorphic components",
+        "Integrated Meta pixel and analytics conversion tracking",
+        "Lightning-fast load times optimized for Vercel/CDN"
+      ],
+      video: "/videos/build-growth-automate.mp4",
+      link: "services-website"
+    },
+    {
+      num: "02",
+      tag: "AUTOMATION & CRM",
+      icon: <Cpu size={18} />,
+      title: "Consolidating operational pipelines",
+      desc: "Connect your incoming leads instantly. We deploy WhatsApp auto-responders and build central CRM databases so your sales team focus on closures.",
+      bullets: [
+        "Inbound WhatsApp lead auto-responders (2-sec delay)",
+        "Drag-and-drop Kanban deal pipeline with probability metrics",
+        "Automated follow-up campaigns and cron notification agents",
+        "Developer Settings dashboard for internal analytics tracking"
+      ],
+      video: "/videos/why-tinetra.mp4",
+      link: "services-crm"
+    },
+    {
+      num: "03",
+      tag: "SEO & ACQUISITION",
+      icon: <BarChart size={18} />,
+      title: "Systematizing inbound traffic",
+      desc: "Generate continuous, qualified traffic for your services. We manage local SEO rankings, review collection loops, and target paid advertising.",
+      bullets: [
+        "Google Business Profile optimization and review campaigns",
+        "Technical audit frameworks and keyword architecture setup",
+        "Meta Ads and Google Search console conversions",
+        "Comprehensive monthly ROI and attribution reporting"
+      ],
+      video: "/videos/pricing.mp4",
+      link: "services-marketing"
+    }
+  ];
 
   return (
-    <section id="system" aria-label="Trinetra AI Automation System — WhatsApp Automation, AI CRM, Smart Follow-Up" className="relative overflow-hidden bg-transparent py-24 md:py-32 border-b border-white/5">
-      <div className="absolute inset-0 grid-pattern opacity-[0.02] pointer-events-none" />
+    <section
+      ref={containerRef}
+      className="relative bg-[#090808] border-b border-border overflow-hidden select-none"
+    >
+      {/* Background ambient gold ray radial glow */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[radial-gradient(circle_at_50%_50%,rgba(194,109,92,0.04)_0%,transparent_60%)] blur-3xl pointer-events-none" />
 
-      <div className="max-w-[1200px] mx-auto px-4 md:px-10 relative z-10">
-        
-        {/* Header */}
-        <div className="text-center mb-16">
-          <span className="mixed-headline-eyebrow">
-            The Trinetra System
+      {/* ── MOBILE / TABLET VIEW (Standard Stacked layouts) ── */}
+      <div className="block lg:hidden py-24 px-6 space-y-16">
+        <div className="text-center max-w-xl mx-auto space-y-4">
+          <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#c26d5c]/10 border border-[#c26d5c]/25 rounded-full text-accent font-mono text-[9px] uppercase tracking-wider">
+            The Trinetra Core System
           </span>
-          <h2 className="display-lg text-ink-1 tracking-tight max-w-[720px] mx-auto mb-4 font-display font-bold">
-            One partner. Every capability. <br />Zero corners cut.
+          <h2 className="font-display text-[clamp(28px,4.5vw,44px)] font-light text-ink-1 leading-tight">
+            One integration. <br />Every growth capability.
           </h2>
-          <p className="body-lg text-ink-2 max-w-[540px] mx-auto font-medium">
-            From building your online presence to automating operations and driving growth — we handle every layer of your digital business.
-          </p>
         </div>
 
-        {/* ── MOBILE / TABLET VIEW (Clickable Tabs) ── */}
-        <div className="block lg:hidden">
-          {/* Tab Switcher Wrapper */}
-          <div className="relative mb-12 w-full max-w-lg mx-auto">
-            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#101415] to-transparent z-20 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#101415] to-transparent z-20 pointer-events-none" />
-            
-            <div className="flex overflow-x-auto pb-2 px-6 justify-start sm:justify-center custom-scrollbar">
-              <div className="inline-flex gap-1 bg-white/5 p-1.5 rounded-xl border border-white/5 z-10 shrink-0 shadow-sm backdrop-blur-md">
-                {TABS.map((tab) => {
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`px-5 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all duration-200 cursor-pointer ${
-                        isActive
-                          ? "bg-accent text-[#101415] shadow-xs font-bold"
-                          : "text-slate-400 hover:text-white"
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  );
-                })}
+        <div className="space-y-12 max-w-lg mx-auto">
+          {systemSteps.map((step, idx) => (
+            <div key={idx} className="bg-[#111010] border border-border rounded-2xl p-6 space-y-6">
+              <div className="flex justify-between items-center">
+                <span className="font-mono text-accent text-xs font-semibold">{step.num} / {step.tag}</span>
+                <span className="h-8 w-8 rounded-lg bg-surface-2 border border-border flex items-center justify-center text-accent">
+                  {step.icon}
+                </span>
               </div>
+              <h3 className="font-editorial text-2xl italic text-ink-1 leading-none">{step.title}</h3>
+              <p className="text-xs text-ink-2 leading-relaxed">{step.desc}</p>
+              
+              <div className="rounded-xl border border-border overflow-hidden relative aspect-video bg-[#090808]">
+                <LazyVideo src={step.video} className="absolute inset-0 w-full h-full object-cover" />
+              </div>
+
+              <ul className="space-y-2 pt-2 border-t border-border">
+                {step.bullets.map((bullet, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-[11px] text-ink-2 font-semibold">
+                    <span className="h-4.5 w-4.5 rounded-full bg-[#c26d5c]/15 text-accent border border-[#c26d5c]/25 flex items-center justify-center shrink-0">
+                      <Check size={10} />
+                    </span>
+                    <span>{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── DESKTOP STICKY SCROLL RAIL VIEW (GSAP Horizontal) ── */}
+      <div className="hidden lg:block">
+        <div
+          ref={railRef}
+          className="flex h-screen items-center"
+          style={{ width: `${systemSteps.length * 100}vw` }}
+        >
+          {/* Header intro slide */}
+          <div className="w-[85vw] h-full flex flex-col justify-center px-24 shrink-0 text-left space-y-6">
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#c26d5c]/10 border border-[#c26d5c]/20 rounded-full text-accent font-mono text-[10px] uppercase tracking-wider w-fit">
+              The Trinetra Core System
+            </span>
+            <h2 className="font-display text-[clamp(44px,5.5vw,72px)] font-light text-ink-1 leading-[1.05] tracking-tight">
+              One engineering partner. <br />
+              <span className="font-editorial italic text-accent font-light">Every growth engine</span> <br />
+              consolidated in one OS.
+            </h2>
+            <p className="text-base text-ink-2 max-w-xl leading-relaxed">
+              We design, build, and optimize every layer of your customer acquisition and operations pipeline. Scroll to reveal the pillars.
+            </p>
+            <div className="text-xs font-mono text-accent/50 flex items-center gap-1.5 pt-4">
+              <span>Scroll to navigate</span> &rarr;
             </div>
           </div>
 
-          {/* Tab Content Display */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.3 }}
-              className="grid gap-8 md:grid-cols-2 md:items-center glass-panel rounded-2xl p-6 md:p-10 shadow-2xl text-left"
+          {/* Core step slides */}
+          {systemSteps.map((step, idx) => (
+            <div
+              key={idx}
+              className="system-slide w-screen h-full flex items-center justify-center shrink-0 px-24"
             >
-              {/* Left Column: Description & Bullet Points */}
-              <div className="flex flex-col space-y-6">
-                {activeTab === "digital" && (
-                  <>
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-mono font-bold tracking-widest text-accent uppercase bg-accent-light px-2.5 py-1 rounded border border-accent/15 inline-block">WEBSITE & DIGITAL PRESENCE</span>
-                      <h3 className="text-xl font-bold tracking-tight text-ink-1 leading-tight font-display">Professional websites that build credibility and capture inquiries.</h3>
-                    </div>
-                    <p className="text-xs text-ink-2 leading-relaxed font-semibold">
-                      We design and develop mobile-responsive, SEO-ready business websites that establish trust, communicate your services clearly and convert visitors into inquiries 24/7.
-                    </p>
-                    <ul className="space-y-3">
-                      {[
-                        "Mobile-responsive design across all devices and screen sizes.",
-                        "Landing pages, multi-page business sites, e-commerce and custom web apps.",
-                        "Integrated contact forms and WhatsApp inquiry buttons.",
-                        "SEO-structured to improve local search visibility from day one."
-                      ].map((bullet, i) => (
-                        <li key={i} className="flex items-start gap-3 text-[11px] font-semibold text-ink-2">
-                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent border border-accent/20">
-                            <Check size={11} />
-                          </span>
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
+              <div className="w-full max-w-[1200px] h-[75vh] grid grid-cols-12 gap-16 items-center">
+                
+                {/* Left Column: Widescreen Typography */}
+                <div className="col-span-6 text-left space-y-6">
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[56px] font-thin text-[#c26d5c]/15 leading-none">{step.num}</span>
+                    <div className="h-px bg-border flex-grow" />
+                    <span className="font-mono text-accent text-[10px] font-bold tracking-[0.2em] uppercase">{step.tag}</span>
+                  </div>
 
-                {activeTab === "crm" && (
-                  <>
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-mono font-bold tracking-widest text-accent uppercase bg-accent-light px-2.5 py-1 rounded border border-accent/15 inline-block">AUTOMATION & CRM</span>
-                      <h3 className="text-xl font-bold tracking-tight text-ink-1 leading-tight font-display">Automate lead capture, follow-ups and customer management.</h3>
-                    </div>
-                    <p className="text-xs text-ink-2 leading-relaxed font-semibold">
-                      Stop managing leads on spreadsheets and chat logs. We set up CRM systems, WhatsApp automation and follow-up workflows so your team focuses on serving customers, not chasing them.
-                    </p>
-                    <ul className="space-y-3">
-                      {[
-                        "WhatsApp, Instagram and Facebook automation flows.",
-                        "Lead pipeline management with status tracking.",
-                        "Automated follow-up reminders and appointment booking.",
-                        "Custom CRM dashboards with team access and reporting."
-                      ].map((bullet, i) => (
-                        <li key={i} className="flex items-start gap-3 text-[11px] font-semibold text-ink-2">
-                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent border border-accent/20">
-                            <Check size={11} />
-                          </span>
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
+                  <h3 className="font-editorial text-[clamp(32px,3.8vw,52px)] italic text-ink-1 leading-none tracking-normal">
+                    {step.title}
+                  </h3>
 
-                {activeTab === "growth" && (
-                  <>
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-mono font-bold tracking-widest text-accent uppercase bg-accent-light px-2.5 py-1 rounded border border-accent/15 inline-block">SEO & DIGITAL MARKETING</span>
-                      <h3 className="text-xl font-bold tracking-tight text-ink-1 leading-tight font-display">Improve search visibility and build a consistent online presence.</h3>
-                    </div>
-                    <p className="text-xs text-ink-2 leading-relaxed font-semibold">
-                      We work on local SEO, Google Business Profile optimization, social media management and paid advertising to help your business be found by the right people at the right time.
-                    </p>
-                    <ul className="space-y-3">
-                      {[
-                        "Local SEO and Google Business Profile optimization.",
-                        "On-page SEO, technical SEO and content strategy.",
-                        "Google Ads and Meta Ads management for qualified inquiries.",
-                        "Monthly social media content creation and posting."
-                      ].map((bullet, i) => (
-                        <li key={i} className="flex items-start gap-3 text-[11px] font-semibold text-ink-2">
-                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent border border-accent/20">
-                            <Check size={11} />
-                          </span>
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-              </div>
+                  <p className="text-sm text-ink-2 leading-relaxed">
+                    {step.desc}
+                  </p>
 
-              {/* Right Column: High Fidelity Operational Visual Flow Diagram */}
-              <div className="flex items-center justify-center mt-6 md:mt-0">
-                <div className="w-full max-w-[400px] rounded-xl border border-white/5 bg-[#101415] shadow-2xl min-h-[260px] flex flex-col justify-between text-left overflow-hidden">
-                  {activeTab === "digital" && (
-                    <div className="space-y-3">
-                      <div className="bg-[#0b0f10] px-4 py-2.5 flex items-center justify-between border-b border-white/5">
-                        <div className="flex gap-1.5 items-center">
-                          <span className="w-2 h-2 rounded-full bg-[#ff5f56]" />
-                          <span className="w-2 h-2 rounded-full bg-[#ffbd2e]" />
-                          <span className="w-2 h-2 rounded-full bg-[#27c93f]" />
-                        </div>
-                        <span className="text-slate-400 font-mono text-[9px]">yourwebsite.com</span>
-                        <ArrowUpRight size={10} className="text-slate-500" />
-                      </div>
-                      <div className="p-3">
-                        <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-white/5 shadow-inner overflow-hidden"><LazyVideo src="/videos/build-growth-automate.mp4" className="absolute inset-0 w-full h-full" /></div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === "crm" && (
-                    <div className="space-y-3">
-                      <div className="bg-[#0b0f10] px-4 py-2.5 flex items-center justify-between border-b border-white/5">
-                        <div className="flex gap-1.5 items-center">
-                          <span className="w-2 h-2 rounded-full bg-[#ff5f56]" />
-                          <span className="w-2 h-2 rounded-full bg-[#ffbd2e]" />
-                          <span className="w-2 h-2 rounded-full bg-[#27c93f]" />
-                        </div>
-                        <span className="text-slate-400 font-mono text-[9px]">crm.yourwebsite.com</span>
-                        <ArrowUpRight size={10} className="text-slate-500" />
-                      </div>
-                      <div className="p-3">
-                        <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-white/5 shadow-inner overflow-hidden"><LazyVideo src="/videos/why-tinetra.mp4" className="absolute inset-0 w-full h-full" /></div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === "growth" && (
-                    <div className="space-y-3">
-                      <div className="bg-[#0b0f10] px-4 py-2.5 flex items-center justify-between border-b border-white/5">
-                        <div className="flex gap-1.5 items-center">
-                          <span className="w-2 h-2 rounded-full bg-[#ff5f56]" />
-                          <span className="w-2 h-2 rounded-full bg-[#ffbd2e]" />
-                          <span className="w-2 h-2 rounded-full bg-[#27c93f]" />
-                        </div>
-                        <span className="text-slate-400 font-mono text-[9px]">analytics.yourwebsite.com</span>
-                        <ArrowUpRight size={10} className="text-slate-500" />
-                      </div>
-                      <div className="p-3">
-                        <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-white/5 shadow-inner overflow-hidden"><LazyVideo src="/videos/pricing.mp4" className="absolute inset-0 w-full h-full" /></div>
-                      </div>
-                    </div>
-                  )}
+                  <ul className="grid grid-cols-2 gap-4 pt-6 border-t border-border">
+                    {step.bullets.map((bullet, i) => (
+                      <li key={i} className="flex items-start gap-2 text-[11px] text-ink-2 font-semibold">
+                        <span className="h-4.5 w-4.5 rounded-full bg-[#c26d5c]/12 text-accent border border-[#c26d5c]/20 flex items-center justify-center shrink-0">
+                          <Check size={10} />
+                        </span>
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
 
-        {/* ── DESKTOP VIEW (Sticky Scroll corridor) ── */}
-        <div className="hidden lg:grid grid-cols-[1.1fr_0.9fr] gap-16 items-start relative max-w-6xl mx-auto">
-          {/* Left Column: Spaced narrative items triggering tab updates on scroll */}
-          <div className="space-y-8 pb-[15vh] w-full">
-            {/* Panel 1 */}
-            <motion.div
-              onViewportEnter={() => setActiveTab("digital")}
-              viewport={{ amount: 0.35, margin: "-15% 0px -15% 0px" }}
-              className={`transition-all duration-300 py-8 text-left space-y-6 ${
-                activeTab === "digital" ? "opacity-100" : "opacity-35"
-              }`}
-            >
-              <div className="space-y-2">
-                <span className="text-[10px] font-mono font-bold tracking-widest text-accent uppercase bg-accent-light px-2.5 py-1 rounded border border-accent/15 inline-block">WEBSITE & DIGITAL PRESENCE</span>
-                <h3 className="text-2xl font-bold tracking-tight text-ink-1 font-display">Professional websites that build credibility and capture inquiries.</h3>
-              </div>
-              <p className="text-sm text-ink-2 leading-relaxed font-semibold">
-                We design and develop mobile-responsive, SEO-ready business websites that establish trust, communicate your services clearly and convert visitors into inquiries 24/7.
-              </p>
-              <ul className="space-y-3">
-                {[
-                  "Mobile-responsive design across all devices and screen sizes.",
-                  "Landing pages, multi-page business sites, e-commerce and custom web apps.",
-                  "Integrated contact forms and WhatsApp inquiry buttons.",
-                  "SEO-structured to improve local search visibility from day one."
-                ].map((bullet, i) => (
-                  <li key={i} className="flex items-start gap-3 text-[11px] font-semibold text-ink-2">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent border border-accent/20">
-                      <Check size={11} />
-                    </span>
-                    <span>{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-
-            {/* Panel 2 */}
-            <motion.div
-              onViewportEnter={() => setActiveTab("crm")}
-              viewport={{ amount: 0.35, margin: "-15% 0px -15% 0px" }}
-              className={`transition-all duration-300 py-8 text-left space-y-6 ${
-                activeTab === "crm" ? "opacity-100" : "opacity-35"
-              }`}
-            >
-              <div className="space-y-2">
-                <span className="text-[10px] font-mono font-bold tracking-widest text-accent uppercase bg-accent-light px-2.5 py-1 rounded border border-accent/15 inline-block">AUTOMATION & CRM</span>
-                <h3 className="text-2xl font-bold tracking-tight text-ink-1 font-display">Automate lead capture, follow-ups and customer management.</h3>
-              </div>
-              <p className="text-sm text-ink-2 leading-relaxed font-semibold">
-                Stop managing leads on spreadsheets and chat logs. We set up CRM systems, WhatsApp automation and follow-up workflows so your team focuses on serving customers, not chasing them.
-              </p>
-              <ul className="space-y-3">
-                {[
-                  "WhatsApp, Instagram and Facebook automation flows.",
-                  "Lead pipeline management with status tracking.",
-                  "Automated follow-up reminders and appointment booking.",
-                  "Custom CRM dashboards with team access and reporting."
-                ].map((bullet, i) => (
-                  <li key={i} className="flex items-start gap-3 text-[11px] font-semibold text-ink-2">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent border border-accent/20">
-                      <Check size={11} />
-                    </span>
-                    <span>{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-
-            {/* Panel 3 */}
-            <motion.div
-              onViewportEnter={() => setActiveTab("growth")}
-              viewport={{ amount: 0.35, margin: "-15% 0px -15% 0px" }}
-              className={`transition-all duration-300 py-8 text-left space-y-6 ${
-                activeTab === "growth" ? "opacity-100" : "opacity-35"
-              }`}
-            >
-              <div className="space-y-2">
-                <span className="text-[10px] font-mono font-bold tracking-widest text-accent uppercase bg-accent-light px-2.5 py-1 rounded border border-accent/15 inline-block">SEO & DIGITAL MARKETING</span>
-                <h3 className="text-2xl font-bold tracking-tight text-ink-1 font-display">Improve search visibility and build a consistent online presence.</h3>
-              </div>
-              <p className="text-sm text-ink-2 leading-relaxed font-semibold">
-                We work on local SEO, Google Business Profile optimization, social media management and paid advertising to help your business be found by the right people at the right time.
-              </p>
-              <ul className="space-y-3">
-                {[
-                  "Local SEO and Google Business Profile optimization.",
-                  "On-page SEO, technical SEO and content strategy.",
-                  "Google Ads and Meta Ads management for qualified inquiries.",
-                  "Monthly social media content creation and posting."
-                ].map((bullet, i) => (
-                  <li key={i} className="flex items-start gap-3 text-[11px] font-semibold text-ink-2">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent border border-accent/20">
-                      <Check size={11} />
-                    </span>
-                    <span>{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          </div>
-
-          {/* Right Column: Sticky Mockup Viewer with Cross-Fading Videos */}
-          <div className="sticky top-28 py-12 flex items-center justify-center w-full">
-            <div className="w-full max-w-[440px] rounded-2xl border border-white/5 bg-[#1d2022]/40 backdrop-blur-3xl p-6 shadow-2xl min-h-[300px] flex flex-col justify-center text-left relative overflow-hidden">
-              <AnimatePresence mode="wait">
-                {activeTab === "digital" && (
-                  <motion.div
-                    key="digital-vid-d"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-4"
-                  >
-                    <span className="text-[9px] font-mono font-bold text-slate-400 block text-center uppercase tracking-widest border-b border-white/5 pb-3">Website Preview</span>
-                    <div className="flex flex-col gap-3">
-                      <div className="bg-[#0b0f10] rounded-lg px-3 py-2 flex items-center justify-between border border-white/5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]" />
-                          <span className="text-slate-400 font-mono text-[9px] tracking-wide">yourwebsite.com</span>
-                        </div>
-                        <div className="flex gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#ff5f56]" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#ffbd2e]" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#27c93f]" />
-                        </div>
+                {/* Right Column: High Fidelity Browser Mock video */}
+                <div className="col-span-6 flex justify-center">
+                  <div className="w-full max-w-[480px] bg-[#111010] border border-border rounded-2xl p-3 shadow-[0_20px_40px_rgba(0,0,0,0.4)] relative group transition-transform duration-300 hover:scale-[1.01]">
+                    {/* Browser top-bar mock */}
+                    <div className="flex justify-between items-center pb-2 border-b border-border mb-3 px-2">
+                      <div className="flex gap-1.5 items-center">
+                        <span className="w-2 h-2 rounded-full bg-red-500/30 group-hover:bg-red-500 transition-colors" />
+                        <span className="w-2 h-2 rounded-full bg-yellow-500/30 group-hover:bg-yellow-500 transition-colors" />
+                        <span className="w-2 h-2 rounded-full bg-green-500/30 group-hover:bg-green-500 transition-colors" />
                       </div>
-                      <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-white/5 shadow-inner overflow-hidden"><LazyVideo src="/videos/build-growth-automate.mp4" className="absolute inset-0 w-full h-full" /></div>
-                      <div className="flex justify-center mt-1">
-                        <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
-                          Mobile Responsive ✓ SEO Ready ✓
-                        </span>
-                      </div>
+                      <span className="text-slate-500 font-mono text-[9px]">trinetradigital.com/{step.link}</span>
+                      <ArrowUpRight size={10} className="text-slate-600" />
                     </div>
-                  </motion.div>
-                )}
 
-                {activeTab === "crm" && (
-                  <motion.div
-                    key="crm-vid-d"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-4"
-                  >
-                    <span className="text-[9px] font-mono font-bold text-slate-400 block text-center uppercase tracking-widest border-b border-white/5 pb-3">Automation & CRM</span>
-                    <div className="flex flex-col gap-3">
-                      <div className="bg-[#0b0f10] rounded-lg px-3 py-2 flex items-center justify-between border border-white/5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                          <span className="text-slate-400 font-mono text-[9px] tracking-wide">crm.yourwebsite.com</span>
-                        </div>
-                        <div className="flex gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#ff5f56]" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#ffbd2e]" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#27c93f]" />
-                        </div>
-                      </div>
-                      <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-white/5 shadow-inner overflow-hidden"><LazyVideo src="/videos/why-tinetra.mp4" className="absolute inset-0 w-full h-full" /></div>
-                      <div className="flex justify-center mt-1">
-                        <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
-                          WhatsApp Auto-Alerts Active ✓
-                        </span>
-                      </div>
+                    {/* Widescreen Video container */}
+                    <div className="rounded-xl border border-border overflow-hidden relative aspect-video bg-[#090808]">
+                      <LazyVideo src={step.video} className="absolute inset-0 w-full h-full object-cover" />
                     </div>
-                  </motion.div>
-                )}
+                  </div>
+                </div>
 
-                {activeTab === "growth" && (
-                  <motion.div
-                    key="growth-vid-d"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-4"
-                  >
-                    <span className="text-[9px] font-mono font-bold text-slate-400 block text-center uppercase tracking-widest border-b border-white/5 pb-3">Growth Dashboard</span>
-                    <div className="flex flex-col gap-3">
-                      <div className="bg-[#0b0f10] rounded-lg px-3 py-2 flex items-center justify-between border border-white/5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          <span className="text-slate-400 font-mono text-[9px] tracking-wide">analytics.yourwebsite.com</span>
-                        </div>
-                        <div className="flex gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#ff5f56]" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#ffbd2e]" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#27c93f]" />
-                        </div>
-                      </div>
-                      <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-white/5 shadow-inner overflow-hidden"><LazyVideo src="/videos/pricing.mp4" className="absolute inset-0 w-full h-full" /></div>
-                      <div className="flex justify-center mt-1">
-                        <span className="text-[9px] font-mono bg-accent-light border border-accent/20 text-accent px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
-                          SEO Crawler Tracked ✓
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
-
       </div>
     </section>
   );

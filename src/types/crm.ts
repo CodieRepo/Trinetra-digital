@@ -180,4 +180,9 @@ export interface AIAnalysisResult {
   intent: string;
   leadTemperature: LeadTemperature;
   suggestedAction: string;
+  appointmentIntent?: boolean;
+  quotationIntent?: boolean;
+  humanHandoff?: boolean;
+  serviceInquiry?: boolean;
+  followUpRequired?: boolean;
 }

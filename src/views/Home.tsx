@@ -4,7 +4,6 @@ import { trackLead, trackContact } from "../utils/metaPixel";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
-  Sparkles,
   MessageSquare,
   Zap,
   TrendingUp,
@@ -23,11 +22,25 @@ import TheProblem from "../components/TheProblem";
 import TheSystem from "../components/TheSystem";
 import Testimonials from "../components/Testimonials";
 import LazyVideo from "../components/LazyVideo";
-import Hero3DSphere from "../components/Hero3DSphere";
+import Hero2DTrinetra from "../components/Hero2DTrinetra";
+
+// Centralized GSAP and custom typography utilities
+import { gsap, useGSAP } from "../lib/gsap";
+import SplitText from "../components/ui/SplitText";
 
 export default function Home() {
   const location = useLocation();
   const heroRef = useRef<HTMLDivElement>(null);
+  const line1Ref = useRef<HTMLHeadingElement>(null);
+  const line2Ref = useRef<HTMLHeadingElement>(null);
+  const line3Ref = useRef<HTMLHeadingElement>(null);
+  const descRef = useRef<HTMLParagraphElement>(null);
+  const ctasRef = useRef<HTMLDivElement>(null);
+  const shortcutsRef = useRef<HTMLDivElement>(null);
+  const trustRef = useRef<HTMLDivElement>(null);
+  const sphereContainerRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
   const whyTrinetraRef = useRef<HTMLDivElement>(null);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
@@ -42,6 +55,157 @@ export default function Home() {
       window.scrollTo({ top: 0, behavior: "instant" });
     }
   }, [location]);
+
+  useGSAP(() => {
+    // 1. Entrance animation on load
+    const tl = gsap.timeline({ defaults: { ease: "editorial-spring" } });
+    
+    // Animate grid fading in and scaling slightly
+    tl.fromTo(gridRef.current, 
+      { opacity: 0, scale: 1.05 },
+      { opacity: 0.08, scale: 1, duration: 1.8 }
+    );
+
+    // Slide in line 1 and 3 from opposite sides
+    tl.fromTo(line1Ref.current,
+      { x: -50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 1.2 },
+      "-=1.4"
+    );
+
+    tl.fromTo(line3Ref.current,
+      { x: 50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 1.2 },
+      "-=1.2"
+    );
+
+    // Animate letters of line 2 rising up
+    const chars = line2Ref.current?.querySelectorAll(".origin-bottom");
+    if (chars && chars.length > 0) {
+      tl.fromTo(chars,
+        { y: "130%", rotate: 2 },
+        { y: "0%", rotate: 0, duration: 1.2, stagger: 0.015 },
+        "-=1.2"
+      );
+    }
+
+    // Animate description, CTAs, shortcuts, and trust badge fading and rising
+    tl.fromTo([descRef.current, ctasRef.current, shortcutsRef.current, trustRef.current],
+      { opacity: 0, y: 15 },
+      { opacity: 1, y: 0, duration: 1, stagger: 0.12 },
+      "-=0.7"
+    );
+
+    // Animate 3D Canvas scaling up and rotating slightly into place
+    if (sphereContainerRef.current) {
+      tl.fromTo(sphereContainerRef.current,
+        { opacity: 0, scale: 0.75 },
+        { opacity: 1, scale: 1, duration: 1.6, ease: "warm-out" },
+        "-=1.2"
+      );
+    }
+
+    // 2. Scroll-Triggered Kinetic Layout Parallax
+    if (heroRef.current) {
+      // Line 1 moves Left on scroll
+      gsap.fromTo(line1Ref.current,
+        { x: 0, opacity: 1 },
+        {
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+          x: -80,
+          opacity: 0.15,
+          ease: "none"
+        }
+      );
+
+      // Line 2 moves Right on scroll
+      gsap.fromTo(line2Ref.current,
+        { x: 0, opacity: 1 },
+        {
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+          x: 60,
+          opacity: 0.2,
+          ease: "none"
+        }
+      );
+
+      // Line 3 moves Left on scroll
+      gsap.fromTo(line3Ref.current,
+        { x: 0, opacity: 1 },
+        {
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+          x: -40,
+          opacity: 0.15,
+          ease: "none"
+        }
+      );
+
+      // Description moves slightly up and fades
+      gsap.fromTo(descRef.current,
+        { y: 0, opacity: 1 },
+        {
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+          y: -20,
+          opacity: 0.1,
+          ease: "none"
+        }
+      );
+
+      // 2D Trinetra Eye container scales up slightly and shifts opacity
+      gsap.fromTo(sphereContainerRef.current,
+        { scale: 1, y: 0, rotation: 0, opacity: 1 },
+        {
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+          scale: 1.12,
+          y: 30,
+          rotation: 0.4,
+          opacity: 0.3,
+          ease: "none"
+        }
+      );
+
+      // Background mesh grid shifts down
+      gsap.fromTo(gridRef.current,
+        { y: 0, opacity: 0.08 },
+        {
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+          y: 50,
+          opacity: 0.02,
+          ease: "none"
+        }
+      );
+    }
+  }, { scope: heroRef });
 
   const trustItems = [
     {
@@ -93,57 +257,68 @@ export default function Home() {
         {/* ── 1. CINEMATIC 3D HERO ── */}
         <section
           ref={heroRef}
-          className="relative min-h-[92svh] md:min-h-[100svh] flex items-center justify-center pt-24 pb-12 overflow-hidden"
+          className="relative min-h-[92svh] md:min-h-[100svh] flex items-center justify-center pt-24 pb-12 overflow-hidden bg-base"
         >
-          <div className="mx-auto max-w-[1200px] w-full px-4 md:px-10 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center text-left">
+          {/* Elegant geometric warm bronze mesh grid background */}
+          <div
+            ref={gridRef}
+            className="absolute inset-0 z-0 pointer-events-none"
+            style={{
+              backgroundImage: `linear-gradient(rgba(197, 168, 128, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(197, 168, 128, 0.06) 1px, transparent 1px)`,
+              backgroundSize: "100px 100px",
+              backgroundPosition: "center center",
+            }}
+          />
+
+          <div className="mx-auto max-w-[1300px] w-full px-6 md:px-12 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center text-left">
             
             {/* Left Column: Headline and CTAs */}
-            <div className="lg:col-span-7 flex flex-col items-start gap-6 z-20">
+            <div className="lg:col-span-7 flex flex-col items-start gap-8 z-20">
               
               {/* Eyebrow badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 px-3 py-1.5 glass-panel rounded-full"
-              >
-                <Sparkles size={11} className="text-accent" />
-                <span className="text-[10px] font-mono font-bold tracking-[0.15em] text-accent uppercase">
-                  Complete Business Growth Partner
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 glass-panel rounded-full border border-border">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
                 </span>
-              </motion.div>
+                <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-accent uppercase">
+                  PIONEERING BUSINESS AUTOMATION
+                </span>
+              </div>
 
-              {/* Main headline */}
-              <motion.h1
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.08 }}
-                className="font-display text-[clamp(32px,5vw,60px)] font-extrabold leading-[1.08] tracking-tight text-ink-1"
-              >
-                Build, Grow,{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-accent-hover italic font-light">
-                  Automate
-                </span>{" "}
-                <br className="hidden sm:block" />
-                &amp; Scale Your Business.
-              </motion.h1>
+              {/* Main headline - Kinetic Horizontal Slit reveals */}
+              <div className="flex flex-col gap-1 overflow-hidden select-none w-full">
+                <h1
+                  ref={line1Ref}
+                  className="font-display text-[clamp(26px,4.2vw,44px)] font-light leading-none tracking-tight text-ink-1 uppercase whitespace-nowrap"
+                >
+                  We engineer foundations
+                </h1>
+                <h2
+                  ref={line2Ref}
+                  className="font-editorial text-[clamp(36px,5.8vw,68px)] italic text-accent font-light leading-none tracking-normal whitespace-nowrap overflow-hidden py-1"
+                >
+                  <SplitText mode="chars">that lead &amp; scale</SplitText>
+                </h2>
+                <h3
+                  ref={line3Ref}
+                  className="font-display text-[clamp(26px,4.2vw,44px)] font-light leading-none tracking-tight text-ink-1 uppercase whitespace-nowrap"
+                >
+                  your business.
+                </h3>
+              </div>
 
               {/* Subtitle */}
-              <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.16 }}
+              <p
+                ref={descRef}
                 className="text-sm md:text-base text-ink-2 leading-relaxed max-w-xl font-medium"
               >
-                We design premium custom websites, build secure CRM pipelines,
-                and deploy WhatsApp conversational agents that automate operations and scale local businesses across India.
-              </motion.p>
+                We construct high-end websites, build secure CRM pipelines, and integrate conversational AI systems to eliminate manual inefficiencies and scale your revenue.
+              </p>
 
               {/* CTA Row */}
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.24 }}
+              <div
+                ref={ctasRef}
                 className="flex flex-wrap gap-4 items-center"
               >
                 <Link
@@ -155,7 +330,7 @@ export default function Home() {
 
                 <a
                   href="#pricing"
-                  className="inline-flex items-center justify-center h-11 px-5 rounded-lg border border-white/5 bg-white/5 text-ink-1 hover:bg-white/10 transition-colors text-xs font-semibold uppercase tracking-wider backdrop-blur-md"
+                  className="inline-flex items-center justify-center h-11 px-5 rounded-lg border border-border bg-surface-1 text-ink-1 hover:bg-surface-2 transition-colors text-xs font-semibold uppercase tracking-wider backdrop-blur-md"
                 >
                   Explore Pricing
                 </a>
@@ -165,17 +340,15 @@ export default function Home() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackContact()}
-                  className="inline-flex items-center gap-2 h-11 px-4 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 text-[#4ade80] hover:bg-[#25D366]/20 transition-all text-xs font-semibold"
+                  className="inline-flex items-center gap-2 h-11 px-4 rounded-lg bg-[#c5a880]/10 border border-[#c5a880]/20 text-accent hover:bg-[#c5a880]/20 transition-all text-xs font-semibold"
                 >
                   💬 WhatsApp Us
                 </a>
-              </motion.div>
+              </div>
 
               {/* Quick nav shortcuts */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.35 }}
+              <div
+                ref={shortcutsRef}
                 className="flex flex-wrap gap-2 mt-2"
               >
                 {[
@@ -192,25 +365,23 @@ export default function Home() {
                       const el = document.getElementById(pathway.anchor);
                       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
                     }}
-                    className="inline-flex items-center h-8 px-3 rounded-md border border-white/5 bg-white/3 hover:bg-white/8 text-[10px] font-semibold text-ink-3 transition-colors font-mono tracking-wide"
+                    className="inline-flex items-center h-8 px-3 rounded-md border border-border bg-surface-1 hover:bg-surface-2 text-[10px] font-semibold text-ink-3 transition-colors font-mono tracking-wide"
                   >
                     {pathway.label} →
                   </a>
                 ))}
-              </motion.div>
+              </div>
 
               {/* Trust proof strip */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.42 }}
+              <div
+                ref={trustRef}
                 className="flex items-center gap-3 mt-4"
               >
                 <div className="flex -space-x-2">
                   {['T', 'D', 'S', 'A'].map((char, i) => (
                     <span
                       key={i}
-                      className="h-7 w-7 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-[9px] font-mono font-bold text-ink-2"
+                      className="h-7 w-7 rounded-full border border-border bg-surface-1 flex items-center justify-center text-[9px] font-mono font-bold text-ink-2"
                     >
                       {char}
                     </span>
@@ -219,41 +390,32 @@ export default function Home() {
                 <p className="text-xs text-ink-3 font-semibold font-mono uppercase tracking-wider">
                   Serving professional brands across India
                 </p>
-              </motion.div>
+              </div>
             </div>
 
-            {/* Right Column: Interactive 3D Sphere */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.15 }}
-              className="lg:col-span-5 relative flex items-center justify-center"
+            {/* Right Column: Immersive 2D Trinetra Eye */}
+            <div 
+              ref={sphereContainerRef}
+              className="lg:col-span-5 relative w-full aspect-square flex items-center justify-center"
             >
-              <div className="w-full max-w-[450px] aspect-square relative flex items-center justify-center">
-                <Hero3DSphere />
-              </div>
-            </motion.div>
+              <Hero2DTrinetra />
+            </div>
           </div>
 
           {/* Scroll indicator */}
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
+          <div
             className="absolute bottom-6 z-20 flex flex-col items-center gap-1.5"
             style={{ left: "50%", transform: "translateX(-50%)" }}
           >
             <span className="text-[9px] font-mono font-bold text-ink-4 uppercase tracking-[0.2em]">
               Scroll
             </span>
-            <motion.div
-              animate={{ y: [0, 5, 0] }}
-              transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-              className="w-5 h-7 rounded-full border border-white/10 flex items-start justify-center pt-1.5"
+            <div
+              className="w-5 h-7 rounded-full border border-border flex items-start justify-center pt-1.5"
             >
               <div className="w-0.5 h-1.5 rounded-full bg-accent/60" />
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </section>
 
         {/* ── 2. FEATURED PROJECTS (CREDIBILITY UPFRONT) ── */}
@@ -267,125 +429,156 @@ export default function Home() {
         {/* ── 4. THE SYSTEM (SOLUTION) SECTION ── */}
         <TheSystem />
 
-        {/* ── 5. SERVICES DETAIL GRID (4 PILLARS) ── */}
-        <section className="py-24 relative z-10 bg-transparent border-b border-white/5">
-          <div className="max-w-[1200px] mx-auto px-4 md:px-10 space-y-16">
+        {/* ── 5. SERVICES BENTO GRID (4 PILLARS) ── */}
+        <section className="py-24 relative z-10 bg-transparent border-b border-border">
+          <div className="max-w-[1280px] mx-auto px-6 md:px-12 space-y-16">
+            
+            {/* Bento Header */}
             <div className="text-center max-w-xl mx-auto space-y-3">
-              <span className="mixed-headline-eyebrow">Our Key Pillars</span>
-              <h2 className="mixed-headline-title">Tailored Software &amp; Growth Systems</h2>
-              <p className="body-md text-ink-2">
-                We design and engineer solid solutions tailored according to your unique business requirements.
+              <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#c26d5c]/10 border border-[#c26d5c]/20 rounded-full text-accent font-mono text-[9px] uppercase tracking-wider">
+                Our Core Expertise
+              </span>
+              <h2 className="font-display text-[clamp(28px,4.5vw,44px)] font-light text-ink-1 leading-tight">
+                Tailored Software &amp; Growth Systems
+              </h2>
+              <p className="body-md text-ink-2 max-w-[480px] mx-auto">
+                We design and engineer high-fidelity solutions tailored explicitly according to your enterprise requirements.
               </p>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
+            {/* Bento Layout Grid */}
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-3 max-w-6xl mx-auto">
               
-              {/* Card 1: Website Development */}
-              <div id="services-website" className="glass-panel p-6 rounded-2xl flex flex-col justify-between transition-all duration-300 hover:bg-[#1d2022]/60 hover:border-accent/35 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] text-left">
-                <div>
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 border border-white/5 text-accent shadow-xs">
+              {/* Card 1: Website Development (Span 2) */}
+              <div id="services-website" className="md:col-span-2 bg-[#111010] border border-border p-8 rounded-2xl flex flex-col md:flex-row gap-8 items-start md:items-center justify-between text-left hover:border-accent/30 hover:shadow-[0_0_30px_rgba(194,109,92,0.05)] group transition-all duration-300">
+                <div className="space-y-5 max-w-sm">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-surface-2 border border-border text-accent shadow-xs">
                     <Globe size={16} />
                   </span>
-                  <h3 className="text-xs font-bold text-ink-1 mt-4 uppercase tracking-wider font-mono">Website Development</h3>
-                  <p className="text-[11px] text-ink-2 leading-relaxed mt-2.5 font-medium">
+                  <h3 className="text-xs font-bold text-ink-1 uppercase tracking-wider font-mono">Website Development</h3>
+                  <p className="text-[11.5px] text-ink-2 leading-relaxed">
                     Fully responsive, highly optimized custom websites constructed from scratch. We build sites that convey legitimacy and turn traffic into leads.
                   </p>
-                  <div className="h-px bg-white/5 my-4" />
-                  <ul className="space-y-2 text-[10.5px] text-ink-3 font-semibold font-mono">
-                    <li>• Business &amp; Company Websites</li>
-                    <li>• Service &amp; Portfolio Sites</li>
-                    <li>• E-commerce &amp; Landing Pages</li>
-                    <li>• Mobile Responsive &amp; Fast Loading</li>
-                    <li>• Third-Party API Integrations</li>
+                  <ul className="grid grid-cols-2 gap-2 text-[10px] text-ink-3 font-semibold font-mono">
+                    <li>• Business &amp; Company Sites</li>
+                    <li>• Landing Pages &amp; Funnels</li>
+                    <li>• Responsive Layouts</li>
+                    <li>• Third-Party Integrations</li>
                   </ul>
+                  <div className="pt-4 border-t border-border w-fit">
+                    <Link to="/contact?service=Website%20Development" className="text-xs font-bold text-accent hover:underline inline-flex items-center gap-1 cursor-pointer">
+                      Enquire About Websites &rarr;
+                    </Link>
+                  </div>
                 </div>
-                <div className="pt-6 border-t border-white/5 mt-6">
-                  <Link to="/contact?service=Website%20Development" className="text-xs font-bold text-accent hover:underline inline-flex items-center gap-1 cursor-pointer">
-                    Enquire About Websites &rarr;
-                  </Link>
+                
+                {/* Visual mock right side */}
+                <div className="w-full md:w-64 aspect-[4/3] rounded-xl border border-border bg-surface-2 p-3 shadow-inner relative overflow-hidden shrink-0">
+                  <div className="h-full border border-border/40 rounded-lg bg-[#090808]/80 p-3 space-y-2">
+                    <div className="h-1.5 w-1/3 bg-accent/25 rounded" />
+                    <div className="h-8 bg-surface-2 rounded border border-border/20" />
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <div className="h-6 bg-surface-2 rounded border border-border/10" />
+                      <div className="h-6 bg-surface-2 rounded border border-border/10" />
+                      <div className="h-6 bg-surface-2 rounded border border-border/10" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Card 2: SEO & Digital Marketing */}
-              <div id="services-marketing" className="glass-panel p-6 rounded-2xl flex flex-col justify-between transition-all duration-300 hover:bg-[#1d2022]/60 hover:border-accent/35 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] text-left">
-                <div>
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 border border-white/5 text-accent shadow-xs">
+              {/* Card 2: SEO & Digital Marketing (Span 1) */}
+              <div id="services-marketing" className="md:col-span-1 bg-[#111010] border border-border p-8 rounded-2xl flex flex-col justify-between text-left hover:border-accent/30 hover:shadow-[0_0_30px_rgba(194,109,92,0.05)] group transition-all duration-300">
+                <div className="space-y-5">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-surface-2 border border-border text-accent shadow-xs">
                     <BarChart3 size={16} />
                   </span>
-                  <h3 className="text-xs font-bold text-ink-1 mt-4 uppercase tracking-wider font-mono">SEO &amp; Digital Marketing</h3>
-                  <p className="text-[11px] text-ink-2 leading-relaxed mt-2.5 font-medium">
-                    We help businesses improve their online presence and generate qualified enquiries through strategic digital marketing. Honest copy and compliance.
+                  <h3 className="text-xs font-bold text-ink-1 uppercase tracking-wider font-mono">SEO &amp; Digital Marketing</h3>
+                  <p className="text-[11.5px] text-ink-2 leading-relaxed">
+                    Improve online presence and generate qualified enquiries through search rankings and target ad campaigns.
                   </p>
-                  <div className="h-px bg-white/5 my-4" />
-                  <ul className="space-y-2 text-[10.5px] text-ink-3 font-semibold font-mono">
-                    <li>• Google &amp; Meta Ads Management</li>
-                    <li>• Lead Generation Campaigns</li>
-                    <li>• Local Business SEO Setup</li>
-                    <li>• Conversion Pixel &amp; Tracking</li>
-                    <li>• Landing Page Optimization</li>
+                  <ul className="space-y-2 text-[10px] text-ink-3 font-semibold font-mono">
+                    <li>• Google &amp; Meta Ads</li>
+                    <li>• Local Business SEO</li>
+                    <li>• Conversion Pixels</li>
+                    <li>• Attribution Reports</li>
                   </ul>
                 </div>
-                <div className="pt-6 border-t border-white/5 mt-6">
+                
+                <div className="pt-6 border-t border-border mt-6">
                   <Link to="/contact?service=Digital%20Marketing" className="text-xs font-bold text-accent hover:underline inline-flex items-center gap-1 cursor-pointer">
                     Enquire About Marketing &rarr;
                   </Link>
                 </div>
               </div>
 
-              {/* Card 3: CRM Development (Most Requested) */}
-              <div id="services-crm" className="bg-[#1c2e30]/30 border border-accent/40 p-6 rounded-2xl flex flex-col justify-between text-left relative overflow-hidden shadow-2xl shadow-accent/5 hover:border-accent/60 transition-all duration-300">
-                <div>
+              {/* Card 3: CRM Development (Span 1, Highlighted) */}
+              <div id="services-crm" className="md:col-span-1 bg-[#181312] border border-[#c26d5c]/35 p-8 rounded-2xl flex flex-col justify-between text-left relative overflow-hidden shadow-2xl hover:border-[#c26d5c]/60 transition-all duration-300 group">
+                <div className="space-y-5 z-10">
                   <div className="flex justify-between items-start">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-accent border border-white/5 shadow-xs">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#c26d5c]/10 text-accent border border-[#c26d5c]/20 shadow-xs">
                       <Database size={16} />
                     </span>
-                    <span className="text-[8px] bg-accent text-[#101415] font-bold px-2 py-0.5 rounded font-mono uppercase tracking-wider">
+                    <span className="text-[8px] bg-accent text-[#090808] font-bold px-2 py-0.5 rounded font-mono uppercase tracking-wider">
                       Most Requested
                     </span>
                   </div>
-                  <h3 className="text-xs font-bold text-white mt-4 uppercase tracking-wider font-mono">Automation &amp; CRM</h3>
-                  <p className="text-[11px] text-white/80 leading-relaxed mt-2.5 font-medium">
-                    Custom-built software databases tailored exactly to your operational workflows. Streamline follow-ups, align teams, and organize raw administrative tasks.
+                  
+                  <h3 className="text-xs font-bold text-ink-1 uppercase tracking-wider font-mono">Automation &amp; CRM</h3>
+                  <p className="text-[11.5px] text-ink-2 leading-relaxed">
+                    Custom-built software pipelines tailored exactly to your operational workflows. Streamline follow-ups, align teams, and organize records.
                   </p>
-                  <div className="h-px bg-white/10 my-4" />
-                  <ul className="space-y-2 text-[10.5px] text-white/60 font-semibold font-mono">
+                  
+                  <ul className="space-y-2 text-[10px] text-ink-3 font-semibold font-mono">
                     <li>• Lead &amp; Pipeline Tracking</li>
-                    <li>• Customer &amp; Team Management</li>
-                    <li>• Custom Dashboards &amp; Workflows</li>
+                    <li>• WhatsApp Auto Alerts</li>
                     <li>• Role-Based Secure Access</li>
-                    <li>• WhatsApp Follow-up Auto Alerts</li>
+                    <li>• Custom CRM Dashboards</li>
                   </ul>
                 </div>
-                <div className="pt-6 border-t border-white/10 mt-6">
-                  <Link to="/contact?service=CRM%20Development" className="text-xs font-bold text-accent hover:text-white inline-flex items-center gap-1 transition-colors cursor-pointer">
+                
+                <div className="pt-6 border-t border-[#c26d5c]/20 mt-6 z-10">
+                  <Link to="/contact?service=CRM%20Development" className="text-xs font-bold text-accent hover:text-ink-1 inline-flex items-center gap-1 cursor-pointer">
                     Enquire About Automation &rarr;
                   </Link>
                 </div>
               </div>
 
-              {/* Card 4: Custom Software Development */}
-              <div id="services-software" className="glass-panel p-6 rounded-2xl flex flex-col justify-between transition-all duration-300 hover:bg-[#1d2022]/60 hover:border-accent/35 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] text-left">
-                <div>
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 border border-white/5 text-accent shadow-xs">
+              {/* Card 4: Custom Software Dev (Span 2) */}
+              <div id="services-software" className="md:col-span-2 bg-[#111010] border border-border p-8 rounded-2xl flex flex-col md:flex-row gap-8 items-start md:items-center justify-between text-left hover:border-accent/30 hover:shadow-[0_0_30px_rgba(194,109,92,0.05)] group transition-all duration-300">
+                <div className="space-y-5 max-w-sm">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-surface-2 border border-border text-accent shadow-xs">
                     <Layers size={16} />
                   </span>
-                  <h3 className="text-xs font-bold text-ink-1 mt-4 uppercase tracking-wider font-mono">Custom Software Dev</h3>
-                  <p className="text-[11px] text-ink-2 leading-relaxed mt-2.5 font-medium">
+                  <h3 className="text-xs font-bold text-ink-1 uppercase tracking-wider font-mono">Custom Software Dev</h3>
+                  <p className="text-[11.5px] text-ink-2 leading-relaxed">
                     Tailored dashboards, ERP modules, inventory management systems, booking platforms and custom reporting built specifically for your rules.
                   </p>
-                  <div className="h-px bg-white/5 my-4" />
-                  <ul className="space-y-2 text-[10.5px] text-ink-3 font-semibold font-mono">
-                    <li>• Custom Operations Panels</li>
-                    <li>• Legacy Software Integrations</li>
-                    <li>• Business Dashboard Creation</li>
-                    <li>• Secure Database Architecture</li>
-                    <li>• Modular Scalable Clean Code</li>
+                  <ul className="grid grid-cols-2 gap-2 text-[10px] text-ink-3 font-semibold font-mono">
+                    <li>• Operations Panels</li>
+                    <li>• Secure Database Architectures</li>
+                    <li>• Legacy API Integrations</li>
+                    <li>• Modular Scalable Code</li>
                   </ul>
+                  <div className="pt-4 border-t border-border w-fit">
+                    <Link to="/contact?service=Custom%20Project" className="text-xs font-bold text-accent hover:underline inline-flex items-center gap-1 cursor-pointer">
+                      Enquire About Software &rarr;
+                    </Link>
+                  </div>
                 </div>
-                <div className="pt-6 border-t border-white/5 mt-6">
-                  <Link to="/contact?service=Custom%20Project" className="text-xs font-bold text-accent hover:underline inline-flex items-center gap-1 cursor-pointer">
-                    Enquire About Software &rarr;
-                  </Link>
+
+                {/* Visual node flowchart right side */}
+                <div className="w-full md:w-64 aspect-[4/3] rounded-xl border border-border bg-surface-2 p-4 shadow-inner relative flex items-center justify-center shrink-0">
+                  <div className="space-y-3 w-full max-w-[160px] font-mono text-[9px] text-ink-3">
+                    <div className="flex justify-between items-center bg-[#090808]/80 px-2.5 py-1 rounded border border-border/20">
+                      <span>API Gateway</span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    </div>
+                    <div className="h-4.5 w-0.5 bg-accent/40 mx-auto" />
+                    <div className="flex justify-between items-center bg-[#090808]/80 px-2.5 py-1 rounded border border-border/20">
+                      <span>Database Node</span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -413,17 +606,21 @@ export default function Home() {
         </section>
 
         {/* ── 6. BUSINESS INDUSTRIES WE SERVE ── */}
-        <section className="py-24 relative z-10 bg-transparent border-b border-white/5">
-          <div className="max-w-[1200px] mx-auto px-4 md:px-10 space-y-16">
-            <div className="text-center max-w-xl mx-auto space-y-3">
-              <span className="mixed-headline-eyebrow">Industries We Serve</span>
-              <h2 className="mixed-headline-title">Tailored Solutions for Your Sector</h2>
+        <section className="py-28 relative z-10 bg-transparent border-b border-border">
+          <div className="max-w-[1280px] mx-auto px-6 md:px-12 space-y-16">
+            <div className="text-center max-w-xl mx-auto space-y-4">
+              <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#c26d5c]/10 border border-[#c26d5c]/20 rounded-full text-accent font-mono text-[9px] uppercase tracking-wider">
+                Industries We Serve
+              </span>
+              <h2 className="font-display text-[clamp(28px,4.5vw,44px)] font-light text-ink-1 leading-tight">
+                Tailored Solutions for Your Sector
+              </h2>
               <p className="body-md text-ink-2">
                 We don't build generic templates. We build custom solutions designed around the specific operations of your business category.
               </p>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
               {[
                 { title: "Healthcare & Clinics", desc: "Patient appointment scheduling, automated WhatsApp reminder follow-ups, and clinic landing pages.", icon: Activity },
                 { title: "Real Estate & Developers", desc: "Property listing architectures, lead capture workflows, and integration with CRM status dashboards.", icon: Compass },
@@ -432,8 +629,8 @@ export default function Home() {
                 { title: "B2B & Professional Services", desc: "Corporate website development, lead qualifying pipelines, and secure database workflows.", icon: ShieldCheck },
                 { title: "Retail & E-commerce", desc: "Digital catalog configurations, order inquiry systems, and payment gateway configurations.", icon: Globe },
               ].map((ind, i) => (
-                <div key={i} className="glass-panel p-6 rounded-2xl space-y-3 text-left transition-all duration-300 hover:bg-[#1d2022]/60 hover:border-accent/35 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)]">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-accent border border-white/5">
+                <div key={i} className="bg-[#111010] border border-border p-7 rounded-2xl space-y-4 text-left transition-all duration-300 hover:border-accent/30 hover:shadow-[0_0_30px_rgba(194,109,92,0.05)] group">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-surface-2 text-accent border border-border group-hover:bg-[#c26d5c]/10 group-hover:border-[#c26d5c]/20 transition-colors">
                     <ind.icon size={15} />
                   </span>
                   <h3 className="text-xs font-bold text-ink-1 font-mono uppercase tracking-wider">{ind.title}</h3>
@@ -445,11 +642,15 @@ export default function Home() {
         </section>
 
          {/* ── 7. TRUST SECTION (BENEFITS) ── */}
-         <section ref={whyTrinetraRef} className="py-24 relative z-10 bg-transparent border-b border-white/5">
-           <div className="max-w-[1200px] mx-auto px-4 md:px-10 space-y-16">
-             <div className="text-center max-w-xl mx-auto space-y-3">
-               <span className="mixed-headline-eyebrow">Institutional Integrity</span>
-               <h2 className="mixed-headline-title">Designed for long-term trust</h2>
+         <section ref={whyTrinetraRef} className="py-28 relative z-10 bg-transparent border-b border-border">
+           <div className="max-w-[1280px] mx-auto px-6 md:px-12 space-y-16">
+             <div className="text-center max-w-xl mx-auto space-y-4">
+               <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#c26d5c]/10 border border-[#c26d5c]/20 rounded-full text-accent font-mono text-[9px] uppercase tracking-wider">
+                 Institutional Integrity
+               </span>
+               <h2 className="font-display text-[clamp(28px,4.5vw,44px)] font-light text-ink-1 leading-tight">
+                 Designed for long-term trust
+               </h2>
                <p className="body-md text-ink-2">
                  Bypass exaggerated promises. Upgraded technology and marketing services designed with compliance, transparency, and structure.
                </p>
@@ -459,8 +660,8 @@ export default function Home() {
                {/* Left Column: 6 Benefits Grid */}
                <div className="grid gap-4 sm:grid-cols-2 w-full">
                  {trustItems.map((item, i) => (
-                   <div key={i} className="glass-panel p-6 rounded-2xl space-y-3 text-left transition-all duration-300 hover:bg-[#1d2022]/60 hover:border-accent/35 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] animate-reveal">
-                     <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-accent border border-white/5 shadow-xs">
+                   <div key={i} className="bg-[#111010] border border-border p-6 rounded-2xl space-y-3 text-left transition-all duration-300 hover:border-accent/30 hover:shadow-[0_0_30px_rgba(194,109,92,0.05)] group">
+                     <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-surface-2 text-accent border border-border group-hover:bg-[#c26d5c]/10 group-hover:border-[#c26d5c]/20 transition-colors">
                        <item.icon size={14} />
                      </span>
                      <h3 className="text-xs font-bold text-ink-1 font-mono uppercase tracking-wider">{item.title}</h3>
@@ -470,15 +671,15 @@ export default function Home() {
                </div>
 
                {/* Right Column: Sticky connected ecosystem loop */}
-               <div className="glass-panel p-4 md:p-5 rounded-2xl shadow-2xl text-left h-fit lg:sticky lg:top-28 w-full max-w-[380px] mx-auto lg:mr-0 border-white/5 bg-[#1d2022]/30">
-                 <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
-                   <span className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest">Ecosystem Integration</span>
-                   <span className="flex items-center gap-1.5 text-[8px] font-mono font-bold text-emerald-450 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+               <div className="bg-[#111010] border border-border p-5 rounded-2xl shadow-2xl text-left h-fit lg:sticky lg:top-28 w-full max-w-[380px] mx-auto lg:mr-0">
+                 <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
+                   <span className="text-[9px] font-mono font-bold text-ink-3 uppercase tracking-widest">Ecosystem Integration</span>
+                   <span className="flex items-center gap-1.5 text-[8px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
                      Synced Database
                    </span>
                  </div>
-                 <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-white/5 shadow-2xl overflow-hidden mb-4">
+                 <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-border shadow-2xl overflow-hidden mb-4">
                    <LazyVideo src="/videos/why-tinetra.mp4" className="absolute inset-0 w-full h-full" />
                  </div>
                  <p className="text-[9.5px] text-ink-3 font-mono text-center leading-relaxed font-semibold">
@@ -490,11 +691,15 @@ export default function Home() {
          </section>
 
         {/* ── 8. DEVELOPMENT PROCESS ── */}
-        <section className="py-24 relative z-10 bg-transparent border-b border-white/5">
-          <div className="max-w-[1200px] mx-auto px-4 md:px-10 space-y-16">
-            <div className="text-center max-w-xl mx-auto space-y-3">
-              <span className="mixed-headline-eyebrow">How We Work</span>
-              <h2 className="mixed-headline-title">Our Staged Process</h2>
+        <section className="py-28 relative z-10 bg-transparent border-b border-border">
+          <div className="max-w-[1280px] mx-auto px-6 md:px-12 space-y-16">
+            <div className="text-center max-w-xl mx-auto space-y-4">
+              <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#c26d5c]/10 border border-[#c26d5c]/20 rounded-full text-accent font-mono text-[9px] uppercase tracking-wider">
+                How We Work
+              </span>
+              <h2 className="font-display text-[clamp(28px,4.5vw,44px)] font-light text-ink-1 leading-tight">
+                Our Staged Process
+              </h2>
               <p className="body-md text-ink-2">
                 We avoid guesswork. We follow a structured, transparent process with clear milestones from the initial call to post-launch support.
               </p>
@@ -502,9 +707,9 @@ export default function Home() {
 
             <div className="relative">
               {/* Process connector line for desktop */}
-              <div className="hidden lg:block absolute top-[50%] left-6 right-6 h-[1px] bg-gradient-to-r from-accent/0 via-accent/30 to-accent/0 z-0 -translate-y-1/2" />
+              <div className="hidden lg:block absolute top-[50%] left-6 right-6 h-[1px] bg-gradient-to-r from-[#c26d5c]/0 via-[#c26d5c]/25 to-[#c26d5c]/0 z-0 -translate-y-1/2" />
               
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5 relative z-10">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5 relative z-10">
                 {[
                   { step: "01", title: "Discovery", desc: "We discuss your business needs, analyze competitors, and outline technical requirements." },
                   { step: "02", title: "Strategy & Scope", desc: "We define precise page structures, database schemas, and milestone timelines." },
@@ -512,9 +717,9 @@ export default function Home() {
                   { step: "04", title: "Staging & Review", desc: "You review and test the solution on a private staging link before final delivery." },
                   { step: "05", title: "Launch & Support", desc: "We migrate your site live, index search engines, and begin contract support." }
                 ].map((item, idx) => (
-                  <div key={idx} className="glass-panel p-6 rounded-2xl text-left transition-all duration-300 hover:bg-[#1d2022]/60 hover:border-accent/35 hover:shadow-[0_0_24px_rgba(0,229,255,0.08)] flex flex-col justify-between min-h-[190px]">
+                  <div key={idx} className="bg-[#111010] border border-border p-6 rounded-2xl text-left transition-all duration-300 hover:border-accent/30 hover:shadow-[0_0_30px_rgba(194,109,92,0.05)] flex flex-col justify-between min-h-[190px] group">
                     <div>
-                      <span className="text-[10px] font-mono font-bold text-accent block mb-2">Stage {item.step}</span>
+                      <span className="font-mono text-[28px] font-thin text-[#c26d5c]/15 leading-none block mb-3">{item.step}</span>
                       <h3 className="text-xs font-bold text-ink-1 mb-2 font-mono uppercase tracking-wider">{item.title}</h3>
                       <p className="text-[11px] text-ink-2 leading-relaxed font-semibold">{item.desc}</p>
                     </div>
@@ -526,16 +731,20 @@ export default function Home() {
         </section>
 
         {/* ── 9. TRANSPARENT PRICING MATRIX ── */}
-        <div id="pricing" className="bg-transparent border-b border-white/5">
+        <div id="pricing" className="bg-transparent border-b border-border">
           <Pricing />
         </div>
 
         {/* ── 10. FAQS SECTION ── */}
-        <section className="py-24 relative z-10 bg-transparent border-t border-white/5">
-          <div className="max-w-[1000px] mx-auto px-4 md:px-10 space-y-16">
-            <div className="text-center max-w-xl mx-auto space-y-3">
-              <span className="mixed-headline-eyebrow">FAQ</span>
-              <h2 className="mixed-headline-title">Pricing &amp; Scope Questions</h2>
+        <section className="py-28 relative z-10 bg-transparent border-b border-border">
+          <div className="max-w-[1000px] mx-auto px-6 md:px-12 space-y-16">
+            <div className="text-center max-w-xl mx-auto space-y-4">
+              <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#c26d5c]/10 border border-[#c26d5c]/20 rounded-full text-accent font-mono text-[9px] uppercase tracking-wider">
+                FAQ
+              </span>
+              <h2 className="font-display text-[clamp(28px,4.5vw,44px)] font-light text-ink-1 leading-tight">
+                Pricing &amp; Scope Questions
+              </h2>
               <p className="body-md text-ink-2">
                 Get honest, direct answers regarding our services, commercial practices, and legal operations.
               </p>
@@ -572,13 +781,13 @@ export default function Home() {
                 return (
                   <div
                     key={i}
-                    className="glass-panel rounded-2xl overflow-hidden transition-all duration-300 border-white/5"
+                    className="bg-[#111010] border border-border rounded-2xl overflow-hidden transition-all duration-300 hover:border-accent/20"
                   >
                     <button
                       onClick={() => setActiveFaq(isOpen ? null : i)}
                       className="w-full flex items-center justify-between p-6 text-left cursor-pointer focus:outline-none"
                     >
-                      <h3 className="text-xs sm:text-sm font-bold text-white font-mono uppercase tracking-wider pr-4">
+                      <h3 className="text-xs sm:text-sm font-bold text-ink-1 font-mono uppercase tracking-wider pr-4">
                         {faq.q}
                       </h3>
                       <span className={`text-accent font-mono text-sm transition-transform duration-300 ${isOpen ? "rotate-45" : ""}`}>
@@ -593,7 +802,7 @@ export default function Home() {
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.25, ease: "easeInOut" }}
                         >
-                          <div className="px-6 pb-6 pt-1 border-t border-white/3 text-[11px] sm:text-[12px] text-ink-2 leading-relaxed font-semibold">
+                          <div className="px-6 pb-6 pt-1 border-t border-border text-[11px] sm:text-[12px] text-ink-2 leading-relaxed font-semibold">
                             {faq.a}
                           </div>
                         </motion.div>
@@ -607,16 +816,16 @@ export default function Home() {
         </section>
 
         {/* ── 11. CONTACT SECTION ── */}
-        <section id="contact" className="py-24 bg-transparent relative z-10">
-          <div className="max-w-[1200px] mx-auto px-4 md:px-10 grid gap-12 md:grid-cols-[1fr_1.3fr] items-start">
+        <section id="contact" className="py-28 bg-transparent relative z-10">
+          <div className="max-w-[1280px] mx-auto px-6 md:px-12 grid gap-12 md:grid-cols-[1fr_1.3fr] items-start">
             
             {/* Direct Info panel */}
             <div className="space-y-8 text-left">
               <div>
-                <span className="mixed-headline-eyebrow">
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#c26d5c]/10 border border-[#c26d5c]/20 rounded-full text-accent font-mono text-[9px] uppercase tracking-wider mb-4">
                   Book A Consultation
                 </span>
-                <h2 className="mixed-headline-title">
+                <h2 className="font-display text-[clamp(28px,4.5vw,44px)] font-light text-ink-1 leading-tight mt-3">
                   Let's discuss your roadmap
                 </h2>
                 <p className="text-ink-2 text-xs sm:text-sm mt-3 leading-relaxed font-semibold">

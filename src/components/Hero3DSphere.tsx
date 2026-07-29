@@ -59,7 +59,7 @@ function SphereNodes() {
         />
       </bufferGeometry>
       <pointsMaterial
-        color="#00e5ff"
+        color="#c5a880"
         size={0.05}
         sizeAttenuation={true}
         transparent={true}
@@ -74,7 +74,7 @@ function SphereNodes() {
 export default function Hero3DSphere() {
   return (
     <div className="w-full h-full min-h-[350px] relative flex items-center justify-center pointer-events-none">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,229,255,0.08)_0%,transparent_60%)] blur-3xl" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(197, 168, 128, 0.08)_0%,transparent_60%)] blur-3xl" />
       <Canvas camera={{ position: [0, 0, 4.5], fov: 60 }} gl={{ alpha: true, antialias: true }}>
         <ambientLight intensity={0.5} />
         <SphereNodes />

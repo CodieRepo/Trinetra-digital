@@ -14,6 +14,9 @@ export interface OutboundMessageRequest {
   to: string;
   body: string;
   template?: string;
+  params?: string[];
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video' | 'document' | 'normal';
 }
 
 export interface OutboundMessageResponse {

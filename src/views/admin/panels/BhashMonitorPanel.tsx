@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   Bell, RefreshCw, CheckCircle2, AlertTriangle, 
-  Search, Zap, Smartphone, MessageSquare, Volume2, VolumeX, Radio, Users
+  Search, Zap, Smartphone, MessageSquare, Volume2, VolumeX, Radio, Users, ShieldAlert, Award
 } from "lucide-react";
 
 interface LeadItem {
@@ -15,6 +15,7 @@ interface LeadItem {
 
 export default function BhashMonitorPanel() {
   const [leads, setLeads] = useState<LeadItem[]>([]);
+  const [health, setHealth] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState("");
@@ -53,6 +54,16 @@ export default function BhashMonitorPanel() {
     }
   };
 
+  const fetchHealthStatus = async () => {
+    try {
+      const res = await fetch("/api/health/bhash");
+      const data = await res.json();
+      setHealth(data);
+    } catch (err) {
+      console.error("Error loading health status:", err);
+    }
+  };
+
   const handleManualSync = async () => {
     setSyncing(true);
     try {
@@ -64,6 +75,7 @@ export default function BhashMonitorPanel() {
       const data = await res.json();
       alert(data.message || "Bhash Sync Completed!");
       fetchSyncedData();
+      fetchHealthStatus();
     } catch (e: any) {
       alert(`Sync Failed: ${e.message}`);
     } finally {
@@ -73,9 +85,11 @@ export default function BhashMonitorPanel() {
 
   useEffect(() => {
     fetchSyncedData();
-    // 5-second polling interval for instant dashboard updates & notifications
+    fetchHealthStatus();
+    // 5-second polling interval for real-time dashboard updates & notifications
     const interval = setInterval(() => {
       fetchSyncedData();
+      fetchHealthStatus();
     }, 5000);
 
     return () => clearInterval(interval);
@@ -163,28 +177,97 @@ export default function BhashMonitorPanel() {
         <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/50 space-y-1">
           <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
             <span>GATEWAY STATUS</span>
-            <Radio size={16} className="text-emerald-400 animate-pulse" />
+            <Radio size={16} className={health?.healthy ? "text-emerald-400 animate-pulse" : "text-amber-400"} />
           </div>
-          <div className="text-xl font-bold text-emerald-400">Connected</div>
-          <div className="text-xs text-slate-400">Endpoint: /api/webhooks/bhash</div>
+          <div className={`text-xl font-bold ${health?.healthy ? "text-emerald-400" : "text-amber-400"}`}>
+            {health?.status || "Verifying..."}
+          </div>
+          <div className="text-xs text-slate-400 truncate">
+            {health?.details?.apiKey || "Resolving credentials..."}
+          </div>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/50 space-y-1">
           <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>NOTIFICATION SYSTEM</span>
-            <Bell size={16} className="text-amber-400" />
+            <span>REMAINING CREDITS</span>
+            <Award size={16} className="text-cyan-400" />
           </div>
-          <div className="text-xl font-bold text-amber-300">Active (Chime & Toast)</div>
-          <div className="text-xs text-slate-400">5s Real-time polling listener</div>
+          <div className="text-xl font-bold text-cyan-300">
+            {health?.credits !== null ? health?.credits : "Unlimited"}
+          </div>
+          <div className="text-xs text-slate-400">
+            {health?.rateLimit || "Bhash SMS Wallet"}
+          </div>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/50 space-y-1">
           <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>AUTOMATED BACKGROUND SCRAPER</span>
-            <Zap size={16} className="text-cyan-400" />
+            <span>LAST INBOUND EVENT</span>
+            <Zap size={16} className="text-amber-400" />
           </div>
-          <div className="text-xl font-bold text-cyan-300">GitHub Actions</div>
-          <div className="text-xs text-slate-400">Runs every 10 min (100% Free)</div>
+          <div className="text-lg font-semibold text-amber-300 truncate">
+            {health?.lastWebhookReceived 
+              ? new Date(health.lastWebhookReceived).toLocaleTimeString() 
+              : "No recent events"}
+          </div>
+          <div className="text-xs text-slate-400 truncate">
+            {health?.details?.webhook || "Checking webhook state..."}
+          </div>
+        </div>
+      </div>
+
+      {/* Health Details Checkbox List */}
+      <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-1.5">
+            <Radio size={16} className="text-indigo-400" />
+            Gateway Health Details
+          </h3>
+          <div className="space-y-2.5">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400">Supabase DB Link:</span>
+              <span className={`font-bold ${health?.checks?.supabaseConnected ? "text-emerald-400" : "text-rose-400"}`}>
+                {health?.checks?.supabaseConnected ? "ONLINE" : "OFFLINE"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400">Bhash API Network:</span>
+              <span className={`font-bold ${health?.checks?.connectivity ? "text-emerald-400" : "text-rose-400"}`}>
+                {health?.checks?.connectivity ? "REACHABLE" : "UNREACHABLE"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400">Bhash SMS Auth:</span>
+              <span className={`font-bold ${health?.checks?.apiKeyValid ? "text-emerald-400" : "text-amber-400"}`}>
+                {health?.checks?.apiKeyValid ? "VERIFIED" : "UNCONFIGURED"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400">Webhook Verify Token:</span>
+              <span className={`font-bold ${health?.checks?.webhookActive ? "text-emerald-400" : "text-rose-400"}`}>
+                {health?.checks?.webhookActive ? "SET" : "MISSING"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-1.5">
+            <ShieldAlert size={16} className="text-indigo-400" />
+            Integration Telemetry URLS
+          </h3>
+          <div className="space-y-2">
+            <div className="text-xs">
+              <div className="text-slate-400 font-semibold">Incoming Real-time Webhook (POST):</div>
+              <div className="font-mono text-indigo-300 select-all truncate mt-0.5">
+                {health?.details?.webhookUrl || "Awaiting URL..."}
+              </div>
+            </div>
+            <div className="text-xs pt-1">
+              <div className="text-slate-400 font-semibold">Status Callback Listener:</div>
+              <div className="text-slate-400 italic mt-0.5">{health?.details?.deliveryCallback}</div>
+            </div>
+          </div>
         </div>
       </div>
 
