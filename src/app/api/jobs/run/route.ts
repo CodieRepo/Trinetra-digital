@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { leadIngestionService } from "../../../../../services/leadIngestionService";
+import { leadIngestionService } from "../../../../services/leadIngestionService";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
