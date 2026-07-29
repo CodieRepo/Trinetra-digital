@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { leadIngestionService } from "../../../../../services/leadIngestionService";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,6 +72,8 @@ export async function POST(request: Request) {
           success = await executeGoogleCalendarJob(job, supabaseAdmin);
         } else if (job.job_type === "n8n_webhook_dispatch") {
           success = await executeN8nWebhookJob(job, supabaseAdmin);
+        } else if (job.job_type === "whatsapp_inbound_message") {
+          success = await executeWhatsAppInboundJob(job);
         } else {
           console.warn(`JobRunner: Unknown job type: ${job.job_type}`);
           success = true; // complete to discard
@@ -166,6 +169,27 @@ async function executeN8nWebhookJob(job: any, supabaseAdmin: any): Promise<boole
     }
   } catch (e) {
     console.error("JobRunner: n8n fetch exception:", e);
+    return false;
+  }
+}
+
+async function executeWhatsAppInboundJob(job: any): Promise<boolean> {
+  console.log(`JobRunner: Executing WhatsApp Inbound Ingestion for job ID ${job.id}...`);
+  try {
+    const payload = job.payload;
+    await leadIngestionService.processInboundMessage({
+      tenant_id: payload.tenant_id,
+      phone: payload.mobile,
+      name: payload.name,
+      message: payload.message,
+      flow_node: payload.flow_node || "6206",
+      meta_message_id: payload.meta_message_id,
+      timestamp: payload.timestamp || new Date().toISOString(),
+      rawPayload: payload.rawPayload || payload
+    });
+    return true;
+  } catch (err) {
+    console.error("JobRunner: WhatsApp Inbound job error:", err);
     return false;
   }
 }
