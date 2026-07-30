@@ -6,8 +6,57 @@ import { parsePlainTextPayload, generateFingerprint } from "../../../../../utils
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+interface BhashPayload {
+  mobile: string;
+  message: string;
+  name: string;
+  sourceType: string;
+}
+
+function extractPayload(request: Request, rawBody = ""): BhashPayload | null {
+  const { searchParams } = new URL(request.url);
+  
+  // 1. Try extracting from query string parameters (GET or POST URL params)
+  const fromphone = searchParams.get("fromphone") || searchParams.get("mobile") || searchParams.get("phone");
+  const message = searchParams.get("message") || searchParams.get("msg") || searchParams.get("text");
+  const fromname = searchParams.get("fromname") || searchParams.get("name");
+
+  if (fromphone && message) {
+    return {
+      mobile: fromphone.replace(/\D/g, "").slice(-10),
+      message: message,
+      name: fromname || `Lead (${fromphone.slice(-4)})`,
+      sourceType: "QUERY_STRING"
+    };
+  }
+
+  // 2. Try parsing plain-text body
+  if (rawBody && rawBody.trim() !== "") {
+    const parsed = parsePlainTextPayload(rawBody);
+    if (parsed.mobile && parsed.mobile.length >= 10) {
+      return {
+        mobile: parsed.mobile.replace(/\D/g, "").slice(-10),
+        message: parsed.message,
+        name: parsed.name || `Lead (${parsed.mobile.slice(-4)})`,
+        sourceType: "PLAIN_TEXT_BODY"
+      };
+    }
+  }
+
+  return null;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  const fromphone = searchParams.get("fromphone") || searchParams.get("mobile") || searchParams.get("phone");
+  const message = searchParams.get("message") || searchParams.get("msg") || searchParams.get("text");
+
+  // If query string parameters contain WhatsApp message details, process them directly!
+  if (fromphone && message) {
+    console.log("[Bhash Webhook GET] Processing incoming message via query parameters...");
+    return await processWebhookPayload(request, null);
+  }
+
   const challenge = searchParams.get("challenge") || searchParams.get("hub.challenge");
   return new Response(challenge || "BhashSMS Webhook Endpoint Active", {
     status: 200,
@@ -16,7 +65,6 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const db = getSupabaseAdmin();
   const clientIp = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "webhook-client";
 
   // Rate Limiting Check
@@ -25,27 +73,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
 
-  // 1. Read request body as plain text
+  // Read request body as plain text for POST parser
   let rawBody = "";
   try {
     rawBody = await request.text();
   } catch (err) {
-    return new Response("Invalid request payload", { status: 200 }); // Always return HTTP 200
+    rawBody = "";
   }
 
-  if (!rawBody || rawBody.trim() === "") {
-    return new Response("Empty payload", { status: 200 });
-  }
+  return await processWebhookPayload(request, rawBody);
+}
 
-  // 2. Parse plain text payload
-  const parsed = parsePlainTextPayload(rawBody);
-  if (!parsed.mobile || parsed.mobile.length < 10) {
-    console.warn(`[Bhash Webhook] Ignored malformed payload: "${rawBody}"`);
-    return new Response("Malformed payload ignored", { status: 200 });
-  }
-
-  // 3. Resolve Tenant ID
+async function processWebhookPayload(request: Request, rawBody: string | null) {
+  const db = getSupabaseAdmin();
   const { searchParams } = new URL(request.url);
+
+  // 1. Resolve Tenant ID
   let tenantId = searchParams.get("tenant_id") || searchParams.get("tenant_slug");
   
   if (tenantId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(tenantId)) {
@@ -65,7 +108,14 @@ export async function POST(request: Request) {
     tenantId = process.env.DEFAULT_TENANT_ID || "00000000-0000-0000-0000-000000000001";
   }
 
-  // 4. Fingerprint Deduplication
+  // 2. Extract and Validate Payload
+  const parsed = extractPayload(request, rawBody || "");
+  if (!parsed || !parsed.mobile || parsed.mobile.length < 10) {
+    console.warn(`[Bhash Webhook] Ignored malformed webhook trigger: "${rawBody || request.url}"`);
+    return new Response("Malformed payload ignored", { status: 200 });
+  }
+
+  // 3. Fingerprint Deduplication
   const timestamp = new Date().toISOString();
   const idempotencyKey = generateFingerprint(parsed.mobile, parsed.message, timestamp);
 
@@ -78,7 +128,7 @@ export async function POST(request: Request) {
         idempotency_key: idempotencyKey,
         provider: "bhash",
         payload: {
-          raw: rawBody,
+          raw: rawBody || `QueryString: ${request.url}`,
           parsed,
           timestamp
         },
@@ -86,19 +136,16 @@ export async function POST(request: Request) {
       });
 
     if (logErr) {
-      // Duplicate violation checks (e.g. SQLSTATE 23505 - unique violation)
+      // Duplicate violation checks
       if (logErr.code === "23505" || logErr.message?.includes("unique")) {
         console.log(`ℹ️ Duplicate webhook ignored: ${idempotencyKey}`);
-        
-        // Update health stats duplicates count
         await incrementHealthDuplicates(db, tenantId);
-
         return new Response("Duplicate event ignored", { status: 200 });
       }
       throw logErr;
     }
 
-    // 5. Enqueue background job to job_queue (Serverless-friendly)
+    // 4. Enqueue background job to job_queue (Serverless-friendly)
     const { error: jobErr } = await db
       .from("job_queue")
       .insert({
@@ -120,13 +167,12 @@ export async function POST(request: Request) {
 
     if (jobErr) {
       console.error("[Bhash Webhook] Job queuing failed:", jobErr.message);
-      // Update log to failed state
       await db
         .from("webhook_logs")
         .update({ status: "failed", error_message: jobErr.message })
         .eq("idempotency_key", idempotencyKey);
     } else {
-      // 6. Asynchronously trigger the serverless runner (fire-and-forget)
+      // 5. Asynchronously trigger the serverless runner (fire-and-forget)
       triggerJobRunnerAsync(tenantId).catch(err => {
         console.error("[Bhash Webhook] Async job trigger exception:", err);
       });
@@ -139,7 +185,6 @@ export async function POST(request: Request) {
     console.error("[Bhash Webhook] Fatal processing error:", err);
   }
 
-  // Always return HTTP 200 immediately
   return new Response("OK", { status: 200 });
 }
 
@@ -153,7 +198,7 @@ async function triggerJobRunnerAsync(tenantId: string) {
       "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
     }
   }).catch(() => {
-    // Fire-and-forget suppressor
+    // Suppress async call exception
   });
 }
 
