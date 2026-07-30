@@ -139,7 +139,7 @@ export async function GET(request: Request) {
 
     // Webhook URL endpoint check
     const webhookUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL 
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}/api/webhooks/whatsapp`
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}/api/v1/webhooks/bhash`
       : "Configured (local / custom)";
 
     return NextResponse.json({

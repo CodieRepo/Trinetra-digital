@@ -62,6 +62,80 @@ export async function POST(request: Request) {
     let tenantId = searchParams.get("tenant_id") || searchParams.get("tenant_slug");
     
     const rawBody = await request.text();
+    
+    // Fallback: Intercept BhashSMS plain-text payloads
+    if (rawBody.trim().startsWith("Mobile:")) {
+      console.log("[WebhookRouter] Detected BhashSMS plain-text payload on default WhatsApp endpoint. Routing...");
+      
+      const parts = rawBody.split(",");
+      let mobile = "";
+      let message = "";
+      let name = "";
+
+      for (const part of parts) {
+        const colonIdx = part.indexOf(":");
+        if (colonIdx === -1) continue;
+        const key = part.slice(0, colonIdx).trim().toLowerCase();
+        const val = part.slice(colonIdx + 1).trim();
+        if (key === "mobile") mobile = val;
+        else if (key === "message") message = val;
+        else if (key === "name") name = val;
+      }
+
+      const cleanPhone = mobile.replace(/\D/g, "").slice(-10);
+      if (!cleanPhone || cleanPhone.length < 10) {
+        return new Response("Invalid mobile number", { status: 400 });
+      }
+
+      const { generateFingerprint } = await import("../../../../utils/bhashHelper");
+      const { leadIngestionService } = await import("../../../../services/leadIngestionService");
+      
+      const tenantIdStr = tenantId || process.env.DEFAULT_TENANT_ID || "00000000-0000-0000-0000-000000000001";
+      const messageTimestamp = new Date().toISOString();
+      const fingerprint = generateFingerprint(cleanPhone, message, messageTimestamp);
+
+      // Check unique fingerprint
+      const { data: existingMsg } = await supabaseAdmin
+        .from("messages")
+        .select("id")
+        .eq("fingerprint", fingerprint)
+        .maybeSingle();
+
+      if (existingMsg) {
+        console.log(`[WebhookRouter] Duplicate Bhash message detected: ${fingerprint}. Skipping...`);
+        return new Response("OK (Duplicate)", { status: 200 });
+      }
+
+      const { classifyInboundMessage } = await import("../../../../services/leadClassifierService");
+      const mlResult = classifyInboundMessage(message, cleanPhone, "6206", []);
+
+      await leadIngestionService.processInboundMessage({
+        tenant_id: tenantIdStr,
+        phone: cleanPhone,
+        name: name || `WhatsApp Lead (${cleanPhone.slice(-4)})`,
+        message: message || "Incoming message from Bhash Portal",
+        flow_node: "6206",
+        meta_message_id: fingerprint,
+        timestamp: messageTimestamp,
+        rawPayload: {
+          mobile,
+          message,
+          name,
+          source: "WEBHOOK",
+          provider: "bhash_api",
+          ml_intent: mlResult.intent,
+          ml_probability: mlResult.probability,
+          ml_score: mlResult.score,
+          ml_temperature: mlResult.leadTemperature,
+          ml_summary: mlResult.summary,
+          ml_suggested_action: mlResult.suggestedAction,
+          ml_metadata: mlResult.metadata
+        }
+      });
+
+      return new Response("OK", { status: 200, headers: { "Content-Type": "text/plain" } });
+    }
+
     const payload = JSON.parse(rawBody);
     
     // If not uuid, treat as tenant slug mapping
