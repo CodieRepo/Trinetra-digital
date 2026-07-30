@@ -83,18 +83,7 @@ export class ConversationRepository {
   }
 
   async getMessagesByLeadId(leadId: string, limit = 100): Promise<ConversationMessage[]> {
-    const { data: bhashMsgs } = await this.db
-      .from("bhash_conversations")
-      .select("*")
-      .eq("lead_id", leadId)
-      .order("timestamp", { ascending: true })
-      .limit(limit);
-
-    if (bhashMsgs && bhashMsgs.length > 0) {
-      return bhashMsgs as ConversationMessage[];
-    }
-
-    // Fallback query to messages table
+    // 1. Fetch from unified messages table
     const { data: msgs } = await this.db
       .from("messages")
       .select("*")
@@ -102,21 +91,58 @@ export class ConversationRepository {
       .order("created_at", { ascending: true })
       .limit(limit);
 
-    if (msgs && msgs.length > 0) {
-      return msgs.map((m) => ({
-        id: m.id,
-        lead_id: m.lead_id,
-        direction: m.direction,
-        message: m.body,
-        flow_node: null,
-        button_clicked: null,
-        meta_message_id: m.provider_message_id,
-        timestamp: m.created_at,
-        created_at: m.created_at,
-      }));
+    // 2. Fetch from legacy bhash_conversations table
+    const { data: bhashMsgs } = await this.db
+      .from("bhash_conversations")
+      .select("*")
+      .eq("lead_id", leadId)
+      .order("timestamp", { ascending: true })
+      .limit(limit);
+
+    const mergedMap = new Map<string, ConversationMessage>();
+
+    // Load legacy messages first
+    if (bhashMsgs) {
+      for (const m of bhashMsgs) {
+        const key = m.meta_message_id || `legacy-${m.id}`;
+        mergedMap.set(key, {
+          id: m.id,
+          lead_id: m.lead_id,
+          direction: m.direction,
+          message: m.message,
+          flow_node: m.flow_node,
+          button_clicked: m.button_clicked,
+          meta_message_id: m.meta_message_id,
+          timestamp: m.timestamp || m.created_at,
+          created_at: m.created_at || m.timestamp,
+        });
+      }
     }
 
-    return [];
+    // Load and overwrite/add new messages
+    if (msgs) {
+      for (const m of msgs) {
+        const key = m.provider_message_id || m.fingerprint || `new-${m.id}`;
+        mergedMap.set(key, {
+          id: m.id,
+          lead_id: m.lead_id,
+          direction: m.direction,
+          message: m.body,
+          flow_node: null,
+          button_clicked: null,
+          meta_message_id: m.provider_message_id || m.fingerprint,
+          timestamp: m.created_at,
+          created_at: m.created_at,
+        });
+      }
+    }
+
+    // Sort chronologically by timestamp
+    const sortedList = Array.from(mergedMap.values()).sort((a, b) => {
+      return new Date(a.timestamp || "").getTime() - new Date(b.timestamp || "").getTime();
+    });
+
+    return sortedList.slice(-limit);
   }
 }
 

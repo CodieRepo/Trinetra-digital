@@ -8,9 +8,8 @@ import { useState, lazy, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard, MessageSquare, Users, TrendingUp, Calendar,
-  Megaphone, Zap, BarChart3, FileText, Settings, LogOut,
-  Menu, X, Shield, Loader2, RefreshCw, Activity, Radio, UtensilsCrossed
+  LayoutDashboard, MessageSquare, Settings, LogOut,
+  Menu, X, Shield, Loader2, RefreshCw, Radio, UtensilsCrossed
 } from "lucide-react";
 import { useDashboard } from "../../hooks/useApi";
 import { ToastProvider } from "../../components/ui/Toast";
@@ -46,25 +45,16 @@ const NAV_ITEMS: Array<{
   icon: React.ReactNode;
   group?: string;
 }> = [
-  { key: "overview",       label: "Overview",      icon: <LayoutDashboard size={16} />, group: "main" },
-  { key: "conversations",  label: "Inbox",         icon: <MessageSquare size={16} />,   group: "main" },
-  { key: "leads",          label: "Leads",         icon: <Users size={16} />,           group: "main" },
-  { key: "pipelines",      label: "Pipeline",      icon: <TrendingUp size={16} />,      group: "main" },
-  { key: "conversions",    label: "Bookings",      icon: <Calendar size={16} />,        group: "main" },
-  { key: "restaurant-os",  label: "Restaurant OS", icon: <UtensilsCrossed size={16} />, group: "verticals" },
-  { key: "bhash",          label: "Bhash Monitor", icon: <Radio size={16} />,           group: "growth" },
-  { key: "campaigns",      label: "Campaigns",     icon: <Megaphone size={16} />,       group: "growth" },
-  { key: "automations",    label: "Automations",   icon: <Zap size={16} />,             group: "growth" },
-  { key: "templates",      label: "Templates",     icon: <FileText size={16} />,        group: "growth" },
-  { key: "reports",        label: "Reports",       icon: <BarChart3 size={16} />,       group: "growth" },
-  { key: "settings",       label: "Settings",      icon: <Settings size={16} />,        group: "system" },
-  { key: "diagnostics",    label: "Meta Test",     icon: <Activity size={16} />,        group: "system" },
+  { key: "overview",       label: "Overview",         icon: <LayoutDashboard size={16} />, group: "main" },
+  { key: "conversations",  label: "Inbox",            icon: <MessageSquare size={16} />,   group: "main" },
+  { key: "restaurant-os",  label: "Restaurant OS",    icon: <UtensilsCrossed size={16} />, group: "main" },
+  { key: "bhash",          label: "Bhash Monitor OS", icon: <Radio size={16} />,           group: "growth" },
+  { key: "settings",       label: "Settings",         icon: <Settings size={16} />,        group: "system" },
 ];
 
 const GROUP_LABELS: Record<string, string> = {
-  main:      "CRM",
-  verticals: "Vertical Modules",
-  growth:    "Growth",
+  main:      "Modules",
+  growth:    "Traffic & API",
   system:    "System",
 };
 
@@ -208,9 +198,10 @@ export default function AdminCrm() {
   const location = useLocation();
   const [activeView, setActiveView] = useState<ViewSection>(() => {
     const p = location.pathname;
-    if (p.includes("leads")) return "leads";
-    if (p.includes("conversions")) return "conversions";
-    if (p.includes("pipeline")) return "pipelines";
+    if (p.includes("restaurant")) return "restaurant-os";
+    if (p.includes("bhash")) return "bhash";
+    if (p.includes("settings")) return "settings";
+    if (p.includes("inbox") || p.includes("leads") || p.includes("conversations")) return "conversations";
     return "overview";
   });
   const [collapsed, setCollapsed] = useState(false);
