@@ -83,13 +83,19 @@ export class ConversationRepository {
   }
 
   async getMessagesByLeadId(leadId: string, limit = 100): Promise<ConversationMessage[]> {
-    // 1. Fetch from unified messages table
-    const { data: msgs } = await this.db
-      .from("messages")
-      .select("*")
-      .eq("lead_id", leadId)
-      .order("created_at", { ascending: true })
-      .limit(limit);
+    // 1. Attempt fetch from unified messages table (may not have lead_id column in production)
+    let msgs: any[] | null = null;
+    try {
+      const { data, error } = await this.db
+        .from("messages")
+        .select("*")
+        .eq("lead_id", leadId)
+        .order("created_at", { ascending: true })
+        .limit(limit);
+      if (!error) msgs = data;
+    } catch (e) {
+      // Graceful fallback - messages table schema may not support lead_id
+    }
 
     // 2. Fetch from legacy bhash_conversations table
     const { data: bhashMsgs } = await this.db
