@@ -128,7 +128,48 @@ export class LeadIngestionService {
       }
     }
 
-    // 2. Save Message to bhash_conversations and messages
+    // 2. Resolve or Create Conversation for this Lead
+    let conversationId: string | null = null;
+    try {
+      const { data: existingConv } = await db
+        .from("conversations")
+        .select("id")
+        .eq("tenant_id", tenantId)
+        .eq("lead_id", lead.id)
+        .eq("channel", "whatsapp")
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingConv) {
+        conversationId = existingConv.id;
+        // Touch conversation updated_at
+        await db.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
+      } else {
+        const { data: newConv, error: convErr } = await db
+          .from("conversations")
+          .insert({
+            tenant_id: tenantId,
+            lead_id: lead.id,
+            channel: "whatsapp",
+            provider: "bhash",
+            status: "active",
+          })
+          .select("id")
+          .single();
+
+        if (convErr || !newConv) {
+          console.error("Failed creating conversation:", convErr?.message);
+        } else {
+          conversationId = newConv.id;
+        }
+      }
+    } catch (convErr) {
+      console.error("Conversation resolution error:", convErr);
+    }
+
+    // 3. Save Message to bhash_conversations (legacy) and messages (unified)
     const messageBody = payload.message || `Navigated to node ${payload.flow_node}`;
     const timestampStr = payload.timestamp || new Date().toISOString();
 
@@ -150,24 +191,32 @@ export class LeadIngestionService {
       console.warn("bhash_conversations insert notice:", bhashConvErr.message);
     }
 
-    try {
-      await db.from("messages").insert({
-        tenant_id: tenantId,
-        lead_id: lead.id,
-        direction: "inbound",
-        body: messageBody,
-        provider_message_id: payload.meta_message_id || null,
-        fingerprint: payload.meta_message_id || null,
-        created_at: timestampStr,
-        source: payload.rawPayload?.source || "WEBHOOK",
-        provider: payload.rawPayload?.provider || "bhash_api",
-        status: "delivered"
-      });
-    } catch (e) {
-      console.error("Failed inserting messages record:", e);
+    if (conversationId) {
+      try {
+        const { error: msgInsertErr } = await db.from("messages").insert({
+          tenant_id: tenantId,
+          conversation_id: conversationId,
+          lead_id: lead.id,
+          direction: "inbound",
+          body: messageBody,
+          provider_message_id: payload.meta_message_id || null,
+          fingerprint: payload.meta_message_id || null,
+          created_at: timestampStr,
+          source: payload.rawPayload?.source || "WEBHOOK",
+          provider: payload.rawPayload?.provider || "bhash_api",
+          status: "delivered"
+        });
+        if (msgInsertErr) {
+          console.error("Messages insert error:", msgInsertErr.message);
+        }
+      } catch (e) {
+        console.error("Failed inserting messages record:", e);
+      }
+    } else {
+      console.error("Skipped messages insert: no conversation_id available for lead", lead.id);
     }
 
-    // 3. Log Message Received Timeline Event
+    // 4. Log Message Received Timeline Event
     try {
       await db.from("timeline_events").insert({
         tenant_id: tenantId,
