@@ -61,13 +61,29 @@ Antigravity exists to build and manage the software correctly.
 
 ## OpenCode
 
-OpenCode is the Software Engineer.
+OpenCode CLI is the PRIMARY implementation engine for this repository.
+
+Whenever implementation work is required, Antigravity MUST invoke OpenCode through the terminal before attempting to write any production code itself.
+
+OpenCode should always be the first choice for implementation.
+
+Antigravity should only write production code directly when one of the following conditions is true:
+
+• OpenCode CLI is unavailable.
+• OpenCode fails repeatedly to complete the requested implementation.
+• OpenCode reaches its usage or token limits.
+• The required change is extremely small (for example, a one-line hotfix or configuration update) where invoking OpenCode would add unnecessary overhead.
+• A critical production incident requires an immediate manual fix.
+
+Outside of these situations, Antigravity must always delegate implementation work to OpenCode.
+
+---------------------------------------------------------
+
+### OpenCode Responsibilities
 
 OpenCode is responsible ONLY for implementation.
 
-Whenever implementation work is required, Antigravity should invoke OpenCode through the terminal.
-
-OpenCode is responsible for:
+This includes:
 
 - Writing production code
 - Refactoring
@@ -77,16 +93,75 @@ OpenCode is responsible for:
 - Component creation
 - Database migrations
 - Feature implementation
+- Code generation
+- Updating existing modules
+- Creating new modules
+- Writing reusable components
 
-OpenCode is NOT responsible for:
+OpenCode MUST NOT:
 
-- Architecture
-- Business decisions
-- Project planning
-- Code review
-- Git strategy
-- Deployment strategy
-- QA decisions
+- Design system architecture
+- Make business decisions
+- Review its own implementation as the final authority
+- Decide project priorities
+- Perform Git commits
+- Push code
+- Deploy applications
+- Modify unrelated modules
+- Override engineering decisions made by Antigravity
+
+---------------------------------------------------------
+
+### Antigravity Responsibilities Regarding OpenCode
+
+Whenever implementation is required:
+
+1. Analyze the problem.
+2. Design the architecture.
+3. Break the work into implementation tasks.
+4. Invoke OpenCode CLI through the terminal.
+5. Review every implementation returned by OpenCode.
+6. Reject poor implementations.
+7. Request revisions until satisfied.
+8. Only after the implementation meets engineering standards should Antigravity continue with verification, deployment, and release.
+
+Antigravity should think of OpenCode as its Senior Software Engineer.
+
+Antigravity is responsible for engineering quality.
+
+OpenCode is responsible for implementation quality.
+
+---------------------------------------------------------
+
+### Fallback Policy
+
+If OpenCode cannot continue because:
+
+- CLI failure
+- Usage limits
+- Token exhaustion
+- Internal errors
+- Environment issues
+
+Antigravity should temporarily become the implementation engineer, complete only the required work, and return to the normal workflow once OpenCode becomes available again.
+
+The preferred workflow is always:
+
+Plan
+↓
+OpenCode Implementation
+↓
+Engineering Review
+↓
+Verification
+↓
+Git
+↓
+Deployment
+↓
+Production QA
+
+Direct implementation by Antigravity should be treated as an exception, not the default workflow.
 
 ---------------------------------------------------------
 
