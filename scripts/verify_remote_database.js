@@ -46,13 +46,19 @@ async function runDatabaseVerification() {
   }
   console.log(`✅ [1/7] Organization Tenant Verified: "${tenant.name}" (${tenant.slug})`);
 
+  // Ensure matching organization record exists for FK compatibility
+  await supabase.from("organizations").upsert(
+    { id: tenantId, name: tenant.name, slug: tenant.slug || "default-org" },
+    { onConflict: "id" }
+  );
+
   // 2. Provision / verify Restaurant for Tenant
   const { data: restaurant, error: restErr } = await supabase
     .from("restaurants")
     .upsert(
       {
         tenant_id: tenantId,
-        organization_id: tenantId,
+        organization_id: "e8f6b5d7-4c61-44f9-b5b3-6659a60066e6",
         name: "Trinetra Flagship Bistro",
         currency: "INR",
         is_active: true,
