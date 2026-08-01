@@ -65,6 +65,17 @@ export async function POST(request: Request) {
         .single();
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+      // Sync legacy categories table for FK compatibility
+      const { data: legacySample } = await db.from("categories").select("branch_id").limit(1);
+      const branchId = legacySample && legacySample[0] ? legacySample[0].branch_id : "abe32f5f-aabe-4962-ac38-710e5b8cc5e3";
+      await db.from("categories").upsert({
+        id: data.id,
+        branch_id: branchId,
+        name: data.name,
+        sort_order: data.display_order || 1,
+      });
+
       return NextResponse.json({ success: true, category: data });
     }
 
