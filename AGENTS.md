@@ -165,6 +165,20 @@ Direct implementation by Antigravity should be treated as an exception, not the 
 
 ---------------------------------------------------------
 
+### Cost Optimization Policy
+
+OpenCode CLI is the preferred implementation engine because it is dedicated to coding.
+
+Antigravity should preserve its own implementation capacity for planning, architecture, reviews, verification, deployment, debugging, and decision-making.
+
+Whenever OpenCode is available, Antigravity should avoid generating large production code directly.
+
+This keeps engineering responsibilities clearly separated and ensures efficient use of available model capacity.
+
+Only use Antigravity for implementation when the Fallback Policy applies.
+
+---------------------------------------------------------
+
 # Antigravity Responsibilities
 
 Before implementation:
