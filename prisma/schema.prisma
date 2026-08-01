@@ -1,0 +1,290 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Organization {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  legalName   String?
+  taxId       String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  deletedAt   DateTime?    @map("deleted_at")
+  restaurants Restaurant[]
+
+  @@map("organizations")
+}
+
+model Restaurant {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  name           String
+  cuisineType    String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branches       Branch[]
+
+  @@map("restaurants")
+}
+
+model Branch {
+  id           String       @id @default(uuid()) @db.Uuid
+  restaurantId String       @map("restaurant_id") @db.Uuid
+  name         String
+  address      String
+  phone        String?
+  timezone     String       @default("UTC")
+  currency     String       @default("USD")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  floors       Floor[]
+  categories   Category[]
+  orders       Order[]
+  ingredients  Ingredient[]
+  users        UserBranch[]
+
+  @@map("branches")
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  CASHIER
+  CHEF
+  WAITER
+}
+
+model User {
+  id           String       @id @default(uuid()) @db.Uuid
+  email        String       @unique
+  fullName     String       @map("full_name")
+  pinHash      String?      @map("pin_hash")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  userBranches UserBranch[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model UserBranch {
+  userId   String   @map("user_id") @db.Uuid
+  branchId String   @map("branch_id") @db.Uuid
+  role     UserRole @default(CASHIER)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch   Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([userId, branchId])
+  @@map("user_branches")
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  BILLING
+  DIRTY
+}
+
+model Floor {
+  id       String  @id @default(uuid()) @db.Uuid
+  branchId String  @map("branch_id") @db.Uuid
+  name     String
+  branch   Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  tables   Table[]
+
+  @@map("floors")
+}
+
+model Table {
+  id        String      @id @default(uuid()) @db.Uuid
+  floorId   String      @map("floor_id") @db.Uuid
+  label     String
+  capacity  Int         @default(4)
+  shape     String      @default("SQUARE")
+  positionX Int         @map("position_x") @default(0)
+  positionY Int         @map("position_y") @default(0)
+  status    TableStatus @default(AVAILABLE)
+  floor     Floor       @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  orders    Order[]
+
+  @@map("tables")
+}
+
+model Category {
+  id        String     @id @default(uuid()) @db.Uuid
+  branchId  String     @map("branch_id") @db.Uuid
+  name      String
+  sortOrder Int        @default(0) @map("sort_order")
+  branch    Branch     @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  items     MenuItem[]
+
+  @@map("categories")
+}
+
+model MenuItem {
+  id             String          @id @default(uuid()) @db.Uuid
+  categoryId     String          @map("category_id") @db.Uuid
+  name           String
+  description    String?
+  basePriceCents Int             @map("base_price_cents")
+  isAvailable    Boolean         @default(true) @map("is_available")
+  taxRatePercent Decimal         @default(8.00) @map("tax_rate_percent") @db.Decimal(5, 2)
+  category       Category        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  modifierGroups ModifierGroup[]
+  orderItems     OrderItem[]
+  boms           RecipeBom[]
+
+  @@map("menu_items")
+}
+
+model ModifierGroup {
+  id           String           @id @default(uuid()) @db.Uuid
+  menuItemId   String           @map("menu_item_id") @db.Uuid
+  name         String
+  minSelection Int              @default(0) @map("min_selection")
+  maxSelection Int              @default(1) @map("max_selection")
+  menuItem     MenuItem         @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  options      ModifierOption[]
+
+  @@map("modifier_groups")
+}
+
+model ModifierOption {
+  id              String        @id @default(uuid()) @db.Uuid
+  modifierGroupId String        @map("modifier_group_id") @db.Uuid
+  name            String
+  priceCents      Int           @default(0) @map("price_cents")
+  modifierGroup   ModifierGroup @relation(fields: [modifierGroupId], references: [id], onDelete: Cascade)
+
+  @@map("modifier_options")
+}
+
+model Ingredient {
+  id            String      @id @default(uuid()) @db.Uuid
+  branchId      String      @map("branch_id") @db.Uuid
+  name          String
+  unitOfMeasure String
+  currentStock  Decimal     @default(0.0) @map("current_stock") @db.Decimal(10, 3)
+  reorderPoint  Decimal     @default(10.0) @map("reorder_point") @db.Decimal(10, 3)
+  branch        Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  boms          RecipeBom[]
+
+  @@map("ingredients")
+}
+
+model RecipeBom {
+  id           String     @id @default(uuid()) @db.Uuid
+  menuItemId   String     @map("menu_item_id") @db.Uuid
+  ingredientId String     @map("ingredient_id") @db.Uuid
+  quantityUsed Decimal    @map("quantity_used") @db.Decimal(10, 3)
+  menuItem     MenuItem   @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([menuItemId, ingredientId])
+  @@map("recipe_boms")
+}
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+
+enum OrderStatus {
+  DRAFT
+  PLACED
+  PREPARING
+  READY_TO_SERVE
+  SERVED
+  BILLING
+  PAID
+  CLOSED
+  CANCELLED
+}
+
+model Order {
+  id               String      @id @default(uuid()) @db.Uuid
+  branchId         String      @map("branch_id") @db.Uuid
+  tableId          String?     @map("table_id") @db.Uuid
+  orderNumber      String      @map("order_number")
+  orderType        OrderType   @default(DINE_IN) @map("order_type")
+  status           OrderStatus @default(DRAFT)
+  subtotalCents    Int         @map("subtotal_cents")
+  taxCents         Int         @map("tax_cents")
+  discountCents    Int         @default(0) @map("discount_cents")
+  totalAmountCents Int         @map("total_amount_cents")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  branch           Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  table            Table?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  items            OrderItem[]
+  payments         Payment[]
+
+  @@index([branchId, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  orderId         String   @map("order_id") @db.Uuid
+  menuItemId      String   @map("menu_item_id") @db.Uuid
+  quantity        Int      @default(1)
+  unitPriceCents  Int      @map("unit_price_cents")
+  totalPriceCents Int      @map("total_price_cents")
+  modifiersJson   Json?    @map("modifiers_json")
+  status          String   @default("PENDING")
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem        MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+
+  @@map("order_items")
+}
+
+model Payment {
+  id             String   @id @default(uuid()) @db.Uuid
+  orderId        String   @map("order_id") @db.Uuid
+  paymentMethod  String   @map("payment_method")
+  amountCents    Int      @map("amount_cents")
+  transactionRef String?  @map("transaction_ref")
+  createdAt      DateTime @default(now()) @map("created_at")
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  details    Json
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
+
+model Reservation {
+  id              String   @id @default(uuid()) @db.Uuid
+  branchId        String   @map("branch_id") @db.Uuid
+  tableId         String?  @map("table_id") @db.Uuid
+  customerName    String   @map("customer_name")
+  customerPhone   String   @map("customer_phone")
+  guestCount      Int      @default(2) @map("guest_count")
+  reservationTime DateTime @map("reservation_time")
+  status          String   @default("CONFIRMED")
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("reservations")
+}
