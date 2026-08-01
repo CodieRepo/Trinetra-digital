@@ -1,0 +1,89 @@
+import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "https://placeholder.supabase.co";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder_key";
+
+  return createClient(url, key, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ tableToken: string }> }
+) {
+  try {
+    const { tableToken } = await params;
+
+    if (!tableToken) {
+      return NextResponse.json({ error: "tableToken is required" }, { status: 400 });
+    }
+
+    const supabase = getSupabase();
+
+    // Query table by table_token
+    const { data: table, error: tableErr } = await supabase
+      .from("restaurant_tables")
+      .select("id, restaurant_id, table_number, table_token, is_active")
+      .eq("table_token", tableToken)
+      .maybeSingle();
+
+    if (tableErr || !table || table.is_active === false) {
+      return NextResponse.json({ error: "Table not found or inactive" }, { status: 404 });
+    }
+
+    // Query restaurant info
+    const { data: restaurant, error: restErr } = await supabase
+      .from("restaurants")
+      .select("id, name, address, currency")
+      .eq("id", table.restaurant_id)
+      .maybeSingle();
+
+    if (restErr || !restaurant) {
+      return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
+    }
+
+    // Query menu categories (is_active = true, ordered by display_order)
+    const { data: categories } = await supabase
+      .from("menu_categories")
+      .select("*")
+      .eq("restaurant_id", table.restaurant_id)
+      .eq("is_active", true)
+      .order("display_order", { ascending: true });
+
+    // Query menu items (is_available = true, ordered by display_order)
+    const { data: items } = await supabase
+      .from("menu_items")
+      .select("*")
+      .eq("restaurant_id", table.restaurant_id)
+      .eq("is_available", true)
+      .order("display_order", { ascending: true });
+
+    return NextResponse.json({
+      restaurant: {
+        id: restaurant.id,
+        name: restaurant.name,
+        address: restaurant.address,
+        currency: restaurant.currency,
+      },
+      table: {
+        id: table.id,
+        table_number: table.table_number,
+        table_token: table.table_token,
+      },
+      menu: {
+        categories: categories || [],
+        items: items || [],
+      },
+    });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });
+  }
+}
