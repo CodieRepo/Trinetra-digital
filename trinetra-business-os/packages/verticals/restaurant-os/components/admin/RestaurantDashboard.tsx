@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   ChefHat,
   CreditCard,
+  CheckCircle2,
 } from "lucide-react";
 
 type DashboardOrder = {
@@ -236,6 +237,7 @@ export default function RestaurantDashboard({
     role: "kitchen" as "kitchen" | "waiter",
   });
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // --- Sessions state (Live Tables) ---
   const [sessions, setSessions] = useState<DashboardSession[]>([]);
@@ -277,6 +279,12 @@ export default function RestaurantDashboard({
       setOrders(ordersData.orders);
       setTables(tablesData.tables);
       setCategories(menuData.categories);
+      if (menuData.categories.length > 0) {
+        setItemForm((prev) => ({
+          ...prev,
+          category_id: prev.category_id || menuData.categories[0].id,
+        }));
+      }
       setItems(menuData.items);
       setStaff(staffData.staff);
       setSessions(sessionsData.sessions);
@@ -436,6 +444,19 @@ export default function RestaurantDashboard({
 
   async function createItem(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!itemForm.category_id) {
+      setError("Please select or create a menu category first.");
+      return;
+    }
+    if (!itemForm.name.trim()) {
+      setError("Please enter a valid item name.");
+      return;
+    }
+    if (!itemForm.price || isNaN(Number(itemForm.price)) || Number(itemForm.price) < 0) {
+      setError("Please enter a valid price.");
+      return;
+    }
+
     try {
       setBusyKey("item:create");
       const response = await fetch("/api/client/restaurant/menu", {
@@ -444,20 +465,21 @@ export default function RestaurantDashboard({
         body: JSON.stringify({
           type: "item",
           category_id: itemForm.category_id,
-          name: itemForm.name,
-          description: itemForm.description,
+          name: itemForm.name.trim(),
+          description: itemForm.description.trim(),
           price: Number(itemForm.price),
           is_veg: itemForm.is_veg,
         }),
       });
       await readJson(response);
-      setItemForm({
-        category_id: itemForm.category_id,
+      setItemForm((current) => ({
+        ...current,
         name: "",
         description: "",
         price: "",
         is_veg: true,
-      });
+      }));
+      setError(null);
       await loadAll(false);
     } catch (submitError) {
       setError(
@@ -561,8 +583,10 @@ export default function RestaurantDashboard({
   }
 
   async function copyAccessLink(member: StaffRecord) {
-    const accessUrl = `${window.location.origin}/${member.role}/${restaurantId}?token=${member.access_token}`;
+    const accessUrl = `${window.location.origin}/staff/ops?role=${member.role}&restaurant_id=${restaurantId}&token=${member.access_token}`;
     await navigator.clipboard.writeText(accessUrl);
+    setToastMessage(`Copied staff access link for ${member.name} (${member.role})`);
+    setTimeout(() => setToastMessage(null), 3500);
   }
 
   // --- Session actions (Live Tables) ---
@@ -1520,8 +1544,8 @@ export default function RestaurantDashboard({
                   </button>
                 </div>
                 <div className="mt-4 space-y-3 rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-stone-300">
-                  <p>
-                    Panel path: /{member.role}/{restaurantId}
+                  <p className="font-mono text-xs text-stone-400 truncate">
+                    /staff/ops?role={member.role}&restaurant_id={restaurantId}
                   </p>
                   <button
                     type="button"
@@ -1542,6 +1566,13 @@ export default function RestaurantDashboard({
           </div>
         </section>
       </div>
+
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-slate-900/95 px-5 py-3.5 text-xs font-bold text-emerald-300 shadow-2xl backdrop-blur-md transition-all animate-bounce">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 }

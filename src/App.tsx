@@ -121,6 +121,10 @@ function AnimatedRoutes() {
           <Route path="/r/:tableToken"                        element={<PublicRestaurantMenuPage />} />
           <Route path="/r/:tableToken/order/:orderId"        element={<OrderStatusPage />} />
           <Route path="/staff/ops"                            element={<StaffOpsPage />} />
+          <Route path="/kitchen/:restaurantId"                element={<StaffOpsPage />} />
+          <Route path="/waiter/:restaurantId"                 element={<StaffOpsPage />} />
+          <Route path="/kitchen"                              element={<StaffOpsPage />} />
+          <Route path="/waiter"                               element={<StaffOpsPage />} />
 
 
           {/* Service Sub-pages */}

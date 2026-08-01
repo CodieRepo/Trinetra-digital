@@ -1,13 +1,28 @@
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useParams, useLocation } from "react-router-dom";
 import StaffOrdersPanel from "../../../trinetra-business-os/packages/verticals/restaurant-os/components/staff/StaffOrdersPanel";
 
 export default function StaffOpsPage() {
   const [searchParams] = useSearchParams();
-  const restaurantId = searchParams.get("restaurant_id") || "default-restaurant-uuid";
+  const params = useParams<{ restaurantId?: string }>();
+  const location = useLocation();
+
+  // Resolve restaurant ID from route params or query string
+  const restaurantId = params.restaurantId || searchParams.get("restaurant_id") || "default-restaurant-uuid";
+  
+  // Resolve role from URL path (e.g. /kitchen/xyz or /waiter/xyz) or query param
+  const isKitchenPath = location.pathname.startsWith("/kitchen");
+  const isWaiterPath = location.pathname.startsWith("/waiter");
   const roleParam = searchParams.get("role");
-  const role: "kitchen" | "waiter" = roleParam === "waiter" ? "waiter" : "kitchen";
+  
+  let role: "kitchen" | "waiter" = "kitchen";
+  if (isWaiterPath || roleParam === "waiter") {
+    role = "waiter";
+  } else if (isKitchenPath || roleParam === "kitchen") {
+    role = "kitchen";
+  }
+
+  // Extract access token
   const token = searchParams.get("token") || "";
-  void token;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -31,6 +46,7 @@ export default function StaffOpsPage() {
         <StaffOrdersPanel
           restaurantId={restaurantId}
           role={role}
+          token={token}
         />
       </main>
     </div>

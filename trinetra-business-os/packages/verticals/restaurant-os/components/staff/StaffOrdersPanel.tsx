@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 // ---------------------------------------------------------------------------
 // Types — orders view
@@ -132,12 +131,17 @@ function timeAgo(isoString: string) {
 export default function StaffOrdersPanel({
   restaurantId,
   role,
+  token,
 }: {
   restaurantId: string;
   role: "kitchen" | "waiter";
+  token?: string;
 }) {
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token") ?? "";
+  const effectiveToken =
+    token ||
+    (typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("token") || ""
+      : "");
 
   // Tabs: 'orders' (always) | 'tables' (waiter only)
   const [activeTab, setActiveTab] = useState<"orders" | "tables">("orders");
@@ -156,11 +160,11 @@ export default function StaffOrdersPanel({
 
   // --- Orders loading ---
   const loadOrders = useCallback(async () => {
-    if (!token) return;
+    if (!effectiveToken) return;
     try {
       const res = await fetch(
         `/api/staff/orders?restaurant_id=${restaurantId}`,
-        { cache: "no-store", headers: { Authorization: `Bearer ${token}` } },
+        { cache: "no-store", headers: { Authorization: `Bearer ${effectiveToken}` } },
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load orders.");
@@ -175,16 +179,16 @@ export default function StaffOrdersPanel({
     } finally {
       setLoading(false);
     }
-  }, [restaurantId, token]);
+  }, [restaurantId, effectiveToken]);
 
   // --- Sessions loading ---
   const loadSessions = useCallback(async () => {
-    if (!token) return;
+    if (!effectiveToken) return;
     try {
       setSessionsLoading(true);
       const res = await fetch(
         `/api/staff/sessions?restaurant_id=${restaurantId}`,
-        { cache: "no-store", headers: { Authorization: `Bearer ${token}` } },
+        { cache: "no-store", headers: { Authorization: `Bearer ${effectiveToken}` } },
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load sessions.");
@@ -199,11 +203,11 @@ export default function StaffOrdersPanel({
     } finally {
       setSessionsLoading(false);
     }
-  }, [restaurantId, token]);
+  }, [restaurantId, effectiveToken]);
 
   useEffect(() => {
-    if (!token) {
-      setError("Missing access token.");
+    if (!effectiveToken) {
+      setError("Missing access token. Please access using a valid staff link.");
       setLoading(false);
       return;
     }
@@ -219,7 +223,7 @@ export default function StaffOrdersPanel({
     return () => {
       window.clearInterval(interval);
     };
-  }, [restaurantId, role, token, loadOrders, loadSessions]);
+  }, [restaurantId, role, effectiveToken, loadOrders, loadSessions]);
 
   async function updateStatus(orderId: string, status: string) {
     try {
@@ -228,7 +232,7 @@ export default function StaffOrdersPanel({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${effectiveToken}`,
         },
         body: JSON.stringify({ status }),
       });

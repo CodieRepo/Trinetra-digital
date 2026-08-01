@@ -47,6 +47,10 @@ export async function POST(request: Request) {
     if (!restaurantId) return NextResponse.json({ error: "No restaurant found" }, { status: 404 });
 
     if (body.type === "category") {
+      if (!body.name || typeof body.name !== "string" || !body.name.trim()) {
+        return NextResponse.json({ error: "Category name is required" }, { status: 400 });
+      }
+
       const { count } = await db
         .from("menu_categories")
         .select("*", { count: "exact", head: true })
@@ -58,7 +62,7 @@ export async function POST(request: Request) {
         .insert({
           tenant_id: tenantId,
           restaurant_id: restaurantId,
-          name: body.name,
+          name: body.name.trim(),
           display_order: (count || 0) + 1,
         })
         .select("*")
@@ -80,15 +84,26 @@ export async function POST(request: Request) {
     }
 
     if (body.type === "item") {
+      if (!body.category_id || typeof body.category_id !== "string" || !body.category_id.trim()) {
+        return NextResponse.json({ error: "Please select a valid menu category" }, { status: 400 });
+      }
+      if (!body.name || typeof body.name !== "string" || !body.name.trim()) {
+        return NextResponse.json({ error: "Menu item name is required" }, { status: 400 });
+      }
+      const priceVal = Number(body.price);
+      if (isNaN(priceVal) || priceVal < 0) {
+        return NextResponse.json({ error: "Price must be a valid positive number" }, { status: 400 });
+      }
+
       const { data, error } = await db
         .from("menu_items")
         .insert({
           tenant_id: tenantId,
           restaurant_id: restaurantId,
-          category_id: body.category_id,
-          name: body.name,
-          description: body.description || null,
-          price: body.price,
+          category_id: body.category_id.trim(),
+          name: body.name.trim(),
+          description: body.description ? String(body.description).trim() : null,
+          price: priceVal,
           is_veg: body.is_veg ?? true,
           display_order: body.display_order || 0,
         })
