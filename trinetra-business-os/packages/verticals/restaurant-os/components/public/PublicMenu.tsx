@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Minus, Plus, QrCode, ShoppingBag, User } from "lucide-react";
 import SessionSummaryBar, {
   type SessionOrderSummary,
@@ -85,8 +85,8 @@ export default function PublicRestaurantMenu({
 }: {
   tableToken: string;
 }) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const browseMode = searchParams.get("browse") === "1";
   const [payload, setPayload] = useState<MenuPayload | null>(null);
   const [cart, setCart] = useState<Record<string, CartEntry>>({});
@@ -196,7 +196,7 @@ export default function PublicRestaurantMenu({
                 getOrderKey(tableToken),
                 latestActive.id,
               );
-              router.replace(`/r/${tableToken}/order/${latestActive.id}`);
+              navigate(`/r/${tableToken}/order/${latestActive.id}`, { replace: true });
               return;
             }
 
@@ -254,7 +254,7 @@ export default function PublicRestaurantMenu({
                 } else if (status === "closed" || status === "cancelled") {
                   window.localStorage.removeItem(getOrderKey(tableToken));
                 } else if (!browseMode) {
-                  router.replace(`/r/${tableToken}/order/${existingOrderId}`);
+                  navigate(`/r/${tableToken}/order/${existingOrderId}`, { replace: true });
                   return;
                 } else {
                   // Legacy single-order browse mode: wrap as session format
@@ -319,7 +319,7 @@ export default function PublicRestaurantMenu({
     return () => {
       active = false;
     };
-  }, [browseMode, router, tableToken]);
+  }, [browseMode, navigate, tableToken]);
 
   // Poll session summary every 30s in browse mode
   useEffect(() => {
@@ -556,7 +556,7 @@ export default function PublicRestaurantMenu({
           data.table_session_id,
         );
       }
-      router.push(`/r/${tableToken}/order/${data.order_id}`);
+      navigate(`/r/${tableToken}/order/${data.order_id}`);
     } catch (submitError) {
       setError(
         submitError instanceof Error

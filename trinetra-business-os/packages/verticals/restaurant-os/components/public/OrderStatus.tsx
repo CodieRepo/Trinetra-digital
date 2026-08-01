@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 type OrderPayload = {
   order: {
@@ -168,7 +168,7 @@ export default function RestaurantOrderStatusClient({
     void loadOrder();
     const interval = window.setInterval(() => {
       void loadOrder();
-    }, 10000);
+    }, 5000);
 
     return () => {
       mounted = false;
@@ -212,12 +212,12 @@ export default function RestaurantOrderStatusClient({
                 {currentLabel}
               </h1>
               <p className="mt-2 text-sm text-slate-400">
-                Order ID {payload.order.id.slice(0, 8)} updates every 10
+                Order ID {payload.order.id.slice(0, 8)} updates every 5
                 seconds.
               </p>
             </div>
             <Link
-              href={`/r/${tableToken}?browse=1`}
+              to={`/r/${tableToken}?browse=1`}
               className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-100 hover:bg-white/10"
             >
               Order more

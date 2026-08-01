@@ -1,6 +1,9 @@
+import { useParams } from "react-router-dom";
 import OrderStatus from "../../../trinetra-business-os/packages/verticals/restaurant-os/components/public/OrderStatus";
 
 export default function OrderStatusPage() {
+  const { tableToken, orderId } = useParams<{ tableToken: string; orderId: string }>();
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-white/10 bg-slate-900/80 px-4 py-3 backdrop-blur">
@@ -16,7 +19,7 @@ export default function OrderStatusPage() {
         </div>
       </header>
       <main className="py-4">
-        <OrderStatus tableToken="table-demo-token" orderId="order-demo-id" />
+        <OrderStatus tableToken={tableToken || ""} orderId={orderId || ""} />
       </main>
     </div>
   );

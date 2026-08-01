@@ -1,6 +1,14 @@
+import { useSearchParams } from "react-router-dom";
 import StaffOrdersPanel from "../../../trinetra-business-os/packages/verticals/restaurant-os/components/staff/StaffOrdersPanel";
 
 export default function StaffOpsPage() {
+  const [searchParams] = useSearchParams();
+  const restaurantId = searchParams.get("restaurant_id") || "default-restaurant-uuid";
+  const roleParam = searchParams.get("role");
+  const role: "kitchen" | "waiter" = roleParam === "waiter" ? "waiter" : "kitchen";
+  const token = searchParams.get("token") || "";
+  void token;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-white/10 bg-slate-900 px-6 py-4">
@@ -21,8 +29,8 @@ export default function StaffOpsPage() {
       </header>
       <main className="p-6">
         <StaffOrdersPanel
-          restaurantId="default-restaurant-uuid"
-          role="kitchen"
+          restaurantId={restaurantId}
+          role={role}
         />
       </main>
     </div>

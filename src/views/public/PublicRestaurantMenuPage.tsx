@@ -1,6 +1,9 @@
+import { useParams } from "react-router-dom";
 import PublicMenu from "../../../trinetra-business-os/packages/verticals/restaurant-os/components/public/PublicMenu";
 
 export default function PublicRestaurantMenuPage() {
+  const { tableToken } = useParams<{ tableToken: string }>();
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-white/10 bg-slate-900/80 px-4 py-3 backdrop-blur">
@@ -19,7 +22,7 @@ export default function PublicRestaurantMenuPage() {
         </div>
       </header>
       <main className="py-4">
-        <PublicMenu tableToken="table-demo-token" />
+        <PublicMenu tableToken={tableToken || ""} />
       </main>
     </div>
   );
