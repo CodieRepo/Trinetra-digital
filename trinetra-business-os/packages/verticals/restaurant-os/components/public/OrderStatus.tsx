@@ -60,6 +60,8 @@ const STATUS_COPY: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
+const STEP_ORDER = ["placed", "accepted", "preparing", "ready", "served", "closed"];
+
 export default function RestaurantOrderStatusClient({
   tableToken,
   orderId,
@@ -184,8 +186,11 @@ export default function RestaurantOrderStatusClient({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-950 text-stone-100 flex items-center justify-center">
-        Loading order status...
+      <div className="min-h-screen bg-[linear-gradient(180deg,#0f172a_0%,#111827_45%,#020617_100%)] text-stone-100 flex flex-col items-center justify-center gap-4">
+        <div className="h-12 w-12 rounded-2xl border-2 border-cyan-300/20 border-t-cyan-300 animate-spin" />
+        <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
+          Tracking your order...
+        </p>
       </div>
     );
   }
@@ -237,6 +242,62 @@ export default function RestaurantOrderStatusClient({
               </p>
             </div>
           )}
+
+          {/* Progress stepper */}
+          <div className="mt-6 rounded-[24px] border border-white/8 bg-slate-950/40 p-5">
+            <div className="flex items-center justify-between gap-2">
+              {STEP_ORDER.map((step, index) => {
+                const stepIndex = STEP_ORDER.indexOf(payload.order.status);
+                const cancelled = payload.order.status === "cancelled";
+                const isReached = !cancelled && stepIndex >= index;
+                const isCurrent = !cancelled && stepIndex === index;
+                return (
+                  <div
+                    key={step}
+                    className="flex flex-1 items-center gap-2 last:flex-none"
+                  >
+                    <div className="flex flex-col items-center gap-1.5 flex-1">
+                      <div
+                        className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-colors ${
+                          cancelled
+                            ? "bg-rose-400/15 text-rose-300"
+                            : isCurrent
+                              ? "bg-cyan-400 text-slate-950 shadow-md shadow-cyan-400/30"
+                              : isReached
+                                ? "bg-cyan-400/25 text-cyan-200"
+                                : "bg-white/8 text-slate-500"
+                        }`}
+                      >
+                        {cancelled ? "!" : isReached ? "✓" : index + 1}
+                      </div>
+                      <span
+                        className={`text-center text-[10px] uppercase tracking-wider ${
+                          cancelled
+                            ? "text-rose-300"
+                            : isReached
+                              ? "text-slate-200"
+                              : "text-slate-500"
+                        }`}
+                      >
+                        {STATUS_COPY[step].split(" ").slice(0, 2).join(" ")}
+                      </span>
+                    </div>
+                    {index !== STEP_ORDER.length - 1 ? (
+                      <div
+                        className={`mb-5 h-0.5 flex-1 rounded-full ${
+                          cancelled
+                            ? "bg-white/8"
+                            : isReached && !isCurrent
+                              ? "bg-cyan-400/40"
+                              : "bg-white/8"
+                        }`}
+                      />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="mt-6 grid gap-6 md:grid-cols-[0.85fr_1.15fr]">
             <div className="rounded-[24px] border border-white/8 bg-slate-950/40 p-5">

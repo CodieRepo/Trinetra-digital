@@ -239,6 +239,9 @@ export default function RestaurantDashboard({
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // --- Tab navigation state ---
+  const [activeTab, setActiveTab] = useState<"live" | "menu" | "staff">("live");
+
   // --- Sessions state (Live Tables) ---
   const [sessions, setSessions] = useState<DashboardSession[]>([]);
   const [paymentActionId, setPaymentActionId] = useState<string | null>(null);
@@ -754,6 +757,49 @@ export default function RestaurantDashboard({
           </div>
         ) : null}
 
+        {/* Tab navigation */}
+        <nav className="flex flex-wrap items-center gap-2 rounded-3xl border border-white/10 bg-white/5 p-1.5 backdrop-blur">
+          {[
+            {
+              id: "live" as const,
+              label: "Live Operations",
+              icon: <UtensilsCrossed className="h-4 w-4" />,
+            },
+            {
+              id: "menu" as const,
+              label: "Tables & Menu",
+              icon: <LayoutGrid className="h-4 w-4" />,
+            },
+            {
+              id: "staff" as const,
+              label: "Staff Access",
+              icon: <Users className="h-4 w-4" />,
+            },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer ${
+                activeTab === tab.id
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/25"
+                  : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+              {tab.id === "live" && orders.length > 0 && (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/15 px-1.5 text-[10px] font-black">
+                  {orders.length}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        {/* ═══════════ LIVE TAB — orders + active sessions ═══════════ */}
+        {activeTab === "live" && (
+        <>
         <section className="grid gap-5 xl:grid-cols-3">
           {orders.map((order) => (
             <article
@@ -1194,7 +1240,11 @@ export default function RestaurantDashboard({
             </div>
           ) : null}
         </section>
+        </>
+        )}
 
+        {/* ═══════════ MENU TAB — tables + categories + items ═══════════ */}
+        {activeTab === "menu" && (
         <section className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
             <div className="flex items-center justify-between gap-4">
@@ -1466,7 +1516,10 @@ export default function RestaurantDashboard({
             </div>
           </div>
         </section>
+        )}
 
+        {/* ═══════════ STAFF TAB — kitchen + waiter access ═══════════ */}
+        {activeTab === "staff" && (
         <section className="rounded-[28px] border border-white/10 bg-white/5 p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -1565,10 +1618,11 @@ export default function RestaurantDashboard({
             ) : null}
           </div>
         </section>
+        )}
       </div>
 
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-slate-900/95 px-5 py-3.5 text-xs font-bold text-emerald-300 shadow-2xl backdrop-blur-md transition-all animate-bounce">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-slate-900/95 px-5 py-3.5 text-xs font-bold text-emerald-300 shadow-2xl backdrop-blur-md transition-all">
           <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>

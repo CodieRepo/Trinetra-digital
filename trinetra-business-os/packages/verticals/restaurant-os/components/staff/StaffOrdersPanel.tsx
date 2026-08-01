@@ -124,6 +124,16 @@ function timeAgo(isoString: string) {
   return `${hrs}h ${mins % 60}m ago`;
 }
 
+function dwellMinutes(isoString: string) {
+  return Math.floor(
+    (Date.now() - new Date(isoString).getTime()) / 60000,
+  );
+}
+
+function isUrgent(isoString: string) {
+  return dwellMinutes(isoString) >= 5;
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -320,25 +330,46 @@ export default function StaffOrdersPanel({
         {activeTab === "orders" && (
           <>
             {loading ? (
-              <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-10 text-center">
-                Loading orders...
+              <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/10 bg-white/5 px-6 py-12 text-center">
+                <div className="h-10 w-10 rounded-2xl border-2 border-cyan-300/20 border-t-cyan-300 animate-spin" />
+                <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
+                  Loading orders...
+                </p>
               </div>
             ) : null}
 
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {(payload?.orders ?? []).map((order) => (
+              {(payload?.orders ?? []).map((order) => {
+                const inKitchen =
+                  order.status === "placed" ||
+                  order.status === "accepted" ||
+                  order.status === "preparing";
+                const urgent = inKitchen && isUrgent(order.created_at);
+                return (
                 <div
                   key={order.id}
-                  className="rounded-[28px] border border-white/10 bg-slate-950/45 p-5 shadow-[0_24px_45px_rgba(0,0,0,0.25)]"
+                  className={`rounded-[28px] border p-5 shadow-[0_24px_45px_rgba(0,0,0,0.25)] transition-all ${
+                    urgent
+                      ? "border-amber-400/50 bg-amber-950/20 shadow-amber-900/20"
+                      : "border-white/10 bg-slate-950/45"
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
                         Table
                       </p>
-                      <h2 className="mt-2 text-2xl font-semibold text-white">
-                        {order.table?.table_number ?? "Unknown"}
-                      </h2>
+                      <div className="mt-1 flex items-center gap-2.5">
+                        <h2 className="text-2xl font-semibold text-white">
+                          {order.table?.table_number ?? "Unknown"}
+                        </h2>
+                        {urgent && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-200">
+                            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />
+                            {dwellMinutes(order.created_at)} min
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <span
                       className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.24em] ${STATUS_BADGE[order.status] ?? "bg-cyan-300/10 text-cyan-100 border-cyan-300/20"}`}
@@ -399,12 +430,18 @@ export default function StaffOrdersPanel({
                     ))}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {!loading && !payload?.orders.length ? (
               <div className="mt-8 rounded-[28px] border border-dashed border-white/12 px-6 py-12 text-center text-slate-400">
-                No active orders right now.
+                <p className="text-sm font-semibold text-slate-300">
+                  No active orders right now
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  New orders will appear here automatically.
+                </p>
               </div>
             ) : null}
           </>
@@ -421,8 +458,11 @@ export default function StaffOrdersPanel({
               </div>
             ) : null}
             {sessionsLoading && !sessionsPayload ? (
-              <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-10 text-center">
-                Loading table sessions...
+              <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/10 bg-white/5 px-6 py-12 text-center">
+                <div className="h-10 w-10 rounded-2xl border-2 border-cyan-300/20 border-t-cyan-300 animate-spin" />
+                <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
+                  Loading table sessions...
+                </p>
               </div>
             ) : null}
 
@@ -545,7 +585,12 @@ export default function StaffOrdersPanel({
 
             {!sessionsLoading && !sessionsPayload?.sessions.length ? (
               <div className="mt-8 rounded-[28px] border border-dashed border-white/12 px-6 py-12 text-center text-slate-400">
-                No active table sessions right now.
+                <p className="text-sm font-semibold text-slate-300">
+                  No active table sessions right now
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Occupied tables with open orders will appear here.
+                </p>
               </div>
             ) : null}
           </>

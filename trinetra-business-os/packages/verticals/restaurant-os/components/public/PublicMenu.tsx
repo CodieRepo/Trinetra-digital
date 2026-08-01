@@ -429,6 +429,12 @@ export default function PublicRestaurantMenu({
     }, 0);
   }, [cart, payload]);
 
+  const cartItemsCount = useMemo(
+    () =>
+      Object.values(cart).reduce((sum, entry) => sum + entry.quantity, 0),
+    [cart],
+  );
+
   function updateQuantity(itemId: string, delta: number) {
     setCart((current) => {
       const nextQty = Math.max(0, (current[itemId]?.quantity ?? 0) + delta);
@@ -591,8 +597,11 @@ export default function PublicRestaurantMenu({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-950 text-stone-100 flex items-center justify-center">
-        Loading menu...
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_36%),linear-gradient(180deg,#140f0a_0%,#1f160d_45%,#0c0a09_100%)] text-stone-100 flex flex-col items-center justify-center gap-4">
+        <div className="h-12 w-12 rounded-2xl border-2 border-amber-300/20 border-t-amber-300 animate-spin" />
+        <p className="text-xs font-bold uppercase tracking-[0.3em] text-stone-400">
+          Loading menu...
+        </p>
       </div>
     );
   }
@@ -608,20 +617,26 @@ export default function PublicRestaurantMenu({
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.22),transparent_36%),linear-gradient(180deg,#140f0a_0%,#1f160d_45%,#0c0a09_100%)] text-stone-50">
       <div
-        className={`mx-auto max-w-6xl px-4 py-8 md:px-8${sessionData ? " pb-24" : ""}`}
+        className={`mx-auto max-w-6xl px-4 py-8 md:px-8${sessionData || cartItemsCount > 0 ? " pb-28" : ""}`}
       >
         <div className="mb-8 rounded-[28px] border border-amber-300/20 bg-black/25 p-6 backdrop-blur md:flex md:items-end md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-amber-200/80">
-              Akuafi Restaurant
+              {payload.restaurant.name}
             </p>
             <h1 className="mt-3 text-3xl font-semibold text-white md:text-5xl">
-              {payload.restaurant.name}
+              Digital Menu
             </h1>
-            <p className="mt-3 max-w-2xl text-sm text-stone-300 md:text-base">
-              Table {payload.table.table_number} is live. Scan, order, and track
-              status without an app.
-            </p>
+            {payload.restaurant.address ? (
+              <p className="mt-3 max-w-2xl text-sm text-stone-300 md:text-base">
+                {payload.restaurant.address}
+              </p>
+            ) : (
+              <p className="mt-3 max-w-2xl text-sm text-stone-300 md:text-base">
+                Table {payload.table.table_number} is live. Scan, order, and
+                track status without an app.
+              </p>
+            )}
           </div>
           <div className="mt-5 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-stone-200 md:mt-0">
             <QrCode className="h-4 w-4 text-amber-200" />
@@ -643,20 +658,35 @@ export default function PublicRestaurantMenu({
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {[
-              { id: "all", label: "All Items" },
-              { id: "veg", label: "🟢 Veg Only" },
-              { id: "non-veg", label: "🔴 Non-Veg" },
+              {
+                id: "all" as const,
+                label: "All Items",
+                dot: null,
+              },
+              {
+                id: "veg" as const,
+                label: "Veg",
+                dot: "bg-emerald-500",
+              },
+              {
+                id: "non-veg" as const,
+                label: "Non-Veg",
+                dot: "bg-rose-500",
+              },
             ].map((f) => (
               <button
                 key={f.id}
                 type="button"
-                onClick={() => setVegFilter(f.id as any)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
+                onClick={() => setVegFilter(f.id)}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
                   vegFilter === f.id
                     ? "bg-amber-300 text-stone-950 shadow-md"
                     : "bg-white/5 text-stone-300 border border-white/10 hover:bg-white/10"
                 }`}
               >
+                {f.dot ? (
+                  <span className={`h-2.5 w-2.5 rounded-full ${f.dot}`} />
+                ) : null}
                 {f.label}
               </button>
             ))}
@@ -684,34 +714,52 @@ export default function PublicRestaurantMenu({
                       key={item.id}
                       className="rounded-3xl border border-white/8 bg-stone-950/35 p-4 md:flex md:items-center md:justify-between"
                     >
-                      <div className="md:max-w-[75%]">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-lg font-medium text-white">
-                            {item.name}
-                          </h3>
-                          <span
-                            className={`rounded-full px-2 py-1 text-[10px] uppercase tracking-[0.25em] ${item.is_veg ? "bg-emerald-400/15 text-emerald-200" : "bg-rose-400/15 text-rose-200"}`}
-                          >
-                            {item.is_veg ? "Veg" : "Non-Veg"}
-                          </span>
-                        </div>
-                        {item.description ? (
-                          <p className="mt-2 text-sm text-stone-400">
-                            {item.description}
-                          </p>
+                      <div className="flex items-start gap-4 md:max-w-[75%]">
+                        {item.image_url ? (
+                          <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-white/10">
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                          </div>
                         ) : null}
-                        <p className="mt-3 text-sm font-semibold text-amber-200">
-                          {formatCurrency(
-                            Number(item.price),
-                            payload.restaurant.currency,
-                          )}
-                        </p>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border-2 ${item.is_veg ? "border-emerald-500" : "border-rose-500"}`}
+                              title={item.is_veg ? "Veg" : "Non-Veg"}
+                            >
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${item.is_veg ? "bg-emerald-500" : "bg-rose-500"}`}
+                              />
+                            </span>
+                            <h3 className="text-lg font-medium text-white">
+                              {item.name}
+                            </h3>
+                          </div>
+                          {item.description ? (
+                            <p className="mt-2 text-sm text-stone-400">
+                              {item.description}
+                            </p>
+                          ) : null}
+                          <p className="mt-3 text-sm font-semibold text-amber-200">
+                            {formatCurrency(
+                              Number(item.price),
+                              payload.restaurant.currency,
+                            )}
+                          </p>
+                        </div>
                       </div>
                       <div className="mt-4 flex items-center gap-3 md:mt-0">
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.id, -1)}
-                          className="rounded-full border border-white/10 bg-white/5 p-2 text-stone-200 hover:bg-white/10"
+                          className="rounded-full border border-white/10 bg-white/5 p-2 text-stone-200 hover:bg-white/10 transition-all"
                         >
                           <Minus className="h-4 w-4" />
                         </button>
@@ -721,7 +769,7 @@ export default function PublicRestaurantMenu({
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.id, 1)}
-                          className="rounded-full border border-amber-200/20 bg-amber-300/10 p-2 text-amber-100 hover:bg-amber-300/20"
+                          className="rounded-full border border-amber-200/20 bg-amber-300/10 p-2 text-amber-100 hover:bg-amber-300/20 transition-all"
                         >
                           <Plus className="h-4 w-4" />
                         </button>
@@ -733,7 +781,10 @@ export default function PublicRestaurantMenu({
             ))}
           </div>
 
-          <aside className="sticky top-6 h-fit rounded-[28px] border border-amber-300/20 bg-black/30 p-5 backdrop-blur">
+          <aside
+            id="order-panel"
+            className="sticky top-6 h-fit rounded-[28px] border border-amber-300/20 bg-black/30 p-5 backdrop-blur scroll-mt-6"
+          >
             <div className="flex items-center gap-3 text-white">
               <ShoppingBag className="h-5 w-5 text-amber-200" />
               <h2 className="text-xl font-semibold">
@@ -827,6 +878,30 @@ export default function PublicRestaurantMenu({
           tableToken={tableToken}
           latestOrderId={sessionData.latestOrderId}
         />
+      )}
+
+      {/* ------- Mobile sticky cart bar (hidden on md+) ------- */}
+      {cartItemsCount > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-4 md:hidden">
+          <button
+            type="button"
+            onClick={() => {
+              document
+                .getElementById("order-panel")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-amber-300/25 bg-stone-950/95 px-5 py-3.5 shadow-[0_-4px_24px_rgba(0,0,0,0.45)] backdrop-blur-md cursor-pointer"
+          >
+            <span className="flex items-center gap-2.5 text-sm text-stone-200">
+              <ShoppingBag className="h-4 w-4 text-amber-200" />
+              <span className="font-semibold text-white">{cartItemsCount}</span>
+              {cartItemsCount === 1 ? "item" : "items"} in order
+            </span>
+            <span className="rounded-full bg-amber-300 px-4 py-2 text-xs font-bold text-stone-950">
+              View Cart · {formatCurrency(total, payload.restaurant.currency)}
+            </span>
+          </button>
+        </div>
       )}
 
       {/* ------- Identity gate modal ------- */}
