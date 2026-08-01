@@ -218,7 +218,7 @@ export default function StaffOrdersPanel({
     const interval = window.setInterval(() => {
       void loadOrders();
       if (role === "waiter") void loadSessions();
-    }, 15000);
+    }, 5000);
 
     return () => {
       window.clearInterval(interval);
