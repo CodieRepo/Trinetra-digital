@@ -75,10 +75,7 @@ The NLP pipeline transforms raw text strings into normalized, structured tokens 
 
 ## 3. Hybrid Semantic Search Engine & Mathematical Formulas
 
-The search engine retrieves knowledge base articles by computing a weighted hybrid score combining 5 complementary algorithms:
-
-$$\text{Final Score} = 0.30 \cdot S_{\text{BM25}} + 0.30 \cdot S_{\text{TFIDF}} + 0.20 \cdot S_{\text{Keyword}} + 0.10 \cdot S_{\text{Synonym}} + 0.10 \cdot S_{\text{Fuzzy}} + \text{Boost}_{\text{Priority}}$$
-
+The search engine retrieves knowledge base articles by com
 ### A. Term Frequency-Inverse Document Frequency (TF-IDF)
 Measures the relevance of term $t$ in document $d$ relative to the entire corpus $D$:
 

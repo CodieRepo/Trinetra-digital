@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Minus, Plus, QrCode, ShoppingBag, User } from "lucide-react";
+import { Minus, Plus, QrCode, ShoppingBag, User, Search } from "lucide-react";
 import SessionSummaryBar, {
   type SessionOrderSummary,
 } from "./SessionSummaryBar";
@@ -392,13 +392,34 @@ export default function PublicRestaurantMenu({
     return () => window.clearInterval(interval);
   }, [sessionData, payload, tableToken, clearStoredSession]);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [vegFilter, setVegFilter] = useState<"all" | "veg" | "non-veg">("all");
+
   const groupedItems = useMemo(() => {
-    const items = payload?.menu.items ?? [];
-    return (payload?.menu.categories ?? []).map((category) => ({
-      ...category,
-      items: items.filter((item) => item.category_id === category.id),
-    }));
-  }, [payload]);
+    let items = payload?.menu.items ?? [];
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      items = items.filter(
+        (item) =>
+          item.name.toLowerCase().includes(q) ||
+          (item.description && item.description.toLowerCase().includes(q)),
+      );
+    }
+
+    if (vegFilter === "veg") {
+      items = items.filter((item) => item.is_veg);
+    } else if (vegFilter === "non-veg") {
+      items = items.filter((item) => !item.is_veg);
+    }
+
+    return (payload?.menu.categories ?? [])
+      .map((category) => ({
+        ...category,
+        items: items.filter((item) => item.category_id === category.id),
+      }))
+      .filter((cat) => cat.items.length > 0);
+  }, [payload, searchQuery, vegFilter]);
 
   const total = useMemo(() => {
     if (!payload) return 0;
@@ -605,6 +626,40 @@ export default function PublicRestaurantMenu({
           <div className="mt-5 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-stone-200 md:mt-0">
             <QrCode className="h-4 w-4 text-amber-200" />
             {payload.restaurant.currency || "INR"} menu
+          </div>
+        </div>
+
+        {/* Search & Dietary Filters */}
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search items by name or ingredients..."
+              className="w-full rounded-2xl border border-white/10 bg-white/5 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-stone-500 focus:border-amber-300/40 focus:outline-none transition-all"
+            />
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {[
+              { id: "all", label: "All Items" },
+              { id: "veg", label: "🟢 Veg Only" },
+              { id: "non-veg", label: "🔴 Non-Veg" },
+            ].map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setVegFilter(f.id as any)}
+                className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
+                  vegFilter === f.id
+                    ? "bg-amber-300 text-stone-950 shadow-md"
+                    : "bg-white/5 text-stone-300 border border-white/10 hover:bg-white/10"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
 
