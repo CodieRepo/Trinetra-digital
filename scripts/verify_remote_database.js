@@ -7,9 +7,13 @@ const envPath = path.resolve(process.cwd(), ".env");
 if (fs.existsSync(envPath)) {
   const envConfig = fs.readFileSync(envPath, "utf8");
   envConfig.split("\n").forEach((line) => {
-    const match = line.match(/^([^=]+)=(.*)$/);
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) return;
+    const match = trimmed.match(/^([^=]+)=(.*)$/);
     if (match) {
-      process.env[match[1].trim()] = match[2].trim();
+      const key = match[1].trim();
+      const val = match[2].trim().replace(/^["']|["']$/g, '');
+      process.env[key] = val;
     }
   });
 }
@@ -48,6 +52,7 @@ async function runDatabaseVerification() {
     .upsert(
       {
         tenant_id: tenantId,
+        organization_id: tenantId,
         name: "Trinetra Flagship Bistro",
         currency: "INR",
         is_active: true,
