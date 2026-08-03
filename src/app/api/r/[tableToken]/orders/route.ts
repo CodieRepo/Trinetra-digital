@@ -1,19 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "https://placeholder.supabase.co";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder_key";
-
-  return createClient(url, key, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-}
 
 export async function POST(
   request: Request,
@@ -37,7 +25,7 @@ export async function POST(
       return NextResponse.json({ error: "items array cannot be empty" }, { status: 400 });
     }
 
-    const supabase = getSupabase();
+    const supabase = getSupabaseAdmin();
 
     // Validate table
     const { data: table, error: tableErr } = await supabase
@@ -97,10 +85,10 @@ export async function POST(
     }
 
     // Calculate total amount from menu_items
-    const menuItemIds = items.map((i: any) => i.menu_item_id);
+    const menuItemIds = items.map((i: any) => i.menu_item_id || i.item_id);
     const { data: dbMenuItems, error: menuErr } = await supabase
       .from("menu_items")
-      .select("id, name, price")
+      .select("id, name, price, is_available")
       .in("id", menuItemIds);
 
     if (menuErr || !dbMenuItems) {
@@ -112,10 +100,17 @@ export async function POST(
     const orderItemsToInsert: any[] = [];
 
     for (const item of items) {
-      const dbItem = menuItemMap.get(item.menu_item_id);
+      const targetItemId = item.menu_item_id || item.item_id;
+      const dbItem = menuItemMap.get(targetItemId);
       if (!dbItem) {
         return NextResponse.json(
           { error: `Menu item ${item.menu_item_id} not found` },
+          { status: 400 }
+        );
+      }
+      if (dbItem.is_available === false) {
+        return NextResponse.json(
+          { error: `Item "${dbItem.name}" is currently unavailable` },
           { status: 400 }
         );
       }

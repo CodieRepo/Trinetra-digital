@@ -164,12 +164,16 @@ export default function RestaurantDashboard({
   currency,
   tenantId,
   userRole = "waiter",
+  taxRate = 5.0,
+  taxLabel = "GST",
 }: {
   restaurantId: string;
   restaurantName: string;
   currency: string;
   tenantId?: string;
   userRole?: string;
+  taxRate?: number;
+  taxLabel?: string;
 }) {
   // Shadow global fetch to automatically inject tenant and restaurant context
   const fetch = (input: RequestInfo | URL, init?: RequestInit) => {
@@ -1075,7 +1079,7 @@ export default function RestaurantDashboard({
                         const discObj = getSessionDiscount(session.id);
                         const discAmt = calculateDiscountAmount(session.session_total, discObj);
                         const netPayable = Math.max(0, session.session_total - discAmt);
-                        const tax = (netPayable * 0.05); // 5% GST
+                        const tax = (netPayable * (taxRate / 100));
                         const totalPayable = Math.round(netPayable + tax);
                         return (
                           <div className="bg-black/30 border border-white/5 rounded-2xl p-3 text-xs text-stone-400 space-y-1.5 font-medium">
@@ -1090,7 +1094,7 @@ export default function RestaurantDashboard({
                               </div>
                             )}
                             <div className="flex justify-between">
-                              <span>Taxes (5% GST):</span>
+                              <span>Taxes ({taxRate}% {taxLabel}):</span>
                               <span>{formatCurrency(tax, currency)}</span>
                             </div>
                             <div className="flex justify-between border-t border-white/5 pt-2 text-sm font-semibold text-white">

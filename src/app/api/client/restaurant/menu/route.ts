@@ -70,15 +70,16 @@ export async function POST(request: Request) {
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-      // Sync legacy categories table for FK compatibility
+      // Sync legacy categories table if branch_id is present
       const { data: legacySample } = await db.from("categories").select("branch_id").limit(1);
-      const branchId = legacySample && legacySample[0] ? legacySample[0].branch_id : "abe32f5f-aabe-4962-ac38-710e5b8cc5e3";
-      await db.from("categories").upsert({
-        id: data.id,
-        branch_id: branchId,
-        name: data.name,
-        sort_order: data.display_order || 1,
-      });
+      if (legacySample && legacySample[0]?.branch_id) {
+        await db.from("categories").upsert({
+          id: data.id,
+          branch_id: legacySample[0].branch_id,
+          name: data.name,
+          sort_order: data.display_order || 1,
+        });
+      }
 
       return NextResponse.json({ success: true, category: data });
     }
@@ -93,6 +94,27 @@ export async function POST(request: Request) {
       const priceVal = Number(body.price);
       if (isNaN(priceVal) || priceVal < 0) {
         return NextResponse.json({ error: "Price must be a valid positive number" }, { status: 400 });
+      }
+
+      // Ensure category exists in legacy categories table if FK points there
+      try {
+        const { data: catData } = await db
+          .from("menu_categories")
+          .select("name, display_order")
+          .eq("id", body.category_id.trim())
+          .maybeSingle();
+
+        if (catData) {
+          const defaultBranchId = "abe32f5f-aabe-4962-ac38-710e5b8cc5e3";
+          await db.from("categories").upsert({
+            id: body.category_id.trim(),
+            branch_id: defaultBranchId,
+            name: catData.name,
+            sort_order: catData.display_order || 1,
+          }, { onConflict: "id" });
+        }
+      } catch (e) {
+        // Ignore if categories table does not exist
       }
 
       const { data, error } = await db

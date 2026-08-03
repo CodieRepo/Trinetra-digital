@@ -22,7 +22,7 @@ import TheProblem from "../components/TheProblem";
 import TheSystem from "../components/TheSystem";
 import Testimonials from "../components/Testimonials";
 import LazyVideo from "../components/LazyVideo";
-import Hero2DTrinetra from "../components/Hero2DTrinetra";
+import HeroScrollSequence from "../components/HeroScrollSequence";
 
 // Centralized GSAP and custom typography utilities
 import { gsap, useGSAP } from "../lib/gsap";
@@ -393,12 +393,12 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Column: Immersive 2D Trinetra Eye */}
+            {/* Right Column: Immersive Pinned Hero Scroll Sequence */}
             <div 
               ref={sphereContainerRef}
               className="lg:col-span-5 relative w-full aspect-square flex items-center justify-center"
             >
-              <Hero2DTrinetra />
+              <HeroScrollSequence />
             </div>
           </div>
 

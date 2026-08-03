@@ -4,17 +4,26 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function getBearerToken(request: Request): string {
+function getStaffToken(request: Request, body?: any): string {
   const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
   if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
     return authHeader.substring(7).trim();
   }
+  const xToken = request.headers.get("x-staff-token");
+  if (xToken && xToken.trim()) return xToken.trim();
+  if (body && body.token && typeof body.token === "string") return body.token.trim();
+  try {
+    const url = new URL(request.url);
+    const qToken = url.searchParams.get("token");
+    if (qToken && qToken.trim()) return qToken.trim();
+  } catch (e) {}
   return "";
 }
 
 export async function POST(request: Request) {
   try {
-    const token = getBearerToken(request);
+    const body = await request.json();
+    const token = getStaffToken(request, body);
     if (!token) {
       return NextResponse.json({ error: "Unauthorized: Missing Bearer token" }, { status: 401 });
     }
@@ -31,7 +40,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized: Invalid or inactive staff token" }, { status: 401 });
     }
 
-    const body = await request.json();
     const { session_id, discount_type, discount_value, discount_reason } = body || {};
 
     if (!session_id) {
@@ -76,6 +84,27 @@ export async function POST(request: Request) {
       discountAmount = (subtotal * value) / 100;
     } else if (type === "flat") {
       discountAmount = value;
+    }
+
+    // Enforce role-based discount permissions
+    if (staff.role === "kitchen") {
+      return NextResponse.json({ error: "Forbidden: Kitchen staff cannot process payment" }, { status: 403 });
+    }
+
+    if (staff.role === "waiter") {
+      if (type === "flat" && value > 0) {
+        return NextResponse.json({ error: "Forbidden: Waiter role is not allowed to apply flat discounts" }, { status: 403 });
+      }
+      if (type === "percentage" && value > 5) {
+        return NextResponse.json({ error: "Forbidden: Waiter discount percentage cannot exceed 5%" }, { status: 403 });
+      }
+    } else {
+      if (type === "percentage" && value > 20) {
+        return NextResponse.json({ error: "Forbidden: Discount percentage cannot exceed 20%" }, { status: 403 });
+      }
+      if (type === "flat" && value > subtotal * 0.20) {
+        return NextResponse.json({ error: "Forbidden: Flat discount cannot exceed 20% of subtotal" }, { status: 403 });
+      }
     }
 
     discountAmount = Math.min(subtotal, Math.max(0, discountAmount));

@@ -1,19 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "https://placeholder.supabase.co";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder_key";
-
-  return createClient(url, key, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-}
 
 export async function GET(
   request: Request,
@@ -29,7 +17,7 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const sessionToken = searchParams.get("session_token");
 
-    const supabase = getSupabase();
+    const supabase = getSupabaseAdmin();
 
     // Fetch order details
     let orderQuery = supabase

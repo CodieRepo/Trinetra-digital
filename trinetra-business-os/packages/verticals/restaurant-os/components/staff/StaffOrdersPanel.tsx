@@ -280,7 +280,7 @@ export default function StaffOrdersPanel({
           <p className="mt-2 text-sm text-slate-300">
             {payload?.staff?.name
               ? `${payload.staff.name} is signed in.`
-              : "Live orders update automatically through Supabase Realtime."}
+              : "Live orders update automatically in real-time."}
           </p>
         </div>
 

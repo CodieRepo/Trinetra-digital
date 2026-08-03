@@ -1,19 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "https://placeholder.supabase.co";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder_key";
-
-  return createClient(url, key, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-}
 
 export async function GET(
   _request: Request,
@@ -26,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: "tableToken is required" }, { status: 400 });
     }
 
-    const supabase = getSupabase();
+    const supabase = getSupabaseAdmin();
 
     // Query table by table_token
     const { data: table, error: tableErr } = await supabase

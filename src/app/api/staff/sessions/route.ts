@@ -4,17 +4,24 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function getBearerToken(request: Request): string {
+function getStaffToken(request: Request): string {
   const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
   if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
     return authHeader.substring(7).trim();
   }
+  const xToken = request.headers.get("x-staff-token");
+  if (xToken && xToken.trim()) return xToken.trim();
+  try {
+    const url = new URL(request.url);
+    const qToken = url.searchParams.get("token");
+    if (qToken && qToken.trim()) return qToken.trim();
+  } catch (e) {}
   return "";
 }
 
 export async function GET(request: Request) {
   try {
-    const token = getBearerToken(request);
+    const token = getStaffToken(request);
     if (!token) {
       return NextResponse.json({ error: "Unauthorized: Missing Bearer token" }, { status: 401 });
     }
@@ -31,8 +38,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized: Invalid or inactive staff token" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const restaurantId = searchParams.get("restaurant_id") || staff.restaurant_id;
+    const restaurantId = staff.restaurant_id;
 
     // Fetch active sessions
     const { data: sessions, error: sessionsErr } = await db

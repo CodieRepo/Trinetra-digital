@@ -14,11 +14,19 @@ const VALID_STATUSES = [
   "cancelled",
 ];
 
-function getBearerToken(request: Request): string {
+function getStaffToken(request: Request, body?: any): string {
   const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
   if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
     return authHeader.substring(7).trim();
   }
+  const xToken = request.headers.get("x-staff-token");
+  if (xToken && xToken.trim()) return xToken.trim();
+  if (body && body.token && typeof body.token === "string") return body.token.trim();
+  try {
+    const url = new URL(request.url);
+    const qToken = url.searchParams.get("token");
+    if (qToken && qToken.trim()) return qToken.trim();
+  } catch (e) {}
   return "";
 }
 
@@ -32,7 +40,8 @@ export async function POST(
       return NextResponse.json({ error: "orderId is required" }, { status: 400 });
     }
 
-    const token = getBearerToken(request);
+    const body = await request.json().catch(() => ({}));
+    const token = getStaffToken(request, body);
     if (!token) {
       return NextResponse.json({ error: "Unauthorized: Missing Bearer token" }, { status: 401 });
     }
@@ -49,7 +58,6 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized: Invalid or inactive staff token" }, { status: 401 });
     }
 
-    const body = await request.json();
     const { status } = body || {};
 
     if (!status || !VALID_STATUSES.includes(status)) {
@@ -69,6 +77,20 @@ export async function POST(
 
     if (order.restaurant_id !== staff.restaurant_id) {
       return NextResponse.json({ error: "Forbidden: Order belongs to a different restaurant" }, { status: 403 });
+    }
+
+    // Role-based status transition restrictions
+    if (staff.role === "kitchen" && (status === "served" || status === "closed")) {
+      return NextResponse.json(
+        { error: "Forbidden: Kitchen role cannot mark orders as served or closed" },
+        { status: 403 }
+      );
+    }
+    if (staff.role === "waiter" && (status === "accepted" || status === "preparing")) {
+      return NextResponse.json(
+        { error: "Forbidden: Waiter role cannot transition orders to accepted or preparing" },
+        { status: 403 }
+      );
     }
 
     const from_status = order.status;
@@ -105,4 +127,11 @@ export async function POST(
     const message = err instanceof Error ? err.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+export async function PATCH(
+  request: Request,
+  context: { params: Promise<{ orderId: string }> }
+) {
+  return POST(request, context);
 }

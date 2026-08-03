@@ -1,19 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "https://placeholder.supabase.co";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder_key";
-
-  return createClient(url, key, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-}
 
 export async function POST(
   request: Request,
@@ -33,7 +21,29 @@ export async function POST(
       return NextResponse.json({ error: "session_token is required" }, { status: 400 });
     }
 
-    const supabase = getSupabase();
+    let cleanName: string | null = null;
+    let cleanPhone: string | null = null;
+
+    if (customer_name && typeof customer_name === "string") {
+      const trimmed = customer_name.trim();
+      if (trimmed.length > 0 && trimmed.length < 2) {
+        return NextResponse.json({ error: "Customer name must be at least 2 characters" }, { status: 400 });
+      }
+      if (trimmed.length > 100) {
+        return NextResponse.json({ error: "Customer name cannot exceed 100 characters" }, { status: 400 });
+      }
+      cleanName = trimmed || null;
+    }
+
+    if (customer_phone && typeof customer_phone === "string") {
+      const digitsOnly = customer_phone.replace(/\D/g, "");
+      if (digitsOnly.length > 0 && (digitsOnly.length < 10 || digitsOnly.length > 15)) {
+        return NextResponse.json({ error: "Phone number must be between 10 and 15 digits" }, { status: 400 });
+      }
+      cleanPhone = digitsOnly || null;
+    }
+
+    const supabase = getSupabaseAdmin();
 
     // Validate table
     const { data: table, error: tableErr } = await supabase
@@ -69,8 +79,8 @@ export async function POST(
       const { error: updateErr } = await supabase
         .from("restaurant_table_sessions")
         .update({
-          customer_name: customer_name ?? null,
-          customer_phone: customer_phone ?? null,
+          customer_name: cleanName,
+          customer_phone: cleanPhone,
         })
         .eq("id", targetSessionId);
 
@@ -86,8 +96,8 @@ export async function POST(
           restaurant_id: table.restaurant_id,
           table_id: table.id,
           session_token: session_token,
-          customer_name: customer_name ?? null,
-          customer_phone: customer_phone ?? null,
+          customer_name: cleanName,
+          customer_phone: cleanPhone,
           status: "active",
           payment_status: "unpaid",
         })

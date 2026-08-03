@@ -17,7 +17,7 @@ export default function RestaurantPortal() {
 
   // Tenant / Restaurant States
   const [tenantId, setTenantId] = useState<string | null>(null);
-  const [restaurant, setRestaurant] = useState<{ id: string; name: string; currency: string } | null>(null);
+  const [restaurant, setRestaurant] = useState<{ id: string; name: string; currency: string; tax_rate?: number; tax_label?: string } | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
 
@@ -26,7 +26,7 @@ export default function RestaurantPortal() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
-        resolveRestaurantContext(session.user);
+        resolveRestaurantContext(session);
       } else {
         setLoading(false);
       }
@@ -36,7 +36,7 @@ export default function RestaurantPortal() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
-        resolveRestaurantContext(session.user);
+        resolveRestaurantContext(session);
       } else {
         setTenantId(null);
         setRestaurant(null);
@@ -48,59 +48,36 @@ export default function RestaurantPortal() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const resolveRestaurantContext = async (user: any) => {
+  const resolveRestaurantContext = async (activeSession: any) => {
     try {
       setLoading(true);
-      setUserName(user.user_metadata?.name || user.email);
-
-      // Find user role and tenant
-      const { data: roleData, error: roleError } = await supabase
-        .from("users_roles")
-        .select("tenant_id, role")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (roleError || !roleData) {
-        // Fallback check legacy profiles
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("tenant_id, role")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (profile) {
-          setTenantId(profile.tenant_id);
-          setUserRole("owner"); // Default owner role for client_admin
-          await fetchRestaurant(profile.tenant_id);
-        } else {
-          setAuthError("Account is not mapped to any Restaurant Organization.");
-          supabase.auth.signOut();
-        }
+      const token = activeSession?.access_token;
+      if (!token) {
+        setLoading(false);
         return;
       }
 
-      setTenantId(roleData.tenant_id);
-      setUserRole(roleData.role);
-      await fetchRestaurant(roleData.tenant_id);
+      const res = await fetch("/api/client/restaurant/context", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setAuthError(data.error || "Failed to resolve Restaurant Organization.");
+        supabase.auth.signOut();
+        return;
+      }
+
+      setUserName(data.name || activeSession.user?.email || "");
+      setTenantId(data.tenant_id);
+      setUserRole(data.role);
+      setRestaurant(data.restaurant);
     } catch (err: any) {
-      setAuthError(err.message);
+      setAuthError(err.message || "Failed to load restaurant profile.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchRestaurant = async (tid: string) => {
-    const { data: rest, error } = await supabase
-      .from("restaurants")
-      .select("id, name, currency")
-      .eq("tenant_id", tid)
-      .maybeSingle();
-
-    if (error || !rest) {
-      setAuthError("No active Restaurant Profile found for your Organization.");
-      supabase.auth.signOut();
-    } else {
-      setRestaurant(rest);
     }
   };
 
@@ -327,6 +304,8 @@ export default function RestaurantPortal() {
           restaurantName={restaurant.name}
           currency={restaurant.currency}
           userRole={userRole || "waiter"}
+          taxRate={restaurant.tax_rate ?? 5.0}
+          taxLabel={restaurant.tax_label ?? "GST"}
         />
       </main>
     </div>

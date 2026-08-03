@@ -1,19 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "https://placeholder.supabase.co";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder_key";
-
-  return createClient(url, key, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-}
 
 export async function GET(
   request: Request,
@@ -34,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: "session_token is required" }, { status: 400 });
     }
 
-    const supabase = getSupabase();
+    const supabase = getSupabaseAdmin();
 
     // Validate table
     const { data: table, error: tableErr } = await supabase
@@ -98,6 +86,11 @@ export async function GET(
       items: orderItemsMap[order.id] || [],
     }));
 
+    const sessionTotal = (orders || []).reduce(
+      (sum, o) => (o.status !== "cancelled" ? sum + (Number(o.total_amount) || 0) : sum),
+      0
+    );
+
     return NextResponse.json({
       session: {
         id: session.id,
@@ -106,6 +99,7 @@ export async function GET(
         customer_phone: session.customer_phone,
         payment_status: session.payment_status,
         opened_at: session.opened_at,
+        session_total: sessionTotal,
       },
       orders: ordersWithItems,
     });
