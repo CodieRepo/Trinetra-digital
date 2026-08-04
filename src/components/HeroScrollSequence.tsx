@@ -3,6 +3,7 @@ import { ScrollTrigger } from '../lib/gsap';
 import { useScrollSequence } from '../hooks/useScrollSequence';
 
 interface HeroScrollSequenceProps {
+  children?: React.ReactNode;
   scrollDistance?: string; // e.g. '250vh' or '300vh'
 }
 
@@ -32,6 +33,7 @@ function mapProgressToFrame(progress: number, totalFrames: number = 301): number
 }
 
 export default function HeroScrollSequence({
+  children,
   scrollDistance = '250vh',
 }: HeroScrollSequenceProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -72,7 +74,7 @@ export default function HeroScrollSequence({
         const targetFrame = mapProgressToFrame(rawProgress, totalFrames);
         setCurrentFrameDisplay(targetFrame);
 
-        // Calculate subtle scale zoom (1.0 to 1.05) and opacity fade for extreme polish
+        // Subtle scale zoom (1.0 to 1.05)
         const subtleScale = 1 + rawProgress * 0.04;
         drawFrame(targetFrame, { scale: subtleScale });
       },
@@ -88,9 +90,9 @@ export default function HeroScrollSequence({
       ref={containerRef}
       className="relative w-full overflow-hidden bg-base text-ink-1 select-none"
     >
-      {/* Loading overlay while image sequence preloads */}
+      {/* Preloader Screen Overlay */}
       {!isLoaded && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-base/95 backdrop-blur-lg">
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-base/95 backdrop-blur-lg min-h-screen">
           <div className="flex flex-col items-center gap-4 max-w-sm px-6 text-center">
             <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 border border-accent/20">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-20" />
@@ -117,17 +119,26 @@ export default function HeroScrollSequence({
         </div>
       )}
 
-      {/* Pinned Viewport Container */}
+      {/* Pinned Cinematic Viewport */}
       <div
         ref={pinRef}
-        className="relative w-full h-[100vh] flex items-center justify-center overflow-hidden"
+        className="relative w-full min-h-screen flex items-center justify-center overflow-hidden"
       >
-        {/* Soft Ambient Radial Background Glow */}
+        {/* Full-width Background Canvas Layer */}
+        <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none opacity-85">
+          <canvas
+            ref={canvasRef}
+            className="w-full h-full max-w-[1200px] max-h-[900px] object-contain drop-shadow-[0_0_50px_rgba(197,168,128,0.18)]"
+            aria-label="Trinetra Digital Hero Background Animation"
+          />
+        </div>
+
+        {/* Ambient Radial Background Glow */}
         <div
-          className="absolute inset-0 z-0 pointer-events-none opacity-40 blur-3xl"
+          className="absolute inset-0 z-5 pointer-events-none opacity-40 blur-3xl"
           style={{
             background:
-              'radial-gradient(circle at 50% 50%, rgba(197, 168, 128, 0.18) 0%, rgba(10, 10, 12, 0) 70%)',
+              'radial-gradient(circle at 50% 50%, rgba(197, 168, 128, 0.22) 0%, rgba(10, 10, 12, 0) 70%)',
           }}
         />
 
@@ -136,20 +147,18 @@ export default function HeroScrollSequence({
           className="absolute inset-0 z-10 pointer-events-none"
           style={{
             background:
-              'radial-gradient(circle at 50% 50%, transparent 40%, rgba(10, 10, 12, 0.75) 100%)',
+              'radial-gradient(circle at 50% 50%, transparent 40%, rgba(10, 10, 12, 0.8) 100%)',
           }}
         />
 
-        {/* HTML5 Canvas Rendering Target */}
-        <canvas
-          ref={canvasRef}
-          className="relative z-20 w-full max-w-[850px] aspect-square object-contain pointer-events-none drop-shadow-[0_0_35px_rgba(197,168,128,0.12)]"
-          aria-label="Trinetra Digital Hero Scroll Animation"
-        />
+        {/* Foreground Content Layer */}
+        <div className="relative z-20 w-full h-full pointer-events-auto">
+          {children}
+        </div>
 
-        {/* Scroll Progress & Frame Counter Floating Pill */}
-        <div className="absolute bottom-8 z-30 flex flex-col items-center gap-2 pointer-events-none">
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-border bg-surface-1/80 backdrop-blur-md shadow-sm">
+        {/* Floating Scroll Indicator Pill */}
+        <div className="absolute bottom-6 z-30 flex flex-col items-center gap-2 pointer-events-none">
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-border/80 bg-surface-1/80 backdrop-blur-md shadow-sm">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />

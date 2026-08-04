@@ -178,7 +178,8 @@ export default function RestaurantDashboard({
   // Shadow global fetch to automatically inject tenant and restaurant context
   const fetch = (input: RequestInfo | URL, init?: RequestInit) => {
     const urlStr = typeof input === "string" ? input : input.toString();
-    const url = new URL(urlStr, window.location.origin);
+    const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+    const url = new URL(urlStr, origin);
     
     if (tenantId) {
       url.searchParams.set("tenant_id", tenantId);
@@ -191,10 +192,15 @@ export default function RestaurantDashboard({
     if (tenantId) headers.set("x-tenant-id", tenantId);
     if (restaurantId && restaurantId !== "default") headers.set("x-restaurant-id", restaurantId);
     
-    return window.fetch(url.toString(), {
-      ...init,
-      headers,
-    });
+    return typeof window !== "undefined"
+      ? window.fetch(url.toString(), {
+          ...init,
+          headers,
+        })
+      : globalThis.fetch(url.toString(), {
+          ...init,
+          headers,
+        });
   };
 
   // Discount / Auditing States
