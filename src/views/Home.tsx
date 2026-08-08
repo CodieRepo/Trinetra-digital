@@ -21,8 +21,7 @@ import Pricing from "../components/Pricing";
 import TheProblem from "../components/TheProblem";
 import TheSystem from "../components/TheSystem";
 import Testimonials from "../components/Testimonials";
-import LazyVideo from "../components/LazyVideo";
-import Hero2DTrinetra from "../components/Hero2DTrinetra";
+import HeroScrollAnimation from "../components/HeroScrollAnimation";
 
 // Centralized GSAP and custom typography utilities
 import { gsap, useGSAP } from "../lib/gsap";
@@ -393,12 +392,12 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Column: Interactive 2D Trinetra Eye Node */}
+            {/* Right Column: Interactive Scroll-Based Kinetic Animation */}
             <div 
               ref={sphereContainerRef}
               className="lg:col-span-5 relative w-full aspect-square hidden lg:flex items-center justify-center"
             >
-              <Hero2DTrinetra />
+              <HeroScrollAnimation />
             </div>
           </div>
         </section>
@@ -664,12 +663,25 @@ export default function Home() {
                      Synced Database
                    </span>
                  </div>
-                 <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-lg border border-border shadow-2xl overflow-hidden mb-4">
-                   <LazyVideo src="/videos/why-tinetra.mp4" className="absolute inset-0 w-full h-full" />
-                 </div>
-                 <p className="text-[9.5px] text-ink-3 font-mono text-center leading-relaxed font-semibold">
-                   Continuous data replication checks active.
-                 </p>
+                 <div style={{ position: "relative", aspectRatio: "16/9" }} className="rounded-xl border border-border bg-[#0a0a0c] shadow-2xl overflow-hidden mb-4 p-4 flex flex-col justify-center items-center">
+                    <div className="w-full space-y-2 text-[10px] font-mono">
+                      <div className="flex justify-between items-center bg-white/5 p-2 rounded-lg border border-white/10">
+                        <span className="text-accent font-bold">⚡ Web &amp; Mobile Leads</span>
+                        <span className="text-emerald-400 font-bold">100% Synced</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-white/5 p-2 rounded-lg border border-white/10">
+                        <span className="text-indigo-400 font-bold">🤖 AI Qualifier &amp; WhatsApp</span>
+                        <span className="text-emerald-400 font-bold">Active Bot</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-white/5 p-2 rounded-lg border border-white/10">
+                        <span className="text-teal-400 font-bold">📊 Restaurant POS &amp; CRM</span>
+                        <span className="text-emerald-400 font-bold">Realtime</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-[9.5px] text-ink-3 font-mono text-center leading-relaxed font-semibold">
+                    Continuous data replication &amp; instant syncing active.
+                  </p>
                </div>
              </div>
            </div>
