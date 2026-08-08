@@ -61,22 +61,23 @@ export const useScrollSequence = (
       const img = new Image();
       img.crossOrigin = 'anonymous';
 
-      const handleLoadOrError = () => {
+      const handleLoadOrError = (frameIndex: number) => {
         if (!isMountedRef.current) return;
         loaded++;
         setLoadedCount(loaded);
         const percent = Math.min(100, Math.floor((loaded / totalFrames) * 100));
         setProgress(percent);
 
-        if (loaded === totalFrames) {
+        // Instantly unlock UI as soon as Frame 1 loads!
+        if (frameIndex === 1 || loaded >= 1) {
           setIsLoaded(true);
         }
       };
 
-      img.onload = handleLoadOrError;
+      img.onload = () => handleLoadOrError(i);
       img.onerror = () => {
         console.warn(`[useScrollSequence] Failed frame load at index ${i}: ${src}`);
-        handleLoadOrError();
+        handleLoadOrError(i);
       };
 
       img.src = src;

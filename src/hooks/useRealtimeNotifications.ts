@@ -15,12 +15,44 @@ export type NotificationItem = {
   read: boolean;
 };
 
+// Global AudioContext singleton to prevent browser policy block
+let globalAudioCtx: AudioContext | null = null;
+
+function getAudioContext(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  if (!globalAudioCtx) {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioCtx) {
+      globalAudioCtx = new AudioCtx();
+    }
+  }
+  if (globalAudioCtx && globalAudioCtx.state === "suspended") {
+    globalAudioCtx.resume().catch(() => {});
+  }
+  return globalAudioCtx;
+}
+
+if (typeof window !== "undefined") {
+  const unlockAudio = () => {
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
+    }
+  };
+  window.addEventListener("click", unlockAudio, { once: true });
+  window.addEventListener("keydown", unlockAudio, { once: true });
+  window.addEventListener("touchstart", unlockAudio, { once: true });
+}
+
 // Web Audio API Synthesizer for zero-dependency sound chimes
 function playChimeSound(type: "new_order" | "ready" | "paid") {
   try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
+    }
 
     if (type === "new_order") {
       const osc1 = ctx.createOscillator();

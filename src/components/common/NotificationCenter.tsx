@@ -19,6 +19,7 @@ export default function NotificationCenter({
     setSoundEnabled,
     markAllAsRead,
     clearNotifications,
+    triggerManualSound,
   } = useRealtimeNotifications(restaurantId, role);
 
   function getIcon(type: NotificationItem["type"]) {
@@ -77,6 +78,15 @@ export default function NotificationCenter({
                 )}
               </div>
               <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => triggerManualSound("new_order")}
+                  className="px-2 py-1 rounded-lg border border-amber-400/30 bg-amber-400/10 text-[10px] font-bold text-amber-300 hover:bg-amber-400/20 transition cursor-pointer"
+                  title="Test Speaker Chime"
+                >
+                  🔊 Test
+                </button>
+
                 <button
                   type="button"
                   onClick={() => setSoundEnabled((prev) => !prev)}
