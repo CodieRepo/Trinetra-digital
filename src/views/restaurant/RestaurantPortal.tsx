@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { 
-  Lock, Mail, LogOut, Utensils, ChefHat, LayoutDashboard, AlertCircle, Menu, X 
+  Lock, Mail, LogOut, Utensils, ChefHat, LayoutDashboard, AlertCircle, Menu, X, ArrowLeft 
 } from "lucide-react";
 import RestaurantDashboard from "../../../trinetra-business-os/packages/verticals/restaurant-os/components/admin/RestaurantDashboard";
 
 export default function RestaurantPortal() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -20,33 +20,7 @@ export default function RestaurantPortal() {
   const [restaurant, setRestaurant] = useState<{ id: string; name: string; currency: string; tax_rate?: number; tax_label?: string } | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
-
-  useEffect(() => {
-    // 1. Get current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        resolveRestaurantContext(session);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // 2. Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        resolveRestaurantContext(session);
-      } else {
-        setTenantId(null);
-        setRestaurant(null);
-        setUserRole(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const resolveRestaurantContext = async (activeSession: any) => {
     try {
@@ -57,29 +31,90 @@ export default function RestaurantPortal() {
         return;
       }
 
-      const res = await fetch("/api/client/restaurant/context", {
+      // Read query params if opening from CRM Admin
+      let queryTenantId: string | null = null;
+      let queryRestaurantId: string | null = null;
+      if (typeof window !== "undefined") {
+        const searchParams = new URLSearchParams(window.location.search);
+        queryTenantId = searchParams.get("tenant_id");
+        queryRestaurantId = searchParams.get("restaurant_id");
+      }
+
+      let contextUrl = "/api/client/restaurant/context";
+      const params = new URLSearchParams();
+      if (queryTenantId) params.set("tenant_id", queryTenantId);
+      if (queryRestaurantId) params.set("restaurant_id", queryRestaurantId);
+      if (params.toString()) {
+        contextUrl += `?${params.toString()}`;
+      }
+
+      const res = await fetch(contextUrl, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      const data = await res.json();
 
-      if (!res.ok || !data.success) {
-        setAuthError(data.error || "Failed to resolve Restaurant Organization.");
-        supabase.auth.signOut();
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        throw new Error("Invalid response format from server.");
+      }
+
+      if (!res.ok || !data?.success) {
+        setAuthError(data?.error || "Failed to resolve Restaurant Organization.");
+        setLoading(false);
         return;
       }
 
-      setUserName(data.name || activeSession.user?.email || "");
-      setTenantId(data.tenant_id);
-      setUserRole(data.role);
-      setRestaurant(data.restaurant);
+      setUserName(data.name || activeSession.user?.email || "Staff User");
+      setTenantId(data.tenant_id || queryTenantId || null);
+      setUserRole(data.role || "admin");
+      setRestaurant(data.restaurant || null);
+      setAuthError(null);
     } catch (err: any) {
-      setAuthError(err.message || "Failed to load restaurant profile.");
+      setAuthError(err?.message || "Failed to load restaurant profile.");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let mounted = true;
+
+    // 1. Get current session safely
+    supabase.auth.getSession().then((res) => {
+      if (!mounted) return;
+      const currentSession = res?.data?.session || null;
+      setSession(currentSession);
+      if (currentSession) {
+        resolveRestaurantContext(currentSession);
+      } else {
+        setLoading(false);
+      }
+    }).catch(() => {
+      if (mounted) setLoading(false);
+    });
+
+    // 2. Listen for auth changes safely
+    const authSub = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      if (!mounted) return;
+      setSession(currentSession);
+      if (currentSession) {
+        resolveRestaurantContext(currentSession);
+      } else {
+        setTenantId(null);
+        setRestaurant(null);
+        setUserRole(null);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      authSub?.data?.subscription?.unsubscribe();
+    };
+  }, [supabase]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +130,7 @@ export default function RestaurantPortal() {
         setLoading(false);
       }
     } catch (err: any) {
-      setAuthError(err.message);
+      setAuthError(err?.message || "Login failed");
       setLoading(false);
     }
   };
@@ -132,9 +167,20 @@ export default function RestaurantPortal() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             {authError && (
-              <div className="flex items-center gap-2 p-3.5 bg-rose-950/60 border border-rose-800/40 rounded-xl text-rose-300 text-xs font-medium">
-                <AlertCircle size={14} className="shrink-0" />
-                <p>{authError}</p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 p-3.5 bg-rose-950/60 border border-rose-800/40 rounded-xl text-rose-300 text-xs font-medium">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <p>{authError}</p>
+                </div>
+                {session && (
+                  <a
+                    href="/admin"
+                    className="inline-flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 font-semibold"
+                  >
+                    <ArrowLeft size={12} />
+                    Return to CRM Admin
+                  </a>
+                )}
               </div>
             )}
 
@@ -185,8 +231,6 @@ export default function RestaurantPortal() {
   }
 
   // ── RENDER DOCK/PORTAL CONTAINER ─────────────────────────────────────────────
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const sidebar = (
     <>
       {/* Mobile close button */}
@@ -234,10 +278,10 @@ export default function RestaurantPortal() {
       <div className="p-4 border-t border-white/5 bg-white/[0.01]">
         <div className="flex items-center gap-3 mb-4">
           <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center font-bold text-white text-xs uppercase shadow-md shadow-violet-600/20">
-            {userName.slice(0, 2)}
+            {(userName || "OU").slice(0, 2)}
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-white truncate">{userName}</p>
+            <p className="text-xs font-bold text-white truncate">{userName || "User"}</p>
             <p className="text-[9px] font-black text-violet-400 uppercase tracking-widest mt-0.5">{userRole || "staff"}</p>
           </div>
         </div>
@@ -294,7 +338,7 @@ export default function RestaurantPortal() {
           </div>
           <div className="text-[10px] text-slate-400 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl font-mono flex items-center gap-2 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            ORGANIZATION TENANT: {tenantId.slice(0, 8)}...
+            ORGANIZATION TENANT: {(tenantId || "").slice(0, 8)}...
           </div>
         </div>
 
@@ -302,7 +346,7 @@ export default function RestaurantPortal() {
           tenantId={tenantId}
           restaurantId={restaurant.id}
           restaurantName={restaurant.name}
-          currency={restaurant.currency}
+          currency={restaurant.currency || "INR"}
           userRole={userRole || "waiter"}
           taxRate={restaurant.tax_rate ?? 5.0}
           taxLabel={restaurant.tax_label ?? "GST"}

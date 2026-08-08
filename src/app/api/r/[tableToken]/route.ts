@@ -27,15 +27,37 @@ export async function GET(
       return NextResponse.json({ error: "Table not found or inactive" }, { status: 404 });
     }
 
-    // Query restaurant info
+    // Query restaurant info (standard guaranteed columns only)
     const { data: restaurant, error: restErr } = await supabase
       .from("restaurants")
-      .select("id, name, address, currency")
+      .select("id, tenant_id, name, address, currency")
       .eq("id", table.restaurant_id)
       .maybeSingle();
 
     if (restErr || !restaurant) {
       return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
+    }
+
+    // Query custom UPI settings safely from tenant_settings if available
+    let upiId: string | null = null;
+    let upiQrUrl: string | null = null;
+
+    if (restaurant.tenant_id) {
+      try {
+        const { data: tenantSettings } = await supabase
+          .from("tenant_settings")
+          .select("feature_flags")
+          .eq("tenant_id", restaurant.tenant_id)
+          .maybeSingle();
+
+        if (tenantSettings?.feature_flags?.payment_settings) {
+          const ps = tenantSettings.feature_flags.payment_settings;
+          upiId = ps.upi_id || null;
+          upiQrUrl = ps.upi_qr_url || null;
+        }
+      } catch (tsErr) {
+        console.warn("[TableRoute] Tenant settings lookup note:", tsErr);
+      }
     }
 
     // Query menu categories (is_active = true, ordered by display_order)
@@ -59,7 +81,9 @@ export async function GET(
         id: restaurant.id,
         name: restaurant.name,
         address: restaurant.address,
-        currency: restaurant.currency,
+        currency: restaurant.currency || "INR",
+        upi_id: upiId,
+        upi_qr_url: upiQrUrl,
       },
       table: {
         id: table.id,

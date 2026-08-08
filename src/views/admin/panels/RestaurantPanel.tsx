@@ -254,7 +254,7 @@ export default function RestaurantPanel() {
                     </td>
                     <td className="px-5 py-4">
                       <a
-                        href="/restaurant"
+                        href={`/restaurant?tenant_id=${encodeURIComponent(r.tenantId || r.id)}&restaurant_id=${encodeURIComponent(r.id)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-[10px] font-bold text-violet-400 hover:text-violet-300 transition-colors border border-violet-500/20 bg-violet-500/5 px-2.5 py-1 rounded-lg"

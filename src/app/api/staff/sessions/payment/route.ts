@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized: Invalid or inactive staff token" }, { status: 401 });
     }
 
-    const { session_id, discount_type, discount_value, discount_reason } = body || {};
+    const { session_id, discount_type, discount_value, discount_reason, payment_method, tip_amount } = body || {};
 
     if (!session_id) {
       return NextResponse.json({ error: "session_id is required" }, { status: 400 });
@@ -110,23 +110,32 @@ export async function POST(request: Request) {
     discountAmount = Math.min(subtotal, Math.max(0, discountAmount));
     const grandTotal = Math.max(0, subtotal - discountAmount);
 
+    const finalMethod = payment_method || "cash";
+    const finalTip = Number(tip_amount) || 0;
+
+    const baseBillPayload: any = {
+      tenant_id: session.tenant_id || staff.tenant_id,
+      restaurant_id: session.restaurant_id || staff.restaurant_id,
+      session_id: session.id,
+      subtotal: subtotal,
+      discount_type: type,
+      discount_value: value,
+      discount_amount: discountAmount,
+      discount_reason: discount_reason || null,
+      grand_total: grandTotal,
+    };
+
     // Inserts/upserts restaurant_bills record
     const { error: billErr } = await db
       .from("restaurant_bills")
       .upsert({
-        tenant_id: session.tenant_id || staff.tenant_id,
-        restaurant_id: session.restaurant_id || staff.restaurant_id,
-        session_id: session.id,
-        subtotal: subtotal,
-        discount_type: type,
-        discount_value: value,
-        discount_amount: discountAmount,
-        discount_reason: discount_reason || null,
-        grand_total: grandTotal,
+        ...baseBillPayload,
+        payment_method: finalMethod,
+        tip_amount: finalTip,
       }, { onConflict: "session_id" });
 
     if (billErr) {
-      return NextResponse.json({ error: billErr.message }, { status: 500 });
+      await db.from("restaurant_bills").upsert(baseBillPayload, { onConflict: "session_id" });
     }
 
     // If discount applied (>0), insert audit row in restaurant_discount_audit

@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import NotificationCenter from "@/components/common/NotificationCenter";
+import PaymentSettingsPanel from "@/views/admin/panels/PaymentSettingsPanel";
+import ThermalReceiptModal, { ReceiptData } from "./ThermalReceiptModal";
 import {
   Copy,
   Download,
@@ -13,6 +16,8 @@ import {
   ChefHat,
   CreditCard,
   CheckCircle2,
+  QrCode,
+  Printer,
 } from "lucide-react";
 
 type DashboardOrder = {
@@ -250,7 +255,44 @@ export default function RestaurantDashboard({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // --- Tab navigation state ---
-  const [activeTab, setActiveTab] = useState<"live" | "menu" | "staff">("live");
+  const [activeTab, setActiveTab] = useState<"live" | "menu" | "staff" | "payment">("live");
+  const [thermalReceiptData, setThermalReceiptData] = useState<ReceiptData | null>(null);
+  const [adminPaymentMethods, setAdminPaymentMethods] = useState<Record<string, string>>({});
+
+  const openThermalReceipt = (session: DashboardSession) => {
+    setThermalReceiptData({
+      restaurantName: restaurantName || "Trinetra Restaurant OS",
+      restaurantAddress: null,
+      businessGstin: null,
+      tableNumber: session.table?.table_number || "1",
+      sessionId: session.id,
+      customerName: session.customer_name || null,
+      customerPhone: session.customer_phone || null,
+      openedAt: session.opened_at || new Date().toISOString(),
+      paidAt: session.paid_at || new Date().toISOString(),
+      orders: (session.orders || []).map((ord) => ({
+        id: ord.id,
+        totalAmount: Number(ord.total_amount || 0),
+        items: (ord.items || []).map((it) => ({
+          id: it.id,
+          name: it.name,
+          price: Number((it as any).price || 0),
+          quantity: Number(it.quantity || 1),
+        })),
+      })),
+      bill: {
+        subtotal: Number(session.bill?.subtotal ?? session.session_total),
+        discountType: session.bill?.discount_type || "none",
+        discountValue: Number(session.bill?.discount_value || 0),
+        discountAmount: Number(session.bill?.discount_amount || 0),
+        discountReason: session.bill?.discount_reason || null,
+        taxAmount: Number(session.bill?.tax_amount || 0),
+        serviceCharge: Number(session.bill?.service_charge || 0),
+        roundOff: Number(session.bill?.round_off || 0),
+        grandTotal: Number(session.bill?.grand_total ?? session.session_total),
+      },
+    });
+  };
 
   // --- Sessions state (Live Tables) ---
   const [sessions, setSessions] = useState<DashboardSession[]>([]);
@@ -609,7 +651,8 @@ export default function RestaurantDashboard({
       try {
         setPaymentActionId(sessionId);
         const discount = sessionDiscounts[sessionId];
-        const body: any = { session_id: sessionId, action };
+        const selectedMethod = adminPaymentMethods[sessionId] || "cash";
+        const body: any = { session_id: sessionId, action, payment_method: selectedMethod };
         
         if (action === "mark_paid" && discount && discount.value > 0) {
           body.discount_type = discount.type;
@@ -701,13 +744,16 @@ export default function RestaurantDashboard({
                 Live table management, QR digital menu, kitchen KDS queue, waiter ops, and real-time settlement for {restaurantName || "Default Organization"}.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => void loadAll(true)}
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
-            >
-              Refresh Module
-            </button>
+            <div className="flex items-center gap-3">
+              <NotificationCenter restaurantId={restaurantId} role={userRole} />
+              <button
+                type="button"
+                onClick={() => void loadAll(true)}
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
+              >
+                Refresh Module
+              </button>
+            </div>
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -784,6 +830,11 @@ export default function RestaurantDashboard({
               id: "staff" as const,
               label: "Staff Access",
               icon: <Users className="h-4 w-4" />,
+            },
+            {
+              id: "payment" as const,
+              label: "Payment & Settings",
+              icon: <QrCode className="h-4 w-4" />,
             },
           ].map((tab) => (
             <button
@@ -1015,6 +1066,15 @@ export default function RestaurantDashboard({
                         <span>Grand Total Paid:</span>
                         <span className="text-amber-200 font-mono">{formatCurrency(session.bill.grand_total, currency)}</span>
                       </div>
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => openThermalReceipt(session)}
+                          className="flex items-center gap-1.5 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-400/20 transition cursor-pointer"
+                        >
+                          <Printer size={13} /> Print 80mm Receipt
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <div className="mt-4 border-t border-white/5 pt-4 space-y-3">
@@ -1114,35 +1174,61 @@ export default function RestaurantDashboard({
                   )}
 
                   {/* Payment action */}
-                  <div className="mt-5 flex items-center justify-between border-t border-white/8 pt-4">
-                    <p className="text-xs text-stone-400">
-                      {session.payment_status === "paid"
-                        ? "Bill settled"
-                        : "Bill unpaid"}
-                    </p>
-                    <button
-                      type="button"
-                      disabled={paymentActionId === session.id}
-                      onClick={() =>
-                        void togglePayment(
-                          session.id,
+                  <div className="mt-5 flex flex-col gap-3 border-t border-white/8 pt-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-stone-400">
+                        {session.payment_status === "paid"
+                          ? "Bill settled"
+                          : "Collect & Settle Payment:"}
+                      </p>
+                      <button
+                        type="button"
+                        disabled={paymentActionId === session.id}
+                        onClick={() =>
+                          void togglePayment(
+                            session.id,
+                            session.payment_status === "paid"
+                              ? "undo_paid"
+                              : "mark_paid",
+                          )
+                        }
+                        className={`rounded-full px-4 py-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer ${
                           session.payment_status === "paid"
-                            ? "undo_paid"
-                            : "mark_paid",
-                        )
-                      }
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                        session.payment_status === "paid"
-                          ? "border border-stone-400/30 bg-stone-400/15 text-stone-200 hover:bg-stone-400/25"
-                          : "border border-emerald-400/30 bg-emerald-400/15 text-emerald-100 hover:bg-emerald-400/25"
-                      }`}
-                    >
-                      {paymentActionId === session.id
-                        ? "Updating..."
-                        : session.payment_status === "paid"
-                          ? "Undo Paid"
-                          : "Mark Paid"}
-                    </button>
+                            ? "border border-stone-400/30 bg-stone-400/15 text-stone-200 hover:bg-stone-400/25"
+                            : "border border-emerald-400/30 bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/20"
+                        }`}
+                      >
+                        {paymentActionId === session.id
+                          ? "Updating..."
+                          : session.payment_status === "paid"
+                            ? "Undo Paid"
+                            : "Mark Paid ✓"}
+                      </button>
+                    </div>
+
+                    {session.payment_status !== "paid" && (
+                      <div className="flex items-center gap-1.5 rounded-xl bg-white/5 p-1 border border-white/10 text-xs font-bold w-fit">
+                        {["cash", "upi", "card", "split"].map((method) => (
+                          <button
+                            key={method}
+                            type="button"
+                            onClick={() =>
+                              setAdminPaymentMethods((prev) => ({
+                                ...prev,
+                                [session.id]: method,
+                              }))
+                            }
+                            className={`px-3 py-1 rounded-lg uppercase transition ${
+                              (adminPaymentMethods[session.id] || "cash") === method
+                                ? "bg-amber-500 text-slate-950 font-extrabold shadow-sm"
+                                : "text-stone-400 hover:text-white"
+                            }`}
+                          >
+                            {method}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Close session action */}
@@ -1629,7 +1715,19 @@ export default function RestaurantDashboard({
           </div>
         </section>
         )}
+
+        {/* ═══════════ PAYMENT & SETTINGS TAB ═══════════ */}
+        {activeTab === "payment" && (
+          <PaymentSettingsPanel restaurantId={restaurantId} tenantId={tenantId} />
+        )}
       </div>
+
+      {thermalReceiptData && (
+        <ThermalReceiptModal
+          receipt={thermalReceiptData}
+          onClose={() => setThermalReceiptData(null)}
+        />
+      )}
 
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-slate-900/95 px-5 py-3.5 text-xs font-bold text-emerald-300 shadow-2xl backdrop-blur-md transition-all">

@@ -1,5 +1,6 @@
 import { useSearchParams, useParams, useLocation } from "react-router-dom";
 import { UtensilsCrossed } from "lucide-react";
+import NotificationCenter from "@/components/common/NotificationCenter";
 import StaffOrdersPanel from "../../../trinetra-business-os/packages/verticals/restaurant-os/components/staff/StaffOrdersPanel";
 
 export default function StaffOpsPage() {
@@ -37,9 +38,12 @@ export default function StaffOpsPage() {
               <p className="text-xs text-slate-400">Kitchen KDS & Waiter Dispatch Panel</p>
             </div>
           </div>
-          <span className="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-3 py-1 rounded-full">
-            Realtime Active
-          </span>
+          <div className="flex items-center gap-3">
+            <NotificationCenter restaurantId={restaurantId} role={role} />
+            <span className="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-3 py-1 rounded-full">
+              Realtime Active
+            </span>
+          </div>
         </div>
       </header>
       <main className="p-6">

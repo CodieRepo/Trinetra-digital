@@ -91,6 +91,13 @@ export async function GET(
       0
     );
 
+    // Fetch bill info if present
+    const { data: bill } = await supabase
+      .from("restaurant_bills")
+      .select("subtotal, discount_type, discount_value, discount_amount, discount_reason, tax_amount, service_charge, round_off, grand_total, created_at")
+      .eq("session_id", session.id)
+      .maybeSingle();
+
     return NextResponse.json({
       session: {
         id: session.id,
@@ -102,6 +109,7 @@ export async function GET(
         session_total: sessionTotal,
       },
       orders: ordersWithItems,
+      bill: bill || null,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });

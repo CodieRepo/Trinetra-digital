@@ -167,6 +167,8 @@ export default function StaffOrdersPanel({
     useState<SessionsPayload | null>(null);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [staffPaymentMethods, setStaffPaymentMethods] = useState<Record<string, string>>({});
+  const [staffSettlingId, setStaffSettlingId] = useState<string | null>(null);
 
   // --- Orders loading ---
   const loadOrders = useCallback(async () => {
@@ -578,6 +580,75 @@ export default function StaffOrdersPanel({
                         </div>
                       ))}
                     </div>
+
+                    {/* Waiter Payment Settlement Authority Bar */}
+                    {role === "waiter" && (
+                      <div className="mt-4 border-t border-white/10 pt-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-slate-400 font-medium">
+                            {session.payment_status === "paid" ? "Bill Settled" : "Collect & Settle Payment:"}
+                          </span>
+                          <span className="text-xs font-bold text-amber-300">
+                            Total: {formatCurrency(session.session_total)}
+                          </span>
+                        </div>
+
+                        {session.payment_status !== "paid" && (
+                          <div className="mt-3 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 rounded-xl bg-white/5 p-1 border border-white/10 text-[11px] font-bold">
+                              {["cash", "upi", "card"].map((m) => (
+                                <button
+                                  key={m}
+                                  type="button"
+                                  onClick={() =>
+                                    setStaffPaymentMethods((prev) => ({ ...prev, [session.id]: m }))
+                                  }
+                                  className={`px-2.5 py-1 rounded-lg uppercase transition ${
+                                    (staffPaymentMethods[session.id] || "cash") === m
+                                      ? "bg-amber-500 text-slate-950 font-extrabold shadow-sm"
+                                      : "text-slate-400 hover:text-white"
+                                  }`}
+                                >
+                                  {m}
+                                </button>
+                              ))}
+                            </div>
+
+                            <button
+                              type="button"
+                              disabled={staffSettlingId === session.id}
+                              onClick={async () => {
+                                try {
+                                  setStaffSettlingId(session.id);
+                                  const method = staffPaymentMethods[session.id] || "cash";
+                                  const res = await fetch("/api/staff/sessions/payment", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                      token,
+                                      session_id: session.id,
+                                      payment_method: method,
+                                    }),
+                                  });
+                                  if (!res.ok) {
+                                    const d = await res.json();
+                                    throw new Error(d.error || "Failed to settle bill");
+                                  }
+                                  void loadSessions();
+                                } catch (e: any) {
+                                  alert(e.message || "Failed to settle payment");
+                                } finally {
+                                  setStaffSettlingId(null);
+                                }
+                              }}
+                              className="rounded-xl bg-emerald-500 px-4 py-1.5 text-xs font-black text-slate-950 hover:bg-emerald-400 transition shadow-md shadow-emerald-500/20 disabled:opacity-50 cursor-pointer"
+                            >
+                              {staffSettlingId === session.id ? "Settling..." : "Mark Paid ✓"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

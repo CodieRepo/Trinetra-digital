@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     const db = getSupabaseAdmin();
     const body = await request.json();
     const { tenantId, restaurantId } = await resolveRestaurantContext(request, body);
-    const { session_id, action, discount_type, discount_value, discount_reason, tax_rate, service_charge_rate } = body;
+    const { session_id, action, discount_type, discount_value, discount_reason, tax_rate, service_charge_rate, payment_method, tip_amount } = body;
 
     if (!session_id || !action) {
       return NextResponse.json({ error: "session_id and action required" }, { status: 400 });
@@ -84,34 +84,54 @@ export async function POST(request: Request) {
       }
 
       // 4. Billing Math calculations
+      const parsedTaxRate = tax_rate !== undefined && tax_rate !== null && !isNaN(Number(tax_rate)) ? Number(tax_rate) : 5;
+      const parsedServiceRate = service_charge_rate !== undefined && service_charge_rate !== null && !isNaN(Number(service_charge_rate)) ? Number(service_charge_rate) : 0;
+      
       const afterDiscount = Math.max(0, subtotal - discountAmount);
-      const taxAmount = (afterDiscount * (Number(tax_rate) ?? 5)) / 100; // 5% default tax
-      const serviceCharge = (afterDiscount * (Number(service_charge_rate) ?? 0)) / 100; // 0% default service charge
+      const taxAmount = Number(((afterDiscount * parsedTaxRate) / 100).toFixed(2));
+      const serviceCharge = Number(((afterDiscount * parsedServiceRate) / 100).toFixed(2));
       const totalBeforeRoundOff = afterDiscount + taxAmount + serviceCharge;
       const grandTotal = Math.round(totalBeforeRoundOff);
-      const roundOff = grandTotal - totalBeforeRoundOff;
+      const roundOff = Number((grandTotal - totalBeforeRoundOff).toFixed(2));
+
+      const finalPaymentMethod = payment_method || "cash";
+      const finalTipAmount = Number(tip_amount) || 0;
 
       // 5. Insert Bill Record (upsert style on session unique key)
+      const billPayload: any = {
+        tenant_id: tenantId,
+        restaurant_id: restaurantId,
+        session_id,
+        subtotal,
+        discount_type: type,
+        discount_value: value,
+        discount_amount: discountAmount,
+        discount_reason: discount_reason || null,
+        tax_amount: taxAmount,
+        service_charge: serviceCharge,
+        round_off: roundOff,
+        grand_total: grandTotal,
+        created_by: user.id
+      };
+
+      // Try inserting with payment_method and tip_amount
       const { error: billErr } = await db
         .from("restaurant_bills")
         .upsert({
-          tenant_id: tenantId,
-          restaurant_id: restaurantId,
-          session_id,
-          subtotal,
-          discount_type: type,
-          discount_value: value,
-          discount_amount: discountAmount,
-          discount_reason: discount_reason || null,
-          tax_amount: taxAmount,
-          service_charge: serviceCharge,
-          round_off: roundOff,
-          grand_total: grandTotal,
-          created_by: user.id
+          ...billPayload,
+          payment_method: finalPaymentMethod,
+          tip_amount: finalTipAmount,
         }, { onConflict: "session_id" });
 
       if (billErr) {
-        return NextResponse.json({ error: billErr.message }, { status: 500 });
+        // Fallback without extended columns if table schema doesn't have them yet
+        const { error: fallbackErr } = await db
+          .from("restaurant_bills")
+          .upsert(billPayload, { onConflict: "session_id" });
+
+        if (fallbackErr) {
+          return NextResponse.json({ error: fallbackErr.message }, { status: 500 });
+        }
       }
 
       // 6. Log Audit Trail if discount applied

@@ -59,11 +59,31 @@ export async function GET(
       .select("*")
       .eq("order_id", order.id);
 
+    // Fetch order events
+    const { data: events } = await supabase
+      .from("restaurant_order_events")
+      .select("*")
+      .eq("order_id", order.id)
+      .order("created_at", { ascending: true });
+
+    const eventList = (events && events.length > 0)
+      ? events
+      : [
+          {
+            id: `evt-${order.id}`,
+            from_status: null,
+            to_status: order.status || "placed",
+            actor_role: "customer",
+            created_at: order.created_at || new Date().toISOString()
+          }
+        ];
+
     return NextResponse.json({
       order,
       restaurant,
       table,
       items: items || [],
+      events: eventList,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });

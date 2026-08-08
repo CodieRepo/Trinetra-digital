@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { CheckCircle2, Clock, Receipt, QrCode } from "lucide-react";
+import CustomerPaymentModal from "./CustomerPaymentModal";
 
 type OrderPayload = {
   order: {
@@ -30,6 +32,42 @@ type OrderPayload = {
     actor_role: string | null;
     created_at: string;
   }>;
+};
+
+type SessionOrder = {
+  id: string;
+  status: string;
+  notes: string | null;
+  total_amount: number;
+  created_at: string;
+  items: Array<{
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    notes: string | null;
+  }>;
+};
+
+type SessionBill = {
+  subtotal: number;
+  discount_type: string;
+  discount_value: number;
+  discount_amount: number;
+  discount_reason: string | null;
+  tax_amount: number;
+  service_charge: number;
+  round_off: number;
+  grand_total: number;
+  created_at: string;
+};
+
+type SessionContextData = {
+  sessionId: string;
+  paymentStatus: string;
+  sessionTotal: number;
+  orders: SessionOrder[];
+  bill: SessionBill | null;
 };
 
 const SESSION_KEY = "akuafi:restaurant:session-token";
@@ -72,10 +110,9 @@ export default function RestaurantOrderStatusClient({
   const [payload, setPayload] = useState<OrderPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sessionContext, setSessionContext] = useState<{
-    orderCount: number;
-    sessionTotal: number;
-  } | null>(null);
+  const [sessionContext, setSessionContext] = useState<SessionContextData | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [restaurantInfo, setRestaurantInfo] = useState<{ name: string; upi_id?: string; upi_qr_url?: string } | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -106,6 +143,20 @@ export default function RestaurantOrderStatusClient({
         setPayload(data);
         setError(null);
 
+        // Fetch restaurant upi_id and name
+        fetch(`/api/r/${tableToken}`)
+          .then((r) => r.json())
+          .then((d) => {
+            if (d.restaurant && mounted) {
+              setRestaurantInfo({
+                name: d.restaurant.name,
+                upi_id: d.restaurant.upi_id,
+                upi_qr_url: d.restaurant.upi_qr_url,
+              });
+            }
+          })
+          .catch(() => {});
+
         // Store table_session_id if returned
         if (data.order.table_session_id) {
           window.localStorage.setItem(
@@ -114,7 +165,7 @@ export default function RestaurantOrderStatusClient({
           );
         }
 
-        // Fetch session context for multi-order total
+        // Fetch session context for all orders & bill calculation
         const storedSessionId =
           data.order.table_session_id ??
           window.localStorage.getItem(getSessionKey(tableToken));
@@ -130,14 +181,15 @@ export default function RestaurantOrderStatusClient({
             );
             if (sessRes.ok && mounted) {
               const sess = await sessRes.json();
-              if (
-                sess.session?.status === "active" &&
-                Array.isArray(sess.orders) &&
-                sess.orders.length > 1
-              ) {
+              if (sess.session && Array.isArray(sess.orders)) {
                 setSessionContext({
-                  orderCount: sess.orders.length,
-                  sessionTotal: Number(sess.session_total ?? 0),
+                  sessionId: sess.session.id,
+                  paymentStatus: sess.session.payment_status || "unpaid",
+                  sessionTotal: Number(
+                    sess.session.session_total ?? sess.session_total ?? 0,
+                  ),
+                  orders: sess.orders,
+                  bill: sess.bill || null,
                 });
               } else {
                 setSessionContext(null);
@@ -229,17 +281,36 @@ export default function RestaurantOrderStatusClient({
             </Link>
           </div>
 
-          {sessionContext && sessionContext.orderCount > 1 && (
-            <div className="mt-4 flex items-center justify-between rounded-2xl border border-cyan-400/15 bg-cyan-400/5 px-5 py-3">
-              <p className="text-sm text-cyan-200">
-                Session total across{" "}
-                <span className="font-semibold text-white">
-                  {sessionContext.orderCount} orders
-                </span>
-              </p>
-              <p className="text-lg font-semibold text-white">
-                {formatCurrency(sessionContext.sessionTotal)}
-              </p>
+          {/* Session Banner */}
+          {sessionContext && (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-400/15 bg-cyan-400/5 px-5 py-3">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-cyan-300">
+                  Table Session
+                </p>
+                <p className="text-sm font-semibold text-white mt-0.5">
+                  {sessionContext.orders.length} {sessionContext.orders.length === 1 ? "order" : "orders"} placed
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                {sessionContext.paymentStatus === "paid" ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-300">
+                    <CheckCircle2 size={13} />
+                    PAID · Bill Settled
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 px-3 py-1 text-xs font-bold text-amber-300">
+                    <Clock size={13} />
+                    Active Session
+                  </span>
+                )}
+                <div className="text-right">
+                  <p className="text-xs text-slate-400">Subtotal</p>
+                  <p className="text-base font-bold text-cyan-200">
+                    {formatCurrency(sessionContext.sessionTotal)}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -301,9 +372,9 @@ export default function RestaurantOrderStatusClient({
 
           <div className="mt-6 grid gap-6 md:grid-cols-[0.85fr_1.15fr]">
             <div className="rounded-[24px] border border-white/8 bg-slate-950/40 p-5">
-              <h2 className="text-lg font-semibold">Order summary</h2>
+              <h2 className="text-lg font-semibold">Current Order ({payload.order.id.slice(0, 8)})</h2>
               <div className="mt-4 space-y-3">
-                {payload.items.map((item) => (
+                {(payload.items || []).map((item) => (
                   <div
                     key={item.id}
                     className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3 text-sm"
@@ -325,7 +396,7 @@ export default function RestaurantOrderStatusClient({
               ) : null}
               <div className="mt-4 border-t border-white/10 pt-4 text-right">
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                  Total
+                  Order Total
                 </p>
                 <p className="mt-2 text-2xl font-semibold text-white">
                   {formatCurrency(payload.order.total_amount)}
@@ -336,11 +407,11 @@ export default function RestaurantOrderStatusClient({
             <div className="rounded-[24px] border border-white/8 bg-slate-950/40 p-5">
               <h2 className="text-lg font-semibold">Status timeline</h2>
               <div className="mt-5 space-y-4">
-                {payload.events.map((event, index) => (
+                {(payload.events || []).map((event, index) => (
                   <div key={event.id} className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div className="h-3 w-3 rounded-full bg-cyan-300" />
-                      {index !== payload.events.length - 1 ? (
+                      {index !== (payload.events || []).length - 1 ? (
                         <div className="mt-2 h-full w-px bg-white/10" />
                       ) : null}
                     </div>
@@ -358,6 +429,243 @@ export default function RestaurantOrderStatusClient({
               </div>
             </div>
           </div>
+
+          {/* ALL SESSION ORDERS SECTION */}
+          {sessionContext && sessionContext.orders.length > 0 && (
+            <div className="mt-8 rounded-[24px] border border-white/10 bg-slate-950/60 p-5">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    All Orders in this Session ({sessionContext.orders.length})
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Items placed across all orders for this table
+                  </p>
+                </div>
+                <span className="text-sm font-bold text-cyan-300">
+                  Subtotal: {formatCurrency(sessionContext.sessionTotal)}
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                {sessionContext.orders.map((ord, index) => (
+                  <div
+                    key={ord.id}
+                    className={`rounded-2xl border p-4 transition-all ${
+                      ord.id === orderId
+                        ? "border-cyan-400/40 bg-cyan-400/5 shadow-md shadow-cyan-400/10"
+                        : "border-white/8 bg-white/5"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white">
+                          Order #{index + 1}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          ({ord.id.slice(0, 8)})
+                        </span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider ${
+                            ord.status === "closed" || ord.status === "served"
+                              ? "bg-emerald-400/15 text-emerald-300 border border-emerald-500/20"
+                              : ord.status === "cancelled"
+                                ? "bg-rose-400/15 text-rose-300 border border-rose-500/20"
+                                : "bg-cyan-400/15 text-cyan-200 border border-cyan-500/20"
+                          }`}
+                        >
+                          {STATUS_COPY[ord.status] ?? ord.status}
+                        </span>
+                        {ord.id === orderId && (
+                          <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-[10px] font-extrabold text-cyan-300">
+                            CURRENTLY VIEWING
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-white">
+                          {formatCurrency(ord.total_amount)}
+                        </span>
+                        {ord.id !== orderId && (
+                          <Link
+                            to={`/r/${tableToken}/order/${ord.id}`}
+                            className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs text-cyan-200 hover:bg-white/20"
+                          >
+                            View →
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {(ord.items || []).map((it) => (
+                        <div
+                          key={it.id}
+                          className="flex items-center justify-between rounded-xl bg-black/30 px-3 py-2 text-xs"
+                        >
+                          <span className="font-medium text-slate-200">
+                            {it.name} <span className="text-slate-400">x{it.quantity}</span>
+                          </span>
+                          <span className="font-semibold text-slate-300">
+                            {formatCurrency(Number(it.price) * it.quantity)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TABLE SESSION BILL & SETTLEMENT SUMMARY */}
+          {sessionContext && (
+            <div className="mt-8 rounded-[24px] border border-amber-400/20 bg-gradient-to-b from-amber-400/10 to-transparent p-5 backdrop-blur">
+              <div className="flex items-center gap-2.5 border-b border-white/10 pb-3 mb-4">
+                <Receipt className="h-5 w-5 text-amber-300" />
+                <div>
+                  <h3 className="text-lg font-bold text-white">
+                    {sessionContext.bill ? "Final Table Bill Breakdown" : "Estimated Session Bill"}
+                  </h3>
+                  <p className="text-xs text-amber-200/80">
+                    {sessionContext.bill
+                      ? "Official tax invoice generated by restaurant"
+                      : "Total bill calculated across all live session orders"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2.5 text-sm">
+                <div className="flex items-center justify-between text-slate-300">
+                  <span>Subtotal ({sessionContext.orders.length} orders)</span>
+                  <span className="font-medium text-white">
+                    {formatCurrency(sessionContext.bill?.subtotal ?? sessionContext.sessionTotal)}
+                  </span>
+                </div>
+
+                {sessionContext.bill && sessionContext.bill.discount_amount > 0 && (
+                  <div className="flex items-center justify-between text-emerald-400">
+                    <span>
+                      Discount ({sessionContext.bill.discount_type === "percentage" ? `${sessionContext.bill.discount_value}%` : "Flat"})
+                      {sessionContext.bill.discount_reason ? ` - ${sessionContext.bill.discount_reason}` : ""}
+                    </span>
+                    <span className="font-medium">
+                      -{formatCurrency(sessionContext.bill.discount_amount)}
+                    </span>
+                  </div>
+                )}
+
+                {sessionContext.bill && sessionContext.bill.tax_amount > 0 && (
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span>Taxes & GST</span>
+                    <span className="font-medium text-white">
+                      +{formatCurrency(sessionContext.bill.tax_amount)}
+                    </span>
+                  </div>
+                )}
+
+                {sessionContext.bill && sessionContext.bill.service_charge > 0 && (
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span>Service Charge</span>
+                    <span className="font-medium text-white">
+                      +{formatCurrency(sessionContext.bill.service_charge)}
+                    </span>
+                  </div>
+                )}
+
+                <div className="border-t border-white/15 pt-3 mt-3 flex items-center justify-between text-lg font-extrabold text-white">
+                  <span>{sessionContext.bill ? "Grand Total" : "Subtotal Payable"}</span>
+                  <span className="text-2xl text-amber-300">
+                    {formatCurrency(sessionContext.bill?.grand_total ?? sessionContext.sessionTotal)}
+                  </span>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between rounded-xl bg-black/40 px-4 py-3 border border-white/10">
+                  <span className="text-xs uppercase tracking-wider text-slate-400">
+                    Payment Status
+                  </span>
+                  {sessionContext.paymentStatus === "paid" ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+                      <CheckCircle2 size={14} /> PAID & SETTLED
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400">
+                      <Clock size={14} /> PAYMENT PENDING
+                    </span>
+                  )}
+                </div>
+
+                {/* ONLINE PAYMENT & BILL REQUEST BUTTONS */}
+                {sessionContext.paymentStatus !== "paid" ? (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await fetch(`/api/r/${tableToken}/session/request-bill`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ sessionId: sessionContext.sessionId }),
+                          });
+                          alert("Bill request sent to waiter!");
+                        } catch {
+                          alert("Failed to request bill.");
+                        }
+                      }}
+                      className="flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 py-3.5 text-sm font-bold text-white hover:bg-white/20 transition active:scale-[0.98] cursor-pointer"
+                    >
+                      <Receipt size={18} className="text-amber-400" /> Request Bill from Waiter
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPaymentModal(true)}
+                      className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 py-3.5 text-sm font-black text-slate-950 shadow-xl shadow-amber-500/25 hover:from-amber-400 hover:to-yellow-400 transition active:scale-[0.98] cursor-pointer"
+                    >
+                      <QrCode size={18} /> Pay Bill Online (UPI / QR / Cash) →
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowPaymentModal(true)}
+                    className="mt-4 w-full flex items-center justify-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 py-3 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition cursor-pointer"
+                  >
+                    <QrCode size={16} /> View Online Payment QR & Details
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ONLINE PAYMENT MODAL */}
+          {showPaymentModal && sessionContext && (
+            <CustomerPaymentModal
+              tableToken={tableToken}
+              tableNumber={payload?.order?.table?.table_number}
+              restaurantName={restaurantInfo?.name || "The Restaurant"}
+              upiId={restaurantInfo?.upi_id}
+              upiQrUrl={restaurantInfo?.upi_qr_url}
+              amount={sessionContext.bill?.grand_total ?? sessionContext.sessionTotal}
+              currency="INR"
+              sessionId={sessionContext.sessionId}
+              onClose={() => setShowPaymentModal(false)}
+              onPaymentSubmitted={async (method, utr, tipAmount) => {
+                await fetch(`/api/r/${tableToken}/session/pay`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    sessionId: sessionContext.sessionId,
+                    paymentMethod: method,
+                    utrNumber: utr,
+                    tipAmount: tipAmount || 0,
+                    amount: sessionContext.bill?.grand_total ?? sessionContext.sessionTotal,
+                  }),
+                });
+              }}
+            />
+          )}
+
         </div>
       </div>
     </div>

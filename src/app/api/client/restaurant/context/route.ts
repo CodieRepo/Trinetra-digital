@@ -20,30 +20,47 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized: Invalid or expired session token" }, { status: 401 });
     }
 
-    // 2. Fetch role and tenant_id from users_roles
-    let tenantId: string | null = null;
+    const url = new URL(request.url);
+    const queryTenantId = url.searchParams.get("tenant_id");
+    const queryRestaurantId = url.searchParams.get("restaurant_id");
+
+    let tenantId: string | null = queryTenantId || null;
     let role: string = "owner";
 
-    const { data: roleRows } = await db
-      .from("users_roles")
-      .select("tenant_id, role")
-      .eq("user_id", user.id)
-      .limit(1);
-
-    if (roleRows && roleRows.length > 0) {
-      tenantId = roleRows[0].tenant_id;
-      role = roleRows[0].role;
-    } else {
-      // Fallback check legacy profiles
-      const { data: profileRows } = await db
-        .from("profiles")
+    if (!tenantId) {
+      // 2. Fetch role and tenant_id from users_roles
+      const { data: roleRows } = await db
+        .from("users_roles")
         .select("tenant_id, role")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .limit(1);
 
-      if (profileRows && profileRows.length > 0) {
-        tenantId = profileRows[0].tenant_id;
-        role = profileRows[0].role === "client_admin" ? "admin" : (profileRows[0].role || "owner");
+      if (roleRows && roleRows.length > 0) {
+        tenantId = roleRows[0].tenant_id;
+        role = roleRows[0].role;
+      } else {
+        // Fallback check legacy profiles
+        const { data: profileRows } = await db
+          .from("profiles")
+          .select("tenant_id, role")
+          .eq("id", user.id)
+          .limit(1);
+
+        if (profileRows && profileRows.length > 0) {
+          tenantId = profileRows[0].tenant_id;
+          role = profileRows[0].role === "client_admin" ? "admin" : (profileRows[0].role || "owner");
+        }
+      }
+    }
+
+    if (!tenantId && queryRestaurantId) {
+      const { data: rRow } = await db
+        .from("restaurants")
+        .select("tenant_id")
+        .eq("id", queryRestaurantId)
+        .maybeSingle();
+      if (rRow?.tenant_id) {
+        tenantId = rRow.tenant_id;
       }
     }
 
@@ -52,12 +69,14 @@ export async function GET(request: Request) {
     }
 
     // 3. Fetch restaurant details
-    const { data: restaurants, error: restErr } = await db
-      .from("restaurants")
-      .select("*")
-      .eq("tenant_id", tenantId.trim())
-      .limit(1);
+    let query = db.from("restaurants").select("*");
+    if (queryRestaurantId) {
+      query = query.eq("id", queryRestaurantId.trim());
+    } else {
+      query = query.eq("tenant_id", tenantId.trim());
+    }
 
+    const { data: restaurants, error: restErr } = await query.limit(1);
     const restaurant = restaurants && restaurants.length > 0 ? restaurants[0] : null;
 
     if (restErr || !restaurant) {
@@ -74,7 +93,7 @@ export async function GET(request: Request) {
       user_id: user.id,
       email: user.email,
       name: user.user_metadata?.name || user.email,
-      tenant_id: tenantId,
+      tenant_id: restaurant.tenant_id || tenantId,
       role: role,
       restaurant: restaurant,
     });

@@ -205,7 +205,9 @@ export default function PublicRestaurantMenu({
               setSessionData({
                 sessionId: sess.session.id,
                 orders: sess.orders,
-                sessionTotal: Number(sess.session_total ?? 0),
+                sessionTotal: Number(
+                  sess.session?.session_total ?? sess.session_total ?? 0,
+                ),
                 latestOrderId:
                   latestActive?.id ??
                   sess.orders[sess.orders.length - 1]?.id ??
@@ -373,7 +375,9 @@ export default function PublicRestaurantMenu({
         setSessionData({
           sessionId: sess.session.id,
           orders: sess.orders,
-          sessionTotal: Number(sess.session_total ?? 0),
+          sessionTotal: Number(
+            sess.session?.session_total ?? sess.session_total ?? 0,
+          ),
           latestOrderId:
             latestActive?.id ?? sess.orders[sess.orders.length - 1]?.id ?? null,
         });
