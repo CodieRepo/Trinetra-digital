@@ -18,6 +18,8 @@ import {
   CheckCircle2,
   QrCode,
   Printer,
+  Search,
+  History,
 } from "lucide-react";
 
 type DashboardOrder = {
@@ -254,10 +256,38 @@ export default function RestaurantDashboard({
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // --- Tab navigation state ---
-  const [activeTab, setActiveTab] = useState<"live" | "menu" | "staff" | "payment">("live");
+  // --- Tab navigation & Search state ---
+  const [activeTab, setActiveTab] = useState<"live" | "menu" | "staff" | "payment" | "history">("live");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "placed" | "preparing" | "ready">("all");
+  const [historySessions, setHistorySessions] = useState<any[]>([]);
+  const [historyMetrics, setHistoryMetrics] = useState<any>({});
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [thermalReceiptData, setThermalReceiptData] = useState<ReceiptData | null>(null);
   const [adminPaymentMethods, setAdminPaymentMethods] = useState<Record<string, string>>({});
+
+  const loadHistory = useCallback(async (query = "") => {
+    try {
+      setHistoryLoading(true);
+      const url = `/api/client/restaurant/history?restaurant_id=${restaurantId}&search=${encodeURIComponent(query)}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        setHistorySessions(data.sessions || []);
+        setHistoryMetrics(data.metrics || {});
+      }
+    } catch {
+      // Silent catch
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [restaurantId]);
+
+  useEffect(() => {
+    if (activeTab === "history") {
+      void loadHistory(searchQuery);
+    }
+  }, [activeTab, searchQuery, loadHistory]);
 
   const openThermalReceipt = (session: DashboardSession) => {
     setThermalReceiptData({
@@ -813,56 +843,120 @@ export default function RestaurantDashboard({
           </div>
         ) : null}
 
-        {/* Tab navigation */}
-        <nav className="flex flex-wrap items-center gap-2 rounded-3xl border border-white/10 bg-white/5 p-1.5 backdrop-blur">
-          {[
-            {
-              id: "live" as const,
-              label: "Live Operations",
-              icon: <UtensilsCrossed className="h-4 w-4" />,
-            },
-            {
-              id: "menu" as const,
-              label: "Tables & Menu",
-              icon: <LayoutGrid className="h-4 w-4" />,
-            },
-            {
-              id: "staff" as const,
-              label: "Staff Access",
-              icon: <Users className="h-4 w-4" />,
-            },
-            {
-              id: "payment" as const,
-              label: "Payment & Settings",
-              icon: <QrCode className="h-4 w-4" />,
-            },
-          ].map((tab) => (
+        {/* Global Search Bar */}
+        <div className="relative my-2">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search orders by ID, table number, customer name, phone, or dish name..."
+            className="w-full h-11 pl-11 pr-10 text-xs bg-white/5 border border-white/10 rounded-2xl text-slate-200 focus:outline-none focus:border-indigo-500 placeholder:text-slate-500 transition-all shadow-inner"
+          />
+          {searchQuery && (
             <button
-              key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer ${
-                activeTab === tab.id
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/25"
-                  : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
-              }`}
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-bold px-2 py-1 bg-white/10 rounded-lg"
             >
-              {tab.icon}
-              {tab.label}
-              {tab.id === "live" && orders.length > 0 && (
-                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/15 px-1.5 text-[10px] font-black">
-                  {orders.length}
-                </span>
-              )}
+              Clear
             </button>
-          ))}
+          )}
+        </div>
+
+        {/* Tab navigation */}
+        <nav className="flex flex-wrap items-center justify-between gap-2 rounded-3xl border border-white/10 bg-white/5 p-1.5 backdrop-blur">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {[
+              {
+                id: "live" as const,
+                label: "Live Operations",
+                icon: <UtensilsCrossed className="h-4 w-4" />,
+              },
+              {
+                id: "history" as const,
+                label: "History & Records",
+                icon: <History className="h-4 w-4" />,
+              },
+              {
+                id: "menu" as const,
+                label: "Tables & Menu",
+                icon: <LayoutGrid className="h-4 w-4" />,
+              },
+              {
+                id: "staff" as const,
+                label: "Staff Access",
+                icon: <Users className="h-4 w-4" />,
+              },
+              {
+                id: "payment" as const,
+                label: "Payment & Settings",
+                icon: <QrCode className="h-4 w-4" />,
+              },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === tab.id
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/25"
+                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+                {tab.id === "live" && orders.length > 0 && (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/15 px-1.5 text-[10px] font-black">
+                    {orders.length}
+                  </span>
+                )}
+                {tab.id === "history" && historySessions.length > 0 && (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 px-1.5 text-[10px] font-black">
+                    {historySessions.length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === "live" && (
+            <div className="flex items-center gap-1 bg-black/40 p-1 rounded-2xl border border-white/10 text-xs">
+              <span className="text-[10px] font-bold uppercase text-slate-500 px-2">Filter:</span>
+              {(["all", "placed", "preparing", "ready"] as const).map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setOrderStatusFilter(status)}
+                  className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase transition cursor-pointer ${
+                    orderStatusFilter === status
+                      ? "bg-indigo-500 text-white shadow-xs"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          )}
         </nav>
 
         {/* ═══════════ LIVE TAB — orders + active sessions ═══════════ */}
-        {activeTab === "live" && (
-        <>
-        <section className="grid gap-5 xl:grid-cols-3">
-          {orders.map((order) => (
+        {activeTab === "live" && (() => {
+          const displayOrders = orders.filter((o) => {
+            if (orderStatusFilter !== "all" && o.status !== orderStatusFilter) return false;
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const tableNo = (o.table?.table_number || "").toLowerCase();
+            const orderId = (o.id || "").toLowerCase();
+            const itemMatch = o.items.some((i) => i.name.toLowerCase().includes(q));
+            return tableNo.includes(q) || orderId.includes(q) || itemMatch;
+          });
+
+          return (
+            <>
+            <section className="grid gap-5 xl:grid-cols-3">
+              {displayOrders.map((order) => (
             <article
               key={order.id}
               className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_22px_55px_rgba(0,0,0,0.22)]"
@@ -1337,6 +1431,158 @@ export default function RestaurantDashboard({
           ) : null}
         </section>
         </>
+        );
+        })()}
+        {activeTab === "history" && (
+          <section className="space-y-6">
+            {/* Sales Summary Cards */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Revenue</p>
+                <p className="mt-2 text-2xl font-black text-emerald-400">
+                  {formatCurrency(historyMetrics.totalRevenue || 0, currency)}
+                </p>
+                <p className="mt-1 text-[10px] text-slate-500 font-medium">Settled Invoices</p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Cash Payments</p>
+                <p className="mt-2 text-xl font-bold text-amber-300">
+                  {formatCurrency(historyMetrics.totalCash || 0, currency)}
+                </p>
+                <p className="mt-1 text-[10px] text-slate-500 font-medium">Cash Register</p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">UPI / QR Payments</p>
+                <p className="mt-2 text-xl font-bold text-cyan-300">
+                  {formatCurrency(historyMetrics.totalUPI || 0, currency)}
+                </p>
+                <p className="mt-1 text-[10px] text-slate-500 font-medium">Direct Bank Transfer</p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Card Payments</p>
+                <p className="mt-2 text-xl font-bold text-violet-300">
+                  {formatCurrency(historyMetrics.totalCard || 0, currency)}
+                </p>
+                <p className="mt-1 text-[10px] text-slate-500 font-medium">POS Terminal</p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Tips Collected</p>
+                <p className="mt-2 text-xl font-bold text-pink-300">
+                  {formatCurrency(historyMetrics.totalTips || 0, currency)}
+                </p>
+                <p className="mt-1 text-[10px] text-slate-500 font-medium">Staff Gratuity</p>
+              </div>
+            </div>
+
+            {/* History Table Container */}
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-black text-white flex items-center gap-2">
+                    <History size={18} className="text-indigo-400" />
+                    Session & Invoice History Archive
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    View completed customer sessions, payment logs, and re-print receipt tax invoices.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void loadHistory(searchQuery)}
+                  className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 text-xs font-bold text-slate-300 hover:bg-white/10 transition cursor-pointer"
+                >
+                  Refresh History
+                </button>
+              </div>
+
+              {historyLoading ? (
+                <div className="py-12 text-center text-xs text-slate-400">
+                  <Loader2 className="mx-auto h-6 w-6 animate-spin mb-2" />
+                  Fetching historical session archives...
+                </div>
+              ) : historySessions.length === 0 ? (
+                <div className="py-12 text-center text-xs text-slate-500">
+                  No session history records found. Completed sessions will be archived here.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300">
+                    <thead>
+                      <tr className="border-b border-white/10 text-[10px] uppercase text-slate-400 font-bold">
+                        <th className="py-3 px-3">Table / Customer</th>
+                        <th className="py-3 px-3">Opened / Settled</th>
+                        <th className="py-3 px-3">Orders & Items</th>
+                        <th className="py-3 px-3">Payment Mode</th>
+                        <th className="py-3 px-3 text-right">Grand Total</th>
+                        <th className="py-3 px-3 text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {historySessions.map((session) => (
+                        <tr key={session.id} className="hover:bg-white/5 transition">
+                          <td className="py-3.5 px-3">
+                            <div className="font-bold text-white">
+                              Table #{session.table?.table_number || "Walk-in"}
+                            </div>
+                            <div className="text-[11px] text-slate-400 mt-0.5">
+                              {session.customer_name || "Guest Customer"}{" "}
+                              {session.customer_phone ? `(${session.customer_phone})` : ""}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-3 whitespace-nowrap">
+                            <div className="text-slate-300">{timeAgo(session.opened_at)}</div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              {session.paid_at ? `Paid ${timeAgo(session.paid_at)}` : session.status}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-3">
+                            <div className="font-bold text-slate-200">
+                              {session.order_count} Orders ({session.orders?.reduce((acc: number, o: any) => acc + (o.items?.length || 0), 0) || 0} Items)
+                            </div>
+                            <div className="text-[10px] text-slate-400 truncate max-w-xs mt-0.5">
+                              {session.orders?.flatMap((o: any) => o.items?.map((i: any) => i.name)).join(", ")}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-3 whitespace-nowrap">
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase border bg-indigo-500/10 text-indigo-300 border-indigo-500/20">
+                              {session.payment_method || session.bill?.payment_method || "CASH"}
+                            </span>
+                            {session.tip_amount > 0 && (
+                              <div className="text-[10px] text-pink-400 font-bold mt-1">
+                                +₹{session.tip_amount} Tip
+                              </div>
+                            )}
+                            {session.customer_utr && (
+                              <div className="text-[9px] text-slate-500 font-mono mt-0.5">
+                                UTR: {session.customer_utr}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-3 text-right font-black text-white whitespace-nowrap">
+                            {formatCurrency(session.bill?.grand_total || session.session_total || 0, currency)}
+                          </td>
+                          <td className="py-3.5 px-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => openThermalReceipt(session)}
+                              className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-bold text-slate-200 transition cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                              <Printer size={12} />
+                              Re-print
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
         )}
 
         {/* ═══════════ MENU TAB — tables + categories + items ═══════════ */}

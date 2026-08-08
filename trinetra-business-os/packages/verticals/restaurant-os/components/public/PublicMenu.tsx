@@ -760,23 +760,31 @@ export default function PublicRestaurantMenu({
                         </div>
                       </div>
                       <div className="mt-4 flex items-center gap-3 md:mt-0">
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(item.id, -1)}
-                          className="rounded-full border border-white/10 bg-white/5 p-2 text-stone-200 hover:bg-white/10 transition-all"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <div className="min-w-10 text-center text-lg font-semibold text-white">
-                          {cart[item.id]?.quantity ?? 0}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(item.id, 1)}
-                          className="rounded-full border border-amber-200/20 bg-amber-300/10 p-2 text-amber-100 hover:bg-amber-300/20 transition-all"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
+                        {!item.is_available ? (
+                          <span className="px-3 py-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-300 text-xs font-black uppercase tracking-wider">
+                            Sold Out
+                          </span>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.id, -1)}
+                              className="rounded-full border border-white/10 bg-white/5 p-2 text-stone-200 hover:bg-white/10 transition-all cursor-pointer"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <div className="min-w-10 text-center text-lg font-semibold text-white">
+                              {cart[item.id]?.quantity ?? 0}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.id, 1)}
+                              className="rounded-full border border-amber-200/20 bg-amber-300/10 p-2 text-amber-100 hover:bg-amber-300/20 transition-all cursor-pointer"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}

@@ -22,7 +22,7 @@ import TheProblem from "../components/TheProblem";
 import TheSystem from "../components/TheSystem";
 import Testimonials from "../components/Testimonials";
 import LazyVideo from "../components/LazyVideo";
-import HeroScrollSequence from "../components/HeroScrollSequence";
+import Hero2DTrinetra from "../components/Hero2DTrinetra";
 
 // Centralized GSAP and custom typography utilities
 import { gsap, useGSAP } from "../lib/gsap";
@@ -254,154 +254,154 @@ export default function Home() {
       {/* ── PAGE WRAPPER ── */}
       <div className="min-h-screen bg-base text-ink-1 relative font-sans pb-mobile-safe">
 
-        {/* ── 1. CINEMATIC 3D HERO ── */}
-        <HeroScrollSequence>
-          <section
-            ref={heroRef}
-            className="relative min-h-[92svh] md:min-h-[100svh] flex items-center justify-center pt-24 pb-12 overflow-hidden bg-transparent"
-          >
-            {/* Elegant geometric warm bronze mesh grid background */}
-            <div
-              ref={gridRef}
-              className="absolute inset-0 z-0 pointer-events-none"
-              style={{
-                backgroundImage: `linear-gradient(rgba(197, 168, 128, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(197, 168, 128, 0.06) 1px, transparent 1px)`,
-                backgroundSize: "100px 100px",
-                backgroundPosition: "center center",
-              }}
-            />
+        {/* ── 1. FAST LIGHTWEIGHT HERO ── */}
+        <section
+          ref={heroRef}
+          className="relative min-h-[90vh] flex items-center justify-center pt-24 pb-12 overflow-hidden bg-transparent"
+        >
+          {/* Elegant geometric warm bronze mesh grid background */}
+          <div
+            ref={gridRef}
+            className="absolute inset-0 z-0 pointer-events-none"
+            style={{
+              backgroundImage: `linear-gradient(rgba(197, 168, 128, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(197, 168, 128, 0.06) 1px, transparent 1px)`,
+              backgroundSize: "100px 100px",
+              backgroundPosition: "center center",
+            }}
+          />
 
-            <div className="mx-auto max-w-[1300px] w-full px-6 md:px-12 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center text-left">
+          <div className="mx-auto max-w-[1300px] w-full px-6 md:px-12 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center text-left">
+            
+            {/* Left Column: Headline and CTAs */}
+            <div className="lg:col-span-7 flex flex-col items-start gap-8 z-20">
               
-              {/* Left Column: Headline and CTAs */}
-              <div className="lg:col-span-7 flex flex-col items-start gap-8 z-20">
-                
-                {/* Eyebrow badge */}
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 glass-panel rounded-full border border-border">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
-                  </span>
-                  <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-accent uppercase">
-                    PIONEERING BUSINESS AUTOMATION
-                  </span>
-                </div>
-
-                {/* Main headline - Kinetic Horizontal Slit reveals */}
-                <div className="flex flex-col gap-1 overflow-hidden select-none w-full">
-                  <h1
-                    ref={line1Ref}
-                    className="font-display text-[clamp(26px,4.2vw,44px)] font-light leading-none tracking-tight text-ink-1 uppercase whitespace-nowrap"
-                  >
-                    We engineer foundations
-                  </h1>
-                  <h2
-                    ref={line2Ref}
-                    className="font-editorial text-[clamp(36px,5.8vw,68px)] italic text-accent font-light leading-none tracking-normal whitespace-nowrap overflow-hidden py-1"
-                  >
-                    <SplitText mode="chars">that lead &amp; scale</SplitText>
-                  </h2>
-                  <h3
-                    ref={line3Ref}
-                    className="font-display text-[clamp(26px,4.2vw,44px)] font-light leading-none tracking-tight text-ink-1 uppercase whitespace-nowrap"
-                  >
-                    your business.
-                  </h3>
-                </div>
-
-                {/* Subtitle */}
-                <p
-                  ref={descRef}
-                  className="text-sm md:text-base text-ink-2 leading-relaxed max-w-xl font-medium"
-                >
-                  We construct high-end websites, build secure CRM pipelines, and integrate conversational AI systems to eliminate manual inefficiencies and scale your revenue.
-                </p>
-
-                {/* CTA Row */}
-                <div
-                  ref={ctasRef}
-                  className="flex flex-wrap gap-4 items-center"
-                >
-                  <Link
-                    to="/contact"
-                    className="btn-primary-forest text-xs font-semibold tracking-wider uppercase h-11 px-6 rounded-lg bg-cta text-ink-inverse hover:bg-cta-hover glow-hover transition-all"
-                  >
-                    Get Free Consultation &rarr;
-                  </Link>
-
-                  <a
-                    href="#pricing"
-                    className="inline-flex items-center justify-center h-11 px-5 rounded-lg border border-border bg-surface-1 text-ink-1 hover:bg-surface-2 transition-colors text-xs font-semibold uppercase tracking-wider backdrop-blur-md"
-                  >
-                    Explore Pricing
-                  </a>
-
-                  <a
-                    href={WA_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => trackContact()}
-                    className="inline-flex items-center gap-2 h-11 px-4 rounded-lg bg-[#c5a880]/10 border border-[#c5a880]/20 text-accent hover:bg-[#c5a880]/20 transition-all text-xs font-semibold"
-                  >
-                    💬 WhatsApp Us
-                  </a>
-                </div>
-
-                {/* Quick nav shortcuts */}
-                <div
-                  ref={shortcutsRef}
-                  className="flex flex-wrap gap-2 mt-2"
-                >
-                  {[
-                    { label: "I Need A Website", anchor: "services-website" },
-                    { label: "I Need More Leads", anchor: "services-marketing" },
-                    { label: "I Need Automation", anchor: "services-crm" },
-                    { label: "I Need Custom Software", anchor: "services-software" },
-                  ].map((pathway, idx) => (
-                    <a
-                      key={idx}
-                      href={`#${pathway.anchor}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        const el = document.getElementById(pathway.anchor);
-                        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-                      }}
-                      className="inline-flex items-center h-8 px-3 rounded-md border border-border bg-surface-1 hover:bg-surface-2 text-[10px] font-semibold text-ink-3 transition-colors font-mono tracking-wide"
-                    >
-                      {pathway.label} →
-                    </a>
-                  ))}
-                </div>
-
-                {/* Trust proof strip */}
-                <div
-                  ref={trustRef}
-                  className="flex items-center gap-3 mt-4"
-                >
-                  <div className="flex -space-x-2">
-                    {['T', 'D', 'S', 'A'].map((char, i) => (
-                      <span
-                        key={i}
-                        className="h-7 w-7 rounded-full border border-border bg-surface-1 flex items-center justify-center text-[9px] font-mono font-bold text-ink-2"
-                      >
-                        {char}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="text-xs text-ink-3 font-semibold font-mono uppercase tracking-wider">
-                    Serving professional brands across India
-                  </p>
-                </div>
+              {/* Eyebrow badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 glass-panel rounded-full border border-border">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+                </span>
+                <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-accent uppercase">
+                  PIONEERING BUSINESS AUTOMATION
+                </span>
               </div>
 
-              {/* Right Column: Hero alignment node */}
-              <div 
-                ref={sphereContainerRef}
-                className="lg:col-span-5 relative w-full aspect-square hidden lg:flex items-center justify-center"
-              />
+              {/* Main headline - Kinetic Horizontal Slit reveals */}
+              <div className="flex flex-col gap-1 overflow-hidden select-none w-full">
+                <h1
+                  ref={line1Ref}
+                  className="font-display text-[clamp(26px,4.2vw,44px)] font-light leading-none tracking-tight text-ink-1 uppercase whitespace-nowrap"
+                >
+                  We engineer foundations
+                </h1>
+                <h2
+                  ref={line2Ref}
+                  className="font-editorial text-[clamp(36px,5.8vw,68px)] italic text-accent font-light leading-none tracking-normal whitespace-nowrap overflow-hidden py-1"
+                >
+                  <SplitText mode="chars">that lead &amp; scale</SplitText>
+                </h2>
+                <h3
+                  ref={line3Ref}
+                  className="font-display text-[clamp(26px,4.2vw,44px)] font-light leading-none tracking-tight text-ink-1 uppercase whitespace-nowrap"
+                >
+                  your business.
+                </h3>
+              </div>
+
+              {/* Subtitle */}
+              <p
+                ref={descRef}
+                className="text-sm md:text-base text-ink-2 leading-relaxed max-w-xl font-medium"
+              >
+                We construct high-end websites, build secure CRM pipelines, and integrate conversational AI systems to eliminate manual inefficiencies and scale your revenue.
+              </p>
+
+              {/* CTA Row */}
+              <div
+                ref={ctasRef}
+                className="flex flex-wrap gap-4 items-center"
+              >
+                <Link
+                  to="/contact"
+                  className="btn-primary-forest text-xs font-semibold tracking-wider uppercase h-11 px-6 rounded-lg bg-cta text-ink-inverse hover:bg-cta-hover glow-hover transition-all"
+                >
+                  Get Free Consultation &rarr;
+                </Link>
+
+                <a
+                  href="#pricing"
+                  className="inline-flex items-center justify-center h-11 px-5 rounded-lg border border-border bg-surface-1 text-ink-1 hover:bg-surface-2 transition-colors text-xs font-semibold uppercase tracking-wider backdrop-blur-md"
+                >
+                  Explore Pricing
+                </a>
+
+                <a
+                  href={WA_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackContact()}
+                  className="inline-flex items-center gap-2 h-11 px-4 rounded-lg bg-[#c5a880]/10 border border-[#c5a880]/20 text-accent hover:bg-[#c5a880]/20 transition-all text-xs font-semibold"
+                >
+                  💬 WhatsApp Us
+                </a>
+              </div>
+
+              {/* Quick nav shortcuts */}
+              <div
+                ref={shortcutsRef}
+                className="flex flex-wrap gap-2 mt-2"
+              >
+                {[
+                  { label: "I Need A Website", anchor: "services-website" },
+                  { label: "I Need More Leads", anchor: "services-marketing" },
+                  { label: "I Need Automation", anchor: "services-crm" },
+                  { label: "I Need Custom Software", anchor: "services-software" },
+                ].map((pathway, idx) => (
+                  <a
+                    key={idx}
+                    href={`#${pathway.anchor}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const el = document.getElementById(pathway.anchor);
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }}
+                    className="inline-flex items-center h-8 px-3 rounded-md border border-border bg-surface-1 hover:bg-surface-2 text-[10px] font-semibold text-ink-3 transition-colors font-mono tracking-wide"
+                  >
+                    {pathway.label} →
+                  </a>
+                ))}
+              </div>
+
+              {/* Trust proof strip */}
+              <div
+                ref={trustRef}
+                className="flex items-center gap-3 mt-4"
+              >
+                <div className="flex -space-x-2">
+                  {['T', 'D', 'S', 'A'].map((char, i) => (
+                    <span
+                      key={i}
+                      className="h-7 w-7 rounded-full border border-border bg-surface-1 flex items-center justify-center text-[9px] font-mono font-bold text-ink-2"
+                    >
+                      {char}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-xs text-ink-3 font-semibold font-mono uppercase tracking-wider">
+                  Serving professional brands across India
+                </p>
+              </div>
             </div>
-          </section>
-        </HeroScrollSequence>
+
+            {/* Right Column: Interactive 2D Trinetra Eye Node */}
+            <div 
+              ref={sphereContainerRef}
+              className="lg:col-span-5 relative w-full aspect-square hidden lg:flex items-center justify-center"
+            >
+              <Hero2DTrinetra />
+            </div>
+          </div>
+        </section>
 
         {/* ── 2. FEATURED PROJECTS (CREDIBILITY UPFRONT) ── */}
         <div className="bg-transparent py-24 border-b border-white/5">

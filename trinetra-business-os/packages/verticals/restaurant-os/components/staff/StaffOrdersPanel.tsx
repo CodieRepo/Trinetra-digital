@@ -384,17 +384,19 @@ export default function StaffOrdersPanel({
                     {order.items.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between text-sm text-slate-200"
+                        className="flex items-center justify-between gap-2 text-sm text-slate-200"
                       >
                         <div>
-                          <p className="font-medium text-white">{item.name}</p>
+                          <p className={`font-bold text-white ${role === "kitchen" ? "text-base md:text-lg" : "text-sm"}`}>
+                            {item.name}
+                          </p>
                           {item.notes ? (
-                            <p className="text-xs text-slate-400">
-                              {item.notes}
+                            <p className="text-xs text-amber-300 font-semibold bg-amber-950/40 px-2 py-1 rounded-lg border border-amber-500/30 mt-1">
+                              Note: {item.notes}
                             </p>
                           ) : null}
                         </div>
-                        <span className="rounded-full bg-white/10 px-2 py-1 text-xs">
+                        <span className={`rounded-xl font-black ${role === "kitchen" ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 px-3 py-1 text-base" : "bg-white/10 px-2.5 py-1 text-xs"}`}>
                           x{item.quantity}
                         </span>
                       </div>
@@ -402,8 +404,8 @@ export default function StaffOrdersPanel({
                   </div>
 
                   {order.notes ? (
-                    <p className="mt-4 rounded-2xl border border-white/8 px-4 py-3 text-sm text-slate-300">
-                      {order.notes}
+                    <p className="mt-4 rounded-2xl border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-xs md:text-sm font-bold text-amber-200">
+                      Order Special Note: {order.notes}
                     </p>
                   ) : null}
 
