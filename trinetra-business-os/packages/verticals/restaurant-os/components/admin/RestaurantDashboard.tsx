@@ -371,10 +371,13 @@ export default function RestaurantDashboard({
       setTables(tablesData.tables);
       setCategories(menuData.categories);
       if (menuData.categories.length > 0) {
-        setItemForm((prev) => ({
-          ...prev,
-          category_id: prev.category_id || menuData.categories[0].id,
-        }));
+        setItemForm((prev) => {
+          const isValid = menuData.categories.some((c) => c.id === prev.category_id);
+          return {
+            ...prev,
+            category_id: isValid ? prev.category_id : menuData.categories[0].id,
+          };
+        });
       }
       setItems(menuData.items);
       setStaff(staffData.staff);
@@ -519,7 +522,10 @@ export default function RestaurantDashboard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "category", name: categoryName }),
       });
-      await readJson(response);
+      const data = await readJson<{ category?: { id: string } }>(response);
+      if (data?.category?.id) {
+        setItemForm((prev) => ({ ...prev, category_id: data.category!.id }));
+      }
       setCategoryName("");
       await loadAll(false);
     } catch (submitError) {

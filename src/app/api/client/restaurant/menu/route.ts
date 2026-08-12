@@ -97,9 +97,6 @@ export async function POST(request: Request) {
     }
 
     if (body.type === "item") {
-      if (!body.category_id || typeof body.category_id !== "string" || !body.category_id.trim()) {
-        return NextResponse.json({ error: "Please select a valid menu category" }, { status: 400 });
-      }
       if (!body.name || typeof body.name !== "string" || !body.name.trim()) {
         return NextResponse.json({ error: "Menu item name is required" }, { status: 400 });
       }
@@ -108,56 +105,82 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Price must be a valid positive number" }, { status: 400 });
       }
 
-      const targetCategoryId = body.category_id.trim();
+      let resolvedCategoryId = typeof body.category_id === "string" ? body.category_id.trim() : "";
 
-      // Ensure target category exists in both menu_categories and legacy categories table
-      try {
-        const { data: catData } = await db
+      // 1. Verify category exists for THIS specific tenant and restaurant
+      let activeCat: { id: string; name: string; display_order: number } | null = null;
+      if (resolvedCategoryId) {
+        const { data: catCheck } = await db
           .from("menu_categories")
           .select("id, name, display_order")
-          .eq("id", targetCategoryId)
+          .eq("id", resolvedCategoryId)
+          .eq("tenant_id", tenantId)
+          .eq("restaurant_id", restaurantId)
           .maybeSingle();
-
-        const defaultBranchId = "abe32f5f-aabe-4962-ac38-710e5b8cc5e3";
-        try {
-          await db.from("branches").upsert({
-            id: defaultBranchId,
-            name: "Main Branch",
-            is_active: true,
-          }, { onConflict: "id" });
-        } catch (e) {}
-
-        if (catData) {
-          try {
-            await db.from("categories").upsert({
-              id: catData.id,
-              branch_id: defaultBranchId,
-              name: catData.name,
-              sort_order: catData.display_order || 1,
-            }, { onConflict: "id" });
-          } catch (e) {}
-        } else {
-          // If category is not in menu_categories yet, create it automatically
-          try {
-            await db.from("menu_categories").upsert({
-              id: targetCategoryId,
-              tenant_id: tenantId,
-              restaurant_id: restaurantId,
-              name: "General",
-              display_order: 1,
-            }, { onConflict: "id" });
-          } catch (e) {}
-        }
-      } catch (catErr) {
-        console.warn("[MenuAPI] Pre-insert category check warning:", catErr);
+        if (catCheck) activeCat = catCheck;
       }
 
+      // 2. If requested category is invalid for this restaurant, fallback to restaurant's first category
+      if (!activeCat) {
+        const { data: firstCat } = await db
+          .from("menu_categories")
+          .select("id, name, display_order")
+          .eq("tenant_id", tenantId)
+          .eq("restaurant_id", restaurantId)
+          .order("display_order", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (firstCat) {
+          activeCat = firstCat;
+        } else {
+          // If restaurant has no categories yet, auto-create default Starters category
+          const { data: newCat, error: newCatErr } = await db
+            .from("menu_categories")
+            .insert({
+              tenant_id: tenantId,
+              restaurant_id: restaurantId,
+              name: "Starters",
+              display_order: 1,
+            })
+            .select("id, name, display_order")
+            .single();
+
+          if (newCatErr || !newCat) {
+            return NextResponse.json({ error: "Please create a menu category first." }, { status: 400 });
+          }
+          activeCat = newCat;
+        }
+      }
+
+      resolvedCategoryId = activeCat.id;
+
+      // 3. Dual-sync to legacy categories table to satisfy any legacy foreign key constraint
+      const defaultBranchId = "abe32f5f-aabe-4962-ac38-710e5b8cc5e3";
+      try {
+        await db.from("branches").upsert({
+          id: defaultBranchId,
+          name: "Main Branch",
+          is_active: true,
+        }, { onConflict: "id" });
+      } catch (e) {}
+
+      try {
+        await db.from("categories").upsert({
+          id: resolvedCategoryId,
+          branch_id: defaultBranchId,
+          name: activeCat.name,
+          sort_order: activeCat.display_order || 1,
+        }, { onConflict: "id" });
+      } catch (e) {}
+
+      // 4. Insert menu item with verified resolvedCategoryId
       const { data, error } = await db
         .from("menu_items")
         .insert({
           tenant_id: tenantId,
           restaurant_id: restaurantId,
-          category_id: body.category_id.trim(),
+          category_id: resolvedCategoryId,
           name: body.name.trim(),
           description: body.description ? String(body.description).trim() : null,
           price: priceVal,
