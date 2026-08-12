@@ -194,7 +194,7 @@ export default function SessionSummaryBar({
 
         {/* Collapsed bar */}
         <div
-          className="mx-auto flex max-w-6xl cursor-pointer items-center justify-between gap-4 rounded-2xl border border-emerald-400/20 bg-stone-950/90 px-5 py-3.5 shadow-[0_-4px_24px_rgba(0,0,0,0.4)] backdrop-blur-md"
+          className="mx-auto flex max-w-6xl cursor-pointer items-center justify-between gap-4 rounded-2xl border border-indigo-500/30 bg-[#0d0e12]/95 px-5 py-3.5 shadow-[0_-10px_35px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-all hover:border-indigo-400/50"
           onClick={() => setExpanded((prev) => !prev)}
           role="button"
           tabIndex={0}
@@ -205,38 +205,38 @@ export default function SessionSummaryBar({
             }
           }}
         >
-          <div className="flex items-center gap-3 text-sm text-stone-200">
+          <div className="flex items-center gap-3 text-xs md:text-sm text-slate-200">
             <span className="relative flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
             </span>
             <span>
-              <span className="font-medium text-white">Table session</span>
-              <span className="mx-1.5 text-stone-500">·</span>
-              <span>
+              <span className="font-extrabold text-white">Table Session</span>
+              <span className="mx-1.5 text-slate-500">·</span>
+              <span className="font-semibold">
                 {orderCount} {orderCount === 1 ? "order" : "orders"}
               </span>
-              <span className="mx-1.5 text-stone-500">·</span>
-              <span>
+              <span className="mx-1.5 text-slate-500">·</span>
+              <span className="font-semibold">
                 {totalItems} {totalItems === 1 ? "item" : "items"}
               </span>
-              <span className="mx-1.5 text-stone-500">·</span>
-              <span className="text-amber-200">
+              <span className="mx-1.5 text-slate-500">·</span>
+              <span className="text-amber-300 font-black">
                 {formatCurrency(sessionTotal, currency)}
               </span>
-              <span className="mx-1.5 hidden text-stone-500 sm:inline">·</span>
-              <span className="hidden text-emerald-200 sm:inline">
+              <span className="mx-1.5 hidden text-slate-500 sm:inline">·</span>
+              <span className="hidden text-emerald-300 font-bold sm:inline">
                 {latestStatus}
               </span>
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {!expanded && <ChevronUp className="h-4 w-4 text-stone-400" />}
+            {!expanded && <ChevronUp className="h-4 w-4 text-slate-400" />}
             {trackOrderId ? (
               <Link
                 to={`/r/${tableToken}/order/${trackOrderId}`}
                 onClick={(e) => e.stopPropagation()}
-                className="shrink-0 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                className="shrink-0 rounded-xl bg-indigo-600 hover:bg-indigo-500 border border-indigo-400/30 px-4 py-2 text-xs font-black text-white transition-all shadow-md cursor-pointer"
               >
                 Track Order →
               </Link>

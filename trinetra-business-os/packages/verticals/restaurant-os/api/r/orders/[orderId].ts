@@ -68,8 +68,8 @@ export async function GET(
       );
     }
 
-    const getDatabaseClient() = getSupabaseAdmin();
-    const { data: order, error: orderError } = await getDatabaseClient()
+    const db = getDatabaseClient();
+    const { data: order, error: orderError } = await db
       .from("restaurant_orders")
       .select(
         "id, table_id, table_session_id, status, notes, total_amount, created_at, updated_at",
@@ -91,19 +91,19 @@ export async function GET(
       { data: events, error: eventsError },
       { data: table, error: tableError },
     ] = await Promise.all([
-      getDatabaseClient()
+      db
         .from("restaurant_order_items")
         .select("id, name, price, quantity, notes")
         .eq("order_id", order.id)
         .order("id", { ascending: true })
         .returns<OrderItemRecord[]>(),
-      getDatabaseClient()
+      db
         .from("restaurant_order_events")
         .select("id, from_status, to_status, actor_role, created_at")
         .eq("order_id", order.id)
         .order("created_at", { ascending: true })
         .returns<OrderEventRecord[]>(),
-      getDatabaseClient()
+      db
         .from("restaurant_tables")
         .select("id, table_number")
         .eq("id", order.table_id)

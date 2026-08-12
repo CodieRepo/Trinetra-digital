@@ -86,7 +86,11 @@ export function verifyStaffJwt(token: string): StaffJwtPayload | null {
       .update(`${header}.${body}`)
       .digest('base64url');
 
-    if (signature !== expectedSignature) return null;
+    const sigBuffer = Buffer.from(signature);
+    const expBuffer = Buffer.from(expectedSignature);
+    if (sigBuffer.length !== expBuffer.length || !crypto.timingSafeEqual(sigBuffer, expBuffer)) {
+      return null;
+    }
 
     const payload: StaffJwtPayload = JSON.parse(Buffer.from(body, 'base64url').toString('utf-8'));
     const now = Math.floor(Date.now() / 1000);

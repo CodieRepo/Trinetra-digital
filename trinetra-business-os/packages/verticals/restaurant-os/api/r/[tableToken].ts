@@ -51,8 +51,8 @@ export async function GET(
       return NextResponse.json({ error: "Missing table token" }, { status: 400 });
     }
 
-    const getDatabaseClient() = getSupabaseAdmin();
-    const { data: table, error: tableError } = await getDatabaseClient()
+    const db = getDatabaseClient();
+    const { data: table, error: tableError } = await db
       .from("restaurant_tables")
       .select("id, restaurant_id, table_number, table_token, is_active")
       .eq("table_token", tableToken)
@@ -67,12 +67,12 @@ export async function GET(
     }
 
     const [{ data: restaurant, error: restaurantError }, { data: categories, error: categoriesError }, { data: items, error: itemsError }] = await Promise.all([
-      getDatabaseClient()
+      db
         .from("restaurants")
         .select("id, name, address, currency, is_active")
         .eq("id", table.restaurant_id)
         .maybeSingle<RestaurantRecord>(),
-      getDatabaseClient()
+      db
         .from("menu_categories")
         .select("id, restaurant_id, name, display_order, is_active")
         .eq("restaurant_id", table.restaurant_id)
@@ -80,7 +80,7 @@ export async function GET(
         .order("display_order", { ascending: true })
         .order("name", { ascending: true })
         .returns<MenuCategoryRecord[]>(),
-      getDatabaseClient()
+      db
         .from("menu_items")
         .select("id, category_id, restaurant_id, name, description, price, image_url, is_available, is_veg, display_order")
         .eq("restaurant_id", table.restaurant_id)

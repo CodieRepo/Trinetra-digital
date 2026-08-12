@@ -619,32 +619,33 @@ export default function PublicRestaurantMenu({
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.22),transparent_36%),linear-gradient(180deg,#140f0a_0%,#1f160d_45%,#0c0a09_100%)] text-stone-50">
+    <div className="min-h-screen bg-[#070709] bg-[radial-gradient(ellipse_80%_80%_at_50%_-10%,rgba(245,158,11,0.15),rgba(0,0,0,0))] text-slate-50 selection:bg-amber-500/30 selection:text-amber-200 font-sans">
       <div
         className={`mx-auto max-w-6xl px-4 py-8 md:px-8${sessionData || cartItemsCount > 0 ? " pb-28" : ""}`}
       >
-        <div className="mb-8 rounded-[28px] border border-amber-300/20 bg-black/25 p-6 backdrop-blur md:flex md:items-end md:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-amber-200/80">
+        <div className="mb-8 rounded-[32px] border border-white/10 bg-[#0d0e12]/80 p-6 md:p-8 backdrop-blur-2xl shadow-[0_30px_70px_rgba(0,0,0,0.5)] md:flex md:items-end md:justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[90px] rounded-full pointer-events-none" />
+          <div className="relative z-10">
+            <p className="text-xs uppercase tracking-[0.35em] text-amber-400 font-extrabold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
               {payload.restaurant.name}
             </p>
-            <h1 className="mt-3 text-3xl font-semibold text-white md:text-5xl">
+            <h1 className="mt-3 text-3xl font-black text-white md:text-5xl tracking-tight">
               Digital Menu
             </h1>
             {payload.restaurant.address ? (
-              <p className="mt-3 max-w-2xl text-sm text-stone-300 md:text-base">
+              <p className="mt-3 max-w-2xl text-sm text-slate-300 md:text-base font-medium">
                 {payload.restaurant.address}
               </p>
             ) : (
-              <p className="mt-3 max-w-2xl text-sm text-stone-300 md:text-base">
-                Table {payload.table.table_number} is live. Scan, order, and
-                track status without an app.
+              <p className="mt-3 max-w-2xl text-sm text-slate-300 md:text-base font-medium">
+                Table {payload.table.table_number} is active. Browse dishes, customize items, and place instant orders from your phone.
               </p>
             )}
           </div>
-          <div className="mt-5 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-stone-200 md:mt-0">
-            <QrCode className="h-4 w-4 text-amber-200" />
-            {payload.restaurant.currency || "INR"} menu
+          <div className="mt-6 inline-flex items-center gap-2.5 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-black text-amber-300 md:mt-0 shadow-lg backdrop-blur shrink-0 relative z-10">
+            <QrCode className="h-4 w-4 text-amber-400" />
+            Table #{payload.table.table_number} · {payload.restaurant.currency || "INR"}
           </div>
         </div>
 

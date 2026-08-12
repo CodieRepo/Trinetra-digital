@@ -40,8 +40,8 @@ export async function verifyStaffToken(
     return null;
   }
 
-  const getDatabaseClient() = getSupabaseAdmin();
-  const { data: staff, error } = await getDatabaseClient()
+  const db = getDatabaseClient();
+  const { data: staff, error } = await db
     .from("restaurant_staff")
     .select("id, restaurant_id, role, name, is_active")
     .eq("access_token", accessToken)

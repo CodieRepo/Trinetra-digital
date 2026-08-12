@@ -2,9 +2,16 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  // Bypass middleware entirely for API routes
-  if (request.nextUrl.pathname.startsWith('/api')) {
-    return NextResponse.next()
+  const pathname = request.nextUrl.pathname;
+
+  // Allow public API routes (customer QR ordering, auth, health checks, webhooks)
+  if (
+    pathname.startsWith('/api/r/') ||
+    pathname.startsWith('/api/auth/') ||
+    pathname.startsWith('/api/health') ||
+    pathname.startsWith('/api/v1/webhooks/')
+  ) {
+    return NextResponse.next();
   }
 
   let supabaseResponse = NextResponse.next({

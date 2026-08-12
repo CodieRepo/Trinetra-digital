@@ -1,45 +1,19 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { authenticateStaffRequest } from "@/lib/auth/staff-api-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function getStaffToken(request: Request, body?: any): string {
-  const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
-  if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
-    return authHeader.substring(7).trim();
-  }
-  const xToken = request.headers.get("x-staff-token");
-  if (xToken && xToken.trim()) return xToken.trim();
-  if (body && body.token && typeof body.token === "string") return body.token.trim();
-  try {
-    const url = new URL(request.url);
-    const qToken = url.searchParams.get("token");
-    if (qToken && qToken.trim()) return qToken.trim();
-  } catch (e) {}
-  return "";
-}
-
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const token = getStaffToken(request, body);
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized: Missing Bearer token" }, { status: 401 });
+    const body = await request.json().catch(() => ({}));
+    const { context: staff, errorResponse } = await authenticateStaffRequest(request, body, body.restaurant_id || null);
+    if (errorResponse || !staff) {
+      return NextResponse.json({ error: errorResponse?.message || "Unauthorized" }, { status: errorResponse?.status || 401 });
     }
 
     const db = getSupabaseAdmin();
-    const { data: staff, error: staffErr } = await db
-      .from("restaurant_staff")
-      .select("id, tenant_id, restaurant_id, name, role, is_active")
-      .eq("access_token", token)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (staffErr || !staff) {
-      return NextResponse.json({ error: "Unauthorized: Invalid or inactive staff token" }, { status: 401 });
-    }
-
     const { session_id, discount_type, discount_value, discount_reason, payment_method, tip_amount } = body || {};
 
     if (!session_id) {
@@ -57,8 +31,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    if (session.restaurant_id !== staff.restaurant_id) {
-      return NextResponse.json({ error: "Forbidden: Session belongs to a different restaurant" }, { status: 403 });
+    // Cross-tenant & cross-restaurant validation
+    if (session.tenant_id !== staff.tenant_id || session.restaurant_id !== staff.restaurant_id) {
+      return NextResponse.json({ error: "Forbidden: Session belongs to a different restaurant branch" }, { status: 403 });
     }
 
     // Fetch all orders for session
@@ -146,7 +121,7 @@ export async function POST(request: Request) {
           tenant_id: session.tenant_id || staff.tenant_id,
           restaurant_id: session.restaurant_id || staff.restaurant_id,
           session_id: session.id,
-          actor_id: staff.id,
+          actor_id: staff.staff_id,
           actor_role: staff.role,
           before_amount: subtotal,
           after_amount: grandTotal,

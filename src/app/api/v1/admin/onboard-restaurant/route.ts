@@ -35,10 +35,6 @@ async function verifyAdminAccess(request: Request): Promise<boolean> {
     // Session check error ignored
   }
 
-  if (!process.env.ADMIN_ONBOARDING_KEY) {
-    return true;
-  }
-
   return false;
 }
 

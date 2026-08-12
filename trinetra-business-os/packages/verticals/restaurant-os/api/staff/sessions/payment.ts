@@ -51,10 +51,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const getDatabaseClient() = getSupabaseAdmin();
+    const db = getDatabaseClient();
 
     // Load session
-    const { data: session, error: sessionError } = await getDatabaseClient()
+    const { data: session, error: sessionError } = await db
       .from("restaurant_table_sessions")
       .select("id, restaurant_id, status, payment_status")
       .eq("id", sessionId)
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
         );
       }
 
-      const { error: updateError } = await getDatabaseClient()
+      const { error: updateError } = await db
         .from("restaurant_table_sessions")
         .update({
           payment_status: "paid",
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { error: updateError } = await getDatabaseClient()
+    const { error: updateError } = await db
       .from("restaurant_table_sessions")
       .update({
         payment_status: "unpaid",

@@ -350,82 +350,96 @@ export default function StaffOrdersPanel({
                 return (
                 <div
                   key={order.id}
-                  className={`rounded-[28px] border p-5 shadow-[0_24px_45px_rgba(0,0,0,0.25)] transition-all ${
+                  className={`rounded-[28px] border p-5 shadow-[0_24px_50px_rgba(0,0,0,0.4)] transition-all backdrop-blur-xl ${
                     urgent
-                      ? "border-amber-400/50 bg-amber-950/20 shadow-amber-900/20"
-                      : "border-white/10 bg-slate-950/45"
+                      ? "border-rose-500/80 bg-rose-950/30 shadow-rose-950/50 animate-urgent-dwell"
+                      : order.status === "placed"
+                      ? "border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-[#0d0e12]/90 shadow-amber-950/30"
+                      : order.status === "preparing"
+                      ? "border-indigo-500/40 bg-gradient-to-b from-indigo-500/10 to-[#0d0e12]/90 shadow-indigo-950/30"
+                      : "border-white/10 bg-[#0d0e12]/90"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                        Table
+                      <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-extrabold">
+                        Table Station
                       </p>
                       <div className="mt-1 flex items-center gap-2.5">
-                        <h2 className="text-2xl font-semibold text-white">
+                        <h2 className="text-3xl font-black text-white tracking-tight">
                           {order.table?.table_number ?? "Unknown"}
                         </h2>
                         {urgent && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-200">
-                            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />
-                            {dwellMinutes(order.created_at)} min
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/50 bg-rose-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-rose-200 shadow-md">
+                            <span className="h-2 w-2 animate-ping rounded-full bg-rose-400" />
+                            {dwellMinutes(order.created_at)} MIN DWELL
                           </span>
                         )}
                       </div>
                     </div>
                     <span
-                      className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.24em] ${STATUS_BADGE[order.status] ?? "bg-cyan-300/10 text-cyan-100 border-cyan-300/20"}`}
+                      className={`rounded-2xl border px-3.5 py-1.5 text-xs font-black uppercase tracking-[0.2em] shadow-sm ${STATUS_BADGE[order.status] ?? "bg-cyan-500/10 text-cyan-200 border-cyan-500/20"}`}
                     >
                       {order.status}
                     </span>
                   </div>
 
-                  <div className="mt-5 space-y-3 rounded-3xl border border-white/8 bg-white/5 p-4">
+                  <div className="mt-5 space-y-3 rounded-2xl border border-white/10 bg-black/40 p-4 shadow-inner">
                     {order.items.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between gap-2 text-sm text-slate-200"
+                        className="flex items-center justify-between gap-3 text-sm text-slate-200"
                       >
-                        <div>
-                          <p className={`font-bold text-white ${role === "kitchen" ? "text-base md:text-lg" : "text-sm"}`}>
+                        <div className="min-w-0 flex-1">
+                          <p className={`font-black text-white ${role === "kitchen" ? "text-lg md:text-xl text-amber-200" : "text-sm"}`}>
                             {item.name}
                           </p>
                           {item.notes ? (
-                            <p className="text-xs text-amber-300 font-semibold bg-amber-950/40 px-2 py-1 rounded-lg border border-amber-500/30 mt-1">
+                            <p className="text-xs text-amber-300 font-bold bg-amber-950/60 px-2.5 py-1 rounded-xl border border-amber-500/40 mt-1.5 inline-block">
                               Note: {item.notes}
                             </p>
                           ) : null}
                         </div>
-                        <span className={`rounded-xl font-black ${role === "kitchen" ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 px-3 py-1 text-base" : "bg-white/10 px-2.5 py-1 text-xs"}`}>
-                          x{item.quantity}
+                        <span className={`rounded-2xl font-black shrink-0 ${role === "kitchen" ? "bg-amber-500/25 text-amber-300 border border-amber-500/40 px-3.5 py-1.5 text-lg shadow-md" : "bg-white/10 px-2.5 py-1 text-xs"}`}>
+                          {item.quantity}x
                         </span>
                       </div>
                     ))}
                   </div>
 
                   {order.notes ? (
-                    <p className="mt-4 rounded-2xl border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-xs md:text-sm font-bold text-amber-200">
-                      Order Special Note: {order.notes}
+                    <p className="mt-4 rounded-2xl border border-amber-500/50 bg-amber-950/40 px-4 py-3 text-xs md:text-sm font-black text-amber-200 backdrop-blur">
+                      Kitchen Special Note: {order.notes}
                     </p>
                   ) : null}
 
-                  <div className="mt-4 flex items-center justify-between text-sm text-slate-400">
+                  <div className="mt-4 flex items-center justify-between text-xs text-slate-400 font-medium">
                     <span>
-                      {new Date(order.created_at).toLocaleTimeString()}
+                      Placed at {new Date(order.created_at).toLocaleTimeString()}
                     </span>
-                    <span className="font-semibold text-slate-200">
+                    <span className="font-extrabold text-white text-sm">
                       {formatCurrency(order.total_amount)}
                     </span>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap gap-2">
+                  <div className="mt-5 flex flex-wrap gap-2.5">
                     {(ACTIONS[role][order.status] ?? []).map((action) => (
                       <button
                         key={action.status}
                         type="button"
                         disabled={updatingOrderId === order.id}
                         onClick={() => updateStatus(order.id, action.status)}
-                        className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        className={`rounded-2xl px-5 py-2.5 text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer border ${
+                          action.status === "accepted"
+                            ? "bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-400/40 shadow-indigo-600/30"
+                            : action.status === "preparing"
+                            ? "bg-purple-600 hover:bg-purple-500 text-white border-purple-400/40 shadow-purple-600/30"
+                            : action.status === "ready"
+                            ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 shadow-emerald-600/30"
+                            : action.status === "served"
+                            ? "bg-teal-600 hover:bg-teal-500 text-white border-teal-400/40 shadow-teal-600/30"
+                            : "bg-white/5 hover:bg-white/10 text-slate-300 border-white/10"
+                        } disabled:cursor-not-allowed disabled:opacity-60`}
                       >
                         {updatingOrderId === order.id
                           ? "Updating..."
@@ -439,12 +453,12 @@ export default function StaffOrdersPanel({
             </div>
 
             {!loading && !payload?.orders.length ? (
-              <div className="mt-8 rounded-[28px] border border-dashed border-white/12 px-6 py-12 text-center text-slate-400">
-                <p className="text-sm font-semibold text-slate-300">
+              <div className="mt-8 rounded-[28px] border border-dashed border-white/15 bg-[#0d0e12]/60 px-6 py-16 text-center text-slate-400 backdrop-blur-xl">
+                <p className="text-base font-extrabold text-slate-200">
                   No active orders right now
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  New orders will appear here automatically.
+                <p className="mt-1.5 text-xs text-slate-400 font-medium">
+                  New dining table orders will stream in automatically.
                 </p>
               </div>
             ) : null}
@@ -457,15 +471,15 @@ export default function StaffOrdersPanel({
         {activeTab === "tables" && role === "waiter" && (
           <>
             {sessionsError ? (
-              <div className="mb-6 rounded-3xl border border-rose-400/20 bg-rose-400/10 px-5 py-4 text-sm text-rose-100">
+              <div className="mb-6 rounded-3xl border border-rose-500/30 bg-rose-950/40 px-5 py-4 text-sm text-rose-200 backdrop-blur-xl">
                 {sessionsError}
               </div>
             ) : null}
             {sessionsLoading && !sessionsPayload ? (
-              <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/10 bg-white/5 px-6 py-12 text-center">
-                <div className="h-10 w-10 rounded-2xl border-2 border-cyan-300/20 border-t-cyan-300 animate-spin" />
+              <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/10 bg-[#0d0e12]/80 px-6 py-16 text-center backdrop-blur-xl">
+                <div className="h-10 w-10 rounded-2xl border-2 border-indigo-400/20 border-t-indigo-400 animate-spin" />
                 <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
-                  Loading table sessions...
+                  Loading active table sessions...
                 </p>
               </div>
             ) : null}
@@ -478,35 +492,40 @@ export default function StaffOrdersPanel({
                 return (
                   <div
                     key={session.id}
-                    className="rounded-[28px] border border-white/10 bg-slate-950/45 p-5 shadow-[0_24px_45px_rgba(0,0,0,0.25)]"
+                    className="rounded-[28px] border border-white/10 bg-[#0d0e12]/90 p-6 shadow-[0_25px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl"
                   >
                     {/* Session header */}
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                          Table
+                        <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-extrabold">
+                          Table Session
                         </p>
-                        <h2 className="mt-2 text-2xl font-semibold text-white">
+                        <h2 className="mt-1 text-3xl font-black text-white tracking-tight">
                           {session.table?.table_number ?? "Unknown"}
                         </h2>
                         {session.customer_name && (
-                          <p className="mt-1 text-sm text-cyan-200">
+                          <p className="mt-1 text-sm font-bold text-indigo-300">
                             {session.customer_name}
+                            {session.customer_phone && (
+                              <span className="ml-2 text-xs text-slate-400 font-mono font-normal">
+                                {session.customer_phone}
+                              </span>
+                            )}
                           </p>
                         )}
                       </div>
                       <div className="flex flex-col items-end gap-1.5">
                         <div className="flex items-center gap-1.5">
                           {session.payment_status === "paid" && (
-                            <span className="rounded-full border border-emerald-400/30 bg-emerald-400/20 px-3 py-1 text-xs uppercase tracking-[0.24em] text-emerald-100">
-                              Paid
+                            <span className="rounded-full border border-emerald-400/40 bg-emerald-400/20 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-200 shadow-sm">
+                              Paid ✓
                             </span>
                           )}
-                          <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-emerald-200">
+                          <span className="rounded-full border border-indigo-400/30 bg-indigo-500/15 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-indigo-200">
                             Active
                           </span>
                         </div>
-                        <span className="text-[11px] text-slate-500">
+                        <span className="text-[11px] font-bold text-slate-400">
                           {timeAgo(session.opened_at)}
                         </span>
                       </div>
@@ -514,53 +533,51 @@ export default function StaffOrdersPanel({
 
                     {/* Session metrics */}
                     <div className="mt-4 grid grid-cols-3 gap-3">
-                      <div className="rounded-2xl border border-white/8 bg-white/5 px-3 py-2.5 text-center">
-                        <p className="text-[11px] uppercase tracking-wider text-slate-500">
+                      <div className="rounded-2xl border border-white/8 bg-black/40 px-3 py-3 text-center">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
                           Orders
                         </p>
-                        <p className="mt-1 text-lg font-semibold text-white">
+                        <p className="mt-1 text-xl font-black text-white">
                           {session.order_count}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-white/8 bg-white/5 px-3 py-2.5 text-center">
-                        <p className="text-[11px] uppercase tracking-wider text-slate-500">
-                          Total
+                      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-3 py-3 text-center">
+                        <p className="text-[10px] uppercase tracking-wider text-amber-400 font-bold">
+                          Total Bill
                         </p>
-                        <p className="mt-1 text-lg font-semibold text-amber-200">
+                        <p className="mt-1 text-xl font-black text-amber-300">
                           {formatCurrency(session.session_total)}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-white/8 bg-white/5 px-3 py-2.5 text-center">
-                        <p className="text-[11px] uppercase tracking-wider text-slate-500">
-                          Latest
+                      <div className="rounded-2xl border border-white/8 bg-black/40 px-3 py-3 text-center">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+                          Latest Status
                         </p>
-                        <p
-                          className={`mt-1 text-sm font-medium ${STATUS_BADGE[latestStatus]?.includes("text-") ? STATUS_BADGE[latestStatus].split(" ").find((c) => c.startsWith("text-")) : "text-slate-200"}`}
-                        >
+                        <p className="mt-1 text-sm font-extrabold text-slate-200 capitalize">
                           {latestStatus}
                         </p>
                       </div>
                     </div>
 
                     {/* Order breakdown */}
-                    <div className="mt-4 max-h-48 space-y-2.5 overflow-y-auto">
+                    <div className="mt-4 max-h-48 space-y-2.5 overflow-y-auto custom-scrollbar pr-1">
                       {session.orders.map((order, idx) => (
                         <div
                           key={order.id}
-                          className="rounded-2xl border border-white/8 bg-white/3 px-4 py-3"
+                          className="rounded-2xl border border-white/8 bg-black/30 px-4 py-3"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-slate-500">
-                                Order {idx + 1}
+                              <span className="text-xs font-bold text-slate-400">
+                                Order #{idx + 1}
                               </span>
                               <span
-                                className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider ${STATUS_BADGE[order.status] ?? "bg-cyan-300/10 text-cyan-100 border-cyan-300/20"}`}
+                                className={`rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${STATUS_BADGE[order.status] ?? "bg-cyan-300/10 text-cyan-100 border-cyan-300/20"}`}
                               >
                                 {order.status}
                               </span>
                             </div>
-                            <span className="text-sm font-semibold text-slate-200">
+                            <span className="text-sm font-extrabold text-white">
                               {formatCurrency(order.total_amount)}
                             </span>
                           </div>
@@ -568,11 +585,11 @@ export default function StaffOrdersPanel({
                             {order.items.map((item) => (
                               <div
                                 key={item.id}
-                                className="flex items-center justify-between text-xs text-slate-400"
+                                className="flex items-center justify-between text-xs text-slate-300"
                               >
                                 <span>
                                   {item.name}{" "}
-                                  <span className="text-slate-600">
+                                  <span className="text-amber-400 font-black">
                                     x{item.quantity}
                                   </span>
                                 </span>
@@ -585,19 +602,19 @@ export default function StaffOrdersPanel({
 
                     {/* Waiter Payment Settlement Authority Bar */}
                     {role === "waiter" && (
-                      <div className="mt-4 border-t border-white/10 pt-3">
+                      <div className="mt-5 border-t border-white/10 pt-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-slate-400 font-medium">
-                            {session.payment_status === "paid" ? "Bill Settled" : "Collect & Settle Payment:"}
+                          <span className="text-xs text-slate-300 font-bold">
+                            {session.payment_status === "paid" ? "Bill Settled ✓" : "Collect & Settle Payment:"}
                           </span>
-                          <span className="text-xs font-bold text-amber-300">
-                            Total: {formatCurrency(session.session_total)}
+                          <span className="text-xs font-black text-amber-300">
+                            Bill Total: {formatCurrency(session.session_total)}
                           </span>
                         </div>
 
                         {session.payment_status !== "paid" && (
-                          <div className="mt-3 flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-1.5 rounded-xl bg-white/5 p-1 border border-white/10 text-[11px] font-bold">
+                          <div className="mt-3 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-1 rounded-2xl bg-black/50 p-1.5 border border-white/10 text-[11px] font-black">
                               {["cash", "upi", "card"].map((m) => (
                                 <button
                                   key={m}
@@ -605,9 +622,9 @@ export default function StaffOrdersPanel({
                                   onClick={() =>
                                     setStaffPaymentMethods((prev) => ({ ...prev, [session.id]: m }))
                                   }
-                                  className={`px-2.5 py-1 rounded-lg uppercase transition ${
+                                  className={`px-3 py-1.5 rounded-xl uppercase transition cursor-pointer ${
                                     (staffPaymentMethods[session.id] || "cash") === m
-                                      ? "bg-amber-500 text-slate-950 font-extrabold shadow-sm"
+                                      ? "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-md shadow-amber-500/20"
                                       : "text-slate-400 hover:text-white"
                                   }`}
                                 >
@@ -643,7 +660,7 @@ export default function StaffOrdersPanel({
                                   setStaffSettlingId(null);
                                 }
                               }}
-                              className="rounded-xl bg-emerald-500 px-4 py-1.5 text-xs font-black text-slate-950 hover:bg-emerald-400 transition shadow-md shadow-emerald-500/20 disabled:opacity-50 cursor-pointer"
+                              className="rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2 text-xs font-black text-slate-950 hover:from-emerald-400 hover:to-teal-400 transition shadow-lg shadow-emerald-500/25 disabled:opacity-50 cursor-pointer border border-emerald-400/30"
                             >
                               {staffSettlingId === session.id ? "Settling..." : "Mark Paid ✓"}
                             </button>

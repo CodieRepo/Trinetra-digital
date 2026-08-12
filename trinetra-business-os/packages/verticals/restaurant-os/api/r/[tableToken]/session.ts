@@ -83,10 +83,10 @@ export async function GET(
       );
     }
 
-    const getDatabaseClient() = getSupabaseAdmin();
+    const db = getDatabaseClient();
 
     // Resolve the table
-    const { data: table, error: tableError } = await getDatabaseClient()
+    const { data: table, error: tableError } = await db
       .from("restaurant_tables")
       .select("id, table_number")
       .eq("table_token", tableToken)
@@ -105,7 +105,7 @@ export async function GET(
 
     // 1. If client provides a table_session_id, validate and use it
     if (tableSessionId && isUuid(tableSessionId)) {
-      const { data: providedSession } = await getDatabaseClient()
+      const { data: providedSession } = await db
         .from("restaurant_table_sessions")
         .select(
           "id, table_id, status, opened_at, closed_at, customer_name, customer_phone, payment_status",
@@ -122,7 +122,7 @@ export async function GET(
 
     // 2. Fall back to most recent active session for this token + table
     if (!session) {
-      const { data: activeSession } = await getDatabaseClient()
+      const { data: activeSession } = await db
         .from("restaurant_table_sessions")
         .select(
           "id, table_id, status, opened_at, closed_at, customer_name, customer_phone, payment_status",
@@ -150,7 +150,7 @@ export async function GET(
     }
 
     // --- Fetch all orders in this session ---
-    const { data: orders, error: ordersError } = await getDatabaseClient()
+    const { data: orders, error: ordersError } = await db
       .from("restaurant_orders")
       .select("id, status, notes, total_amount, created_at")
       .eq("table_session_id", session.id)
@@ -165,7 +165,7 @@ export async function GET(
 
     // Fetch items for all orders in one batch
     const { data: allItems, error: itemsError } = orderIds.length
-      ? await getDatabaseClient()
+      ? await db
           .from("restaurant_order_items")
           .select("id, order_id, name, price, quantity, notes")
           .in("order_id", orderIds)

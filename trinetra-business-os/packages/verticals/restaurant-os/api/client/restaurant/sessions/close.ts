@@ -35,10 +35,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const getDatabaseClient() = getDatabaseClient();
+    const db = getDatabaseClient();
 
     // 1. Load session
-    const { data: session, error: sessionError } = await getDatabaseClient()
+    const { data: session, error: sessionError } = await db
       .from("restaurant_table_sessions")
       .select("id, restaurant_id, status")
       .eq("id", sessionId)
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     }
 
     // 2. Check orders in this session
-    const { data: orders, error: ordersError } = await getDatabaseClient()
+    const { data: orders, error: ordersError } = await db
       .from("restaurant_orders")
       .select("id, status")
       .eq("table_session_id", sessionId)
@@ -89,14 +89,14 @@ export async function POST(request: Request) {
     if (activeOrders.length > 0) {
       const cancelOps = activeOrders.map((o) =>
         Promise.all([
-          getDatabaseClient()
+          db
             .from("restaurant_orders")
             .update({
               status: "cancelled" as RestaurantOrderStatus,
               updated_at: now,
             })
             .eq("id", o.id),
-          getDatabaseClient().from("restaurant_order_events").insert({
+          db.from("restaurant_order_events").insert({
             order_id: o.id,
             from_status: o.status,
             to_status: "cancelled",
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
     }
 
     // 5. Close the session
-    const { error: closeError } = await getDatabaseClient()
+    const { error: closeError } = await db
       .from("restaurant_table_sessions")
       .update({ status: "closed", closed_at: now })
       .eq("id", sessionId);

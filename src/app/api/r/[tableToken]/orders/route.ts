@@ -30,7 +30,7 @@ export async function POST(
     // Validate table
     const { data: table, error: tableErr } = await supabase
       .from("restaurant_tables")
-      .select("id, tenant_id, restaurant_id, is_active")
+      .select("id, tenant_id, restaurant_id, table_number, is_active")
       .eq("table_token", tableToken)
       .maybeSingle();
 
@@ -114,7 +114,13 @@ export async function POST(
           { status: 400 }
         );
       }
-      const qty = Number(item.quantity) || 1;
+      const qty = Math.floor(Number(item.quantity));
+      if (!qty || qty <= 0 || !Number.isFinite(qty)) {
+        return NextResponse.json(
+          { error: `Invalid quantity for item "${dbItem.name}". Quantity must be a positive number.` },
+          { status: 400 }
+        );
+      }
       const price = Number(dbItem.price) || 0;
       totalAmount += price * qty;
 
@@ -179,6 +185,23 @@ export async function POST(
 
     if (eventErr) {
       console.error("Failed to insert order event:", eventErr);
+    }
+
+    // Trigger post-commit FCM push notification dispatch (asynchronous, non-blocking)
+    try {
+      const { fcmNotificationService } = await import("@/services/fcmNotificationService");
+      fcmNotificationService.dispatchOrderNotification({
+        order_id: order.id,
+        tenant_id: table.tenant_id,
+        restaurant_id: table.restaurant_id,
+        table_number: table.table_number,
+        status: "placed",
+        title: `🔔 New Order #${order.id.slice(0, 6)}`,
+        body: `Table ${table.table_number} • ${orderItemsToInsert.length} items (Total: ₹${totalAmount})`,
+        target_roles: ["kitchen", "manager", "owner"],
+      }).catch((e) => console.error("[OrderApi] FCM dispatch background error:", e));
+    } catch (pushErr) {
+      console.error("[OrderApi] Notification dispatcher error:", pushErr);
     }
 
     return NextResponse.json({

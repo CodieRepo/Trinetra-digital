@@ -1,46 +1,24 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { authenticateStaffRequest } from "@/lib/auth/staff-api-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function getStaffToken(request: Request): string {
-  const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
-  if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
-    return authHeader.substring(7).trim();
-  }
-  const xToken = request.headers.get("x-staff-token");
-  if (xToken && xToken.trim()) return xToken.trim();
-  try {
-    const url = new URL(request.url);
-    const qToken = url.searchParams.get("token");
-    if (qToken && qToken.trim()) return qToken.trim();
-  } catch (e) {}
-  return "";
-}
-
 export async function GET(request: Request) {
   try {
-    const token = getStaffToken(request);
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized: Missing Bearer token" }, { status: 401 });
-    }
+    const url = new URL(request.url);
+    const requestedRestaurantId = url.searchParams.get("restaurant_id");
 
-    const db = getSupabaseAdmin();
-    const { data: staff, error: staffErr } = await db
-      .from("restaurant_staff")
-      .select("id, tenant_id, restaurant_id, name, role, is_active")
-      .eq("access_token", token)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (staffErr || !staff) {
-      return NextResponse.json({ error: "Unauthorized: Invalid or inactive staff token" }, { status: 401 });
+    const { context: staff, errorResponse } = await authenticateStaffRequest(request, null, requestedRestaurantId);
+    if (errorResponse || !staff) {
+      return NextResponse.json({ error: errorResponse?.message || "Unauthorized" }, { status: errorResponse?.status || 401 });
     }
 
     const targetRestaurantId = staff.restaurant_id;
+    const db = getSupabaseAdmin();
 
-    // Filter statuses based on role
+    // Filter statuses based on staff role
     const statuses = staff.role === "kitchen"
       ? ["placed", "accepted", "preparing", "ready"]
       : ["ready", "served"];
@@ -49,6 +27,7 @@ export async function GET(request: Request) {
     const { data: orders, error: ordersErr } = await db
       .from("restaurant_orders")
       .select("id, table_id, table_session_id, status, notes, total_amount, created_at, updated_at")
+      .eq("tenant_id", staff.tenant_id)
       .eq("restaurant_id", targetRestaurantId)
       .in("status", statuses)
       .order("created_at", { ascending: true });

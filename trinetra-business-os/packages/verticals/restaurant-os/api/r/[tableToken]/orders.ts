@@ -92,8 +92,8 @@ export async function POST(
       );
     }
 
-    const getDatabaseClient() = getSupabaseAdmin();
-    const { data: table, error: tableError } = await getDatabaseClient()
+    const db = getDatabaseClient();
+    const { data: table, error: tableError } = await db
       .from("restaurant_tables")
       .select("id, restaurant_id, table_number, is_active")
       .eq("table_token", tableToken)
@@ -110,7 +110,7 @@ export async function POST(
     const menuItemIds = [
       ...new Set(normalizedItems.map((item) => item.menu_item_id)),
     ];
-    const { data: menuItems, error: menuItemsError } = await getDatabaseClient()
+    const { data: menuItems, error: menuItemsError } = await db
       .from("menu_items")
       .select("id, restaurant_id, name, price, is_available")
       .eq("restaurant_id", table.restaurant_id)
@@ -145,7 +145,7 @@ export async function POST(
 
     // 1. If client provides a table_session_id, try to reuse it
     if (clientTableSessionId && isUuid(clientTableSessionId)) {
-      const { data: existingSession } = await getDatabaseClient()
+      const { data: existingSession } = await db
         .from("restaurant_table_sessions")
         .select("id, customer_name, customer_phone, payment_status")
         .eq("id", clientTableSessionId)
@@ -183,7 +183,7 @@ export async function POST(
 
     // 2. If not reused, look for any active session for this token + table
     if (!tableSessionId) {
-      const { data: activeSession } = await getDatabaseClient()
+      const { data: activeSession } = await db
         .from("restaurant_table_sessions")
         .select("id, customer_name, customer_phone, payment_status")
         .eq("table_id", table.id)
@@ -229,7 +229,7 @@ export async function POST(
     }
     // ----- End table session logic -----
 
-    const { data: order, error: orderError } = await getDatabaseClient()
+    const { data: order, error: orderError } = await db
       .from("restaurant_orders")
       .insert({
         restaurant_id: table.restaurant_id,
@@ -267,8 +267,8 @@ export async function POST(
 
     const [{ error: orderItemsError }, { error: orderEventError }] =
       await Promise.all([
-        getDatabaseClient().from("restaurant_order_items").insert(orderItems),
-        getDatabaseClient().from("restaurant_order_events").insert({
+        db.from("restaurant_order_items").insert(orderItems),
+        db.from("restaurant_order_events").insert({
           order_id: order.id,
           from_status: null,
           to_status: "placed",

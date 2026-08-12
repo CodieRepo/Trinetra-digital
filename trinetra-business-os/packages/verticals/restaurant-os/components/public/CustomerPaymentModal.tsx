@@ -92,51 +92,53 @@ export default function CustomerPaymentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 p-0 sm:p-4 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-amber-500/20 bg-slate-950 p-6 text-slate-100 shadow-2xl shadow-amber-500/10 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 p-0 sm:p-4 backdrop-blur-xl animate-in fade-in duration-200">
+      <div className="w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] border border-amber-500/30 bg-[#0d0e12] p-6 text-slate-100 shadow-[0_30px_90px_rgba(245,158,11,0.2)] max-h-[92vh] overflow-y-auto relative overflow-hidden">
+        {/* Top ambient glow bar */}
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500" />
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 font-black text-slate-950 shadow-lg shadow-amber-500/20">
-              <QrCode size={20} />
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 font-black text-slate-950 shadow-lg shadow-amber-500/30 border border-white/20">
+              <QrCode size={22} />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-white">Pay Bill Online</h3>
-              <p className="text-xs text-slate-400">{restaurantName} · Table {tableNumber || "Guest"}</p>
+              <h3 className="text-lg font-black text-white tracking-tight">Instant Online Payment</h3>
+              <p className="text-xs text-slate-400 font-medium">{restaurantName} · Table {tableNumber || "Guest"}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-slate-400 hover:bg-white/10 hover:text-white transition"
+            className="rounded-2xl p-2 text-slate-400 hover:bg-white/10 hover:text-white transition cursor-pointer border border-white/5"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Amount & Tip Card */}
-        <div className="my-4 rounded-2xl border border-amber-400/20 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent p-4 text-center">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1 px-2">
-            <span>Bill Amount: <strong className="text-white">{formattedBillAmount}</strong></span>
+        <div className="my-5 rounded-3xl border border-amber-500/30 bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-black/40 p-5 text-center shadow-xl backdrop-blur">
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-1 px-2 font-semibold">
+            <span>Bill Base: <strong className="text-white">{formattedBillAmount}</strong></span>
             {tipAmount > 0 && (
-              <span className="text-emerald-400 font-bold">+ Tip: ₹{tipAmount}</span>
+              <span className="text-amber-300 font-extrabold">+ Staff Tip: ₹{tipAmount}</span>
             )}
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">Total Payable</span>
-          <h2 className="mt-1 text-3xl font-black text-white">{formattedTotalPayable}</h2>
-          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-400/10 px-3 py-1 text-[10px] font-semibold text-amber-300 border border-amber-400/20">
-            <ShieldCheck size={12} /> Encrypted & Verified Settlement
+          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-400">Total Payable Amount</span>
+          <h2 className="mt-1 text-4xl font-black text-white tracking-tight">{formattedTotalPayable}</h2>
+          <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-3.5 py-1 text-[10px] font-black uppercase tracking-wider text-amber-300 border border-amber-500/30">
+            <ShieldCheck size={13} /> Instant Direct UPI Settlement
           </div>
         </div>
 
         {!submittedSuccess ? (
           <>
             {/* OPTIONAL TIP SELECTION BAR */}
-            <div className="mb-5 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-3.5">
-              <div className="flex items-center gap-2 mb-2 text-xs font-bold text-rose-300">
-                <Heart size={14} className="fill-rose-400 text-rose-400" />
-                <span>Add Tip for Waiter & Staff (Optional)</span>
+            <div className="mb-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 backdrop-blur">
+              <div className="flex items-center gap-2 mb-2.5 text-xs font-black text-rose-300">
+                <Heart size={15} className="fill-rose-400 text-rose-400 animate-pulse" />
+                <span>Add Tip for Waiter & Kitchen Team (Optional)</span>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 {[0, 20, 50, 100].map((preset) => (
@@ -144,9 +146,9 @@ export default function CustomerPaymentModal({
                     key={preset}
                     type="button"
                     onClick={() => handleSelectTip(preset)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
                       !isCustomTip && tipAmount === preset
-                        ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 scale-105"
+                        ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg shadow-rose-500/30 scale-105 border border-rose-400/40"
                         : "bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10"
                     }`}
                   >

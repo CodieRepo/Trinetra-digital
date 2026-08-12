@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { authenticateStaffRequest } from "@/lib/auth/staff-api-auth";
+import { canStaffTransitionOrder, RestaurantOrderStatus, RestaurantStaffRole } from "../../../../../../../trinetra-business-os/packages/verticals/restaurant-os/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const VALID_STATUSES = [
+const VALID_STATUSES: RestaurantOrderStatus[] = [
   "placed",
   "accepted",
   "preparing",
@@ -13,22 +15,6 @@ const VALID_STATUSES = [
   "closed",
   "cancelled",
 ];
-
-function getStaffToken(request: Request, body?: any): string {
-  const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
-  if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
-    return authHeader.substring(7).trim();
-  }
-  const xToken = request.headers.get("x-staff-token");
-  if (xToken && xToken.trim()) return xToken.trim();
-  if (body && body.token && typeof body.token === "string") return body.token.trim();
-  try {
-    const url = new URL(request.url);
-    const qToken = url.searchParams.get("token");
-    if (qToken && qToken.trim()) return qToken.trim();
-  } catch (e) {}
-  return "";
-}
 
 export async function POST(
   request: Request,
@@ -41,28 +27,17 @@ export async function POST(
     }
 
     const body = await request.json().catch(() => ({}));
-    const token = getStaffToken(request, body);
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized: Missing Bearer token" }, { status: 401 });
-    }
-
-    const db = getSupabaseAdmin();
-    const { data: staff, error: staffErr } = await db
-      .from("restaurant_staff")
-      .select("id, tenant_id, restaurant_id, name, role, is_active")
-      .eq("access_token", token)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (staffErr || !staff) {
-      return NextResponse.json({ error: "Unauthorized: Invalid or inactive staff token" }, { status: 401 });
+    const { context: staff, errorResponse } = await authenticateStaffRequest(request, body, body.restaurant_id || null);
+    if (errorResponse || !staff) {
+      return NextResponse.json({ error: errorResponse?.message || "Unauthorized" }, { status: errorResponse?.status || 401 });
     }
 
     const { status } = body || {};
-
-    if (!status || !VALID_STATUSES.includes(status)) {
+    if (!status || !VALID_STATUSES.includes(status as RestaurantOrderStatus)) {
       return NextResponse.json({ error: `Invalid status: ${status}` }, { status: 400 });
     }
+
+    const db = getSupabaseAdmin();
 
     // Fetch current order
     const { data: order, error: orderErr } = await db
@@ -75,54 +50,63 @@ export async function POST(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (order.restaurant_id !== staff.restaurant_id) {
-      return NextResponse.json({ error: "Forbidden: Order belongs to a different restaurant" }, { status: 403 });
-    }
-
-    // Role-based status transition restrictions
-    if (staff.role === "kitchen" && (status === "served" || status === "closed")) {
+    // Cross-tenant & cross-restaurant check
+    if (order.tenant_id !== staff.tenant_id || order.restaurant_id !== staff.restaurant_id) {
       return NextResponse.json(
-        { error: "Forbidden: Kitchen role cannot mark orders as served or closed" },
-        { status: 403 }
-      );
-    }
-    if (staff.role === "waiter" && (status === "accepted" || status === "preparing")) {
-      return NextResponse.json(
-        { error: "Forbidden: Waiter role cannot transition orders to accepted or preparing" },
+        { error: "Forbidden: Order belongs to a different tenant or restaurant branch" },
         { status: 403 }
       );
     }
 
-    const from_status = order.status;
+    const from_status = order.status as RestaurantOrderStatus;
+    const targetStatus = status as RestaurantOrderStatus;
+
+    // Execute role-based transition check if staff role is kitchen or waiter
+    if (staff.role === "kitchen" || staff.role === "waiter") {
+      const isAllowed = canStaffTransitionOrder(staff.role as RestaurantStaffRole, from_status, targetStatus);
+      if (!isAllowed) {
+        return NextResponse.json(
+          { error: `Forbidden: ${staff.role} role cannot transition order from ${from_status} to ${targetStatus}` },
+          { status: 403 }
+        );
+      }
+    }
+
     const now = new Date().toISOString();
 
-    // Update order status
-    const { error: updateErr } = await db
-      .from("restaurant_orders")
-      .update({ status, updated_at: now })
-      .eq("id", orderId);
+    // Execute atomic RPC or fallback update
+    const { error: rpcErr } = await db.rpc("transition_order_status_atomic_rpc", {
+      p_order_id: order.id,
+      p_tenant_id: staff.tenant_id,
+      p_restaurant_id: staff.restaurant_id,
+      p_expected_from_status: from_status,
+      p_target_status: targetStatus,
+      p_actor_id: staff.staff_id,
+      p_actor_role: staff.role,
+    });
 
-    if (updateErr) {
-      return NextResponse.json({ error: updateErr.message }, { status: 500 });
-    }
+    if (rpcErr) {
+      // Fallback update if RPC is not present
+      const { error: updateErr } = await db
+        .from("restaurant_orders")
+        .update({ status: targetStatus, updated_at: now })
+        .eq("id", orderId);
 
-    // Insert audit trail event
-    const { error: eventErr } = await db
-      .from("restaurant_order_events")
-      .insert({
-        tenant_id: order.tenant_id || staff.tenant_id,
+      if (updateErr) {
+        return NextResponse.json({ error: updateErr.message }, { status: 500 });
+      }
+
+      await db.from("restaurant_order_events").insert({
+        tenant_id: staff.tenant_id,
         order_id: order.id,
         from_status: from_status,
-        to_status: status,
+        to_status: targetStatus,
         actor_role: staff.role,
-        actor_id: staff.id,
+        actor_id: staff.staff_id,
       });
-
-    if (eventErr) {
-      console.error("Failed to insert order event audit row:", eventErr.message);
     }
 
-    return NextResponse.json({ success: true, status });
+    return NextResponse.json({ success: true, status: targetStatus });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });

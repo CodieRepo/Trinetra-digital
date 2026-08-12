@@ -61,17 +61,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const getDatabaseClient() = getSupabaseAdmin();
+    const db = getDatabaseClient();
     const [
       { data: staff, error: staffError },
       { data: orders, error: ordersError },
     ] = await Promise.all([
-      getDatabaseClient()
+      db
         .from("restaurant_staff")
         .select("id, name, role")
         .eq("id", verifiedStaff.staff_id)
         .maybeSingle<StaffRecord>(),
-      getDatabaseClient()
+      db
         .from("restaurant_orders")
         .select("id, table_id, status, notes, total_amount, created_at")
         .eq("restaurant_id", restaurantId)
@@ -98,14 +98,14 @@ export async function GET(request: Request) {
       { data: tables, error: tablesError },
     ] = await Promise.all([
       orderIds.length
-        ? getDatabaseClient()
+        ? db
             .from("restaurant_order_items")
             .select("id, order_id, name, quantity, notes")
             .in("order_id", orderIds)
             .returns<OrderItemRecord[]>()
         : Promise.resolve({ data: [], error: null }),
       tableIds.length
-        ? getDatabaseClient()
+        ? db
             .from("restaurant_tables")
             .select("id, table_number")
             .in("id", tableIds)

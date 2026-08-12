@@ -56,10 +56,10 @@ export async function GET() {
   try {
     const context = await requireRestaurantClientContext();
     const restaurantId = context.restaurant.id;
-    const getDatabaseClient() = getDatabaseClient();
+    const db = getDatabaseClient();
 
     // 1. Active sessions
-    const { data: sessions, error: sessionsError } = await getDatabaseClient()
+    const { data: sessions, error: sessionsError } = await db
       .from("restaurant_table_sessions")
       .select(
         "id, table_id, status, opened_at, closed_at, customer_name, customer_phone, payment_status, paid_at",
@@ -82,13 +82,13 @@ export async function GET() {
       { data: orders, error: ordersError },
       { data: tables, error: tablesError },
     ] = await Promise.all([
-      getDatabaseClient()
+      db
         .from("restaurant_orders")
         .select("id, table_session_id, status, total_amount, created_at")
         .in("table_session_id", sessionIds)
         .order("created_at", { ascending: true })
         .returns<SessionOrderRecord[]>(),
-      getDatabaseClient()
+      db
         .from("restaurant_tables")
         .select("id, table_number")
         .in("id", tableIds)
@@ -101,7 +101,7 @@ export async function GET() {
     // 3. Items for all orders in one batch
     const orderIds = (orders ?? []).map((o) => o.id);
     const { data: allItems, error: itemsError } = orderIds.length
-      ? await getDatabaseClient()
+      ? await db
           .from("restaurant_order_items")
           .select("id, order_id, name, quantity, notes")
           .in("order_id", orderIds)

@@ -45,8 +45,8 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const getDatabaseClient() = getSupabaseAdmin();
-    const { data: order, error: orderError } = await getDatabaseClient()
+    const db = getDatabaseClient();
+    const { data: order, error: orderError } = await db
       .from("restaurant_orders")
       .select("id, restaurant_id, status")
       .eq("id", orderId)
@@ -75,11 +75,11 @@ export async function POST(
 
     const now = new Date().toISOString();
     const [{ error: updateError }, { error: eventError }] = await Promise.all([
-      getDatabaseClient()
+      db
         .from("restaurant_orders")
         .update({ status: nextStatus, updated_at: now })
         .eq("id", order.id),
-      getDatabaseClient().from("restaurant_order_events").insert({
+      db.from("restaurant_order_events").insert({
         order_id: order.id,
         from_status: order.status,
         to_status: nextStatus,

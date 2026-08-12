@@ -73,10 +73,10 @@ export async function POST(
       );
     }
 
-    const getDatabaseClient() = getSupabaseAdmin();
+    const db = getDatabaseClient();
 
     // Resolve table
-    const { data: table, error: tableError } = await getDatabaseClient()
+    const { data: table, error: tableError } = await db
       .from("restaurant_tables")
       .select("id, restaurant_id")
       .eq("table_token", tableToken)
@@ -92,7 +92,7 @@ export async function POST(
 
     // 1. By explicit table_session_id
     if (clientTableSessionId && isUuid(clientTableSessionId)) {
-      const { data: s } = await getDatabaseClient()
+      const { data: s } = await db
         .from("restaurant_table_sessions")
         .select("id")
         .eq("id", clientTableSessionId)
@@ -105,7 +105,7 @@ export async function POST(
 
     // 2. By session_token + table
     if (!sessionId) {
-      const { data: s } = await getDatabaseClient()
+      const { data: s } = await db
         .from("restaurant_table_sessions")
         .select("id")
         .eq("table_id", table.id)
@@ -119,7 +119,7 @@ export async function POST(
 
     // 3. No active session — create one with identity pre-set
     if (!sessionId) {
-      const { data: newSession, error: createError } = await getDatabaseClient()
+      const { data: newSession, error: createError } = await db
         .from("restaurant_table_sessions")
         .insert({
           restaurant_id: table.restaurant_id,
@@ -145,7 +145,7 @@ export async function POST(
     }
 
     // Update existing session with identity
-    const { error: updateError } = await getDatabaseClient()
+    const { error: updateError } = await db
       .from("restaurant_table_sessions")
       .update({
         customer_name: customerName,

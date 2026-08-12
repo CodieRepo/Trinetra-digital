@@ -1,49 +1,28 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { authenticateStaffRequest } from "@/lib/auth/staff-api-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function getStaffToken(request: Request): string {
-  const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
-  if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
-    return authHeader.substring(7).trim();
-  }
-  const xToken = request.headers.get("x-staff-token");
-  if (xToken && xToken.trim()) return xToken.trim();
-  try {
-    const url = new URL(request.url);
-    const qToken = url.searchParams.get("token");
-    if (qToken && qToken.trim()) return qToken.trim();
-  } catch (e) {}
-  return "";
-}
-
 export async function GET(request: Request) {
   try {
-    const token = getStaffToken(request);
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized: Missing Bearer token" }, { status: 401 });
-    }
+    const url = new URL(request.url);
+    const requestedRestaurantId = url.searchParams.get("restaurant_id");
 
-    const db = getSupabaseAdmin();
-    const { data: staff, error: staffErr } = await db
-      .from("restaurant_staff")
-      .select("id, tenant_id, restaurant_id, name, role, is_active")
-      .eq("access_token", token)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (staffErr || !staff) {
-      return NextResponse.json({ error: "Unauthorized: Invalid or inactive staff token" }, { status: 401 });
+    const { context: staff, errorResponse } = await authenticateStaffRequest(request, null, requestedRestaurantId);
+    if (errorResponse || !staff) {
+      return NextResponse.json({ error: errorResponse?.message || "Unauthorized" }, { status: errorResponse?.status || 401 });
     }
 
     const restaurantId = staff.restaurant_id;
+    const db = getSupabaseAdmin();
 
     // Fetch active sessions
     const { data: sessions, error: sessionsErr } = await db
       .from("restaurant_table_sessions")
       .select("id, tenant_id, restaurant_id, table_id, lead_id, session_token, customer_name, customer_phone, status, payment_status, paid_at, opened_at, closed_at, created_at")
+      .eq("tenant_id", staff.tenant_id)
       .eq("restaurant_id", restaurantId)
       .eq("status", "active")
       .order("opened_at", { ascending: true });

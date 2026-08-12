@@ -256,57 +256,57 @@ export default function RestaurantOrderStatusClient({
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#0f172a_0%,#111827_45%,#020617_100%)] text-slate-50">
+    <div className="min-h-screen bg-[#070709] bg-[radial-gradient(ellipse_80%_80%_at_50%_-10%,rgba(99,102,241,0.15),rgba(0,0,0,0))] text-slate-50 font-sans selection:bg-indigo-500/30">
       <div className="mx-auto max-w-4xl px-4 py-10 md:px-8">
-        <div className="rounded-[30px] border border-white/10 bg-white/5 p-6 backdrop-blur">
+        <div className="rounded-[32px] border border-white/10 bg-[#0d0e12]/80 p-6 md:p-8 backdrop-blur-2xl shadow-[0_30px_70px_rgba(0,0,0,0.5)] relative overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
-                Live Order
+              <p className="text-xs uppercase tracking-[0.35em] text-indigo-400 font-extrabold flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+                Live Order Tracker
               </p>
-              <h1 className="mt-3 text-3xl font-semibold">
+              <h1 className="mt-2 text-2xl md:text-4xl font-black text-white tracking-tight">
                 Table {payload.order.table?.table_number ?? "Unknown"} ·{" "}
-                {currentLabel}
+                <span className="text-indigo-300">{currentLabel}</span>
               </h1>
-              <p className="mt-2 text-sm text-slate-400">
-                Order ID {payload.order.id.slice(0, 8)} updates every 5
-                seconds.
+              <p className="mt-1.5 text-xs text-slate-400 font-medium">
+                Order ID #{payload.order.id.slice(0, 8)} · Realtime updates active
               </p>
             </div>
             <Link
               to={`/r/${tableToken}?browse=1`}
-              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-100 hover:bg-white/10"
+              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-2.5 text-xs font-black text-white hover:bg-white/10 transition-all cursor-pointer shadow-sm"
             >
-              Order more
+              Add More Items +
             </Link>
           </div>
 
           {/* Session Banner */}
           {sessionContext && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-400/15 bg-cyan-400/5 px-5 py-3">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-500/20 bg-indigo-500/10 px-5 py-3.5 backdrop-blur">
               <div>
-                <p className="text-xs uppercase tracking-wider text-cyan-300">
-                  Table Session
+                <p className="text-[10px] uppercase tracking-widest font-black text-indigo-300">
+                  Active Table Session
                 </p>
-                <p className="text-sm font-semibold text-white mt-0.5">
-                  {sessionContext.orders.length} {sessionContext.orders.length === 1 ? "order" : "orders"} placed
+                <p className="text-sm font-black text-white mt-0.5">
+                  {sessionContext.orders.length} {sessionContext.orders.length === 1 ? "Order Placed" : "Orders Placed"}
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 {sessionContext.paymentStatus === "paid" ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-300">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 px-3.5 py-1 text-xs font-black text-emerald-300">
                     <CheckCircle2 size={13} />
-                    PAID · Bill Settled
+                    Bill Settled ✓
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 px-3 py-1 text-xs font-bold text-amber-300">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 px-3.5 py-1 text-xs font-black text-amber-300">
                     <Clock size={13} />
-                    Active Session
+                    Dining Session Active
                   </span>
                 )}
                 <div className="text-right">
-                  <p className="text-xs text-slate-400">Subtotal</p>
-                  <p className="text-base font-bold text-cyan-200">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Session Total</p>
+                  <p className="text-lg font-black text-amber-300">
                     {formatCurrency(sessionContext.sessionTotal)}
                   </p>
                 </div>
@@ -315,7 +315,7 @@ export default function RestaurantOrderStatusClient({
           )}
 
           {/* Progress stepper */}
-          <div className="mt-6 rounded-[24px] border border-white/8 bg-slate-950/40 p-5">
+          <div className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-5 shadow-inner">
             <div className="flex items-center justify-between gap-2">
               {STEP_ORDER.map((step, index) => {
                 const stepIndex = STEP_ORDER.indexOf(payload.order.status);
@@ -329,20 +329,20 @@ export default function RestaurantOrderStatusClient({
                   >
                     <div className="flex flex-col items-center gap-1.5 flex-1">
                       <div
-                        className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-colors ${
+                        className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-black transition-all ${
                           cancelled
-                            ? "bg-rose-400/15 text-rose-300"
+                            ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
                             : isCurrent
-                              ? "bg-cyan-400 text-slate-950 shadow-md shadow-cyan-400/30"
+                              ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-500/40 ring-4 ring-indigo-500/20"
                               : isReached
-                                ? "bg-cyan-400/25 text-cyan-200"
-                                : "bg-white/8 text-slate-500"
+                                ? "bg-indigo-500/30 text-indigo-200 border border-indigo-500/40"
+                                : "bg-white/5 text-slate-500 border border-white/5"
                         }`}
                       >
                         {cancelled ? "!" : isReached ? "✓" : index + 1}
                       </div>
                       <span
-                        className={`text-center text-[10px] uppercase tracking-wider ${
+                        className={`text-center text-[9px] font-black uppercase tracking-wider ${
                           cancelled
                             ? "text-rose-300"
                             : isReached
@@ -355,12 +355,12 @@ export default function RestaurantOrderStatusClient({
                     </div>
                     {index !== STEP_ORDER.length - 1 ? (
                       <div
-                        className={`mb-5 h-0.5 flex-1 rounded-full ${
+                        className={`mb-5 h-0.5 flex-1 rounded-full transition-all ${
                           cancelled
-                            ? "bg-white/8"
+                            ? "bg-white/5"
                             : isReached && !isCurrent
-                              ? "bg-cyan-400/40"
-                              : "bg-white/8"
+                              ? "bg-gradient-to-r from-indigo-500 to-purple-500"
+                              : "bg-white/5"
                         }`}
                       />
                     ) : null}

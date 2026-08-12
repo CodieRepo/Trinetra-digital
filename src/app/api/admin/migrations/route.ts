@@ -4,7 +4,16 @@ import { Client } from "pg";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const adminKey = request.headers.get("x-admin-key") || "";
+  const authHeader = request.headers.get("authorization") || "";
+  const bearerToken = authHeader.replace(/^Bearer\s+/i, "").trim();
+  const secretKey = process.env.ADMIN_ONBOARDING_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!secretKey || (adminKey !== secretKey && bearerToken !== secretKey)) {
+    return NextResponse.json({ error: "Unauthorized access to migration endpoint" }, { status: 401 });
+  }
+
   const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {
     return NextResponse.json({ error: "Missing DATABASE_URL" }, { status: 500 });
