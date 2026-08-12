@@ -70,15 +70,27 @@ export async function POST(request: Request) {
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-      // Sync legacy categories table if branch_id is present
-      const { data: legacySample } = await db.from("categories").select("branch_id").limit(1);
-      if (legacySample && legacySample[0]?.branch_id) {
-        await db.from("categories").upsert({
-          id: data.id,
-          branch_id: legacySample[0].branch_id,
-          name: data.name,
-          sort_order: data.display_order || 1,
-        });
+      // Always sync category row to legacy categories table to satisfy legacy foreign keys
+      try {
+        const defaultBranchId = "abe32f5f-aabe-4962-ac38-710e5b8cc5e3";
+        try {
+          await db.from("branches").upsert({
+            id: defaultBranchId,
+            name: "Main Branch",
+            is_active: true,
+          }, { onConflict: "id" });
+        } catch (e) {}
+
+        try {
+          await db.from("categories").upsert({
+            id: data.id,
+            branch_id: defaultBranchId,
+            name: data.name,
+            sort_order: data.display_order || 1,
+          }, { onConflict: "id" });
+        } catch (e) {}
+      } catch (syncErr) {
+        console.warn("[MenuAPI] Legacy categories sync warning:", syncErr);
       }
 
       return NextResponse.json({ success: true, category: data });
@@ -96,25 +108,48 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Price must be a valid positive number" }, { status: 400 });
       }
 
-      // Ensure category exists in legacy categories table if FK points there
+      const targetCategoryId = body.category_id.trim();
+
+      // Ensure target category exists in both menu_categories and legacy categories table
       try {
         const { data: catData } = await db
           .from("menu_categories")
-          .select("name, display_order")
-          .eq("id", body.category_id.trim())
+          .select("id, name, display_order")
+          .eq("id", targetCategoryId)
           .maybeSingle();
 
-        if (catData) {
-          const defaultBranchId = "abe32f5f-aabe-4962-ac38-710e5b8cc5e3";
-          await db.from("categories").upsert({
-            id: body.category_id.trim(),
-            branch_id: defaultBranchId,
-            name: catData.name,
-            sort_order: catData.display_order || 1,
+        const defaultBranchId = "abe32f5f-aabe-4962-ac38-710e5b8cc5e3";
+        try {
+          await db.from("branches").upsert({
+            id: defaultBranchId,
+            name: "Main Branch",
+            is_active: true,
           }, { onConflict: "id" });
+        } catch (e) {}
+
+        if (catData) {
+          try {
+            await db.from("categories").upsert({
+              id: catData.id,
+              branch_id: defaultBranchId,
+              name: catData.name,
+              sort_order: catData.display_order || 1,
+            }, { onConflict: "id" });
+          } catch (e) {}
+        } else {
+          // If category is not in menu_categories yet, create it automatically
+          try {
+            await db.from("menu_categories").upsert({
+              id: targetCategoryId,
+              tenant_id: tenantId,
+              restaurant_id: restaurantId,
+              name: "General",
+              display_order: 1,
+            }, { onConflict: "id" });
+          } catch (e) {}
         }
-      } catch (e) {
-        // Ignore if categories table does not exist
+      } catch (catErr) {
+        console.warn("[MenuAPI] Pre-insert category check warning:", catErr);
       }
 
       const { data, error } = await db

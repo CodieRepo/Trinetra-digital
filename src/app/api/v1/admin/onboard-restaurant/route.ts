@@ -169,15 +169,25 @@ export async function POST(request: Request) {
     if (insertedCats && insertedCats.length > 0) {
       try {
         const defaultBranchId = "abe32f5f-aabe-4962-ac38-710e5b8cc5e3";
-        await db.from("categories").upsert(
-          insertedCats.map(c => ({
-            id: c.id,
-            branch_id: defaultBranchId,
-            name: c.name,
-            sort_order: c.display_order || 1,
-          })),
-          { onConflict: "id" }
-        );
+        try {
+          await db.from("branches").upsert({
+            id: defaultBranchId,
+            name: "Main Branch",
+            is_active: true,
+          }, { onConflict: "id" });
+        } catch (e) {}
+
+        try {
+          await db.from("categories").upsert(
+            insertedCats.map(c => ({
+              id: c.id,
+              branch_id: defaultBranchId,
+              name: c.name,
+              sort_order: c.display_order || 1,
+            })),
+            { onConflict: "id" }
+          );
+        } catch (e) {}
       } catch (e) {
         // Ignore if categories table does not exist
       }
