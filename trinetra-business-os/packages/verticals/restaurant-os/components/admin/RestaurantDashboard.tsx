@@ -263,21 +263,27 @@ export default function RestaurantDashboard({
   const [historySessions, setHistorySessions] = useState<any[]>([]);
   const [historyMetrics, setHistoryMetrics] = useState<any>({});
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [thermalReceiptData, setThermalReceiptData] = useState<ReceiptData | null>(null);
   const [adminPaymentMethods, setAdminPaymentMethods] = useState<Record<string, string>>({});
 
   const loadHistory = useCallback(async (query = "") => {
     try {
       setHistoryLoading(true);
+      setHistoryError(null);
       const url = `/api/client/restaurant/history?restaurant_id=${restaurantId}&search=${encodeURIComponent(query)}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setHistorySessions(data.sessions || []);
         setHistoryMetrics(data.metrics || {});
+      } else {
+        console.error("History fetch failed with status:", res.status);
+        setHistoryError("Unable to load session history. Please retry.");
       }
-    } catch {
-      // Silent catch
+    } catch (err) {
+      console.error("Failed to fetch session history:", err);
+      setHistoryError("Unable to load session history. Please retry.");
     } finally {
       setHistoryLoading(false);
     }
@@ -789,40 +795,52 @@ export default function RestaurantDashboard({
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             {[
               {
-                label: "Active orders",
+                label: "Active Orders",
                 value: metrics.activeOrders,
-                icon: <UtensilsCrossed className="h-5 w-5" />,
+                icon: <UtensilsCrossed className="h-5 w-5 text-amber-400" />,
+                bgGradient: "from-amber-500/10 via-amber-500/5 to-transparent",
+                borderColor: "border-amber-500/20",
               },
               {
-                label: "Kitchen queue",
+                label: "Kitchen Queue",
                 value: metrics.kitchenQueue,
-                icon: <ChefHat className="h-5 w-5" />,
+                icon: <ChefHat className="h-5 w-5 text-indigo-400" />,
+                bgGradient: "from-indigo-500/10 via-indigo-500/5 to-transparent",
+                borderColor: "border-indigo-500/20",
               },
               {
-                label: "Ready to serve",
+                label: "Ready to Serve",
                 value: metrics.readyOrders,
-                icon: <LayoutGrid className="h-5 w-5" />,
+                icon: <LayoutGrid className="h-5 w-5 text-emerald-400" />,
+                bgGradient: "from-emerald-500/10 via-emerald-500/5 to-transparent",
+                borderColor: "border-emerald-500/20",
               },
               {
-                label: "Active tables",
+                label: "Active Tables",
                 value: sessions.length,
-                icon: <CreditCard className="h-5 w-5" />,
+                icon: <CreditCard className="h-5 w-5 text-purple-400" />,
+                bgGradient: "from-purple-500/10 via-purple-500/5 to-transparent",
+                borderColor: "border-purple-500/20",
               },
               {
-                label: "Revenue tracked",
+                label: "Tracked Revenue",
                 value: formatCurrency(metrics.revenue, currency),
-                icon: <Users className="h-5 w-5" />,
+                icon: <Users className="h-5 w-5 text-teal-400" />,
+                bgGradient: "from-teal-500/10 via-teal-500/5 to-transparent",
+                borderColor: "border-teal-500/20",
               },
             ].map((metric) => (
               <div
                 key={metric.label}
-                className="rounded-[24px] border border-white/10 bg-white/5 p-5 backdrop-blur"
+                className={`rounded-[24px] border ${metric.borderColor} bg-gradient-to-b ${metric.bgGradient} bg-[#0d0e12]/80 p-5 backdrop-blur-xl shadow-lg transition-all hover:scale-[1.02] hover:border-white/20`}
               >
-                <div className="flex items-center justify-between text-stone-300">
-                  <span className="text-sm">{metric.label}</span>
-                  {metric.icon}
+                <div className="flex items-center justify-between text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider">{metric.label}</span>
+                  <div className="p-2 rounded-xl bg-white/5 border border-white/10">
+                    {metric.icon}
+                  </div>
                 </div>
-                <p className="mt-4 text-3xl font-semibold text-white">
+                <p className="mt-3 text-3xl font-black text-white tracking-tight">
                   {metric.value}
                 </p>
               </div>
@@ -831,33 +849,34 @@ export default function RestaurantDashboard({
         </section>
 
         {loading ? (
-          <div className="rounded-[28px] border border-white/10 bg-white/5 px-6 py-16 text-center text-stone-300">
-            <Loader2 className="mx-auto h-6 w-6 animate-spin" />
-            <p className="mt-4">Loading restaurant dashboard...</p>
+          <div className="rounded-[28px] border border-white/10 bg-[#0d0e12]/80 px-6 py-16 text-center text-slate-300 backdrop-blur-xl my-6">
+            <Loader2 className="mx-auto h-7 w-7 animate-spin text-indigo-400" />
+            <p className="mt-4 text-xs font-bold uppercase tracking-widest text-slate-400">Loading Restaurant OS State...</p>
           </div>
         ) : null}
 
         {error ? (
-          <div className="rounded-3xl border border-rose-400/25 bg-rose-400/10 px-5 py-4 text-sm text-rose-100">
+          <div className="rounded-3xl border border-rose-500/30 bg-rose-950/40 px-5 py-4 text-sm text-rose-200 backdrop-blur-xl my-6 flex items-center gap-3">
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
             {error}
           </div>
         ) : null}
 
         {/* Global Search Bar */}
-        <div className="relative my-2">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+        <div className="relative my-6">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search orders by ID, table number, customer name, phone, or dish name..."
-            className="w-full h-11 pl-11 pr-10 text-xs bg-white/5 border border-white/10 rounded-2xl text-slate-200 focus:outline-none focus:border-indigo-500 placeholder:text-slate-500 transition-all shadow-inner"
+            placeholder="Search active orders, table numbers, customer names, phone numbers, or menu items..."
+            className="w-full h-12 pl-12 pr-12 text-xs bg-[#0d0e12]/90 border border-white/10 rounded-2xl text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-500 transition-all shadow-inner backdrop-blur-xl"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-bold px-2 py-1 bg-white/10 rounded-lg"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-extrabold px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-xl transition-all cursor-pointer"
             >
               Clear
             </button>
@@ -865,7 +884,7 @@ export default function RestaurantDashboard({
         </div>
 
         {/* Tab navigation */}
-        <nav className="flex flex-wrap items-center justify-between gap-2 rounded-3xl border border-white/10 bg-white/5 p-1.5 backdrop-blur">
+        <nav className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-white/10 bg-[#0d0e12]/90 p-2 backdrop-blur-xl shadow-xl my-6">
           <div className="flex flex-wrap items-center gap-1.5">
             {[
               {
@@ -898,21 +917,21 @@ export default function RestaurantDashboard({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer border ${
                   activeTab === tab.id
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/25"
-                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 border-indigo-400/40 text-white shadow-lg shadow-indigo-600/30"
+                    : "border-transparent text-slate-400 hover:bg-white/5 hover:text-slate-200"
                 }`}
               >
                 {tab.icon}
                 {tab.label}
                 {tab.id === "live" && orders.length > 0 && (
-                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/15 px-1.5 text-[10px] font-black">
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/25 text-amber-300 border border-amber-500/30 px-1.5 text-[10px] font-black">
                     {orders.length}
                   </span>
                 )}
                 {tab.id === "history" && historySessions.length > 0 && (
-                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 px-1.5 text-[10px] font-black">
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 text-[10px] font-black">
                     {historySessions.length}
                   </span>
                 )}
@@ -921,16 +940,16 @@ export default function RestaurantDashboard({
           </div>
 
           {activeTab === "live" && (
-            <div className="flex items-center gap-1 bg-black/40 p-1 rounded-2xl border border-white/10 text-xs">
-              <span className="text-[10px] font-bold uppercase text-slate-500 px-2">Filter:</span>
+            <div className="flex items-center gap-1 bg-black/50 p-1.5 rounded-2xl border border-white/10 text-xs">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-2">Filter:</span>
               {(["all", "placed", "preparing", "ready"] as const).map((status) => (
                 <button
                   key={status}
                   type="button"
                   onClick={() => setOrderStatusFilter(status)}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase transition cursor-pointer ${
+                  className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase transition cursor-pointer ${
                     orderStatusFilter === status
-                      ? "bg-indigo-500 text-white shadow-xs"
+                      ? "bg-indigo-600 text-white shadow-xs"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
@@ -1503,6 +1522,10 @@ export default function RestaurantDashboard({
                 <div className="py-12 text-center text-xs text-slate-400">
                   <Loader2 className="mx-auto h-6 w-6 animate-spin mb-2" />
                   Fetching historical session archives...
+                </div>
+              ) : historyError ? (
+                <div className="py-12 text-center text-xs text-rose-400 font-medium">
+                  {historyError}
                 </div>
               ) : historySessions.length === 0 ? (
                 <div className="py-12 text-center text-xs text-slate-500">

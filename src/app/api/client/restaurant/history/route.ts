@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
     let query = db
       .from("restaurant_table_sessions")
-      .select("id, table_id, status, opened_at, paid_at, customer_name, customer_phone, payment_status, payment_method, tip_amount, customer_utr, bill_requested_at")
+      .select("id, table_id, status, opened_at, paid_at, customer_name, customer_phone, payment_status, session_token")
       .eq("tenant_id", tenantId)
       .eq("restaurant_id", restaurantId)
       .order("opened_at", { ascending: false })
@@ -33,12 +33,16 @@ export async function GET(request: Request) {
 
     const enriched = await Promise.all(
       (sessions || []).map(async (session) => {
-        const { data: table } = await db
-          .from("restaurant_tables")
-          .select("id, table_number")
-          .eq("id", session.table_id)
-          .eq("tenant_id", tenantId)
-          .maybeSingle();
+        let table = null;
+        if (session.table_id) {
+          const { data: tableData } = await db
+            .from("restaurant_tables")
+            .select("id, table_number")
+            .eq("id", session.table_id)
+            .eq("tenant_id", tenantId)
+            .maybeSingle();
+          table = tableData || null;
+        }
 
         const { data: orders } = await db
           .from("restaurant_orders")
@@ -62,13 +66,19 @@ export async function GET(request: Request) {
           .from("restaurant_bills")
           .select("*")
           .eq("session_id", session.id)
+          .eq("tenant_id", tenantId)
           .maybeSingle();
 
         const orderCount = enrichedOrders.length;
         const sessionTotal = enrichedOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
+        const paymentMethod = (session as any).payment_method || bill?.payment_method || "CASH";
+        const tipAmount = Number((session as any).tip_amount || bill?.tip_amount || 0);
 
         return {
           ...session,
+          payment_method: paymentMethod,
+          tip_amount: tipAmount,
+          customer_utr: (session as any).customer_utr || null,
           table: table || null,
           orders: enrichedOrders,
           order_count: orderCount,
