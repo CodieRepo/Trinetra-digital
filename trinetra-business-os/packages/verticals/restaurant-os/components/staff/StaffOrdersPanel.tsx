@@ -174,10 +174,12 @@ export default function StaffOrdersPanel({
   const loadOrders = useCallback(async () => {
     if (!effectiveToken) return;
     try {
-      const res = await fetch(
-        `/api/staff/orders?restaurant_id=${restaurantId}`,
-        { cache: "no-store", headers: { Authorization: `Bearer ${effectiveToken}` } },
-      );
+      // Use token authentication directly. If restaurantId is specified, pass it; otherwise token derives branch context.
+      const endpoint = restaurantId ? `/api/staff/orders?restaurant_id=${encodeURIComponent(restaurantId)}` : `/api/staff/orders`;
+      const res = await fetch(endpoint, {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${effectiveToken}` },
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load orders.");
       setPayload(data as StaffPayload);
@@ -198,10 +200,11 @@ export default function StaffOrdersPanel({
     if (!effectiveToken) return;
     try {
       setSessionsLoading(true);
-      const res = await fetch(
-        `/api/staff/sessions?restaurant_id=${restaurantId}`,
-        { cache: "no-store", headers: { Authorization: `Bearer ${effectiveToken}` } },
-      );
+      const endpoint = restaurantId ? `/api/staff/sessions?restaurant_id=${encodeURIComponent(restaurantId)}` : `/api/staff/sessions`;
+      const res = await fetch(endpoint, {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${effectiveToken}` },
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load sessions.");
       setSessionsPayload(data as SessionsPayload);
