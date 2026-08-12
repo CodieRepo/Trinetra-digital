@@ -3,11 +3,13 @@
 import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { 
-  Lock, Mail, LogOut, Utensils, ChefHat, LayoutDashboard, AlertCircle, Menu, X, ArrowLeft 
+  Lock, Mail, LogOut, Utensils, ChefHat, LayoutDashboard, AlertCircle, Menu, X, ArrowLeft, Smartphone 
 } from "lucide-react";
+import { useDynamicManifest } from "@/hooks/useDynamicManifest";
 import RestaurantDashboard from "../../../trinetra-business-os/packages/verticals/restaurant-os/components/admin/RestaurantDashboard";
 
 export default function RestaurantPortal() {
+  const { canInstall, isInstalled, installApp } = useDynamicManifest();
   const supabase = useMemo(() => createClient(), []);
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -344,9 +346,21 @@ export default function RestaurantPortal() {
               <p className="text-xs text-slate-400 font-medium truncate mt-0.5">Realtime order management, kitchen queue, live table billing & menu controls.</p>
             </div>
           </div>
-          <div className="text-[10px] text-slate-300 bg-white/5 border border-white/10 px-3.5 py-2 rounded-2xl font-mono flex items-center gap-2 shadow-sm backdrop-blur shrink-0">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-            <span className="font-bold text-slate-400">TENANT:</span> {(tenantId || "").slice(0, 8)}...
+          <div className="flex items-center gap-3 shrink-0">
+            {canInstall && !isInstalled && (
+              <button
+                type="button"
+                onClick={installApp}
+                className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500/25 px-3.5 py-2 rounded-2xl flex items-center gap-2 shadow-sm backdrop-blur cursor-pointer transition-all active:scale-95"
+              >
+                <Smartphone size={13} className="text-amber-400" />
+                Install Restaurant App
+              </button>
+            )}
+            <div className="text-[10px] text-slate-300 bg-white/5 border border-white/10 px-3.5 py-2 rounded-2xl font-mono flex items-center gap-2 shadow-sm backdrop-blur">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              <span className="font-bold text-slate-400">TENANT:</span> {(tenantId || "").slice(0, 8)}...
+            </div>
           </div>
         </div>
 

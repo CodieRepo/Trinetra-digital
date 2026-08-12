@@ -136,6 +136,56 @@ export default function RestaurantPanel() {
     }
   };
 
+  const handleDeleteRestaurant = async (restaurantId: string, businessName: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${businessName}"? All its tables, menu items, and staff will be permanently removed.`)) {
+      return;
+    }
+    try {
+      setBusy(true);
+      const res = await fetch("/api/v1/admin/delete-restaurant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurant_id: restaurantId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        success("Restaurant Deleted", `"${businessName}" was removed.`);
+        loadRestaurants();
+      } else {
+        toastError("Delete Failed", data.error || "Could not delete restaurant.");
+      }
+    } catch (err: any) {
+      toastError("Delete Error", err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handlePurgeTestRestaurants = async () => {
+    if (!window.confirm("WARNING: Are you sure you want to purge ALL test restaurants? This will wipe all test restaurants so you can start fresh.")) {
+      return;
+    }
+    try {
+      setBusy(true);
+      const res = await fetch("/api/v1/admin/delete-restaurant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ purge_all_test: true }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        success("Purge Complete", "All test restaurants removed. Ready for pristine testing.");
+        loadRestaurants();
+      } else {
+        toastError("Purge Failed", data.error || "Could not purge test restaurants.");
+      }
+    } catch (err: any) {
+      toastError("Purge Error", err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Platform KPIs */}
@@ -184,13 +234,23 @@ export default function RestaurantPanel() {
           </div>
         </div>
 
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex items-center gap-2 h-9 px-4 bg-violet-600 hover:bg-violet-700 rounded-xl text-xs font-bold text-white transition-colors cursor-pointer border-0 w-full sm:w-auto justify-center"
-        >
-          <Plus size={13} />
-          Add Restaurant
-        </button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={handlePurgeTestRestaurants}
+            disabled={busy}
+            className="flex items-center gap-1.5 h-9 px-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition-colors cursor-pointer justify-center"
+            title="Wipe all test restaurants to start fresh"
+          >
+            Purge Test Data
+          </button>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="flex items-center gap-2 h-9 px-4 bg-violet-600 hover:bg-violet-700 rounded-xl text-xs font-bold text-white transition-colors cursor-pointer border-0 justify-center"
+          >
+            <Plus size={13} />
+            Add Restaurant
+          </button>
+        </div>
       </div>
 
       {/* List Table */}
@@ -253,15 +313,24 @@ export default function RestaurantPanel() {
                       ₹{r.plan === "enterprise" ? "8,999/mo" : r.plan === "starter" ? "1,999/mo" : "2,999/mo"}
                     </td>
                     <td className="px-5 py-4">
-                      <a
-                        href={`/restaurant?tenant_id=${encodeURIComponent(r.tenantId || r.id)}&restaurant_id=${encodeURIComponent(r.id)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[10px] font-bold text-violet-400 hover:text-violet-300 transition-colors border border-violet-500/20 bg-violet-500/5 px-2.5 py-1 rounded-lg"
-                      >
-                        Open Portal
-                        <ExternalLink size={10} />
-                      </a>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`/restaurant?tenant_id=${encodeURIComponent(r.tenantId || r.id)}&restaurant_id=${encodeURIComponent(r.id)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-[10px] font-bold text-violet-400 hover:text-violet-300 transition-colors border border-violet-500/20 bg-violet-500/5 px-2.5 py-1 rounded-lg"
+                        >
+                          Open Portal
+                          <ExternalLink size={10} />
+                        </a>
+                        <button
+                          onClick={() => handleDeleteRestaurant(r.id, r.businessName)}
+                          className="text-[10px] font-bold text-rose-400 hover:text-rose-300 transition-colors border border-rose-500/20 bg-rose-500/5 px-2.5 py-1 rounded-lg cursor-pointer"
+                          title="Delete this test restaurant"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import PageLayout from "@/layouts/PageLayout";
 import { trackPageView } from "@/utils/metaPixel";
+import { useDynamicManifest } from "@/hooks/useDynamicManifest";
 
 // ── Eager-loaded (above the fold) ─────────────────────────────────────────
 import Home from "@/views/Home";
@@ -71,6 +72,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AnimatedRoutes() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Dynamic PWA Manifest Switcher
+  useDynamicManifest();
 
   // Track PageView on route change
   useEffect(() => {

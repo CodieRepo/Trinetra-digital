@@ -70,50 +70,55 @@ export async function GET(request: Request) {
 
     if (restErr) throw restErr;
 
-    const insights = [];
+    // Batch fetch metrics in parallel across all restaurants
+    const [tablesRes, sessionsRes, ordersRes] = await Promise.all([
+      db.from("restaurant_tables").select("restaurant_id"),
+      db.from("restaurant_table_sessions").select("restaurant_id").eq("status", "active"),
+      db.from("restaurant_orders").select("restaurant_id, total_amount, status")
+    ]);
 
-    for (const r of (restaurants as any) || []) {
-      // 1. Get total tables count
-      const { count: tableCount } = await db
-        .from("restaurant_tables")
-        .select("id", { count: "exact", head: true })
-        .eq("restaurant_id", r.id);
-
-      // 2. Get active sessions count
-      const { count: activeSessions } = await db
-        .from("restaurant_table_sessions")
-        .select("id", { count: "exact", head: true })
-        .eq("restaurant_id", r.id)
-        .eq("status", "active");
-
-      // 3. Get total orders and revenue
-      const { data: orders } = await db
-        .from("restaurant_orders")
-        .select("total_amount, status")
-        .eq("restaurant_id", r.id);
-
-      const totalOrders = orders?.length || 0;
-      const totalRevenue = orders
-        ?.filter((o: any) => o.status !== "cancelled")
-        .reduce((sum: number, o: any) => sum + (Number(o.total_amount) || 0), 0) || 0;
-
-      insights.push({
-        id: r.id,
-        tenantId: r.tenant_id,
-        businessName: r.name,
-        address: r.address,
-        currency: r.currency,
-        isActive: r.is_active,
-        tenantName: r.tenants?.name || "Unknown Tenant",
-        plan: r.tenants?.plan || "pro",
-        status: r.tenants?.status || "active",
-        createdAt: r.tenants?.created_at || new Date().toISOString(),
-        tableCount: tableCount || 0,
-        activeSessions: activeSessions || 0,
-        totalOrders,
-        totalRevenue,
-      });
+    // Build lookup maps in O(N)
+    const tableCounts: Record<string, number> = {};
+    for (const t of (tablesRes.data || [])) {
+      if (t.restaurant_id) {
+        tableCounts[t.restaurant_id] = (tableCounts[t.restaurant_id] || 0) + 1;
+      }
     }
+
+    const activeSessionCounts: Record<string, number> = {};
+    for (const s of (sessionsRes.data || [])) {
+      if (s.restaurant_id) {
+        activeSessionCounts[s.restaurant_id] = (activeSessionCounts[s.restaurant_id] || 0) + 1;
+      }
+    }
+
+    const orderCounts: Record<string, number> = {};
+    const revenueTotals: Record<string, number> = {};
+    for (const o of (ordersRes.data || [])) {
+      if (o.restaurant_id) {
+        orderCounts[o.restaurant_id] = (orderCounts[o.restaurant_id] || 0) + 1;
+        if (o.status !== "cancelled") {
+          revenueTotals[o.restaurant_id] = (revenueTotals[o.restaurant_id] || 0) + (Number(o.total_amount) || 0);
+        }
+      }
+    }
+
+    const insights = (restaurants as any[] || []).map((r) => ({
+      id: r.id,
+      tenantId: r.tenant_id,
+      businessName: r.name,
+      address: r.address,
+      currency: r.currency,
+      isActive: r.is_active,
+      tenantName: r.tenants?.name || "Unknown Tenant",
+      plan: r.tenants?.plan || "pro",
+      status: r.tenants?.status || "active",
+      createdAt: r.tenants?.created_at || new Date().toISOString(),
+      tableCount: tableCounts[r.id] || 0,
+      activeSessions: activeSessionCounts[r.id] || 0,
+      totalOrders: orderCounts[r.id] || 0,
+      totalRevenue: revenueTotals[r.id] || 0,
+    }));
 
     return NextResponse.json({ success: true, insights });
   } catch (err: any) {

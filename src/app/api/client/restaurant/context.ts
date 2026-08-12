@@ -58,55 +58,76 @@ export async function resolveRestaurantContext(request: Request, bodyData?: any)
     }
   }
 
-  // 3. Request param inspection (Only allow client parameter if it matches verified tenant, or if public access)
+  // 3. Request param inspection & Database context resolution
   const requestedTenantId = url.searchParams.get("tenant_id") || request.headers.get("x-tenant-id") || bodyData?.tenant_id;
   const requestedRestaurantId = url.searchParams.get("restaurant_id") || request.headers.get("x-restaurant-id") || bodyData?.restaurant_id;
 
-  let tenantId: string;
-  if (verifiedTenantId) {
-    // If requested tenant matches authorized tenant, accept it. Otherwise enforce authorized tenant!
-    if (requestedTenantId && requestedTenantId === verifiedTenantId) {
+  let tenantId: string | null = null;
+  let restaurantId: string | null = null;
+
+  // Option A: Explicit requestedRestaurantId provided
+  if (requestedRestaurantId && requestedRestaurantId !== "default") {
+    const { data: restRow } = await db
+      .from("restaurants")
+      .select("id, tenant_id")
+      .eq("id", requestedRestaurantId.trim())
+      .maybeSingle();
+
+    if (restRow) {
+      restaurantId = restRow.id;
+      tenantId = restRow.tenant_id;
+    }
+  }
+
+  // Option B: Explicit requestedTenantId provided
+  if (!restaurantId && requestedTenantId && requestedTenantId !== "default") {
+    const { data: restRow } = await db
+      .from("restaurants")
+      .select("id, tenant_id")
+      .eq("tenant_id", requestedTenantId.trim())
+      .limit(1)
+      .maybeSingle();
+
+    if (restRow) {
+      restaurantId = restRow.id;
+      tenantId = restRow.tenant_id;
+    } else {
       tenantId = requestedTenantId;
+    }
+  }
+
+  // Option C: Authenticated user context fallback
+  if (!restaurantId && verifiedTenantId) {
+    const { data: restRow } = await db
+      .from("restaurants")
+      .select("id, tenant_id")
+      .eq("tenant_id", verifiedTenantId)
+      .limit(1)
+      .maybeSingle();
+
+    if (restRow) {
+      restaurantId = restRow.id;
+      tenantId = restRow.tenant_id;
     } else {
       tenantId = verifiedTenantId;
     }
-  } else {
-    // Unauthenticated public request fallback (e.g. demo tenant)
-    tenantId = requestedTenantId || "00000000-0000-0000-0000-000000000001";
   }
 
-  // 4. Resolve restaurant_id scoped strictly to tenantId
-  let restaurantId = requestedRestaurantId;
-  if (!restaurantId || restaurantId === "default") {
-    const { data } = await db
+  // Option D: Public / Unauthenticated fallback to default demo tenant
+  if (!tenantId) {
+    tenantId = "00000000-0000-0000-0000-000000000001";
+  }
+
+  if (!restaurantId) {
+    const { data: demoRest } = await db
       .from("restaurants")
       .select("id")
       .eq("tenant_id", tenantId)
       .limit(1)
       .maybeSingle();
-      
-    restaurantId = data?.id || null;
-  } else {
-    // Verify that requested restaurant_id actually belongs to tenantId
-    const { data: restCheck } = await db
-      .from("restaurants")
-      .select("id")
-      .eq("id", restaurantId)
-      .eq("tenant_id", tenantId)
-      .maybeSingle();
 
-    if (!restCheck) {
-      // If restaurant doesn't belong to tenant, fallback to tenant's default restaurant
-      const { data: defaultRest } = await db
-        .from("restaurants")
-        .select("id")
-        .eq("tenant_id", tenantId)
-        .limit(1)
-        .maybeSingle();
-
-      restaurantId = defaultRest?.id || null;
-    }
+    restaurantId = demoRest?.id || null;
   }
-  
+
   return { tenantId, restaurantId };
 }

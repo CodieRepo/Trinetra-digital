@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { SupabaseAuthRepository } from "@/repositories/auth/supabase-auth.repository";
 import { StaffAuthenticationService } from "@/services/auth/staff-authentication.service";
 
@@ -13,11 +14,30 @@ const staffLoginSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip")?.trim() || "127.0.0.1";
+
   try {
+    const db = getSupabaseAdmin();
+
+    // 1. IP-Level Sliding Window Rate Limit Check (Max 10 failed attempts / 15 mins)
+    const { data: rateLimitRes } = await db.rpc("check_ip_login_rate_limit_rpc", {
+      p_ip_address: ipAddress,
+      p_max_attempts: 10,
+      p_window_minutes: 15,
+    });
+
+    if (rateLimitRes && rateLimitRes.allowed === false) {
+      return NextResponse.json(
+        { error: "Too many login attempts from this IP. Please try again in 15 minutes." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimitRes.retry_after_seconds || 900) },
+        }
+      );
+    }
+
     const body = await request.json();
     const parsed = staffLoginSchema.parse(body);
-
-    const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
 
     const authRepo = new SupabaseAuthRepository();
     const authService = new StaffAuthenticationService(authRepo);
@@ -39,6 +59,12 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error("[StaffAuthApi] Login error:", error.message);
+
+    // Record failed IP login attempt
+    try {
+      const db = getSupabaseAdmin();
+      await db.rpc("record_failed_ip_login_rpc", { p_ip_address: ipAddress });
+    } catch (e) {}
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
