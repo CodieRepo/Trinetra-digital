@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const { tenantId, restaurantId } = await resolveRestaurantContext(request);
-    if (!tenantId || !restaurantId) return NextResponse.json({ categories: [], items: [] });
+    if (!restaurantId) return NextResponse.json({ categories: [], items: [] });
 
     const [catResult, itemResult] = await Promise.all([
       db
@@ -44,9 +44,7 @@ export async function POST(request: Request) {
     const db = getSupabaseAdmin();
     const body = await request.json();
     const { tenantId, restaurantId } = await resolveRestaurantContext(request, body);
-    if (!tenantId || !restaurantId) {
-      return NextResponse.json({ error: "Unauthorized or invalid restaurant context" }, { status: 403 });
-    }
+    if (!restaurantId) return NextResponse.json({ error: "No restaurant found" }, { status: 404 });
 
     if (body.type === "category") {
       if (!body.name || typeof body.name !== "string" || !body.name.trim()) {
@@ -86,28 +84,24 @@ export async function POST(request: Request) {
 
       let resolvedCategoryId = typeof body.category_id === "string" ? body.category_id.trim() : "";
 
+      // 1. Verify category exists for THIS specific tenant and restaurant
+      let activeCat: { id: string; name: string; display_order: number } | null = null;
       if (resolvedCategoryId) {
-        // 1. If explicit category_id supplied, strictly verify ownership by THIS tenant & restaurant
         const { data: catCheck } = await db
           .from("menu_categories")
-          .select("id")
+          .select("id, name, display_order")
           .eq("id", resolvedCategoryId)
           .eq("tenant_id", tenantId)
           .eq("restaurant_id", restaurantId)
           .maybeSingle();
+        if (catCheck) activeCat = catCheck;
+      }
 
-        if (!catCheck) {
-          // Explicit category_id supplied but invalid/unauthorized for this restaurant -> REJECT
-          return NextResponse.json(
-            { error: "Invalid or unauthorized category_id for this restaurant" },
-            { status: 400 }
-          );
-        }
-      } else {
-        // 2. Only if category_id is omitted/empty, find or create default category for this restaurant
+      // 2. If requested category is invalid for this restaurant, fallback to restaurant's first category
+      if (!activeCat) {
         const { data: firstCat } = await db
           .from("menu_categories")
-          .select("id")
+          .select("id, name, display_order")
           .eq("tenant_id", tenantId)
           .eq("restaurant_id", restaurantId)
           .order("display_order", { ascending: true })
@@ -115,8 +109,9 @@ export async function POST(request: Request) {
           .maybeSingle();
 
         if (firstCat) {
-          resolvedCategoryId = firstCat.id;
+          activeCat = firstCat;
         } else {
+          // If restaurant has no categories yet, auto-create default Starters category
           const { data: newCat, error: newCatErr } = await db
             .from("menu_categories")
             .insert({
@@ -125,15 +120,17 @@ export async function POST(request: Request) {
               name: "Starters",
               display_order: 1,
             })
-            .select("id")
+            .select("id, name, display_order")
             .single();
 
           if (newCatErr || !newCat) {
             return NextResponse.json({ error: "Please create a menu category first." }, { status: 400 });
           }
-          resolvedCategoryId = newCat.id;
+          activeCat = newCat;
         }
       }
+
+      resolvedCategoryId = activeCat.id;
 
       // 3. Insert menu item with verified resolvedCategoryId
       const { data, error } = await db
@@ -166,59 +163,19 @@ export async function PATCH(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
-    const { tenantId, restaurantId } = await resolveRestaurantContext(request, body);
-    if (!tenantId || !restaurantId) {
-      return NextResponse.json({ error: "Unauthorized or invalid restaurant context" }, { status: 403 });
-    }
+    const { tenantId } = await resolveRestaurantContext(request, body);
 
     if (body.type === "item") {
-      if (!body.id) {
-        return NextResponse.json({ error: "Menu item ID is required" }, { status: 400 });
-      }
-
-      // Verify item exists and is owned by THIS restaurant & tenant
-      const { data: existingItem } = await db
-        .from("menu_items")
-        .select("id")
-        .eq("id", body.id)
-        .eq("tenant_id", tenantId)
-        .eq("restaurant_id", restaurantId)
-        .maybeSingle();
-
-      if (!existingItem) {
-        return NextResponse.json({ error: "Menu item not found or unauthorized" }, { status: 404 });
-      }
-
       const updates: Record<string, unknown> = {};
       if (body.is_available !== undefined) updates.is_available = body.is_available;
       if (body.name !== undefined) updates.name = body.name;
       if (body.price !== undefined) updates.price = body.price;
 
-      if (body.category_id !== undefined) {
-        const targetCatId = String(body.category_id).trim();
-        const { data: catCheck } = await db
-          .from("menu_categories")
-          .select("id")
-          .eq("id", targetCatId)
-          .eq("tenant_id", tenantId)
-          .eq("restaurant_id", restaurantId)
-          .maybeSingle();
-
-        if (!catCheck) {
-          return NextResponse.json(
-            { error: "Invalid or unauthorized category_id for this restaurant" },
-            { status: 400 }
-          );
-        }
-        updates.category_id = targetCatId;
-      }
-
       const { error } = await db
         .from("menu_items")
         .update(updates)
         .eq("id", body.id)
-        .eq("tenant_id", tenantId)
-        .eq("restaurant_id", restaurantId);
+        .eq("tenant_id", tenantId);
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ success: true });
@@ -235,19 +192,14 @@ export async function DELETE(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
-    const { tenantId, restaurantId } = await resolveRestaurantContext(request, body);
-    if (!tenantId || !restaurantId) {
-      return NextResponse.json({ error: "Unauthorized or invalid restaurant context" }, { status: 403 });
-    }
-
+    const { tenantId } = await resolveRestaurantContext(request, body);
     const table = body.type === "category" ? "menu_categories" : "menu_items";
 
     const { error } = await db
       .from(table)
       .delete()
       .eq("id", body.id)
-      .eq("tenant_id", tenantId)
-      .eq("restaurant_id", restaurantId);
+      .eq("tenant_id", tenantId);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });

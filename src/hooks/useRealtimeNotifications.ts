@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export type NotificationItem = {
   id: string;
-  type: "ORDER_PLACED" | "ORDER_READY" | "ORDER_SERVED" | "BILL_PAID" | "BILL_REQUESTED" | "SESSION_OPENED";
+  type: "ORDER_PLACED" | "ORDER_READY" | "ORDER_SERVED" | "BILL_PAID" | "SESSION_OPENED";
   title: string;
   message: string;
   timestamp: string;
@@ -118,7 +118,7 @@ export function useRealtimeNotifications(restaurantId?: string | null, _role?: s
       if (soundEnabled) {
         if (newItem.type === "ORDER_PLACED") {
           playChimeSound("new_order");
-        } else if (newItem.type === "ORDER_READY" || newItem.type === "BILL_REQUESTED") {
+        } else if (newItem.type === "ORDER_READY") {
           playChimeSound("ready");
         } else if (newItem.type === "BILL_PAID") {
           playChimeSound("paid");
@@ -214,15 +214,6 @@ export function useRealtimeNotifications(restaurantId?: string | null, _role?: s
                 type: "BILL_PAID",
                 title: `Bill Settled & Paid`,
                 message: `Table session has been settled successfully.`,
-              });
-            } else if (
-              (updated.payment_status === "requested" && payload.old?.payment_status !== "requested") ||
-              (updated.bill_requested_at && payload.old?.bill_requested_at !== updated.bill_requested_at)
-            ) {
-              addNotificationRef.current({
-                type: "BILL_REQUESTED",
-                title: `Bill Requested`,
-                message: `Guest at Table session requested their bill!`,
               });
             }
           }

@@ -11,17 +11,9 @@ export async function GET(request: Request) {
     const { tenantId, restaurantId } = await resolveRestaurantContext(request);
     if (!restaurantId) return NextResponse.json({ sessions: [] });
 
-    const { data: rawSessions, error } = await db
+    const { data: sessions, error } = await db
       .from("restaurant_table_sessions")
-      .select(`
-        id, table_id, status, opened_at, customer_name, customer_phone, payment_status, paid_at, bill_requested_at,
-        table:restaurant_tables(id, table_number),
-        orders:restaurant_orders(
-          id, status, total_amount, created_at,
-          items:restaurant_order_items(id, name, quantity, notes)
-        ),
-        bill:restaurant_bills(*)
-      `)
+      .select("id, table_id, status, opened_at, customer_name, customer_phone, payment_status, paid_at")
       .eq("tenant_id", tenantId)
       .eq("restaurant_id", restaurantId)
       .eq("status", "active")
@@ -29,43 +21,57 @@ export async function GET(request: Request) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    const enriched = (rawSessions || []).map((session: any) => {
-      const tableObj = Array.isArray(session.table) ? session.table[0] || null : session.table || null;
-      const rawOrders = session.orders || [];
-      const sortedOrders = [...rawOrders].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-      
-      const enrichedOrders = sortedOrders.map((o: any) => ({
-        id: o.id,
-        status: o.status,
-        total_amount: Number(o.total_amount || 0),
-        created_at: o.created_at,
-        items: o.items || []
-      }));
+    const enriched = await Promise.all(
+      (sessions || []).map(async (session) => {
+        const { data: table } = await db
+          .from("restaurant_tables")
+          .select("id, table_number")
+          .eq("id", session.table_id)
+          .eq("tenant_id", tenantId)
+          .maybeSingle();
 
-      const billObj = Array.isArray(session.bill) ? session.bill[0] || null : session.bill || null;
-      const orderCount = enrichedOrders.length;
-      const sessionTotal = enrichedOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
-      const terminalStatuses = ["closed", "cancelled", "served"];
-      const allOrdersTerminal = orderCount > 0 && enrichedOrders.every((o) => terminalStatuses.includes(o.status));
+        const { data: orders } = await db
+          .from("restaurant_orders")
+          .select("id, status, total_amount, created_at")
+          .eq("table_session_id", session.id)
+          .eq("tenant_id", tenantId)
+          .order("created_at", { ascending: true });
 
-      return {
-        id: session.id,
-        table_id: session.table_id,
-        status: session.status,
-        opened_at: session.opened_at,
-        customer_name: session.customer_name,
-        customer_phone: session.customer_phone,
-        payment_status: session.payment_status,
-        paid_at: session.paid_at,
-        bill_requested_at: session.bill_requested_at || null,
-        table: tableObj,
-        orders: enrichedOrders,
-        order_count: orderCount,
-        session_total: sessionTotal,
-        all_orders_terminal: allOrdersTerminal,
-        bill: billObj
-      };
-    });
+        const enrichedOrders = await Promise.all(
+          (orders || []).map(async (order) => {
+            const { data: items } = await db
+              .from("restaurant_order_items")
+              .select("id, name, quantity, notes")
+              .eq("order_id", order.id)
+              .eq("tenant_id", tenantId);
+            return { ...order, items: items || [] };
+          })
+        );
+
+        // Fetch session-level bill info if paid or prepared
+        const { data: bill } = await db
+          .from("restaurant_bills")
+          .select("*")
+          .eq("session_id", session.id)
+          .maybeSingle();
+
+        const orderCount = enrichedOrders.length;
+        const sessionTotal = enrichedOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
+        const terminalStatuses = ["closed", "cancelled", "served"];
+        const allOrdersTerminal =
+          orderCount > 0 && enrichedOrders.every((o) => terminalStatuses.includes(o.status));
+
+        return {
+          ...session,
+          table: table || null,
+          orders: enrichedOrders,
+          order_count: orderCount,
+          session_total: sessionTotal,
+          all_orders_terminal: allOrdersTerminal,
+          bill: bill || null
+        };
+      })
+    );
 
     return NextResponse.json({ sessions: enriched });
   } catch (err: unknown) {

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useSearchParams, useParams, useLocation } from "react-router-dom";
 import { UtensilsCrossed, Smartphone } from "lucide-react";
 import NotificationCenter from "@/components/common/NotificationCenter";
@@ -12,19 +11,6 @@ export default function StaffOpsPage() {
   const location = useLocation();
 
   const restaurantId = params.restaurantId || searchParams.get("restaurant_id") || "";
-  const [restaurantName, setRestaurantName] = useState<string>("");
-  const [restaurantLogo, setRestaurantLogo] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!restaurantId) return;
-    fetch(`/api/client/restaurant/settings?restaurant_id=${restaurantId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.settings?.name) setRestaurantName(data.settings.name);
-        if (data.settings?.logo_url) setRestaurantLogo(data.settings.logo_url);
-      })
-      .catch(() => {});
-  }, [restaurantId]);
   
   // Resolve role from URL path (e.g. /kitchen/xyz or /waiter/xyz) or query param
   const isKitchenPath = location.pathname.startsWith("/kitchen");
@@ -50,25 +36,17 @@ export default function StaffOpsPage() {
       <header className="border-b border-white/10 bg-[#0d0e12]/90 backdrop-blur-xl px-6 py-4 sticky top-0 z-30 shadow-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-3">
-            {restaurantLogo ? (
-              <div className="h-10 w-10 rounded-2xl bg-black/40 border border-white/10 p-1 flex items-center justify-center shrink-0 shadow-lg">
-                <img src={restaurantLogo} alt="Logo" className="max-h-full max-w-full object-contain rounded-xl" />
-              </div>
-            ) : (
-              <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center font-black text-slate-950 text-sm shadow-xl shadow-amber-500/20 border border-white/20">
-                <UtensilsCrossed size={20} />
-              </div>
-            )}
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center font-black text-slate-950 text-sm shadow-xl shadow-amber-500/20 border border-white/20">
+              <UtensilsCrossed size={20} />
+            </div>
             <div>
               <h1 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
-                <span>{restaurantName || (role === "kitchen" ? "Kitchen KDS Terminal" : "Waiter Dispatch Board")}</span>
+                <span>Trinetra Staff Operations</span>
                 <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   {role === "kitchen" ? "KDS Station" : "Waiter Board"}
                 </span>
               </h1>
-              <p className="text-xs text-slate-400 font-medium">
-                Realtime Operations · <span className="text-slate-500">Powered by Trinetra OS</span>
-              </p>
+              <p className="text-xs text-slate-400 font-medium">Realtime Kitchen Queue & Order Dispatch Terminal</p>
             </div>
           </div>
           <div className="flex items-center gap-3">

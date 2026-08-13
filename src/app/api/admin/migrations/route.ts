@@ -51,7 +51,6 @@ export async function GET(request: Request) {
       ALTER TABLE restaurants
       ADD COLUMN IF NOT EXISTS upi_id TEXT,
       ADD COLUMN IF NOT EXISTS upi_qr_url TEXT,
-      ADD COLUMN IF NOT EXISTS logo_url TEXT,
       ADD COLUMN IF NOT EXISTS business_gstin TEXT,
       ADD COLUMN IF NOT EXISTS receipt_header_note TEXT,
       ADD COLUMN IF NOT EXISTS receipt_footer_note TEXT,
@@ -68,11 +67,6 @@ export async function GET(request: Request) {
       ALTER TABLE restaurant_bills
       ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash',
       ADD COLUMN IF NOT EXISTS tip_amount NUMERIC(10, 2) DEFAULT 0;
-
-      CREATE INDEX IF NOT EXISTS idx_restaurant_orders_active ON restaurant_orders(tenant_id, restaurant_id, status);
-      CREATE INDEX IF NOT EXISTS idx_restaurant_orders_session ON restaurant_orders(table_session_id);
-      CREATE INDEX IF NOT EXISTS idx_restaurant_sessions_active ON restaurant_table_sessions(tenant_id, restaurant_id, status, payment_status);
-      CREATE INDEX IF NOT EXISTS idx_restaurant_bills_session ON restaurant_bills(session_id);
     `;
     await client.query(columnsSql);
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle2, Clock, Receipt, QrCode, CheckCircle, Loader2, AlertCircle } from "lucide-react";
+import { CheckCircle2, Clock, Receipt, QrCode } from "lucide-react";
 import CustomerPaymentModal from "./CustomerPaymentModal";
 
 type OrderPayload = {
@@ -113,10 +113,6 @@ export default function RestaurantOrderStatusClient({
   const [sessionContext, setSessionContext] = useState<SessionContextData | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [restaurantInfo, setRestaurantInfo] = useState<{ name: string; upi_id?: string; upi_qr_url?: string } | null>(null);
-  const [billRequesting, setBillRequesting] = useState(false);
-  const [billRequested, setBillRequested] = useState(false);
-  const [billRequestError, setBillRequestError] = useState<string | null>(null);
-  const [billToastMessage, setBillToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -195,9 +191,6 @@ export default function RestaurantOrderStatusClient({
                   orders: sess.orders,
                   bill: sess.bill || null,
                 });
-                if (sess.session.bill_requested_at || sess.session.payment_status === "requested") {
-                  setBillRequested(true);
-                }
               } else {
                 setSessionContext(null);
               }
@@ -604,85 +597,33 @@ export default function RestaurantOrderStatusClient({
 
                 {/* ONLINE PAYMENT & BILL REQUEST BUTTONS */}
                 {sessionContext.paymentStatus !== "paid" ? (
-                  <div className="mt-4 space-y-3">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <button
-                        type="button"
-                        disabled={billRequesting || billRequested}
-                        onClick={async () => {
-                          if (!sessionContext?.sessionId || billRequesting || billRequested) return;
-                          setBillRequesting(true);
-                          setBillRequestError(null);
-                          try {
-                            const res = await fetch(`/api/r/${tableToken}/session/request-bill`, {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ sessionId: sessionContext.sessionId }),
-                            });
-                            const data = await res.json();
-                            if (res.ok && data.success) {
-                              setBillRequested(true);
-                              setBillToastMessage(data.message || "Bill request sent to staff. A waiter will bring your bill.");
-                            } else {
-                              setBillRequestError(data.error || "Couldn't send bill request. Please retry.");
-                            }
-                          } catch (err: any) {
-                            setBillRequestError(err?.message || "Couldn't send bill request. Please retry.");
-                          } finally {
-                            setBillRequesting(false);
-                          }
-                        }}
-                        className={`flex items-center justify-center gap-2 rounded-2xl border py-3.5 text-sm font-bold transition active:scale-[0.98] ${
-                          billRequested
-                            ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-300 cursor-not-allowed opacity-90"
-                            : billRequesting
-                            ? "border-amber-500/30 bg-amber-500/15 text-amber-300 cursor-wait"
-                            : "border-white/15 bg-white/10 text-white hover:bg-white/20 cursor-pointer"
-                        }`}
-                      >
-                        {billRequested ? (
-                          <>
-                            <CheckCircle size={18} className="text-emerald-400" /> Bill Requested ✓
-                          </>
-                        ) : billRequesting ? (
-                          <>
-                            <Loader2 size={18} className="animate-spin text-amber-400" /> Requesting...
-                          </>
-                        ) : (
-                          <>
-                            <Receipt size={18} className="text-amber-400" /> Request Bill from Waiter
-                          </>
-                        )}
-                      </button>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await fetch(`/api/r/${tableToken}/session/request-bill`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ sessionId: sessionContext.sessionId }),
+                          });
+                          alert("Bill request sent to waiter!");
+                        } catch {
+                          alert("Failed to request bill.");
+                        }
+                      }}
+                      className="flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 py-3.5 text-sm font-bold text-white hover:bg-white/20 transition active:scale-[0.98] cursor-pointer"
+                    >
+                      <Receipt size={18} className="text-amber-400" /> Request Bill from Waiter
+                    </button>
 
-                      <button
-                        type="button"
-                        onClick={() => setShowPaymentModal(true)}
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 py-3.5 text-sm font-black text-slate-950 shadow-xl shadow-amber-500/25 hover:from-amber-400 hover:to-yellow-400 transition active:scale-[0.98] cursor-pointer"
-                      >
-                        <QrCode size={18} /> Pay Bill Online (UPI / QR / Cash) →
-                      </button>
-                    </div>
-
-                    {billToastMessage && (
-                      <div className="flex items-center justify-between gap-3 p-3.5 bg-emerald-950/70 border border-emerald-500/40 rounded-2xl text-emerald-200 text-xs font-bold backdrop-blur">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle size={16} className="text-emerald-400 shrink-0" />
-                          <span>{billToastMessage}</span>
-                        </div>
-                        <button onClick={() => setBillToastMessage(null)} className="text-emerald-400 hover:text-white text-xs font-extrabold px-2 py-0.5 cursor-pointer">✕</button>
-                      </div>
-                    )}
-
-                    {billRequestError && (
-                      <div className="flex items-center justify-between gap-3 p-3.5 bg-rose-950/70 border border-rose-500/40 rounded-2xl text-rose-200 text-xs font-bold backdrop-blur">
-                        <div className="flex items-center gap-2">
-                          <AlertCircle size={16} className="text-rose-400 shrink-0" />
-                          <span>{billRequestError}</span>
-                        </div>
-                        <button onClick={() => setBillRequestError(null)} className="text-rose-300 hover:text-white underline text-xs font-extrabold cursor-pointer">Dismiss</button>
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowPaymentModal(true)}
+                      className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 py-3.5 text-sm font-black text-slate-950 shadow-xl shadow-amber-500/25 hover:from-amber-400 hover:to-yellow-400 transition active:scale-[0.98] cursor-pointer"
+                    >
+                      <QrCode size={18} /> Pay Bill Online (UPI / QR / Cash) →
+                    </button>
                   </div>
                 ) : (
                   <button

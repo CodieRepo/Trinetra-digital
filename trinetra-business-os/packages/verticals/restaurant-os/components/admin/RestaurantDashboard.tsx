@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import NotificationCenter from "@/components/common/NotificationCenter";
 import PaymentSettingsPanel from "@/views/admin/panels/PaymentSettingsPanel";
 import ThermalReceiptModal, { ReceiptData } from "./ThermalReceiptModal";
@@ -21,7 +20,6 @@ import {
   Printer,
   Search,
   History,
-  Receipt,
 } from "lucide-react";
 
 type DashboardOrder = {
@@ -351,7 +349,7 @@ export default function RestaurantDashboard({
     try {
       const [ordersRes, tablesRes, menuRes, staffRes, sessionsRes] =
         await Promise.all([
-          fetch("/api/client/restaurant/orders?limit=30&active_only=true", {
+          fetch("/api/client/restaurant/orders?limit=30", {
             cache: "no-store",
           }),
           fetch("/api/client/restaurant/tables", { cache: "no-store" }),
@@ -400,54 +398,14 @@ export default function RestaurantDashboard({
 
   useEffect(() => {
     void loadAll(true);
-
-    if (!restaurantId || restaurantId === "default") return;
-
-    const supabase = createClient();
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const triggerDebouncedReload = () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        void loadAll(false);
-      }, 500);
-    };
-
-    const channelName = `restaurant-ops-${restaurantId}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "restaurant_orders",
-          filter: `restaurant_id=eq.${restaurantId}`,
-        },
-        () => triggerDebouncedReload()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "restaurant_table_sessions",
-          filter: `restaurant_id=eq.${restaurantId}`,
-        },
-        () => triggerDebouncedReload()
-      )
-      .subscribe();
-
     const interval = window.setInterval(() => {
       void loadAll(false);
-    }, 20000);
+    }, 15000);
 
     return () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
       window.clearInterval(interval);
-      void supabase.removeChannel(channel);
     };
-  }, [restaurantId, tenantId]);
+  }, []);
 
   const groupedMenu = useMemo(
     () =>
@@ -460,17 +418,13 @@ export default function RestaurantDashboard({
 
   const metrics = useMemo(() => {
     const activeOrders = orders.filter(
-      (order) =>
-        !["served", "closed", "cancelled"].includes(order.status) &&
-        (order as any).session_status !== "closed",
+      (order) => !["closed", "cancelled"].includes(order.status),
     );
     const readyOrders = orders.filter(
-      (order) => order.status === "ready" && (order as any).session_status !== "closed",
+      (order) => order.status === "ready",
     ).length;
-    const kitchenQueue = orders.filter(
-      (order) =>
-        ["placed", "accepted", "preparing"].includes(order.status) &&
-        (order as any).session_status !== "closed",
+    const kitchenQueue = orders.filter((order) =>
+      ["placed", "accepted", "preparing"].includes(order.status),
     ).length;
     const revenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
 
@@ -977,9 +931,9 @@ export default function RestaurantDashboard({
               >
                 {tab.icon}
                 {tab.label}
-                {tab.id === "live" && sessions.length > 0 && (
+                {tab.id === "live" && orders.length > 0 && (
                   <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/25 text-amber-300 border border-amber-500/30 px-1.5 text-[10px] font-black">
-                    {sessions.length}
+                    {orders.length}
                   </span>
                 )}
                 {tab.id === "history" && historySessions.length > 0 && (
@@ -1121,11 +1075,6 @@ export default function RestaurantDashboard({
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
                       <div className="flex items-center gap-1.5">
-                        {(session.payment_status === "requested" || (session as any).bill_requested_at) && (
-                          <span className="rounded-full border border-amber-400/40 bg-amber-400/20 px-3 py-1 text-xs uppercase tracking-[0.24em] text-amber-300 font-black animate-pulse flex items-center gap-1">
-                            <Receipt size={12} /> Bill Requested
-                          </span>
-                        )}
                         {session.payment_status === "paid" && (
                           <span className="rounded-full border border-emerald-400/30 bg-emerald-400/20 px-3 py-1 text-xs uppercase tracking-[0.24em] text-emerald-100">
                             Paid

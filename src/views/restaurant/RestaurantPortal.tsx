@@ -19,7 +19,7 @@ export default function RestaurantPortal() {
 
   // Tenant / Restaurant States
   const [tenantId, setTenantId] = useState<string | null>(null);
-  const [restaurant, setRestaurant] = useState<{ id: string; name: string; currency: string; tax_rate?: number; tax_label?: string; logo_url?: string } | null>(null);
+  const [restaurant, setRestaurant] = useState<{ id: string; name: string; currency: string; tax_rate?: number; tax_label?: string } | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -255,25 +255,12 @@ export default function RestaurantPortal() {
       <div className="px-4 lg:px-0">
         {/* Header Branding */}
         <div className="p-4 lg:p-6 lg:border-b lg:border-white/5 flex items-center gap-3">
-          {restaurant.logo_url ? (
-            <div className="h-10 w-10 rounded-2xl bg-black/40 border border-white/10 p-1.5 flex items-center justify-center shrink-0 shadow-lg">
-              <img
-                src={restaurant.logo_url}
-                alt={restaurant.name}
-                className="max-h-full max-w-full object-contain rounded-xl"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
-              />
-            </div>
-          ) : (
-            <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 shadow-lg shadow-amber-500/10">
-              <ChefHat size={20} />
-            </div>
-          )}
+          <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 shadow-lg shadow-amber-500/10">
+            <ChefHat size={20} />
+          </div>
           <div className="min-w-0">
             <h2 className="font-black text-sm text-white uppercase tracking-wider line-clamp-1">{restaurant.name}</h2>
-            <div className="text-[9px] text-amber-400 font-extrabold uppercase tracking-widest mt-0.5">Restaurant Terminal</div>
+            <div className="text-[9px] text-amber-400 font-extrabold uppercase tracking-widest mt-0.5">Commercial OS</div>
           </div>
         </div>
 
