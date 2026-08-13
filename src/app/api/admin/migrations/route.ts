@@ -61,8 +61,7 @@ export async function GET(request: Request) {
       ALTER TABLE restaurant_table_sessions
       ADD COLUMN IF NOT EXISTS payment_method TEXT,
       ADD COLUMN IF NOT EXISTS tip_amount NUMERIC(10, 2) DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS customer_utr TEXT,
-      ADD COLUMN IF NOT EXISTS bill_requested_at TIMESTAMPTZ;
+      ADD COLUMN IF NOT EXISTS customer_utr TEXT;
 
       ALTER TABLE restaurant_bills
       ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash',
