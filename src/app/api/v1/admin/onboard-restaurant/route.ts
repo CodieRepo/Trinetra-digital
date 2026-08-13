@@ -160,39 +160,11 @@ export async function POST(request: Request) {
 
     // 6. Seed Default Menu Categories
     console.log("[Onboarding] Seeding menu categories...");
-    const { data: insertedCats } = await db.from("menu_categories").insert([
+    await db.from("menu_categories").insert([
       { tenant_id: tenantId, restaurant_id: restaurantId, name: "Starters", display_order: 1 },
       { tenant_id: tenantId, restaurant_id: restaurantId, name: "Main Course", display_order: 2 },
       { tenant_id: tenantId, restaurant_id: restaurantId, name: "Beverages", display_order: 3 },
-    ]).select("id, name, display_order");
-
-    if (insertedCats && insertedCats.length > 0) {
-      try {
-        const defaultBranchId = "abe32f5f-aabe-4962-ac38-710e5b8cc5e3";
-        try {
-          await db.from("branches").upsert({
-            id: defaultBranchId,
-            name: "Main Branch",
-            is_active: true,
-          }, { onConflict: "id" });
-        } catch (e) {}
-
-        try {
-          await db.from("categories").upsert(
-            insertedCats.map(c => ({
-              id: c.id,
-              branch_id: defaultBranchId,
-              name: c.name,
-              sort_order: c.display_order || 1,
-            })),
-            { onConflict: "id" }
-          );
-        } catch (e) {}
-      } catch (e) {
-        // Ignore if categories table does not exist
-      }
-    }
-
+    ]);
     // 7. Seed Default Tables
     console.log("[Onboarding] Seeding tables...");
     await db.from("restaurant_tables").insert([

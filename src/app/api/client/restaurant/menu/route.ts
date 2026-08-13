@@ -70,29 +70,6 @@ export async function POST(request: Request) {
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-      // Always sync category row to legacy categories table to satisfy legacy foreign keys
-      try {
-        const defaultBranchId = "abe32f5f-aabe-4962-ac38-710e5b8cc5e3";
-        try {
-          await db.from("branches").upsert({
-            id: defaultBranchId,
-            name: "Main Branch",
-            is_active: true,
-          }, { onConflict: "id" });
-        } catch (e) {}
-
-        try {
-          await db.from("categories").upsert({
-            id: data.id,
-            branch_id: defaultBranchId,
-            name: data.name,
-            sort_order: data.display_order || 1,
-          }, { onConflict: "id" });
-        } catch (e) {}
-      } catch (syncErr) {
-        console.warn("[MenuAPI] Legacy categories sync warning:", syncErr);
-      }
-
       return NextResponse.json({ success: true, category: data });
     }
 
@@ -155,26 +132,7 @@ export async function POST(request: Request) {
 
       resolvedCategoryId = activeCat.id;
 
-      // 3. Dual-sync to legacy categories table to satisfy any legacy foreign key constraint
-      const defaultBranchId = "abe32f5f-aabe-4962-ac38-710e5b8cc5e3";
-      try {
-        await db.from("branches").upsert({
-          id: defaultBranchId,
-          name: "Main Branch",
-          is_active: true,
-        }, { onConflict: "id" });
-      } catch (e) {}
-
-      try {
-        await db.from("categories").upsert({
-          id: resolvedCategoryId,
-          branch_id: defaultBranchId,
-          name: activeCat.name,
-          sort_order: activeCat.display_order || 1,
-        }, { onConflict: "id" });
-      } catch (e) {}
-
-      // 4. Insert menu item with verified resolvedCategoryId
+      // 3. Insert menu item with verified resolvedCategoryId
       const { data, error } = await db
         .from("menu_items")
         .insert({
