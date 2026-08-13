@@ -65,68 +65,89 @@ export async function resolveRestaurantContext(request: Request, bodyData?: any)
   let tenantId: string | null = null;
   let restaurantId: string | null = null;
 
-  // Option A: Explicit requestedRestaurantId provided
-  if (requestedRestaurantId && requestedRestaurantId !== "default") {
-    const { data: restRow } = await db
-      .from("restaurants")
-      .select("id, tenant_id")
-      .eq("id", requestedRestaurantId.trim())
-      .maybeSingle();
-
-    if (restRow) {
-      restaurantId = restRow.id;
-      tenantId = restRow.tenant_id;
+  // Security Check: If user is authenticated, enforce that requestedTenantId / requestedRestaurantId belong to verifiedTenantId
+  if (verifiedTenantId) {
+    if (requestedTenantId && requestedTenantId !== "default" && requestedTenantId !== verifiedTenantId) {
+      // Authenticated user attempting cross-tenant manipulation
+      return { tenantId: null, restaurantId: null };
     }
-  }
 
-  // Option B: Explicit requestedTenantId provided
-  if (!restaurantId && requestedTenantId && requestedTenantId !== "default") {
-    const { data: restRow } = await db
-      .from("restaurants")
-      .select("id, tenant_id")
-      .eq("tenant_id", requestedTenantId.trim())
-      .limit(1)
-      .maybeSingle();
+    if (requestedRestaurantId && requestedRestaurantId !== "default") {
+      const { data: restRow } = await db
+        .from("restaurants")
+        .select("id, tenant_id")
+        .eq("id", requestedRestaurantId.trim())
+        .maybeSingle();
 
-    if (restRow) {
-      restaurantId = restRow.id;
-      tenantId = restRow.tenant_id;
-    } else {
-      tenantId = requestedTenantId;
-    }
-  }
-
-  // Option C: Authenticated user context fallback
-  if (!restaurantId && verifiedTenantId) {
-    const { data: restRow } = await db
-      .from("restaurants")
-      .select("id, tenant_id")
-      .eq("tenant_id", verifiedTenantId)
-      .limit(1)
-      .maybeSingle();
-
-    if (restRow) {
-      restaurantId = restRow.id;
-      tenantId = restRow.tenant_id;
+      if (restRow) {
+        if (restRow.tenant_id !== verifiedTenantId) {
+          // Authenticated user attempting access to a restaurant owned by another tenant
+          return { tenantId: null, restaurantId: null };
+        }
+        restaurantId = restRow.id;
+        tenantId = restRow.tenant_id;
+      } else {
+        // Nonexistent requested restaurant ID
+        return { tenantId: null, restaurantId: null };
+      }
     } else {
       tenantId = verifiedTenantId;
+      const { data: restRow } = await db
+        .from("restaurants")
+        .select("id, tenant_id")
+        .eq("tenant_id", verifiedTenantId)
+        .limit(1)
+        .maybeSingle();
+
+      if (restRow) {
+        restaurantId = restRow.id;
+      }
     }
-  }
+  } else {
+    // Unauthenticated / Demo Context Resolution
+    if (requestedRestaurantId && requestedRestaurantId !== "default") {
+      const { data: restRow } = await db
+        .from("restaurants")
+        .select("id, tenant_id")
+        .eq("id", requestedRestaurantId.trim())
+        .maybeSingle();
 
-  // Option D: Public / Unauthenticated fallback to default demo tenant
-  if (!tenantId) {
-    tenantId = "00000000-0000-0000-0000-000000000001";
-  }
+      if (restRow) {
+        restaurantId = restRow.id;
+        tenantId = restRow.tenant_id;
+      }
+    }
 
-  if (!restaurantId) {
-    const { data: demoRest } = await db
-      .from("restaurants")
-      .select("id")
-      .eq("tenant_id", tenantId)
-      .limit(1)
-      .maybeSingle();
+    if (!restaurantId && requestedTenantId && requestedTenantId !== "default") {
+      const { data: restRow } = await db
+        .from("restaurants")
+        .select("id, tenant_id")
+        .eq("tenant_id", requestedTenantId.trim())
+        .limit(1)
+        .maybeSingle();
 
-    restaurantId = demoRest?.id || null;
+      if (restRow) {
+        restaurantId = restRow.id;
+        tenantId = restRow.tenant_id;
+      } else {
+        tenantId = requestedTenantId;
+      }
+    }
+
+    if (!tenantId) {
+      tenantId = "00000000-0000-0000-0000-000000000001";
+    }
+
+    if (!restaurantId) {
+      const { data: demoRest } = await db
+        .from("restaurants")
+        .select("id")
+        .eq("tenant_id", tenantId)
+        .limit(1)
+        .maybeSingle();
+
+      restaurantId = demoRest?.id || null;
+    }
   }
 
   return { tenantId, restaurantId };

@@ -30,6 +30,8 @@ export default function NotificationCenter({
         return <UtensilsCrossed size={16} className="text-cyan-400" />;
       case "BILL_PAID":
         return <Receipt size={16} className="text-emerald-400" />;
+      case "BILL_REQUESTED":
+        return <Receipt size={16} className="text-amber-400 animate-pulse" />;
       default:
         return <CheckCircle size={16} className="text-indigo-400" />;
     }

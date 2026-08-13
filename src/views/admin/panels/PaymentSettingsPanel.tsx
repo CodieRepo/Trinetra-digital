@@ -10,6 +10,7 @@ export default function PaymentSettingsPanel({
   restaurantId?: string | null;
   tenantId?: string | null;
 }) {
+  const [logoUrl, setLogoUrl] = useState("");
   const [upiId, setUpiId] = useState("");
   const [upiQrUrl, setUpiQrUrl] = useState("");
   const [businessGstin, setBusinessGstin] = useState("");
@@ -32,6 +33,7 @@ export default function PaymentSettingsPanel({
         if (res.ok) {
           const data = await res.json();
           if (data.settings) {
+            setLogoUrl(data.settings.logo_url || "");
             setUpiId(data.settings.upi_id || "");
             setUpiQrUrl(data.settings.upi_qr_url || "");
             setBusinessGstin(data.settings.business_gstin || "");
@@ -62,6 +64,7 @@ export default function PaymentSettingsPanel({
         body: JSON.stringify({
           restaurant_id: restaurantId,
           tenant_id: tenantId,
+          logo_url: logoUrl.trim(),
           upi_id: upiId.trim(),
           upi_qr_url: upiQrUrl.trim(),
           business_gstin: businessGstin.trim(),
@@ -76,7 +79,7 @@ export default function PaymentSettingsPanel({
         throw new Error(data.error || "Failed to save payment settings.");
       }
 
-      setStatusMessage({ type: "success", text: "Custom Payment Settings & QR Code saved successfully!" });
+      setStatusMessage({ type: "success", text: "Restaurant Identity & Payment Settings saved successfully!" });
     } catch (err: any) {
       setStatusMessage({ type: "error", text: err.message || "Failed to save settings." });
     } finally {
@@ -99,10 +102,10 @@ export default function PaymentSettingsPanel({
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-2.5">
             <QrCode className="h-6 w-6 text-amber-400" />
-            Payment Methods & Receipt Settings
+            Restaurant Identity & Settings
           </h2>
           <p className="mt-1 text-xs text-slate-400">
-            Configure custom Business UPI ID, Soundbox QR Code image, GSTIN, and 80mm receipt headers.
+            Configure White-Label Brand Logo, Business UPI ID, Soundbox QR Code, GSTIN, and 80mm receipt headers.
           </p>
         </div>
       </div>
@@ -121,6 +124,50 @@ export default function PaymentSettingsPanel({
       )}
 
       <form onSubmit={handleSave} className="space-y-6">
+        {/* White-Label Logo Section */}
+        <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur">
+          <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/10 pb-3 mb-4">
+            <Building2 size={18} className="text-indigo-400" />
+            White-Label Restaurant Brand Logo
+          </h3>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+              Logo Image URL (PNG, JPG, SVG - Max 2MB recommended)
+            </label>
+            <input
+              type="url"
+              value={logoUrl}
+              onChange={(e) => setLogoUrl(e.target.value)}
+              placeholder="https://example.com/logo.png"
+              className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs text-white placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none"
+            />
+            <p className="mt-1.5 text-[11px] text-slate-400">
+              Optional logo displayed on Admin Header, Staff Terminal, and Guest QR Menu. Leave blank for text fallback.
+            </p>
+          </div>
+
+          {logoUrl && (
+            <div className="mt-4 flex items-center gap-4 rounded-2xl border border-indigo-400/20 bg-indigo-400/5 p-4">
+              <div className="h-16 w-16 overflow-hidden rounded-xl border border-white/20 bg-black/50 p-2 flex items-center justify-center">
+                <img
+                  src={logoUrl}
+                  alt="Restaurant Brand Logo"
+                  className="max-h-full max-w-full object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-indigo-300">Live Brand Logo Preview</p>
+                <p className="text-[11px] text-slate-300">
+                  This logo will appear across all tenant-scoped surfaces.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
         {/* Custom UPI & QR Section */}
         <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur">
           <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/10 pb-3 mb-4">

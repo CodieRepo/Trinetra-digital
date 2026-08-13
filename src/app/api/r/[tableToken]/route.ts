@@ -27,10 +27,10 @@ export async function GET(
       return NextResponse.json({ error: "Table not found or inactive" }, { status: 404 });
     }
 
-    // Query restaurant info (standard guaranteed columns only)
+    // Query restaurant info
     const { data: restaurant, error: restErr } = await supabase
       .from("restaurants")
-      .select("id, tenant_id, name, address, currency")
+      .select("id, tenant_id, name, address, currency, logo_url")
       .eq("id", table.restaurant_id)
       .maybeSingle();
 
@@ -82,6 +82,7 @@ export async function GET(
         name: restaurant.name,
         address: restaurant.address,
         currency: restaurant.currency || "INR",
+        logo_url: restaurant.logo_url || null,
         upi_id: upiId,
         upi_qr_url: upiQrUrl,
       },

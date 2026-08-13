@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     // 1. Fetch restaurant basic info
     const { data: restaurant, error: restErr } = await db
       .from("restaurants")
-      .select("id, tenant_id, name, address, currency")
+      .select("id, tenant_id, name, address, currency, logo_url")
       .eq("id", restaurantId)
       .maybeSingle();
 
@@ -46,6 +46,7 @@ export async function GET(request: Request) {
         name: restaurant.name,
         address: restaurant.address,
         currency: restaurant.currency || "INR",
+        logo_url: restaurant.logo_url || paymentSettings.logo_url || "",
         upi_id: paymentSettings.upi_id || "",
         upi_qr_url: paymentSettings.upi_qr_url || "",
         business_gstin: paymentSettings.business_gstin || "",
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
     // 1. Fetch restaurant to get tenant_id
     const { data: restaurant, error: restErr } = await db
       .from("restaurants")
-      .select("id, tenant_id, name, address, currency")
+      .select("id, tenant_id, name, address, currency, logo_url")
       .eq("id", restaurantId)
       .maybeSingle();
 
@@ -87,6 +88,7 @@ export async function POST(request: Request) {
       name,
       address,
       currency,
+      logo_url,
       upi_id,
       upi_qr_url,
       business_gstin,
@@ -102,6 +104,7 @@ export async function POST(request: Request) {
     if (name !== undefined) restUpdatePayload.name = name;
     if (address !== undefined) restUpdatePayload.address = address;
     if (currency !== undefined) restUpdatePayload.currency = currency;
+    if (logo_url !== undefined) restUpdatePayload.logo_url = logo_url;
 
     if (Object.keys(restUpdatePayload).length > 0) {
       await db.from("restaurants").update(restUpdatePayload).eq("id", restaurantId);

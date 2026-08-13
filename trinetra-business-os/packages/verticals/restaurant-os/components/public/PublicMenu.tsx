@@ -32,6 +32,7 @@ type MenuPayload = {
     name: string;
     address: string | null;
     currency: string;
+    logo_url?: string | null;
   };
   table: {
     id: string;
@@ -625,23 +626,37 @@ export default function PublicRestaurantMenu({
       >
         <div className="mb-8 rounded-[32px] border border-white/10 bg-[#0d0e12]/80 p-6 md:p-8 backdrop-blur-2xl shadow-[0_30px_70px_rgba(0,0,0,0.5)] md:flex md:items-end md:justify-between relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[90px] rounded-full pointer-events-none" />
-          <div className="relative z-10">
-            <p className="text-xs uppercase tracking-[0.35em] text-amber-400 font-extrabold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
-              {payload.restaurant.name}
-            </p>
-            <h1 className="mt-3 text-3xl font-black text-white md:text-5xl tracking-tight">
-              Digital Menu
-            </h1>
-            {payload.restaurant.address ? (
-              <p className="mt-3 max-w-2xl text-sm text-slate-300 md:text-base font-medium">
-                {payload.restaurant.address}
-              </p>
-            ) : (
-              <p className="mt-3 max-w-2xl text-sm text-slate-300 md:text-base font-medium">
-                Table {payload.table.table_number} is active. Browse dishes, customize items, and place instant orders from your phone.
-              </p>
+          <div className="relative z-10 flex items-start gap-4">
+            {payload.restaurant.logo_url && (
+              <div className="h-16 w-16 rounded-2xl bg-black/50 border border-white/15 p-1.5 flex items-center justify-center shrink-0 shadow-lg mt-1">
+                <img
+                  src={payload.restaurant.logo_url}
+                  alt={payload.restaurant.name}
+                  className="max-h-full max-w-full object-contain rounded-xl"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              </div>
             )}
+            <div>
+              <p className="text-xs uppercase tracking-[0.35em] text-amber-400 font-extrabold flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
+                {payload.restaurant.name}
+              </p>
+              <h1 className="mt-2 text-3xl font-black text-white md:text-5xl tracking-tight">
+                Digital Menu
+              </h1>
+              {payload.restaurant.address ? (
+                <p className="mt-2 max-w-2xl text-sm text-slate-300 md:text-base font-medium">
+                  {payload.restaurant.address}
+                </p>
+              ) : (
+                <p className="mt-2 max-w-2xl text-sm text-slate-300 md:text-base font-medium">
+                  Table {payload.table.table_number} is active. Browse dishes, customize items, and place instant orders from your phone.
+                </p>
+              )}
+            </div>
           </div>
           <div className="mt-6 inline-flex items-center gap-2.5 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-black text-amber-300 md:mt-0 shadow-lg backdrop-blur shrink-0 relative z-10">
             <QrCode className="h-4 w-4 text-amber-400" />
