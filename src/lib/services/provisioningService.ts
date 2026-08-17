@@ -491,7 +491,18 @@ export class ProvisioningService {
   /**
    * Seed demo restaurant operationally via RPC
    */
-  static async seedDemoRestaurant(): Promise<{ success: boolean; restaurantId: string }> {
+  static async seedDemoRestaurant(): Promise<{
+    success: boolean;
+    restaurantId: string;
+    restaurant_id: string;
+    tenantId: string;
+    tenant_id: string;
+    floorsCount?: number;
+    tablesCount?: number;
+    categoriesCount?: number;
+    itemsCount?: number;
+    staffCount?: number;
+  }> {
     const supabase = this.getAdminClient();
 
     const { data, error } = await supabase.rpc('seed_demo_restaurant_rpc');
@@ -503,6 +514,14 @@ export class ProvisioningService {
     return {
       success: true,
       restaurantId: data.restaurant_id,
+      restaurant_id: data.restaurant_id,
+      tenantId: data.tenant_id,
+      tenant_id: data.tenant_id,
+      floorsCount: data.floors_count,
+      tablesCount: data.tables_count,
+      categoriesCount: data.categories_count,
+      itemsCount: data.items_count,
+      staffCount: data.staff_count,
     };
   }
 }

@@ -42,8 +42,9 @@ export default function ProvisioningLandingPage() {
     try {
       const res = await fetch('/api/restaurant-os/provisioning/demo', { method: 'POST' });
       const json = await res.json();
-      if (json.success) {
-        window.location.href = `/restaurant-os/provisioning/wizard?restaurantId=${json.data.restaurant_id}`;
+      const targetId = json.data?.restaurantId || json.data?.restaurant_id;
+      if (json.success && targetId) {
+        window.location.href = `/restaurant-os/provisioning/wizard?restaurantId=${targetId}`;
       }
     } catch (err: any) {
       setErrorMsg(err.message);
