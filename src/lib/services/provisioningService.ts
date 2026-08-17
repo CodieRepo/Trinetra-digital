@@ -176,7 +176,11 @@ export class ProvisioningService {
 
     // Step 7: Sample Data Seeding Opt-in
     if (stepData.sampleDataOptIn?.loadSampleData) {
-      await this.seedDemoRestaurant();
+      const profile = await this.getRestaurantProfile(restaurantId);
+      if (!profile?.tenantId) {
+        throw new Error('Unable to resolve tenant for sample menu seeding');
+      }
+      await this.seedSampleMenuData(restaurantId, profile.tenantId);
     }
 
     // Step 8: Mark Wizard Completed & Restaurant Operational
@@ -357,6 +361,130 @@ export class ProvisioningService {
         hasTerminal: data.checks.has_terminal,
         wizardCompleted: data.checks.wizard_completed,
       },
+    };
+  }
+
+  /**
+   * Seed sample menu categories and items scoped strictly to active restaurant tenant
+   */
+  static async seedSampleMenuData(
+    restaurantId: string,
+    tenantId: string
+  ): Promise<{ success: boolean; categoriesCount: number; itemsCount: number }> {
+    const supabase = this.getAdminClient();
+
+    const sampleCategories = [
+      { name: 'Starters', display_order: 1 },
+      { name: 'Main Course', display_order: 2 },
+      { name: 'Breads & Rice', display_order: 3 },
+      { name: 'Beverages & Desserts', display_order: 4 },
+    ];
+
+    const sampleItems = [
+      // Starters
+      { category: 'Starters', name: 'Paneer Tikka', description: 'Cottage cheese marinated in tandoori spices and grilled', price: 240, is_veg: true, display_order: 1 },
+      { category: 'Starters', name: 'Chicken Tikka', description: 'Tender boneless chicken marinated in yogurt and aromatic spices', price: 290, is_veg: false, display_order: 2 },
+      { category: 'Starters', name: 'Hara Bhara Kebab', description: 'Crispy patties of spinach, green peas, and potatoes', price: 210, is_veg: true, display_order: 3 },
+
+      // Main Course
+      { category: 'Main Course', name: 'Paneer Butter Masala', description: 'Cottage cheese cubes simmered in a rich tomato, butter, and cashew gravy', price: 320, is_veg: true, display_order: 1 },
+      { category: 'Main Course', name: 'Butter Chicken', description: 'Tandoori chicken pieces cooked in a creamy buttery tomato sauce', price: 380, is_veg: false, display_order: 2 },
+      { category: 'Main Course', name: 'Dal Makhani', description: 'Slow-cooked black lentils simmered with butter and cream overnight', price: 260, is_veg: true, display_order: 3 },
+
+      // Breads & Rice
+      { category: 'Breads & Rice', name: 'Butter Garlic Naan', description: 'Soft refined flour bread brushed with garlic butter and fresh coriander', price: 70, is_veg: true, display_order: 1 },
+      { category: 'Breads & Rice', name: 'Tandoori Roti', description: 'Whole wheat flatbread baked crisp in the tandoor clay oven', price: 40, is_veg: true, display_order: 2 },
+      { category: 'Breads & Rice', name: 'Hyderabadi Dum Biryani', description: 'Fragrant basmati rice layered with spiced marinated chicken and saffron', price: 340, is_veg: false, display_order: 3 },
+      { category: 'Breads & Rice', name: 'Jeera Rice', description: 'Fluffy steamed basmati rice tempered with roasted cumin seeds and ghee', price: 180, is_veg: true, display_order: 4 },
+
+      // Beverages & Desserts
+      { category: 'Beverages & Desserts', name: 'Mango Lassi', description: 'Traditional chilled yogurt smoothie blended with Alphonso mango pulp', price: 120, is_veg: true, display_order: 1 },
+      { category: 'Beverages & Desserts', name: 'Gulab Jamun (2 pcs)', description: 'Warm golden milk dumplings soaked in cardamom-infused rose syrup', price: 110, is_veg: true, display_order: 2 },
+    ];
+
+    // 1. Fetch existing categories for this restaurant to maintain idempotency
+    const { data: existingCategories, error: catFetchErr } = await supabase
+      .from('menu_categories')
+      .select('id, name')
+      .eq('tenant_id', tenantId)
+      .eq('restaurant_id', restaurantId);
+
+    if (catFetchErr) {
+      throw new Error(`Failed to check existing categories: ${catFetchErr.message}`);
+    }
+
+    const categoryMap = new Map<string, string>();
+    (existingCategories || []).forEach((c) => categoryMap.set(c.name, c.id));
+
+    // 2. Insert missing sample categories
+    for (const cat of sampleCategories) {
+      if (!categoryMap.has(cat.name)) {
+        const { data: insertedCat, error: insertCatErr } = await supabase
+          .from('menu_categories')
+          .insert({
+            tenant_id: tenantId,
+            restaurant_id: restaurantId,
+            name: cat.name,
+            display_order: cat.display_order,
+            is_active: true,
+          })
+          .select('id, name')
+          .single();
+
+        if (insertCatErr || !insertedCat) {
+          throw new Error(`Failed to insert category ${cat.name}: ${insertCatErr?.message}`);
+        }
+        categoryMap.set(insertedCat.name, insertedCat.id);
+      }
+    }
+
+    // 3. Fetch existing items for this restaurant to maintain idempotency
+    const { data: existingItems, error: itemFetchErr } = await supabase
+      .from('menu_items')
+      .select('id, name, category_id')
+      .eq('tenant_id', tenantId)
+      .eq('restaurant_id', restaurantId);
+
+    if (itemFetchErr) {
+      throw new Error(`Failed to check existing items: ${itemFetchErr.message}`);
+    }
+
+    const existingItemKeys = new Set(
+      (existingItems || []).map((i) => `${i.category_id}:::${i.name}`)
+    );
+
+    // 4. Insert missing sample items
+    for (const item of sampleItems) {
+      const categoryId = categoryMap.get(item.category);
+      if (!categoryId) continue;
+
+      const itemKey = `${categoryId}:::${item.name}`;
+      if (!existingItemKeys.has(itemKey)) {
+        const { error: insertItemErr } = await supabase
+          .from('menu_items')
+          .insert({
+            tenant_id: tenantId,
+            restaurant_id: restaurantId,
+            category_id: categoryId,
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            is_veg: item.is_veg,
+            is_available: true,
+            display_order: item.display_order,
+          });
+
+        if (insertItemErr) {
+          throw new Error(`Failed to insert menu item ${item.name}: ${insertItemErr.message}`);
+        }
+        existingItemKeys.add(itemKey);
+      }
+    }
+
+    return {
+      success: true,
+      categoriesCount: categoryMap.size,
+      itemsCount: existingItemKeys.size,
     };
   }
 

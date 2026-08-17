@@ -1,34 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useSetupWizardStore } from '@/lib/stores/useSetupWizardStore';
-import { Sparkles, Check, Database, RefreshCw, Layers, Users } from 'lucide-react';
+import { Sparkles, Check, Database, Layers, Users } from 'lucide-react';
 
 export const Step7SampleData: React.FC = () => {
   const { step7, updateStep7 } = useSetupWizardStore();
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [seededStatus, setSeededStatus] = useState<string | null>(null);
 
-  const handleOptInChoice = async (loadSampleData: boolean) => {
+  const handleOptInChoice = (loadSampleData: boolean) => {
     updateStep7({ loadSampleData });
-    if (loadSampleData) {
-      setIsSeeding(true);
-      try {
-        const res = await fetch('/api/restaurant-os/provisioning/demo', {
-          method: 'POST',
-        });
-        const json = await res.json();
-        if (json.success) {
-          setSeededStatus('Sample Indian Cuisine Menu, Modifiers, Staff & Tables loaded successfully');
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsSeeding(false);
-      }
-    } else {
-      setSeededStatus(null);
-    }
   };
 
   return (
@@ -50,7 +30,6 @@ export const Step7SampleData: React.FC = () => {
         <button
           type="button"
           onClick={() => handleOptInChoice(true)}
-          disabled={isSeeding}
           className={`p-6 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
             step7.loadSampleData
               ? 'bg-amber-500/10 border-amber-500 ring-1 ring-amber-500 shadow-xl shadow-amber-500/10'
@@ -69,7 +48,7 @@ export const Step7SampleData: React.FC = () => {
             </div>
             <h3 className="text-lg font-bold text-white">Quick Start with Sample Menu</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Pre-populates Indian Cuisine menu categories (Starters, Main Course, Breads, Beverages), modifiers, staff roles, and 8 dining tables.
+              Pre-populates Indian Cuisine menu categories (Starters, Main Course, Breads & Rice, Beverages & Desserts) and 12 dining menu items.
             </p>
           </div>
 
@@ -78,7 +57,7 @@ export const Step7SampleData: React.FC = () => {
               <Layers className="w-3.5 h-3.5 text-amber-400" /> 12 Menu Items
             </div>
             <div className="flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5 text-amber-400" /> 4 Staff Roles
+              <Users className="w-3.5 h-3.5 text-amber-400" /> 4 Categories
             </div>
           </div>
         </button>
@@ -87,7 +66,6 @@ export const Step7SampleData: React.FC = () => {
         <button
           type="button"
           onClick={() => handleOptInChoice(false)}
-          disabled={isSeeding}
           className={`p-6 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
             !step7.loadSampleData
               ? 'bg-amber-500/10 border-amber-500 ring-1 ring-amber-500 shadow-xl shadow-amber-500/10'
@@ -116,17 +94,11 @@ export const Step7SampleData: React.FC = () => {
         </button>
       </div>
 
-      {/* Loading Overlay */}
-      {isSeeding && (
-        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-3 text-amber-400 text-sm">
-          <RefreshCw className="w-4 h-4 animate-spin" /> Populating sample menu, modifiers, and staff credentials...
-        </div>
-      )}
-
-      {/* Success Notification */}
-      {seededStatus && !isSeeding && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-3 text-emerald-400 text-sm">
-          <Check className="w-4 h-4 shrink-0" /> {seededStatus}
+      {/* Selected Indicator */}
+      {step7.loadSampleData && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-3 text-amber-300 text-sm">
+          <Check className="w-4 h-4 shrink-0 text-amber-400" />
+          <span>Sample Indian Menu (4 categories, 12 items) will be populated into your restaurant database upon saving.</span>
         </div>
       )}
     </div>
