@@ -19,7 +19,7 @@ export default function RestaurantPortal() {
 
   // Tenant / Restaurant States
   const [tenantId, setTenantId] = useState<string | null>(null);
-  const [restaurant, setRestaurant] = useState<{ id: string; name: string; currency: string; tax_rate?: number; tax_label?: string } | null>(null);
+  const [restaurant, setRestaurant] = useState<{ id: string; name: string; currency: string; tax_rate?: number; tax_label?: string; address?: string } | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -59,7 +59,7 @@ export default function RestaurantPortal() {
       let data: any = null;
       try {
         data = await res.json();
-      } catch (jsonErr) {
+      } catch {
         throw new Error("Invalid response format from server.");
       }
 
@@ -318,7 +318,7 @@ export default function RestaurantPortal() {
 
       {/* Mobile Drawer Sidebar */}
       {sidebarOpen && (
-        <aside className="fixed inset-y-0 left-0 z-40 w-72 border-r border-slate-200 bg-[#FAF9F6] flex flex-col justify-between shrink-0 select-none shadow-xl">
+        <aside className="fixed inset-y-0 left-0 z-40 w-72 border-r border-slate-200 bg-[#FAF9F6] flex-col justify-between shrink-0 select-none shadow-xl flex">
           {sidebar}
         </aside>
       )}
@@ -374,6 +374,17 @@ export default function RestaurantPortal() {
           userRole={userRole || "waiter"}
           taxRate={restaurant.tax_rate ?? 5.0}
           taxLabel={restaurant.tax_label ?? "GST"}
+          onRestaurantUpdated={(updated) => {
+            setRestaurant((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    name: updated.name || prev.name,
+                    address: updated.address !== undefined ? updated.address : prev.address,
+                  }
+                : null
+            );
+          }}
         />
       </main>
     </div>

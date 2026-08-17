@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import NotificationCenter from "@/components/common/NotificationCenter";
-import PaymentSettingsPanel from "@/views/admin/panels/PaymentSettingsPanel";
+import RestaurantProfileSettings from "./RestaurantProfileSettings";
 import ThermalReceiptModal, { ReceiptData } from "./ThermalReceiptModal";
 import {
   Copy,
@@ -16,10 +16,10 @@ import {
   ChefHat,
   CreditCard,
   CheckCircle2,
-  QrCode,
   Printer,
   Search,
   History,
+  Building2,
 } from "lucide-react";
 
 type DashboardOrder = {
@@ -174,6 +174,7 @@ export default function RestaurantDashboard({
   userRole = "waiter",
   taxRate = 5.0,
   taxLabel = "GST",
+  onRestaurantUpdated,
 }: {
   restaurantId: string;
   restaurantName: string;
@@ -182,7 +183,15 @@ export default function RestaurantDashboard({
   userRole?: string;
   taxRate?: number;
   taxLabel?: string;
+  onRestaurantUpdated?: (updated: { name?: string; address?: string }) => void;
 }) {
+  const [currentRestaurantName, setCurrentRestaurantName] = useState(restaurantName || "");
+
+  useEffect(() => {
+    if (restaurantName) {
+      setCurrentRestaurantName(restaurantName);
+    }
+  }, [restaurantName]);
   // Shadow global fetch to automatically inject tenant and restaurant context
   const fetch = (input: RequestInfo | URL, init?: RequestInit) => {
     const urlStr = typeof input === "string" ? input : input.toString();
@@ -914,8 +923,8 @@ export default function RestaurantDashboard({
               },
               {
                 id: "payment" as const,
-                label: "Payment & Settings",
-                icon: <QrCode className="h-4 w-4 text-slate-600" />,
+                label: "Profile & Settings",
+                icon: <Building2 className="h-4 w-4 text-slate-600" />,
               },
             ].map((tab) => (
               <button
@@ -1973,9 +1982,22 @@ export default function RestaurantDashboard({
         </section>
         )}
 
-        {/* ═══════════ PAYMENT & SETTINGS TAB ═══════════ */}
+        {/* ═══════════ RESTAURANT PROFILE & SETTINGS TAB ═══════════ */}
         {activeTab === "payment" && (
-          <PaymentSettingsPanel restaurantId={restaurantId} tenantId={tenantId} />
+          <RestaurantProfileSettings
+            restaurantId={restaurantId}
+            tenantId={tenantId}
+            initialRestaurantName={currentRestaurantName}
+            currency={currency}
+            onRestaurantUpdated={(updated) => {
+              if (updated.name) {
+                setCurrentRestaurantName(updated.name);
+              }
+              if (onRestaurantUpdated) {
+                onRestaurantUpdated(updated);
+              }
+            }}
+          />
         )}
       </div>
 
