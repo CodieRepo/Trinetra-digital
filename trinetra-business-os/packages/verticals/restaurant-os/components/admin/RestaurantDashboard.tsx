@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import NotificationCenter from "@/components/common/NotificationCenter";
 import RestaurantProfileSettings from "./RestaurantProfileSettings";
 import ThermalReceiptModal, { ReceiptData } from "./ThermalReceiptModal";
+import { FloorTablesWorkspace } from "@/components/restaurant-os/tables/FloorTablesWorkspace";
 import {
   Copy,
   Download,
@@ -280,7 +281,7 @@ export default function RestaurantDashboard({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // --- Tab navigation & Search state ---
-  const [activeTab, setActiveTab] = useState<"live" | "menu" | "staff" | "payment" | "history">("live");
+  const [activeTab, setActiveTab] = useState<"live" | "tables" | "menu" | "staff" | "payment" | "history">("live");
   const [searchQuery, setSearchQuery] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "placed" | "preparing" | "ready">("all");
   const [historySessions, setHistorySessions] = useState<any[]>([]);
@@ -907,14 +908,19 @@ export default function RestaurantDashboard({
                 icon: <UtensilsCrossed className="h-4 w-4 text-amber-600" />,
               },
               {
-                id: "history" as const,
-                label: "History & Records",
-                icon: <History className="h-4 w-4 text-slate-600" />,
+                id: "tables" as const,
+                label: "Floor & Tables",
+                icon: <LayoutGrid className="h-4 w-4 text-slate-600" />,
               },
               {
                 id: "menu" as const,
-                label: "Tables & Menu",
-                icon: <LayoutGrid className="h-4 w-4 text-slate-600" />,
+                label: "Menu Catalog",
+                icon: <ChefHat className="h-4 w-4 text-slate-600" />,
+              },
+              {
+                id: "history" as const,
+                label: "History & Records",
+                icon: <History className="h-4 w-4 text-slate-600" />,
               },
               {
                 id: "staff" as const,
@@ -942,6 +948,11 @@ export default function RestaurantDashboard({
                 {tab.id === "live" && metrics.activeOrders > 0 && (
                   <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 text-amber-800 border border-amber-300 px-1.5 text-[10px] font-bold">
                     {metrics.activeOrders}
+                  </span>
+                )}
+                {tab.id === "tables" && tables.length > 0 && (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 text-slate-700 border border-slate-300 px-1.5 text-[10px] font-bold">
+                    {tables.length}
                   </span>
                 )}
                 {tab.id === "history" && historySessions.length > 0 && (
@@ -1446,6 +1457,49 @@ export default function RestaurantDashboard({
         </>
         );
         })()}
+
+        {/* ═══════════ FLOOR & TABLES WORKSPACE ═══════════ */}
+        {activeTab === "tables" && (
+          <FloorTablesWorkspace
+            tables={tables}
+            sessions={sessions}
+            restaurantName={currentRestaurantName || restaurantName}
+            currency={currency}
+            onAddTable={async (tableNum: string) => {
+              try {
+                setBusyKey("table:create");
+                const res = await fetch("/api/client/restaurant/tables", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ table_number: tableNum }),
+                });
+                const json = await readJson<{ table: TableRecord }>(res);
+                if (json.table) {
+                  setTables((current) => [...current, json.table]);
+                  setToastMessage(`Table "${tableNum}" created successfully.`);
+                  void loadAll(false);
+                  return true;
+                }
+                return false;
+              } catch (err: any) {
+                setError(err?.message || "Failed to create table.");
+                return false;
+              } finally {
+                setBusyKey(null);
+              }
+            }}
+            onDeleteTable={async (tableId: string) => {
+              await deleteTable(tableId);
+            }}
+            onExportAllQrs={generateQrs}
+            onRefresh={() => void loadAll(false)}
+            onSelectTableSession={(_session) => {
+              setActiveTab("live");
+            }}
+            isExportingQrs={busyKey === "tables:qrs"}
+          />
+        )}
+
         {activeTab === "history" && (
           <section className="space-y-5">
             {/* Sales Summary Cards */}
