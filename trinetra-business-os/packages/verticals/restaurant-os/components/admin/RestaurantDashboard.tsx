@@ -793,45 +793,60 @@ export default function RestaurantDashboard({
             {
               label: "Active Orders",
               value: metrics.activeOrders,
-              icon: <UtensilsCrossed className="h-4 w-4 text-amber-600" />,
-              badgeBg: "bg-amber-50 border-amber-200 text-amber-800",
+              icon: <UtensilsCrossed className="h-4 w-4 text-white" />,
+              iconBg: "bg-amber-500 shadow-xs",
+              cardBg: "bg-[#FFF9EE] border-amber-200/90",
+              textColor: "text-amber-950",
+              labelColor: "text-amber-800",
             },
             {
               label: "Kitchen Queue",
               value: metrics.kitchenQueue,
-              icon: <ChefHat className="h-4 w-4 text-indigo-600" />,
-              badgeBg: "bg-indigo-50 border-indigo-200 text-indigo-800",
+              icon: <ChefHat className="h-4 w-4 text-white" />,
+              iconBg: "bg-indigo-600 shadow-xs",
+              cardBg: "bg-[#F2F5FF] border-indigo-200/90",
+              textColor: "text-indigo-950",
+              labelColor: "text-indigo-800",
             },
             {
               label: "Ready to Serve",
               value: metrics.readyOrders,
-              icon: <LayoutGrid className="h-4 w-4 text-emerald-600" />,
-              badgeBg: "bg-emerald-50 border-emerald-200 text-emerald-800",
+              icon: <LayoutGrid className="h-4 w-4 text-white" />,
+              iconBg: "bg-emerald-600 shadow-xs",
+              cardBg: "bg-[#F2FBF7] border-emerald-200/90",
+              textColor: "text-emerald-950",
+              labelColor: "text-emerald-800",
             },
             {
               label: "Active Tables",
               value: sessions.length,
-              icon: <CreditCard className="h-4 w-4 text-purple-600" />,
-              badgeBg: "bg-purple-50 border-purple-200 text-purple-800",
+              icon: <CreditCard className="h-4 w-4 text-white" />,
+              iconBg: "bg-purple-600 shadow-xs",
+              cardBg: "bg-[#FAF5FF] border-purple-200/90",
+              textColor: "text-purple-950",
+              labelColor: "text-purple-800",
             },
             {
               label: "Tracked Revenue",
               value: formatCurrency(metrics.revenue, currency),
-              icon: <Users className="h-4 w-4 text-teal-600" />,
-              badgeBg: "bg-teal-50 border-teal-200 text-teal-800",
+              icon: <Users className="h-4 w-4 text-white" />,
+              iconBg: "bg-teal-600 shadow-xs",
+              cardBg: "bg-[#F0FDF9] border-teal-200/90",
+              textColor: "text-teal-950",
+              labelColor: "text-teal-800",
             },
           ].map((metric) => (
             <div
               key={metric.label}
-              className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition-all hover:border-slate-300"
+              className={`rounded-xl border p-4 shadow-xs transition-all hover:shadow-sm ${metric.cardBg}`}
             >
-              <div className="flex items-center justify-between text-slate-500">
-                <span className="text-xs font-medium">{metric.label}</span>
-                <div className={`p-1.5 rounded-lg border ${metric.badgeBg}`}>
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-bold ${metric.labelColor}`}>{metric.label}</span>
+                <div className={`p-1.5 rounded-lg ${metric.iconBg}`}>
                   {metric.icon}
                 </div>
               </div>
-              <p className="mt-2 text-2xl font-bold text-slate-900 tracking-tight font-mono">
+              <p className={`mt-2 text-2xl font-black tracking-tight font-mono ${metric.textColor}`}>
                 {metric.value}
               </p>
             </div>
@@ -854,19 +869,19 @@ export default function RestaurantDashboard({
 
         {/* Global Search Bar */}
         <div className="relative my-4">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-600/80" size={16} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search active orders, table #, customer name, phone, or menu items..."
-            className="w-full h-11 pl-11 pr-12 text-xs bg-white border border-slate-200/80 rounded-xl text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 placeholder:text-slate-400 transition-all shadow-xs"
+            className="w-full h-11 pl-11 pr-12 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 placeholder:text-slate-400 transition-all shadow-xs"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 text-xs font-bold px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded-md transition-all cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-900 text-xs font-bold px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded-md transition-all cursor-pointer"
             >
               Clear
             </button>
@@ -874,43 +889,43 @@ export default function RestaurantDashboard({
         </div>
 
         {/* Tab navigation */}
-        <nav className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-white p-1.5 shadow-xs my-4">
+        <nav className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/90 bg-[#F8F9FA] p-1.5 shadow-xs my-4">
           <div className="flex flex-wrap items-center gap-1">
             {[
               {
                 id: "live" as const,
                 label: "Live Operations",
-                icon: <UtensilsCrossed className="h-4 w-4" />,
+                icon: <UtensilsCrossed className="h-4 w-4 text-amber-600" />,
               },
               {
                 id: "history" as const,
                 label: "History & Records",
-                icon: <History className="h-4 w-4" />,
+                icon: <History className="h-4 w-4 text-slate-600" />,
               },
               {
                 id: "menu" as const,
                 label: "Tables & Menu",
-                icon: <LayoutGrid className="h-4 w-4" />,
+                icon: <LayoutGrid className="h-4 w-4 text-slate-600" />,
               },
               {
                 id: "staff" as const,
                 label: "Staff Access",
-                icon: <Users className="h-4 w-4" />,
+                icon: <Users className="h-4 w-4 text-slate-600" />,
               },
               {
                 id: "payment" as const,
                 label: "Payment & Settings",
-                icon: <QrCode className="h-4 w-4" />,
+                icon: <QrCode className="h-4 w-4 text-slate-600" />,
               },
             ].map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
                   activeTab === tab.id
-                    ? "bg-slate-900 text-white shadow-xs"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    ? "bg-white text-amber-950 shadow-xs border border-amber-200/90 ring-1 ring-amber-500/10"
+                    : "text-slate-600 hover:bg-white/80 hover:text-slate-900"
                 }`}
               >
                 {tab.icon}
@@ -932,7 +947,7 @@ export default function RestaurantDashboard({
           <div className="flex items-center gap-2">
             <NotificationCenter restaurantId={restaurantId} role={userRole} />
             {activeTab === "live" && (
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/80 text-xs">
+              <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs shadow-xs">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2">Filter:</span>
                 {(["all", "placed", "preparing", "ready"] as const).map((status) => (
                   <button
@@ -941,7 +956,7 @@ export default function RestaurantDashboard({
                     onClick={() => setOrderStatusFilter(status)}
                     className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition cursor-pointer ${
                       orderStatusFilter === status
-                        ? "bg-white text-slate-900 shadow-xs border border-slate-200/60"
+                        ? "bg-amber-50 text-amber-900 shadow-xs border border-amber-200"
                         : "text-slate-500 hover:text-slate-900"
                     }`}
                   >
@@ -979,18 +994,18 @@ export default function RestaurantDashboard({
               {displayOrders.map((order) => (
             <article
               key={order.id}
-              className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs text-slate-800"
+              className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs text-slate-800 hover:border-amber-300/80 transition-all"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     Table
                   </p>
-                  <h2 className="mt-1 text-xl font-bold text-slate-900 font-mono">
+                  <h2 className="mt-0.5 text-xl font-black text-slate-900 font-mono">
                     {order.table?.table_number ?? "Unknown"}
                   </h2>
                 </div>
-                <span className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-amber-800">
+                <span className={`rounded-md border px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider ${SESSION_STATUS_BADGE[order.status] || "bg-amber-50 text-amber-800 border-amber-200"}`}>
                   {order.status}
                 </span>
               </div>
@@ -998,14 +1013,14 @@ export default function RestaurantDashboard({
                 {order.items.slice(0, 4).map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between text-xs text-slate-600 font-medium"
+                    className="flex items-center justify-between text-xs text-slate-700 font-medium"
                   >
                     <span>{item.name}</span>
-                    <span className="font-mono text-slate-800">x{item.quantity}</span>
+                    <span className="font-mono font-bold text-slate-900">x{item.quantity}</span>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-400">
+              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
                 <span>{new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 <span className="font-bold text-slate-900 font-mono text-sm">
                   {formatCurrency(order.total_amount, currency)}
@@ -1014,8 +1029,14 @@ export default function RestaurantDashboard({
             </article>
           ))}
           {!loading && !orders.length ? (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center text-slate-400 text-xs font-medium xl:col-span-3 shadow-xs">
-              No active orders at this moment.
+            <div className="col-span-full rounded-2xl border border-dashed border-amber-200 bg-gradient-to-b from-[#FFFDF9] to-white px-6 py-12 text-center shadow-xs">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 border border-amber-200">
+                <UtensilsCrossed size={22} />
+              </div>
+              <h4 className="text-sm font-bold text-slate-800">No Active Kitchen Orders</h4>
+              <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+                New orders placed by dining guests or waitstaff will arrive here in real time.
+              </p>
             </div>
           ) : null}
         </section>
@@ -1026,7 +1047,7 @@ export default function RestaurantDashboard({
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">
+              <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
                 Live Tables & Sessions
               </h2>
               <p className="text-xs text-slate-500">Active dining tables and pending settlements</p>
@@ -1044,10 +1065,10 @@ export default function RestaurantDashboard({
               return (
                 <div
                   key={session.id}
-                  className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs text-slate-800"
+                  className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs text-slate-800"
                 >
                   {/* Session header */}
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-3 bg-gradient-to-r from-slate-50/80 to-amber-50/30 -m-5 mb-4 p-4 border-b border-slate-100 rounded-t-xl">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-bold font-mono text-slate-900">
@@ -1402,8 +1423,14 @@ export default function RestaurantDashboard({
           </div>
 
           {!loading && !sessions.length ? (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center text-slate-400 text-xs font-medium shadow-xs">
-              No active table sessions right now.
+            <div className="rounded-2xl border border-dashed border-blue-200 bg-gradient-to-b from-[#F9FBFF] to-white px-6 py-12 text-center shadow-xs">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 border border-blue-200">
+                <LayoutGrid size={22} />
+              </div>
+              <h4 className="text-sm font-bold text-slate-800">No Active Table Sessions</h4>
+              <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+                All dining stations are currently available. Active guest check-ins will populate here.
+              </p>
             </div>
           ) : null}
         </section>
@@ -1414,44 +1441,44 @@ export default function RestaurantDashboard({
           <section className="space-y-5">
             {/* Sales Summary Cards */}
             <div className="grid gap-3.5 grid-cols-2 md:grid-cols-5">
-              <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
-                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Total Revenue</p>
-                <p className="mt-1 text-2xl font-bold text-slate-900 font-mono">
+              <div className="rounded-xl border border-teal-200/90 bg-[#F0FDF9] p-4 shadow-xs">
+                <p className="text-[10px] uppercase tracking-wider text-teal-800 font-bold">Total Revenue</p>
+                <p className="mt-1 text-2xl font-black text-teal-950 font-mono">
                   {formatCurrency(historyMetrics.totalRevenue || 0, currency)}
                 </p>
-                <p className="mt-0.5 text-[10px] text-slate-400 font-medium">Settled Invoices</p>
+                <p className="mt-0.5 text-[10px] text-teal-700/80 font-medium">Settled Invoices</p>
               </div>
 
-              <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
-                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Cash Payments</p>
-                <p className="mt-1 text-xl font-bold text-amber-800 font-mono">
+              <div className="rounded-xl border border-amber-200/90 bg-[#FFF9EE] p-4 shadow-xs">
+                <p className="text-[10px] uppercase tracking-wider text-amber-800 font-bold">Cash Payments</p>
+                <p className="mt-1 text-xl font-black text-amber-950 font-mono">
                   {formatCurrency(historyMetrics.totalCash || 0, currency)}
                 </p>
-                <p className="mt-0.5 text-[10px] text-slate-400 font-medium">Cash Register</p>
+                <p className="mt-0.5 text-[10px] text-amber-700/80 font-medium">Cash Register</p>
               </div>
 
-              <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
-                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">UPI / QR Payments</p>
-                <p className="mt-1 text-xl font-bold text-cyan-800 font-mono">
+              <div className="rounded-xl border border-cyan-200/90 bg-[#F0F9FF] p-4 shadow-xs">
+                <p className="text-[10px] uppercase tracking-wider text-cyan-800 font-bold">UPI / QR Payments</p>
+                <p className="mt-1 text-xl font-black text-cyan-950 font-mono">
                   {formatCurrency(historyMetrics.totalUPI || 0, currency)}
                 </p>
-                <p className="mt-0.5 text-[10px] text-slate-400 font-medium">Direct Bank Transfer</p>
+                <p className="mt-0.5 text-[10px] text-cyan-700/80 font-medium">Direct Bank Transfer</p>
               </div>
 
-              <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
-                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Card Payments</p>
-                <p className="mt-1 text-xl font-bold text-violet-800 font-mono">
+              <div className="rounded-xl border border-violet-200/90 bg-[#FAF5FF] p-4 shadow-xs">
+                <p className="text-[10px] uppercase tracking-wider text-violet-800 font-bold">Card Payments</p>
+                <p className="mt-1 text-xl font-black text-violet-950 font-mono">
                   {formatCurrency(historyMetrics.totalCard || 0, currency)}
                 </p>
-                <p className="mt-0.5 text-[10px] text-slate-400 font-medium">POS Terminal</p>
+                <p className="mt-0.5 text-[10px] text-violet-700/80 font-medium">POS Terminal</p>
               </div>
 
-              <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
-                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Tips Collected</p>
-                <p className="mt-1 text-xl font-bold text-emerald-800 font-mono">
+              <div className="rounded-xl border border-emerald-200/90 bg-[#F2FBF7] p-4 shadow-xs">
+                <p className="text-[10px] uppercase tracking-wider text-emerald-800 font-bold">Tips Collected</p>
+                <p className="mt-1 text-xl font-black text-emerald-950 font-mono">
                   {formatCurrency(historyMetrics.totalTips || 0, currency)}
                 </p>
-                <p className="mt-0.5 text-[10px] text-slate-400 font-medium">Staff Gratuity</p>
+                <p className="mt-0.5 text-[10px] text-emerald-700/80 font-medium">Staff Gratuity</p>
               </div>
             </div>
 

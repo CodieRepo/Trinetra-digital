@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { 
-  Lock, Mail, LogOut, Utensils, ChefHat, LayoutDashboard, AlertCircle, Menu, X, ArrowLeft, Smartphone 
+  LogOut, Utensils, ChefHat, LayoutDashboard, AlertCircle, Menu, X, ArrowLeft, Smartphone 
 } from "lucide-react";
 import { useDynamicManifest } from "@/hooks/useDynamicManifest";
 import RestaurantDashboard from "../../../trinetra-business-os/packages/verticals/restaurant-os/components/admin/RestaurantDashboard";
@@ -154,13 +154,13 @@ export default function RestaurantPortal() {
   // ── RENDER LOGIN SCREEN ──────────────────────────────────────────────────────
   if (!session || !restaurant || !tenantId) {
     return (
-      <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4 font-sans relative">
-        <div className="w-full max-w-md bg-white border border-slate-200/80 rounded-2xl p-8 shadow-sm relative">
+      <div className="min-h-screen bg-[#F4F5F7] flex items-center justify-center p-4 font-sans relative">
+        <div className="w-full max-w-md bg-[#FFFDFB] border border-amber-900/10 rounded-2xl p-8 shadow-sm relative">
           <div className="text-center mb-8">
-            <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-sm text-white">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-xs text-white border border-amber-600/30">
               <Utensils size={22} />
             </div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Restaurant Operations Portal</h2>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Restaurant Operations Portal</h2>
             <p className="text-xs text-slate-500 font-medium mt-1">Sign in to access your restaurant terminal</p>
           </div>
 
@@ -174,7 +174,7 @@ export default function RestaurantPortal() {
                 {session && (
                   <a
                     href="/admin"
-                    className="inline-flex items-center gap-1.5 text-xs text-amber-600 hover:text-amber-700 font-semibold"
+                    className="inline-flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-800 font-semibold"
                   >
                     <ArrowLeft size={12} />
                     Return to CRM Admin
@@ -184,46 +184,45 @@ export default function RestaurantPortal() {
             )}
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="manager@restaurant.com"
-                  className="w-full h-11 pl-10 pr-4 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 placeholder:text-slate-400 transition-all shadow-xs"
-                />
-              </div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                Staff Email / Access Identifier
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="staff@restaurant.com"
+                className="w-full h-11 px-3.5 text-xs bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 placeholder:text-slate-400 shadow-xs"
+              />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full h-11 pl-10 pr-4 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 placeholder:text-slate-400 transition-all shadow-xs"
-                />
-              </div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                Security Password
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full h-11 px-3.5 text-xs bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 placeholder:text-slate-400 shadow-xs"
+              />
             </div>
 
             <button
               type="submit"
-              className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-sm cursor-pointer shadow-xs transition-all mt-2"
+              disabled={loading}
+              className="w-full h-11 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
             >
-              Sign In to Terminal
+              {loading ? (
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                "Authorize & Open Terminal"
+              )}
             </button>
           </form>
-
-          <div className="text-center mt-6 pt-4 border-t border-slate-100">
-            <span className="text-[11px] text-slate-400 font-medium">Powered by Trinetra</span>
-          </div>
         </div>
       </div>
     );
@@ -247,14 +246,14 @@ export default function RestaurantPortal() {
 
       <div className="px-4 lg:px-0">
         {/* Header Branding */}
-        <div className="p-4 lg:p-5 lg:border-b lg:border-slate-200/80 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-base shrink-0 shadow-xs">
+        <div className="p-4 lg:p-5 lg:border-b lg:border-slate-200/90 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-white flex items-center justify-center font-black text-base shrink-0 shadow-xs border border-amber-600/30">
             {restaurant.name ? restaurant.name[0].toUpperCase() : <ChefHat size={20} />}
           </div>
           <div className="min-w-0">
-            <h2 className="font-bold text-sm text-slate-900 tracking-tight line-clamp-1">{restaurant.name}</h2>
-            <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <h2 className="font-extrabold text-sm text-slate-900 tracking-tight line-clamp-1">{restaurant.name}</h2>
+            <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Live Operations
             </div>
           </div>
@@ -263,11 +262,11 @@ export default function RestaurantPortal() {
         {/* Navigation Controls info */}
         <nav className="p-3 lg:p-4 space-y-1.5">
           {[
-            { label: "Operations Cockpit", active: true, icon: <LayoutDashboard size={15} /> }
+            { label: "Operations Cockpit", active: true, icon: <LayoutDashboard size={15} className="text-amber-700" /> }
           ].map(item => (
             <div
               key={item.label}
-              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 text-white shadow-xs cursor-default"
+              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-950 border border-amber-500/20 shadow-xs cursor-default"
             >
               {item.icon}
               {item.label}
@@ -277,9 +276,9 @@ export default function RestaurantPortal() {
       </div>
 
       {/* Footer Profile & Logout */}
-      <div className="p-4 border-t border-slate-200/80 bg-slate-50/80">
-        <div className="flex items-center gap-3 mb-3 p-2 rounded-xl bg-white border border-slate-200/80 shadow-xs">
-          <div className="h-8 w-8 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs uppercase">
+      <div className="p-4 border-t border-slate-200/90 bg-amber-50/20">
+        <div className="flex items-center gap-3 mb-3 p-2.5 rounded-xl bg-white border border-slate-200/90 shadow-xs">
+          <div className="h-8 w-8 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 flex items-center justify-center font-bold text-xs uppercase">
             {(userName || "OU").slice(0, 2)}
           </div>
           <div className="min-w-0">
@@ -289,7 +288,7 @@ export default function RestaurantPortal() {
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 h-9 border border-slate-200 hover:border-rose-300 bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 rounded-xl font-medium text-xs cursor-pointer transition-all shadow-xs"
+          className="w-full flex items-center justify-center gap-2 h-9 border border-slate-200 hover:border-rose-300 bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-700 rounded-xl font-semibold text-xs cursor-pointer transition-all shadow-xs"
         >
           <LogOut size={13} />
           Sign Out
@@ -302,7 +301,7 @@ export default function RestaurantPortal() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 flex font-sans">
+    <div className="min-h-screen bg-[#F4F5F7] text-slate-900 flex font-sans">
       {/* Mobile overlay backdrop */}
       {sidebarOpen && (
         <div
@@ -313,13 +312,13 @@ export default function RestaurantPortal() {
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 border-r border-slate-200/80 bg-white flex-col justify-between shrink-0 select-none">
+      <aside className="hidden lg:flex w-64 border-r border-slate-200/90 bg-[#FAF9F6] flex-col justify-between shrink-0 select-none">
         {sidebar}
       </aside>
 
       {/* Mobile Drawer Sidebar */}
       {sidebarOpen && (
-        <aside className="fixed inset-y-0 left-0 z-40 w-72 border-r border-slate-200 bg-white flex flex-col justify-between shrink-0 select-none shadow-xl">
+        <aside className="fixed inset-y-0 left-0 z-40 w-72 border-r border-slate-200 bg-[#FAF9F6] flex flex-col justify-between shrink-0 select-none shadow-xl">
           {sidebar}
         </aside>
       )}
@@ -327,7 +326,7 @@ export default function RestaurantPortal() {
       {/* Main Operations Window */}
       <main className="flex-1 overflow-y-auto p-4 md:p-6 relative">
         {/* Persistent Top Restaurant Identity Bar */}
-        <div className="flex justify-between items-center gap-4 mb-6 bg-white border border-slate-200/80 rounded-2xl px-5 py-3.5 shadow-xs">
+        <div className="flex justify-between items-center gap-4 mb-5 bg-gradient-to-r from-amber-50/50 via-white to-orange-50/30 border border-amber-900/10 rounded-2xl px-5 py-3.5 shadow-xs">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
@@ -339,10 +338,11 @@ export default function RestaurantPortal() {
             </button>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-base md:text-lg font-bold text-slate-900 tracking-tight truncate">
+                <h1 className="text-base md:text-lg font-black text-slate-900 tracking-tight truncate">
                   {restaurant.name}
                 </h1>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Live
                 </span>
               </div>
@@ -360,7 +360,7 @@ export default function RestaurantPortal() {
                 Install App
               </button>
             )}
-            <div className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md font-medium">
+            <div className="text-[11px] text-slate-500 bg-white border border-slate-200/80 px-2.5 py-1 rounded-md font-medium shadow-xs">
               Powered by Trinetra
             </div>
           </div>
@@ -379,4 +379,3 @@ export default function RestaurantPortal() {
     </div>
   );
 }
-
