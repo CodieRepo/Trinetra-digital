@@ -222,7 +222,7 @@ export const useSetupWizardStore = create<SetupWizardStore>((set, get) => ({
           profile: p,
           currentStep: p.wizardStep || 1,
           step1: {
-            restaurantName: p.cuisineType ? p.cuisineType : 'My Restaurant',
+            restaurantName: p.restaurantName || 'My Restaurant',
             restaurantType: p.restaurantType || 'FineDining',
             cuisineType: p.cuisineType || 'MultiCuisine',
             logoUrl: p.logoUrl || '',

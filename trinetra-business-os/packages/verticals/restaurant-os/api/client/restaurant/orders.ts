@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { getApiErrorStatus, getErrorMessage, requireRestaurantClientContext } from "../../services/server";
+import { getApiErrorStatus, getErrorMessage, getDatabaseClient, requireRestaurantClientContext } from "../../services/server";
 
 export const dynamic = "force-dynamic";
 
 type OrderRecord = {
   id: string;
   table_id: string;
+  table_session_id: string | null;
   status: string;
   notes: string | null;
   total_amount: number | string;
@@ -32,16 +33,42 @@ export async function GET(request: Request) {
     const context = await requireRestaurantClientContext();
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status")?.trim();
+    const scope = searchParams.get("scope")?.trim();
+    const activeOnly = searchParams.get("active_only") === "true" || scope === "active";
     const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit") || 50)));
+
+    let activeSessionIds: string[] | null = null;
+
+    if (activeOnly) {
+      const { data: activeSessions, error: sessionsError } = await getDatabaseClient()
+        .from("restaurant_table_sessions")
+        .select("id")
+        .eq("restaurant_id", context.restaurant.id)
+        .eq("status", "active");
+
+      if (sessionsError) {
+        throw new Error(sessionsError.message);
+      }
+
+      activeSessionIds = (activeSessions ?? []).map((s) => s.id);
+      if (activeSessionIds.length === 0) {
+        return NextResponse.json({ orders: [] });
+      }
+    }
 
     let query = getDatabaseClient()
       .from("restaurant_orders")
-      .select("id, table_id, status, notes, total_amount, created_at, updated_at")
+      .select("id, table_id, table_session_id, status, notes, total_amount, created_at, updated_at")
       .eq("restaurant_id", context.restaurant.id)
       .order("created_at", { ascending: false })
       .limit(limit);
 
-    if (status) {
+    if (activeOnly && activeSessionIds) {
+      query = query
+        .in("table_session_id", activeSessionIds)
+        .not("status", "eq", "closed")
+        .not("status", "eq", "cancelled");
+    } else if (status) {
       query = query.eq("status", status);
     }
 
@@ -85,6 +112,7 @@ export async function GET(request: Request) {
       orders:
         orders?.map((order) => ({
           ...order,
+          table_session_id: order.table_session_id ?? null,
           total_amount: Number(order.total_amount),
           table: tableMap.has(order.table_id)
             ? {
@@ -104,3 +132,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: message }, { status: getApiErrorStatus(message) });
   }
 }
+

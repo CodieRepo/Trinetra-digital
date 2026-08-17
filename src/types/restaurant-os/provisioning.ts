@@ -70,6 +70,7 @@ export interface ProvisionRestaurantResponse {
 export interface RestaurantProfile {
   restaurantId: string;
   tenantId: string;
+  restaurantName?: string | null;
   status: RestaurantStatus;
   wizardStep: number;
   wizardCompleted: boolean;

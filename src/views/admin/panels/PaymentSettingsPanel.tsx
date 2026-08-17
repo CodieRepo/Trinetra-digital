@@ -87,50 +87,50 @@ export default function PaymentSettingsPanel({
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12 text-slate-400">
-        <RefreshCw className="h-6 w-6 animate-spin mr-2 text-amber-400" />
-        <span>Loading Payment & Receipt Settings...</span>
+        <RefreshCw className="h-5 w-5 animate-spin mr-2 text-amber-500" />
+        <span className="text-xs font-medium">Loading Payment & Receipt Settings...</span>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-6 text-slate-100 font-sans">
-      <div className="mb-6 flex items-center justify-between border-b border-white/10 pb-4">
+    <div className="mx-auto max-w-4xl space-y-5 font-sans">
+      <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
         <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2.5">
-            <QrCode className="h-6 w-6 text-amber-400" />
+          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <QrCode className="h-5 w-5 text-slate-700" />
             Payment Methods & Receipt Settings
           </h2>
-          <p className="mt-1 text-xs text-slate-400">
-            Configure custom Business UPI ID, Soundbox QR Code image, GSTIN, and 80mm receipt headers.
+          <p className="mt-0.5 text-xs text-slate-500">
+            Configure custom Business UPI ID, Soundbox QR Code image, GSTIN, and 80mm thermal receipt headers.
           </p>
         </div>
       </div>
 
       {statusMessage && (
         <div
-          className={`mb-6 flex items-center gap-2.5 rounded-2xl border p-4 text-xs font-bold ${
+          className={`flex items-center gap-2.5 rounded-xl border p-3.5 text-xs font-semibold ${
             statusMessage.type === "success"
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-              : "border-rose-500/30 bg-rose-500/10 text-rose-300"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-rose-200 bg-rose-50 text-rose-800"
           }`}
         >
-          {statusMessage.type === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+          {statusMessage.type === "success" ? <CheckCircle2 size={16} className="text-emerald-600 shrink-0" /> : <AlertCircle size={16} className="text-rose-600 shrink-0" />}
           <span>{statusMessage.text}</span>
         </div>
       )}
 
-      <form onSubmit={handleSave} className="space-y-6">
+      <form onSubmit={handleSave} className="space-y-5">
         {/* Custom UPI & QR Section */}
-        <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur">
-          <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/10 pb-3 mb-4">
-            <QrCode size={18} className="text-amber-400" />
-            Custom Restaurant Business UPI & Payment QR
+        <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+            <QrCode size={16} className="text-amber-600" />
+            Restaurant Business UPI & Payment QR
           </h3>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Business UPI ID / VPA
               </label>
               <input
@@ -138,15 +138,15 @@ export default function PaymentSettingsPanel({
                 value={upiId}
                 onChange={(e) => setUpiId(e.target.value)}
                 placeholder="e.g. auracafe@upi or 9876543210@ybl"
-                className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs text-white placeholder:text-slate-500 focus:border-amber-400 focus:outline-none"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none shadow-xs"
               />
-              <p className="mt-1.5 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-slate-400">
                 Customers and waiters scanning UPI will see this VPA.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Custom Soundbox / QR Image URL
               </label>
               <input
@@ -154,9 +154,9 @@ export default function PaymentSettingsPanel({
                 value={upiQrUrl}
                 onChange={(e) => setUpiQrUrl(e.target.value)}
                 placeholder="https://example.com/qr-code.png"
-                className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs text-white placeholder:text-slate-500 focus:border-amber-400 focus:outline-none"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none shadow-xs"
               />
-              <p className="mt-1.5 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-slate-400">
                 Upload your GPay / PhonePe / BharatPe Soundbox QR image URL.
               </p>
             </div>
@@ -164,8 +164,8 @@ export default function PaymentSettingsPanel({
 
           {/* QR Code Preview */}
           {upiQrUrl && (
-            <div className="mt-4 flex items-center gap-4 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4">
-              <div className="h-20 w-20 overflow-hidden rounded-xl border border-white/20 bg-white p-1">
+            <div className="mt-4 flex items-center gap-3.5 rounded-lg border border-amber-200 bg-amber-50/50 p-3.5">
+              <div className="h-16 w-16 overflow-hidden rounded-lg border border-amber-200 bg-white p-1 shrink-0 shadow-xs">
                 <img
                   src={upiQrUrl}
                   alt="Custom Payment QR"
@@ -176,8 +176,8 @@ export default function PaymentSettingsPanel({
                 />
               </div>
               <div>
-                <p className="text-xs font-bold text-amber-300">Live QR Code Preview</p>
-                <p className="text-[11px] text-slate-300">
+                <p className="text-xs font-bold text-amber-900">Live QR Code Preview</p>
+                <p className="text-[11px] text-amber-700">
                   This custom QR image will render live in customer & staff payment drawers.
                 </p>
               </div>
@@ -186,15 +186,15 @@ export default function PaymentSettingsPanel({
         </div>
 
         {/* GSTIN & Tax Configuration */}
-        <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur">
-          <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/10 pb-3 mb-4">
-            <Building2 size={18} className="text-cyan-400" />
+        <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+            <Building2 size={16} className="text-indigo-600" />
             Tax Registration & Invoicing Setup
           </h3>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Business GSTIN Number
               </label>
               <input
@@ -202,15 +202,15 @@ export default function PaymentSettingsPanel({
                 value={businessGstin}
                 onChange={(e) => setBusinessGstin(e.target.value)}
                 placeholder="e.g. 29AAAAA0000A1Z5"
-                className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs text-white uppercase placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 uppercase placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none shadow-xs font-mono"
               />
-              <p className="mt-1.5 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-slate-400">
                 Printed on formal 80mm thermal tax invoices.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Default Tax Rate (% GST)
               </label>
               <div className="relative">
@@ -221,11 +221,11 @@ export default function PaymentSettingsPanel({
                   max="28"
                   value={taxRate}
                   onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                  className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none shadow-xs font-mono"
                 />
-                <Percent size={14} className="absolute right-4 top-3.5 text-slate-500" />
+                <Percent size={14} className="absolute right-3.5 top-3 text-slate-400" />
               </div>
-              <p className="mt-1.5 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-slate-400">
                 Default tax rate calculated at bill settlement (e.g. 5% GST).
               </p>
             </div>
@@ -233,15 +233,15 @@ export default function PaymentSettingsPanel({
         </div>
 
         {/* Receipt Header / Footer Notes */}
-        <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur">
-          <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-white/10 pb-3 mb-4">
-            <Save size={18} className="text-emerald-400" />
+        <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+            <Save size={16} className="text-emerald-600" />
             Receipt Thermal Printer Header & Footer Notes
           </h3>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Receipt Top Header Note
               </label>
               <input
@@ -249,12 +249,12 @@ export default function PaymentSettingsPanel({
                 value={receiptHeader}
                 onChange={(e) => setReceiptHeader(e.target.value)}
                 placeholder="e.g. Welcome to Aura Cafe! Pure Veg Multi-Cuisine"
-                className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none shadow-xs"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Receipt Footer Greeting Note
               </label>
               <input
@@ -262,26 +262,26 @@ export default function PaymentSettingsPanel({
                 value={receiptFooter}
                 onChange={(e) => setReceiptFooter(e.target.value)}
                 placeholder="e.g. Thank you for dining with us! Visit again soon."
-                className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none shadow-xs"
               />
             </div>
           </div>
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end pt-1">
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 rounded-2xl bg-amber-400 px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider text-slate-950 shadow-lg shadow-amber-400/20 hover:bg-amber-300 transition disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-slate-900 hover:bg-slate-800 px-5 py-2.5 text-xs font-semibold text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer"
           >
             {saving ? (
               <>
-                <RefreshCw size={16} className="animate-spin" /> Saving Settings...
+                <RefreshCw size={14} className="animate-spin" /> Saving Settings...
               </>
             ) : (
               <>
-                <Save size={16} /> Save Payment & Receipt Settings
+                <Save size={14} /> Save Payment & Receipt Settings
               </>
             )}
           </button>

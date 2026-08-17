@@ -24,6 +24,7 @@ import {
 
 type DashboardOrder = {
   id: string;
+  table_session_id?: string | null;
   status: string;
   notes: string | null;
   total_amount: number;
@@ -142,13 +143,13 @@ function timeAgo(isoString: string) {
 }
 
 const SESSION_STATUS_BADGE: Record<string, string> = {
-  placed: "bg-amber-400/10 text-amber-200 border-amber-400/20",
-  accepted: "bg-sky-400/10 text-sky-200 border-sky-400/20",
-  preparing: "bg-violet-400/10 text-violet-200 border-violet-400/20",
-  ready: "bg-emerald-400/10 text-emerald-200 border-emerald-400/20",
-  served: "bg-teal-400/10 text-teal-200 border-teal-400/20",
-  closed: "bg-slate-400/10 text-slate-300 border-slate-400/20",
-  cancelled: "bg-rose-400/10 text-rose-300 border-rose-400/20",
+  placed: "bg-amber-50 text-amber-800 border-amber-200",
+  accepted: "bg-sky-50 text-sky-800 border-sky-200",
+  preparing: "bg-violet-50 text-violet-800 border-violet-200",
+  ready: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  served: "bg-teal-50 text-teal-800 border-teal-200",
+  closed: "bg-slate-100 text-slate-700 border-slate-200",
+  cancelled: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -233,6 +234,19 @@ export default function RestaurantDashboard({
     }
     return Math.min(subtotal, discount.value);
   };
+
+  const [adminPaymentMethods, setAdminPaymentMethods] = useState<Record<string, string>>({});
+
+  const getSessionPaymentMethod = (sessionId: string) => {
+    return adminPaymentMethods[sessionId] || "cash";
+  };
+
+  const updatePaymentMethod = (sessionId: string, method: string) => {
+    setAdminPaymentMethods(prev => ({
+      ...prev,
+      [sessionId]: method
+    }));
+  };
   const [orders, setOrders] = useState<DashboardOrder[]>([]);
   const [tables, setTables] = useState<TableRecord[]>([]);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
@@ -265,7 +279,6 @@ export default function RestaurantDashboard({
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [thermalReceiptData, setThermalReceiptData] = useState<ReceiptData | null>(null);
-  const [adminPaymentMethods, setAdminPaymentMethods] = useState<Record<string, string>>({});
 
   const loadHistory = useCallback(async (query = "") => {
     try {
@@ -418,7 +431,8 @@ export default function RestaurantDashboard({
 
   const metrics = useMemo(() => {
     const activeOrders = orders.filter(
-      (order) => !["closed", "cancelled"].includes(order.status),
+      (order) =>
+        ["placed", "accepted", "preparing", "ready"].includes(order.status),
     );
     const readyOrders = orders.filter(
       (order) => order.status === "ready",
@@ -426,7 +440,10 @@ export default function RestaurantDashboard({
     const kitchenQueue = orders.filter((order) =>
       ["placed", "accepted", "preparing"].includes(order.status),
     ).length;
-    const revenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
+    const revenue = orders.reduce(
+      (sum, order) => sum + Number(order.total_amount || 0),
+      0,
+    );
 
     return {
       activeOrders: activeOrders.length,
@@ -768,121 +785,88 @@ export default function RestaurantDashboard({
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100 md:px-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <section className="rounded-3xl border border-indigo-500/20 bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-900 p-6 shadow-xl shadow-indigo-950/20">
-          <div className="flex flex-wrap items-start justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-                <p className="text-xs uppercase tracking-widest text-indigo-400 font-bold">
-                  Trinetra Business OS • Vertical Module
-                </p>
+    <div className="space-y-6">
+      <div className="mx-auto max-w-7xl space-y-5">
+        {/* Compact High-Density Operational KPI Bar */}
+        <section className="grid gap-3.5 grid-cols-2 md:grid-cols-5">
+          {[
+            {
+              label: "Active Orders",
+              value: metrics.activeOrders,
+              icon: <UtensilsCrossed className="h-4 w-4 text-amber-600" />,
+              badgeBg: "bg-amber-50 border-amber-200 text-amber-800",
+            },
+            {
+              label: "Kitchen Queue",
+              value: metrics.kitchenQueue,
+              icon: <ChefHat className="h-4 w-4 text-indigo-600" />,
+              badgeBg: "bg-indigo-50 border-indigo-200 text-indigo-800",
+            },
+            {
+              label: "Ready to Serve",
+              value: metrics.readyOrders,
+              icon: <LayoutGrid className="h-4 w-4 text-emerald-600" />,
+              badgeBg: "bg-emerald-50 border-emerald-200 text-emerald-800",
+            },
+            {
+              label: "Active Tables",
+              value: sessions.length,
+              icon: <CreditCard className="h-4 w-4 text-purple-600" />,
+              badgeBg: "bg-purple-50 border-purple-200 text-purple-800",
+            },
+            {
+              label: "Tracked Revenue",
+              value: formatCurrency(metrics.revenue, currency),
+              icon: <Users className="h-4 w-4 text-teal-600" />,
+              badgeBg: "bg-teal-50 border-teal-200 text-teal-800",
+            },
+          ].map((metric) => (
+            <div
+              key={metric.label}
+              className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition-all hover:border-slate-300"
+            >
+              <div className="flex items-center justify-between text-slate-500">
+                <span className="text-xs font-medium">{metric.label}</span>
+                <div className={`p-1.5 rounded-lg border ${metric.badgeBg}`}>
+                  {metric.icon}
+                </div>
               </div>
-              <h1 className="mt-2 text-3xl font-black text-white md:text-4xl">
-                Restaurant OS
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm text-slate-400">
-                Live table management, QR digital menu, kitchen KDS queue, waiter ops, and real-time settlement for {restaurantName || "Default Organization"}.
+              <p className="mt-2 text-2xl font-bold text-slate-900 tracking-tight font-mono">
+                {metric.value}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <NotificationCenter restaurantId={restaurantId} role={userRole} />
-              <button
-                type="button"
-                onClick={() => void loadAll(true)}
-                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
-              >
-                Refresh Module
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            {[
-              {
-                label: "Active Orders",
-                value: metrics.activeOrders,
-                icon: <UtensilsCrossed className="h-5 w-5 text-amber-400" />,
-                bgGradient: "from-amber-500/10 via-amber-500/5 to-transparent",
-                borderColor: "border-amber-500/20",
-              },
-              {
-                label: "Kitchen Queue",
-                value: metrics.kitchenQueue,
-                icon: <ChefHat className="h-5 w-5 text-indigo-400" />,
-                bgGradient: "from-indigo-500/10 via-indigo-500/5 to-transparent",
-                borderColor: "border-indigo-500/20",
-              },
-              {
-                label: "Ready to Serve",
-                value: metrics.readyOrders,
-                icon: <LayoutGrid className="h-5 w-5 text-emerald-400" />,
-                bgGradient: "from-emerald-500/10 via-emerald-500/5 to-transparent",
-                borderColor: "border-emerald-500/20",
-              },
-              {
-                label: "Active Tables",
-                value: sessions.length,
-                icon: <CreditCard className="h-5 w-5 text-purple-400" />,
-                bgGradient: "from-purple-500/10 via-purple-500/5 to-transparent",
-                borderColor: "border-purple-500/20",
-              },
-              {
-                label: "Tracked Revenue",
-                value: formatCurrency(metrics.revenue, currency),
-                icon: <Users className="h-5 w-5 text-teal-400" />,
-                bgGradient: "from-teal-500/10 via-teal-500/5 to-transparent",
-                borderColor: "border-teal-500/20",
-              },
-            ].map((metric) => (
-              <div
-                key={metric.label}
-                className={`rounded-[24px] border ${metric.borderColor} bg-gradient-to-b ${metric.bgGradient} bg-[#0d0e12]/80 p-5 backdrop-blur-xl shadow-lg transition-all hover:scale-[1.02] hover:border-white/20`}
-              >
-                <div className="flex items-center justify-between text-slate-400">
-                  <span className="text-xs font-bold uppercase tracking-wider">{metric.label}</span>
-                  <div className="p-2 rounded-xl bg-white/5 border border-white/10">
-                    {metric.icon}
-                  </div>
-                </div>
-                <p className="mt-3 text-3xl font-black text-white tracking-tight">
-                  {metric.value}
-                </p>
-              </div>
-            ))}
-          </div>
+          ))}
         </section>
 
         {loading ? (
-          <div className="rounded-[28px] border border-white/10 bg-[#0d0e12]/80 px-6 py-16 text-center text-slate-300 backdrop-blur-xl my-6">
-            <Loader2 className="mx-auto h-7 w-7 animate-spin text-indigo-400" />
-            <p className="mt-4 text-xs font-bold uppercase tracking-widest text-slate-400">Loading Restaurant OS State...</p>
+          <div className="rounded-xl border border-slate-200/80 bg-white px-6 py-12 text-center text-slate-500 shadow-xs my-4">
+            <Loader2 className="mx-auto h-6 w-6 animate-spin text-amber-500" />
+            <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Syncing live operations...</p>
           </div>
         ) : null}
 
         {error ? (
-          <div className="rounded-3xl border border-rose-500/30 bg-rose-950/40 px-5 py-4 text-sm text-rose-200 backdrop-blur-xl my-6 flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-            {error}
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 my-4 flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
+            <p className="text-xs font-medium">{error}</p>
           </div>
         ) : null}
 
         {/* Global Search Bar */}
-        <div className="relative my-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+        <div className="relative my-4">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search active orders, table numbers, customer names, phone numbers, or menu items..."
-            className="w-full h-12 pl-12 pr-12 text-xs bg-[#0d0e12]/90 border border-white/10 rounded-2xl text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-500 transition-all shadow-inner backdrop-blur-xl"
+            placeholder="Search active orders, table #, customer name, phone, or menu items..."
+            className="w-full h-11 pl-11 pr-12 text-xs bg-white border border-slate-200/80 rounded-xl text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 placeholder:text-slate-400 transition-all shadow-xs"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-extrabold px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-xl transition-all cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 text-xs font-bold px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded-md transition-all cursor-pointer"
             >
               Clear
             </button>
@@ -890,8 +874,8 @@ export default function RestaurantDashboard({
         </div>
 
         {/* Tab navigation */}
-        <nav className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-white/10 bg-[#0d0e12]/90 p-2 backdrop-blur-xl shadow-xl my-6">
-          <div className="flex flex-wrap items-center gap-1.5">
+        <nav className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-white p-1.5 shadow-xs my-4">
+          <div className="flex flex-wrap items-center gap-1">
             {[
               {
                 id: "live" as const,
@@ -923,21 +907,21 @@ export default function RestaurantDashboard({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer border ${
+                className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer ${
                   activeTab === tab.id
-                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 border-indigo-400/40 text-white shadow-lg shadow-indigo-600/30"
-                    : "border-transparent text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
                 {tab.icon}
                 {tab.label}
-                {tab.id === "live" && orders.length > 0 && (
-                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/25 text-amber-300 border border-amber-500/30 px-1.5 text-[10px] font-black">
-                    {orders.length}
+                {tab.id === "live" && metrics.activeOrders > 0 && (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 text-amber-800 border border-amber-300 px-1.5 text-[10px] font-bold">
+                    {metrics.activeOrders}
                   </span>
                 )}
                 {tab.id === "history" && historySessions.length > 0 && (
-                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 text-[10px] font-black">
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-1.5 text-[10px] font-bold">
                     {historySessions.length}
                   </span>
                 )}
@@ -945,30 +929,41 @@ export default function RestaurantDashboard({
             ))}
           </div>
 
-          {activeTab === "live" && (
-            <div className="flex items-center gap-1 bg-black/50 p-1.5 rounded-2xl border border-white/10 text-xs">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-2">Filter:</span>
-              {(["all", "placed", "preparing", "ready"] as const).map((status) => (
-                <button
-                  key={status}
-                  type="button"
-                  onClick={() => setOrderStatusFilter(status)}
-                  className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase transition cursor-pointer ${
-                    orderStatusFilter === status
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {status}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <NotificationCenter restaurantId={restaurantId} role={userRole} />
+            {activeTab === "live" && (
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/80 text-xs">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2">Filter:</span>
+                {(["all", "placed", "preparing", "ready"] as const).map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => setOrderStatusFilter(status)}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition cursor-pointer ${
+                      orderStatusFilter === status
+                        ? "bg-white text-slate-900 shadow-xs border border-slate-200/60"
+                        : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => void loadAll(true)}
+              className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition-all cursor-pointer"
+            >
+              Refresh
+            </button>
+          </div>
         </nav>
 
         {/* ═══════════ LIVE TAB — orders + active sessions ═══════════ */}
         {activeTab === "live" && (() => {
           const displayOrders = orders.filter((o) => {
+            if (!["placed", "accepted", "preparing", "ready"].includes(o.status)) return false;
             if (orderStatusFilter !== "all" && o.status !== orderStatusFilter) return false;
             if (!searchQuery) return true;
             const q = searchQuery.toLowerCase();
@@ -980,47 +975,47 @@ export default function RestaurantDashboard({
 
           return (
             <>
-            <section className="grid gap-5 xl:grid-cols-3">
+            <section className="grid gap-4 xl:grid-cols-3">
               {displayOrders.map((order) => (
             <article
               key={order.id}
-              className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_22px_55px_rgba(0,0,0,0.22)]"
+              className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs text-slate-800"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.28em] text-stone-500">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
                     Table
                   </p>
-                  <h2 className="mt-2 text-2xl font-semibold text-white">
+                  <h2 className="mt-1 text-xl font-bold text-slate-900 font-mono">
                     {order.table?.table_number ?? "Unknown"}
                   </h2>
                 </div>
-                <span className="rounded-full border border-amber-200/20 bg-amber-300/10 px-3 py-1 text-xs uppercase tracking-[0.26em] text-amber-100">
+                <span className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-amber-800">
                   {order.status}
                 </span>
               </div>
-              <div className="mt-4 space-y-3">
+              <div className="mt-3 space-y-2">
                 {order.items.slice(0, 4).map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between text-sm text-stone-300"
+                    className="flex items-center justify-between text-xs text-slate-600 font-medium"
                   >
                     <span>{item.name}</span>
-                    <span>x{item.quantity}</span>
+                    <span className="font-mono text-slate-800">x{item.quantity}</span>
                   </div>
                 ))}
               </div>
-              <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-sm text-stone-400">
-                <span>{new Date(order.created_at).toLocaleString()}</span>
-                <span className="font-semibold text-white">
+              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-400">
+                <span>{new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span className="font-bold text-slate-900 font-mono text-sm">
                   {formatCurrency(order.total_amount, currency)}
                 </span>
               </div>
             </article>
           ))}
           {!loading && !orders.length ? (
-            <div className="rounded-[28px] border border-dashed border-white/12 px-6 py-12 text-center text-stone-400 xl:col-span-3">
-              No restaurant orders yet.
+            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center text-slate-400 text-xs font-medium xl:col-span-3 shadow-xs">
+              No active orders at this moment.
             </div>
           ) : null}
         </section>
@@ -1028,19 +1023,17 @@ export default function RestaurantDashboard({
         {/* ============================================================= */}
         {/* LIVE TABLES — session cards with payment + close controls      */}
         {/* ============================================================= */}
-        <section>
-          <div className="mb-5 flex items-center justify-between">
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-stone-500">
-                Live Tables
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">
-                Active sessions
+              <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                Live Tables & Sessions
               </h2>
+              <p className="text-xs text-slate-500">Active dining tables and pending settlements</p>
             </div>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
             {sessions.map((session) => {
               const latestOrder = session.orders[session.orders.length - 1];
               const latestStatus = latestOrder?.status ?? "—";
@@ -1051,69 +1044,69 @@ export default function RestaurantDashboard({
               return (
                 <div
                   key={session.id}
-                  className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_22px_55px_rgba(0,0,0,0.22)]"
+                  className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs text-slate-800"
                 >
                   {/* Session header */}
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-stone-500">
-                        Table
-                      </p>
-                      <h3 className="mt-2 text-2xl font-semibold text-white">
-                        {session.table?.table_number ?? "Unknown"}
-                      </h3>
-                      {session.customer_name && (
-                        <p className="mt-1 text-sm text-amber-200">
-                          {session.customer_name}
-                          {session.customer_phone && (
-                            <span className="ml-2 text-xs text-stone-400">
-                              {session.customer_phone}
-                            </span>
-                          )}
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-bold font-mono text-slate-900">
+                          {session.table?.table_number ?? "Table"}
+                        </span>
+                        {session.customer_name && (
+                          <span className="text-sm font-semibold text-slate-800 truncate">
+                            {session.customer_name}
+                          </span>
+                        )}
+                      </div>
+                      {session.customer_phone && (
+                        <p className="mt-1 text-[11px] text-slate-400 font-mono">
+                          {session.customer_phone}
                         </p>
                       )}
                     </div>
-                    <div className="flex flex-col items-end gap-1.5">
+                    <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-1.5">
-                        {session.payment_status === "paid" && (
-                          <span className="rounded-full border border-emerald-400/30 bg-emerald-400/20 px-3 py-1 text-xs uppercase tracking-[0.24em] text-emerald-100">
-                            Paid
+                        {session.payment_status === "paid" ? (
+                          <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                            Paid ✓
+                          </span>
+                        ) : (
+                          <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                            Dining Active
                           </span>
                         )}
-                        <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-emerald-200">
-                          Active
-                        </span>
                       </div>
-                      <span className="text-[11px] text-stone-500">
+                      <span className="text-[11px] text-slate-400 font-medium">
                         {timeAgo(session.opened_at)}
                       </span>
                     </div>
                   </div>
 
                   {/* Session metrics */}
-                  <div className="mt-4 grid grid-cols-3 gap-3">
-                    <div className="rounded-2xl border border-white/8 bg-white/5 px-3 py-2.5 text-center">
-                      <p className="text-[11px] uppercase tracking-wider text-stone-500">
+                  <div className="mt-4 grid grid-cols-3 gap-2.5">
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-2.5 text-center">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                         Orders
                       </p>
-                      <p className="mt-1 text-lg font-semibold text-white">
+                      <p className="mt-0.5 text-base font-bold text-slate-900 font-mono">
                         {session.order_count}
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-white/8 bg-white/5 px-3 py-2.5 text-center">
-                      <p className="text-[11px] uppercase tracking-wider text-stone-500">
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-2.5 text-center">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                         Total
                       </p>
-                      <p className="mt-1 text-lg font-semibold text-amber-200">
+                      <p className="mt-0.5 text-base font-bold text-amber-700 font-mono">
                         {formatCurrency(session.session_total, currency)}
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-white/8 bg-white/5 px-3 py-2.5 text-center">
-                      <p className="text-[11px] uppercase tracking-wider text-stone-500">
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-2.5 text-center">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                         Latest
                       </p>
                       <p
-                        className={`mt-1 text-sm font-medium ${SESSION_STATUS_BADGE[latestStatus]?.split(" ").find((c: string) => c.startsWith("text-")) ?? "text-stone-200"}`}
+                        className={`mt-0.5 text-xs font-semibold ${SESSION_STATUS_BADGE[latestStatus]?.split(" ").find((c: string) => c.startsWith("text-")) ?? "text-slate-700"}`}
                       >
                         {latestStatus}
                       </p>
@@ -1121,24 +1114,24 @@ export default function RestaurantDashboard({
                   </div>
 
                   {/* Order breakdown */}
-                  <div className="mt-4 max-h-48 space-y-2.5 overflow-y-auto">
+                  <div className="mt-4 max-h-48 space-y-2 overflow-y-auto">
                     {session.orders.map((order, idx) => (
                       <div
                         key={order.id}
-                        className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3"
+                        className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-stone-500">
+                            <span className="text-xs font-medium text-slate-500">
                               Order {idx + 1}
                             </span>
                             <span
-                              className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider ${SESSION_STATUS_BADGE[order.status] ?? "bg-amber-300/10 text-amber-100 border-amber-300/20"}`}
+                              className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase ${SESSION_STATUS_BADGE[order.status] ?? "bg-amber-50 text-amber-800 border-amber-200"}`}
                             >
                               {order.status}
                             </span>
                           </div>
-                          <span className="text-sm font-semibold text-stone-200">
+                          <span className="text-xs font-bold text-slate-800 font-mono">
                             {formatCurrency(order.total_amount, currency)}
                           </span>
                         </div>
@@ -1146,11 +1139,11 @@ export default function RestaurantDashboard({
                           {order.items.map((item) => (
                             <div
                               key={item.id}
-                              className="flex items-center justify-between text-xs text-stone-400"
+                              className="flex items-center justify-between text-xs text-slate-600"
                             >
                               <span>
                                 {item.name}{" "}
-                                <span className="text-stone-600">
+                                <span className="font-mono text-slate-800 font-medium">
                                   x{item.quantity}
                                 </span>
                               </span>
@@ -1163,52 +1156,52 @@ export default function RestaurantDashboard({
 
                   {/* Billing Details & Discount Controls */}
                   {session.payment_status === "paid" && session.bill ? (
-                    <div className="mt-4 border-t border-white/5 pt-4 space-y-1.5 text-xs text-stone-400">
+                    <div className="mt-4 border-t border-slate-100 pt-4 space-y-1.5 text-xs text-slate-600">
                       <div className="flex justify-between">
                         <span>Subtotal:</span>
-                        <span className="font-mono">{formatCurrency(session.bill.subtotal, currency)}</span>
+                        <span className="font-mono font-medium text-slate-800">{formatCurrency(session.bill.subtotal, currency)}</span>
                       </div>
                       {Number(session.bill.discount_amount) > 0 && (
-                        <div className="flex justify-between text-emerald-400">
+                        <div className="flex justify-between text-emerald-700 font-medium">
                           <span>Discount ({session.bill.discount_type === "percentage" ? `${session.bill.discount_value}%` : "flat"}):</span>
                           <span className="font-mono">-{formatCurrency(session.bill.discount_amount, currency)}</span>
                         </div>
                       )}
                       {session.bill.discount_reason && (
-                        <div className="text-[10px] text-stone-500 italic">Reason: {session.bill.discount_reason}</div>
+                        <div className="text-[10px] text-slate-400 italic">Reason: {session.bill.discount_reason}</div>
                       )}
                       <div className="flex justify-between">
                         <span>Taxes (5% GST):</span>
-                        <span className="font-mono">{formatCurrency(session.bill.tax_amount, currency)}</span>
+                        <span className="font-mono font-medium text-slate-800">{formatCurrency(session.bill.tax_amount, currency)}</span>
                       </div>
-                      <div className="flex justify-between border-t border-white/5 pt-2 text-sm font-semibold text-white">
+                      <div className="flex justify-between border-t border-slate-100 pt-2 text-sm font-bold text-slate-900">
                         <span>Grand Total Paid:</span>
-                        <span className="text-amber-200 font-mono">{formatCurrency(session.bill.grand_total, currency)}</span>
+                        <span className="text-emerald-700 font-mono">{formatCurrency(session.bill.grand_total, currency)}</span>
                       </div>
                       <div className="mt-3 flex justify-end">
                         <button
                           type="button"
                           onClick={() => openThermalReceipt(session)}
-                          className="flex items-center gap-1.5 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-400/20 transition cursor-pointer"
+                          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition cursor-pointer"
                         >
                           <Printer size={13} /> Print 80mm Receipt
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <div className="mt-4 border-t border-white/5 pt-4 space-y-3">
+                    <div className="mt-4 border-t border-slate-100 pt-4 space-y-3">
                       {/* Discount Input Form */}
-                      <div className="space-y-2">
+                      <div className="space-y-1.5">
                         <div className="flex justify-between items-center text-xs">
-                          <span className="text-stone-400 font-bold">Billing Discount</span>
-                          <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/10">
+                          <span className="text-slate-600 font-semibold">Billing Discount</span>
+                          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200/80">
                             <button
                               type="button"
                               onClick={() => updateDiscount(session.id, "type", "percentage")}
                               className={`px-2 py-0.5 rounded text-[10px] font-bold border-0 cursor-pointer ${
                                 getSessionDiscount(session.id).type === "percentage"
-                                  ? "bg-violet-600 text-white"
-                                  : "text-stone-400 hover:text-white"
+                                  ? "bg-slate-900 text-white shadow-xs"
+                                  : "text-slate-600 hover:text-slate-900"
                               }`}
                             >
                               %
@@ -1219,8 +1212,8 @@ export default function RestaurantDashboard({
                               onClick={() => updateDiscount(session.id, "type", "flat")}
                               className={`px-2 py-0.5 rounded text-[10px] font-bold border-0 cursor-pointer ${
                                 getSessionDiscount(session.id).type === "flat"
-                                  ? "bg-violet-600 text-white"
-                                  : "text-stone-400 hover:text-white"
+                                  ? "bg-slate-900 text-white shadow-xs"
+                                  : "text-slate-600 hover:text-slate-900"
                               } disabled:opacity-30 disabled:cursor-not-allowed`}
                               title={userRole === "waiter" ? "Waiters cannot apply flat discounts" : ""}
                             >
@@ -1236,7 +1229,6 @@ export default function RestaurantDashboard({
                             value={getSessionDiscount(session.id).value || ""}
                             onChange={(e) => {
                               let val = parseFloat(e.target.value) || 0;
-                              // Validate role-based constraints on the frontend
                               if (getSessionDiscount(session.id).type === "percentage") {
                                 if (userRole === "waiter" && val > 5) val = 5;
                                 if (userRole === "manager" && val > 20) val = 20;
@@ -1247,14 +1239,14 @@ export default function RestaurantDashboard({
                               }
                               updateDiscount(session.id, "value", val);
                             }}
-                            className="col-span-1 h-8 px-2.5 text-xs bg-black/40 border border-white/10 rounded-xl text-stone-200 focus:outline-none focus:border-violet-500 placeholder:text-stone-600"
+                            className="col-span-1 h-8 px-2.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-amber-500 placeholder:text-slate-400"
                           />
                           <input
                             type="text"
                             placeholder="Reason (e.g. Promo, Staff)"
                             value={getSessionDiscount(session.id).reason}
                             onChange={(e) => updateDiscount(session.id, "reason", e.target.value)}
-                            className="col-span-2 h-8 px-2.5 text-xs bg-black/40 border border-white/10 rounded-xl text-stone-200 focus:outline-none focus:border-violet-500 placeholder:text-stone-600"
+                            className="col-span-2 h-8 px-2.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-amber-500 placeholder:text-slate-400"
                           />
                         </div>
                       </div>
@@ -1267,123 +1259,87 @@ export default function RestaurantDashboard({
                         const tax = (netPayable * (taxRate / 100));
                         const totalPayable = Math.round(netPayable + tax);
                         return (
-                          <div className="bg-black/30 border border-white/5 rounded-2xl p-3 text-xs text-stone-400 space-y-1.5 font-medium">
+                          <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-xs text-slate-600 space-y-1.5 font-medium">
                             <div className="flex justify-between">
                               <span>Subtotal:</span>
-                              <span>{formatCurrency(session.session_total, currency)}</span>
+                              <span className="font-mono text-slate-800">{formatCurrency(session.session_total, currency)}</span>
                             </div>
                             {discAmt > 0 && (
-                              <div className="flex justify-between text-emerald-400">
+                              <div className="flex justify-between text-emerald-700">
                                 <span>Discount ({discObj.type === "percentage" ? `${discObj.value}%` : "flat"}):</span>
-                                <span>-{formatCurrency(discAmt, currency)}</span>
+                                <span className="font-mono">-{formatCurrency(discAmt, currency)}</span>
                               </div>
                             )}
                             <div className="flex justify-between">
                               <span>Taxes ({taxRate}% {taxLabel}):</span>
-                              <span>{formatCurrency(tax, currency)}</span>
+                              <span className="font-mono text-slate-800">{formatCurrency(tax, currency)}</span>
                             </div>
-                            <div className="flex justify-between border-t border-white/5 pt-2 text-sm font-semibold text-white">
+                            <div className="flex justify-between border-t border-slate-200/80 pt-1.5 text-sm font-bold text-slate-900">
                               <span>Estimated Payable:</span>
-                              <span className="text-amber-200 font-mono">{formatCurrency(totalPayable, currency)}</span>
+                              <span className="text-slate-900 font-mono">{formatCurrency(totalPayable, currency)}</span>
                             </div>
                           </div>
                         );
                       })()}
+
+                      {/* Payment Method & Settle Action */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-semibold text-slate-500">Method:</span>
+                          <select
+                            value={getSessionPaymentMethod(session.id)}
+                            onChange={(e) => updatePaymentMethod(session.id, e.target.value as any)}
+                            className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-amber-500 cursor-pointer shadow-xs"
+                          >
+                            <option value="CASH">CASH</option>
+                            <option value="UPI">UPI</option>
+                            <option value="CARD">CARD</option>
+                            <option value="SPLIT">SPLIT</option>
+                          </select>
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={paymentActionId === session.id}
+                          onClick={() => void togglePayment(session.id, "mark_paid")}
+                          className="flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          <CheckCircle2 size={13} />
+                          {paymentActionId === session.id ? "Settling..." : "Mark Paid ✓"}
+                        </button>
+                      </div>
                     </div>
                   )}
 
-                  {/* Payment action */}
-                  <div className="mt-5 flex flex-col gap-3 border-t border-white/8 pt-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-stone-400">
-                        {session.payment_status === "paid"
-                          ? "Bill settled"
-                          : "Collect & Settle Payment:"}
-                      </p>
-                      <button
-                        type="button"
-                        disabled={paymentActionId === session.id}
-                        onClick={() =>
-                          void togglePayment(
-                            session.id,
-                            session.payment_status === "paid"
-                              ? "undo_paid"
-                              : "mark_paid",
-                          )
-                        }
-                        className={`rounded-full px-4 py-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer ${
-                          session.payment_status === "paid"
-                            ? "border border-stone-400/30 bg-stone-400/15 text-stone-200 hover:bg-stone-400/25"
-                            : "border border-emerald-400/30 bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/20"
-                        }`}
-                      >
-                        {paymentActionId === session.id
-                          ? "Updating..."
-                          : session.payment_status === "paid"
-                            ? "Undo Paid"
-                            : "Mark Paid ✓"}
-                      </button>
-                    </div>
-
-                    {session.payment_status !== "paid" && (
-                      <div className="flex items-center gap-1.5 rounded-xl bg-white/5 p-1 border border-white/10 text-xs font-bold w-fit">
-                        {["cash", "upi", "card", "split"].map((method) => (
-                          <button
-                            key={method}
-                            type="button"
-                            onClick={() =>
-                              setAdminPaymentMethods((prev) => ({
-                                ...prev,
-                                [session.id]: method,
-                              }))
-                            }
-                            className={`px-3 py-1 rounded-lg uppercase transition ${
-                              (adminPaymentMethods[session.id] || "cash") === method
-                                ? "bg-amber-500 text-slate-950 font-extrabold shadow-sm"
-                                : "text-stone-400 hover:text-white"
-                            }`}
-                          >
-                            {method}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Close session action */}
-                  <div className="mt-3 border-t border-white/8 pt-4">
+                  {/* Close Session Controls */}
+                  <div className="mt-4 border-t border-slate-100 pt-3">
                     {isForceConfirm ? (
-                      <div className="space-y-3">
-                        <p className="text-sm text-rose-200">
-                          This session has active orders that will be{" "}
-                          <strong>cancelled</strong>. Are you sure?
+                      <div className="space-y-2 rounded-xl bg-rose-50 border border-rose-200 p-3">
+                        <p className="text-xs text-rose-700 font-medium">
+                          This session has active orders that will be <strong>cancelled</strong>. Are you sure?
                         </p>
                         <div className="flex gap-2">
                           <button
                             type="button"
                             disabled={closingSessionId === session.id}
                             onClick={() => void closeSession(session.id, true)}
-                            className="rounded-full border border-rose-400/30 bg-rose-400/15 px-4 py-2 text-sm font-medium text-rose-100 hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-lg bg-rose-600 hover:bg-rose-700 px-3 py-1 text-xs font-semibold text-white shadow-xs"
                           >
-                            {closingSessionId === session.id
-                              ? "Closing..."
-                              : "Yes, force close"}
+                            {closingSessionId === session.id ? "Closing..." : "Yes, force close"}
                           </button>
                           <button
                             type="button"
                             onClick={() => setConfirmForceClose(null)}
-                            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-stone-300 hover:bg-white/10"
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
                           >
                             Cancel
                           </button>
                         </div>
                       </div>
                     ) : isUnpaidConfirm ? (
-                      <div className="space-y-3">
-                        <p className="text-sm text-rose-200">
-                          This session is <strong>unpaid</strong> (
-                          {formatCurrency(session.session_total, currency)}).
-                          Close without collecting payment?
+                      <div className="space-y-2 rounded-xl bg-rose-50 border border-rose-200 p-3">
+                        <p className="text-xs text-rose-700 font-medium">
+                          This session is <strong>unpaid</strong> ({formatCurrency(session.session_total, currency)}). Close without collecting payment?
                         </p>
                         <div className="flex gap-2">
                           <button
@@ -1393,16 +1349,14 @@ export default function RestaurantDashboard({
                               setConfirmUnpaidClose(null);
                               void closeSession(session.id, false);
                             }}
-                            className="rounded-full border border-rose-400/30 bg-rose-400/15 px-4 py-2 text-sm font-medium text-rose-100 hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-lg bg-rose-600 hover:bg-rose-700 px-3 py-1 text-xs font-semibold text-white shadow-xs"
                           >
-                            {closingSessionId === session.id
-                              ? "Closing..."
-                              : "Yes, close unpaid"}
+                            {closingSessionId === session.id ? "Closing..." : "Yes, close unpaid"}
                           </button>
                           <button
                             type="button"
                             onClick={() => setConfirmUnpaidClose(null)}
-                            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-stone-300 hover:bg-white/10"
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
                           >
                             Cancel
                           </button>
@@ -1412,12 +1366,12 @@ export default function RestaurantDashboard({
                       <div className="flex items-center justify-between">
                         <div>
                           {session.all_orders_terminal ? (
-                            <p className="text-xs text-emerald-300/80">
-                              All orders complete — safe to close
+                            <p className="text-xs text-emerald-700 font-medium">
+                              All orders complete — ready to close
                             </p>
                           ) : (
-                            <p className="text-xs text-amber-300/80">
-                              Has active orders — will require confirmation
+                            <p className="text-xs text-amber-700 font-medium">
+                              Has active orders — requires confirmation
                             </p>
                           )}
                         </div>
@@ -1431,15 +1385,13 @@ export default function RestaurantDashboard({
                               void closeSession(session.id, false);
                             }
                           }}
-                          className={`rounded-full px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                          className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
                             session.all_orders_terminal
-                              ? "border border-emerald-400/30 bg-emerald-400/15 text-emerald-100 hover:bg-emerald-400/25"
-                              : "border border-amber-400/30 bg-amber-400/15 text-amber-100 hover:bg-amber-400/25"
+                              ? "bg-slate-900 hover:bg-slate-800 text-white"
+                              : "border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900"
                           }`}
                         >
-                          {closingSessionId === session.id
-                            ? "Closing..."
-                            : "Close Table Session"}
+                          {closingSessionId === session.id ? "Closing..." : "Close Session"}
                         </button>
                       </div>
                     )}
@@ -1450,7 +1402,7 @@ export default function RestaurantDashboard({
           </div>
 
           {!loading && !sessions.length ? (
-            <div className="rounded-[28px] border border-dashed border-white/12 px-6 py-12 text-center text-stone-400">
+            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center text-slate-400 text-xs font-medium shadow-xs">
               No active table sessions right now.
             </div>
           ) : null}
@@ -1459,89 +1411,89 @@ export default function RestaurantDashboard({
         );
         })()}
         {activeTab === "history" && (
-          <section className="space-y-6">
+          <section className="space-y-5">
             {/* Sales Summary Cards */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Revenue</p>
-                <p className="mt-2 text-2xl font-black text-emerald-400">
+            <div className="grid gap-3.5 grid-cols-2 md:grid-cols-5">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Total Revenue</p>
+                <p className="mt-1 text-2xl font-bold text-slate-900 font-mono">
                   {formatCurrency(historyMetrics.totalRevenue || 0, currency)}
                 </p>
-                <p className="mt-1 text-[10px] text-slate-500 font-medium">Settled Invoices</p>
+                <p className="mt-0.5 text-[10px] text-slate-400 font-medium">Settled Invoices</p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Cash Payments</p>
-                <p className="mt-2 text-xl font-bold text-amber-300">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Cash Payments</p>
+                <p className="mt-1 text-xl font-bold text-amber-800 font-mono">
                   {formatCurrency(historyMetrics.totalCash || 0, currency)}
                 </p>
-                <p className="mt-1 text-[10px] text-slate-500 font-medium">Cash Register</p>
+                <p className="mt-0.5 text-[10px] text-slate-400 font-medium">Cash Register</p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">UPI / QR Payments</p>
-                <p className="mt-2 text-xl font-bold text-cyan-300">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">UPI / QR Payments</p>
+                <p className="mt-1 text-xl font-bold text-cyan-800 font-mono">
                   {formatCurrency(historyMetrics.totalUPI || 0, currency)}
                 </p>
-                <p className="mt-1 text-[10px] text-slate-500 font-medium">Direct Bank Transfer</p>
+                <p className="mt-0.5 text-[10px] text-slate-400 font-medium">Direct Bank Transfer</p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Card Payments</p>
-                <p className="mt-2 text-xl font-bold text-violet-300">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Card Payments</p>
+                <p className="mt-1 text-xl font-bold text-violet-800 font-mono">
                   {formatCurrency(historyMetrics.totalCard || 0, currency)}
                 </p>
-                <p className="mt-1 text-[10px] text-slate-500 font-medium">POS Terminal</p>
+                <p className="mt-0.5 text-[10px] text-slate-400 font-medium">POS Terminal</p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Tips Collected</p>
-                <p className="mt-2 text-xl font-bold text-pink-300">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Tips Collected</p>
+                <p className="mt-1 text-xl font-bold text-emerald-800 font-mono">
                   {formatCurrency(historyMetrics.totalTips || 0, currency)}
                 </p>
-                <p className="mt-1 text-[10px] text-slate-500 font-medium">Staff Gratuity</p>
+                <p className="mt-0.5 text-[10px] text-slate-400 font-medium">Staff Gratuity</p>
               </div>
             </div>
 
             {/* History Table Container */}
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur space-y-4">
+            <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-black text-white flex items-center gap-2">
-                    <History size={18} className="text-indigo-400" />
+                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <History size={16} className="text-slate-600" />
                     Session & Invoice History Archive
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     View completed customer sessions, payment logs, and re-print receipt tax invoices.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => void loadHistory(searchQuery)}
-                  className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 text-xs font-bold text-slate-300 hover:bg-white/10 transition cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition shadow-xs cursor-pointer"
                 >
                   Refresh History
                 </button>
               </div>
 
               {historyLoading ? (
-                <div className="py-12 text-center text-xs text-slate-400">
-                  <Loader2 className="mx-auto h-6 w-6 animate-spin mb-2" />
+                <div className="py-12 text-center text-xs text-slate-500">
+                  <Loader2 className="mx-auto h-5 w-5 animate-spin mb-2 text-amber-500" />
                   Fetching historical session archives...
                 </div>
               ) : historyError ? (
-                <div className="py-12 text-center text-xs text-rose-400 font-medium">
+                <div className="py-8 text-center text-xs text-rose-600 font-medium">
                   {historyError}
                 </div>
               ) : historySessions.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-500">
+                <div className="py-12 text-center text-xs text-slate-400">
                   No session history records found. Completed sessions will be archived here.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300">
+                <div className="overflow-x-auto rounded-lg border border-slate-200/80">
+                  <table className="w-full text-left text-xs text-slate-700">
                     <thead>
-                      <tr className="border-b border-white/10 text-[10px] uppercase text-slate-400 font-bold">
+                      <tr className="border-b border-slate-200 bg-slate-50/80 text-[10px] uppercase text-slate-500 font-bold">
                         <th className="py-3 px-3">Table / Customer</th>
                         <th className="py-3 px-3">Opened / Settled</th>
                         <th className="py-3 px-3">Orders & Items</th>
@@ -1550,55 +1502,55 @@ export default function RestaurantDashboard({
                         <th className="py-3 px-3 text-center">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-slate-100">
                       {historySessions.map((session) => (
-                        <tr key={session.id} className="hover:bg-white/5 transition">
-                          <td className="py-3.5 px-3">
-                            <div className="font-bold text-white">
+                        <tr key={session.id} className="hover:bg-slate-50/60 transition">
+                          <td className="py-3 px-3">
+                            <div className="font-bold text-slate-900">
                               Table #{session.table?.table_number || "Walk-in"}
                             </div>
-                            <div className="text-[11px] text-slate-400 mt-0.5">
+                            <div className="text-[11px] text-slate-500 mt-0.5">
                               {session.customer_name || "Guest Customer"}{" "}
                               {session.customer_phone ? `(${session.customer_phone})` : ""}
                             </div>
                           </td>
-                          <td className="py-3.5 px-3 whitespace-nowrap">
-                            <div className="text-slate-300">{timeAgo(session.opened_at)}</div>
-                            <div className="text-[10px] text-slate-500 mt-0.5">
+                          <td className="py-3 px-3 whitespace-nowrap">
+                            <div className="text-slate-700">{timeAgo(session.opened_at)}</div>
+                            <div className="text-[10px] text-slate-400 mt-0.5">
                               {session.paid_at ? `Paid ${timeAgo(session.paid_at)}` : session.status}
                             </div>
                           </td>
-                          <td className="py-3.5 px-3">
-                            <div className="font-bold text-slate-200">
+                          <td className="py-3 px-3">
+                            <div className="font-semibold text-slate-800">
                               {session.order_count} Orders ({session.orders?.reduce((acc: number, o: any) => acc + (o.items?.length || 0), 0) || 0} Items)
                             </div>
-                            <div className="text-[10px] text-slate-400 truncate max-w-xs mt-0.5">
+                            <div className="text-[10px] text-slate-500 truncate max-w-xs mt-0.5">
                               {session.orders?.flatMap((o: any) => o.items?.map((i: any) => i.name)).join(", ")}
                             </div>
                           </td>
-                          <td className="py-3.5 px-3 whitespace-nowrap">
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase border bg-indigo-500/10 text-indigo-300 border-indigo-500/20">
+                          <td className="py-3 px-3 whitespace-nowrap">
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border bg-slate-100 text-slate-800 border-slate-200">
                               {session.payment_method || session.bill?.payment_method || "CASH"}
                             </span>
                             {session.tip_amount > 0 && (
-                              <div className="text-[10px] text-pink-400 font-bold mt-1">
+                              <div className="text-[10px] text-emerald-700 font-bold mt-1">
                                 +₹{session.tip_amount} Tip
                               </div>
                             )}
                             {session.customer_utr && (
-                              <div className="text-[9px] text-slate-500 font-mono mt-0.5">
+                              <div className="text-[9px] text-slate-400 font-mono mt-0.5">
                                 UTR: {session.customer_utr}
                               </div>
                             )}
                           </td>
-                          <td className="py-3.5 px-3 text-right font-black text-white whitespace-nowrap">
+                          <td className="py-3 px-3 text-right font-bold text-slate-900 font-mono whitespace-nowrap">
                             {formatCurrency(session.bill?.grand_total || session.session_total || 0, currency)}
                           </td>
-                          <td className="py-3.5 px-3 text-center">
+                          <td className="py-3 px-3 text-center">
                             <button
                               type="button"
                               onClick={() => openThermalReceipt(session)}
-                              className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-bold text-slate-200 transition cursor-pointer inline-flex items-center gap-1.5"
+                              className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                             >
                               <Printer size={12} />
                               Re-print
@@ -1616,22 +1568,22 @@ export default function RestaurantDashboard({
 
         {/* ═══════════ MENU TAB — tables + categories + items ═══════════ */}
         {activeTab === "menu" && (
-        <section className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+        <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.28em] text-slate-400 font-bold">
-                  Tables
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                  Floor Layout
                 </p>
-                <h2 className="mt-1 text-2xl font-black text-white">
-                  QR Stations
+                <h2 className="mt-0.5 text-lg font-bold text-slate-900 tracking-tight">
+                  Dining Tables & QRs
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => void generateQrs()}
                 disabled={busyKey === "tables:qrs" || !tables.length}
-                className="rounded-xl border border-indigo-500/30 bg-indigo-600/20 px-3 py-1.5 text-xs font-bold text-indigo-300 hover:bg-indigo-600/30 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
               >
                 {busyKey === "tables:qrs" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                 Export QRs
@@ -1645,19 +1597,19 @@ export default function RestaurantDashboard({
                 onChange={(e) => setTableNumber(e.target.value)}
                 placeholder="Table No. (e.g. T-12)"
                 required
-                className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500 shadow-xs"
               />
               <button
                 type="submit"
                 disabled={busyKey === "table:create"}
-                className="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-500 disabled:opacity-50 cursor-pointer flex items-center gap-1"
+                className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer flex items-center gap-1 shadow-xs"
               >
                 {busyKey === "table:create" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
                 Add Table
               </button>
             </form>
 
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 space-y-2">
               {[...tables]
                 .sort((a, b) => {
                   const numA = parseInt(a.table_number.replace(/\D/g, ""), 10);
@@ -1668,13 +1620,13 @@ export default function RestaurantDashboard({
                 .map((table) => (
                   <div
                     key={table.id}
-                    className="flex items-center justify-between rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm"
+                    className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/50 px-3.5 py-2.5 text-xs"
                   >
                     <div>
-                      <p className="font-semibold text-white">
+                      <p className="font-bold text-slate-900 font-mono">
                         {table.table_number}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-400">
+                      <p className="mt-0.5 text-[10px] text-slate-400 font-mono">
                         Token: {table.table_token.slice(0, 8)}...
                       </p>
                     </div>
@@ -1682,54 +1634,54 @@ export default function RestaurantDashboard({
                       type="button"
                       onClick={() => void deleteTable(table.id)}
                       disabled={busyKey === `table:${table.id}`}
-                      className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-500/20 hover:text-rose-300 transition-colors border-0 cursor-pointer"
+                      className="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors border-0 cursor-pointer"
                       title="Delete Table"
                     >
-                      {busyKey === `table:${table.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      {busyKey === `table:${table.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                     </button>
                   </div>
                 ))}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
             <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-stone-500">
-                Menu
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                Menu Management
               </p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">
-                Categories and items
+              <h2 className="mt-0.5 text-lg font-bold text-slate-900 tracking-tight">
+                Categories & Menu Items
               </h2>
             </div>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
               <form
                 onSubmit={createCategory}
-                className="rounded-3xl border border-white/8 bg-black/20 p-4"
+                className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 space-y-3"
               >
-                <label className="text-sm font-medium text-white">
-                  Create category
+                <label className="text-xs font-bold text-slate-800">
+                  Add Category
                 </label>
                 <input
                   value={categoryName}
                   onChange={(event) => setCategoryName(event.target.value)}
-                  placeholder="Starters"
-                  className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500"
+                  placeholder="e.g. Starters, Main Course"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-amber-500 placeholder:text-slate-400 shadow-xs"
                 />
                 <button
                   type="submit"
                   disabled={busyKey === "category:create"}
-                  className="mt-4 rounded-full bg-white px-4 py-2 text-sm font-semibold text-stone-950 disabled:opacity-60"
+                  className="w-full rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60 shadow-xs"
                 >
-                  Add category
+                  Create Category
                 </button>
               </form>
 
               <form
                 onSubmit={createItem}
-                className="rounded-3xl border border-white/8 bg-black/20 p-4"
+                className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 space-y-2.5"
               >
-                <label className="text-sm font-medium text-white">
-                  Create menu item
+                <label className="text-xs font-bold text-slate-800">
+                  Add Menu Item
                 </label>
                 <select
                   value={itemForm.category_id}
@@ -1739,14 +1691,13 @@ export default function RestaurantDashboard({
                       category_id: event.target.value,
                     }))
                   }
-                  className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-amber-500 shadow-xs"
                 >
                   <option value="">Select category</option>
                   {categories.map((category) => (
                     <option
                       key={category.id}
                       value={category.id}
-                      className="bg-stone-900"
                     >
                       {category.name}
                     </option>
@@ -1760,8 +1711,8 @@ export default function RestaurantDashboard({
                       name: event.target.value,
                     }))
                   }
-                  placeholder="Paneer Tikka"
-                  className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500"
+                  placeholder="e.g. Paneer Tikka"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-amber-500 placeholder:text-slate-400 shadow-xs"
                 />
                 <input
                   value={itemForm.description}
@@ -1771,10 +1722,10 @@ export default function RestaurantDashboard({
                       description: event.target.value,
                     }))
                   }
-                  placeholder="Smoked cottage cheese skewers"
-                  className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500"
+                  placeholder="Description / ingredients"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-amber-500 placeholder:text-slate-400 shadow-xs"
                 />
-                <div className="mt-3 flex gap-3">
+                <div className="flex gap-2">
                   <input
                     value={itemForm.price}
                     onChange={(event) =>
@@ -1783,10 +1734,10 @@ export default function RestaurantDashboard({
                         price: event.target.value,
                       }))
                     }
-                    placeholder="Price"
-                    className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500"
+                    placeholder="Price (₹)"
+                    className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-amber-500 placeholder:text-slate-400 shadow-xs"
                   />
-                  <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-stone-300">
+                  <label className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-xs">
                     <input
                       type="checkbox"
                       checked={itemForm.is_veg}
@@ -1803,24 +1754,24 @@ export default function RestaurantDashboard({
                 <button
                   type="submit"
                   disabled={busyKey === "item:create"}
-                  className="mt-4 rounded-full bg-amber-300 px-4 py-2 text-sm font-semibold text-stone-950 disabled:opacity-60"
+                  className="w-full rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60 shadow-xs cursor-pointer"
                 >
-                  Add item
+                  Add Item
                 </button>
               </form>
             </div>
-            <div className="mt-6 space-y-4">
+            <div className="mt-5 space-y-3">
               {groupedMenu.map((category) => (
                 <div
                   key={category.id}
-                  className="rounded-3xl border border-white/8 bg-black/20 p-4"
+                  className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-white">
+                      <h3 className="text-sm font-bold text-slate-900">
                         {category.name}
                       </h3>
-                      <p className="text-sm text-stone-400">
+                      <p className="text-[11px] text-slate-500">
                         {category.items.length} items
                       </p>
                     </div>
@@ -1830,26 +1781,26 @@ export default function RestaurantDashboard({
                       onClick={() =>
                         void deleteMenuEntity("category", category.id)
                       }
-                      className="rounded-full border border-rose-400/25 bg-rose-400/10 p-2 text-rose-100 hover:bg-rose-400/20 disabled:opacity-60"
+                      className="rounded-lg border border-rose-200 bg-white p-1.5 text-rose-600 hover:bg-rose-50 disabled:opacity-60 cursor-pointer shadow-xs"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <div className="mt-4 space-y-3">
+                  <div className="mt-3 space-y-2">
                     {category.items.map((item) => (
                       <div
                         key={item.id}
-                        className="rounded-2xl border border-white/8 bg-white/5 px-4 py-4"
+                        className="rounded-lg border border-slate-200/80 bg-white px-3.5 py-3 shadow-xs"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <p className="font-medium text-white">
+                            <p className="text-xs font-bold text-slate-900">
                               {item.name}
                             </p>
-                            <p className="mt-1 text-sm text-stone-400">
-                              {item.description || "No description yet."}
+                            <p className="mt-0.5 text-[11px] text-slate-500">
+                              {item.description || "No description."}
                             </p>
-                            <p className="mt-2 text-sm font-semibold text-amber-100">
+                            <p className="mt-1 text-xs font-bold text-slate-900 font-mono">
                               {formatCurrency(item.price, currency)}
                             </p>
                           </div>
@@ -1858,7 +1809,11 @@ export default function RestaurantDashboard({
                               type="button"
                               disabled={busyKey === `item:toggle:${item.id}`}
                               onClick={() => void toggleItemAvailability(item)}
-                              className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.24em] text-white disabled:opacity-60"
+                              className={`rounded-md border px-2.5 py-1 text-[10px] font-bold uppercase transition disabled:opacity-60 cursor-pointer shadow-xs ${
+                                item.is_available
+                                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                  : "border-slate-200 bg-slate-100 text-slate-600"
+                              }`}
                             >
                               {item.is_available ? "Available" : "Hidden"}
                             </button>
@@ -1868,16 +1823,16 @@ export default function RestaurantDashboard({
                               onClick={() =>
                                 void deleteMenuEntity("item", item.id)
                               }
-                              className="rounded-full border border-rose-400/25 bg-rose-400/10 p-2 text-rose-100 hover:bg-rose-400/20 disabled:opacity-60"
+                              className="rounded-md border border-slate-200 bg-white p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-60 cursor-pointer"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
                         </div>
                       </div>
                     ))}
                     {!category.items.length ? (
-                      <p className="text-sm text-stone-500">
+                      <p className="text-xs text-slate-400">
                         No items in this category yet.
                       </p>
                     ) : null}
@@ -1891,20 +1846,20 @@ export default function RestaurantDashboard({
 
         {/* ═══════════ STAFF TAB — kitchen + waiter access ═══════════ */}
         {activeTab === "staff" && (
-        <section className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+        <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-stone-500">
-                Staff
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                Staff Management
               </p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">
-                Kitchen and waiter access
+              <h2 className="mt-0.5 text-lg font-bold text-slate-900 tracking-tight">
+                Kitchen & Waiter Operations Access
               </h2>
             </div>
           </div>
           <form
             onSubmit={createStaff}
-            className="mt-5 grid gap-3 md:grid-cols-[1fr_180px_140px]"
+            className="mt-4 grid gap-3 md:grid-cols-[1fr_180px_140px]"
           >
             <input
               value={staffForm.name}
@@ -1915,7 +1870,7 @@ export default function RestaurantDashboard({
                 }))
               }
               placeholder="Staff member name"
-              className="rounded-full border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500"
+              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-amber-500 placeholder:text-slate-400 shadow-xs"
             />
             <select
               value={staffForm.role}
@@ -1925,36 +1880,36 @@ export default function RestaurantDashboard({
                   role: event.target.value as "kitchen" | "waiter",
                 }))
               }
-              className="rounded-full border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none"
+              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-amber-500 shadow-xs"
             >
-              <option value="kitchen" className="bg-stone-900">
-                Kitchen
+              <option value="kitchen">
+                Kitchen Staff
               </option>
-              <option value="waiter" className="bg-stone-900">
-                Waiter
+              <option value="waiter">
+                Floor Waiter
               </option>
             </select>
             <button
               type="submit"
               disabled={busyKey === "staff:create"}
-              className="rounded-full bg-white px-4 py-3 text-sm font-semibold text-stone-950 disabled:opacity-60"
+              className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60 shadow-xs cursor-pointer"
             >
-              Add staff
+              Add Staff
             </button>
           </form>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {staff.map((member) => (
               <div
                 key={member.id}
-                className="rounded-3xl border border-white/8 bg-black/20 p-4"
+                className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-lg font-semibold text-white">
+                    <p className="text-sm font-bold text-slate-900">
                       {member.name}
                     </p>
-                    <p className="mt-1 text-sm uppercase tracking-[0.24em] text-stone-400">
+                    <p className="mt-0.5 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
                       {member.role}
                     </p>
                   </div>
@@ -1962,28 +1917,28 @@ export default function RestaurantDashboard({
                     type="button"
                     disabled={busyKey === `staff:${member.id}`}
                     onClick={() => void deleteStaff(member.id)}
-                    className="rounded-full border border-rose-400/25 bg-rose-400/10 p-2 text-rose-100 hover:bg-rose-400/20 disabled:opacity-60"
+                    className="rounded-md border border-slate-200 bg-white p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-60 cursor-pointer shadow-xs"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <div className="mt-4 space-y-3 rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-stone-300">
-                  <p className="font-mono text-xs text-stone-400 truncate">
+                <div className="mt-3 space-y-2 rounded-lg border border-slate-200/80 bg-white p-3 text-xs text-slate-700 shadow-xs">
+                  <p className="font-mono text-[11px] text-slate-500 truncate">
                     /staff/ops?role={member.role}&restaurant_id={restaurantId}
                   </p>
                   <button
                     type="button"
                     onClick={() => void copyAccessLink(member)}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 shadow-xs cursor-pointer"
                   >
-                    <Copy className="h-4 w-4" />
-                    Copy access link
+                    <Copy className="h-3.5 w-3.5" />
+                    Copy Access Link
                   </button>
                 </div>
               </div>
             ))}
             {!staff.length ? (
-              <div className="rounded-3xl border border-dashed border-white/12 px-6 py-12 text-center text-stone-400 md:col-span-2 xl:col-span-3">
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center text-slate-400 text-xs md:col-span-2 xl:col-span-3">
                 No staff access links created yet.
               </div>
             ) : null}
@@ -2005,8 +1960,8 @@ export default function RestaurantDashboard({
       )}
 
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-slate-900/95 px-5 py-3.5 text-xs font-bold text-emerald-300 shadow-2xl backdrop-blur-md transition-all">
-          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-900 shadow-lg transition-all">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}

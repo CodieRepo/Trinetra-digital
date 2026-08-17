@@ -66,7 +66,7 @@ export class ProvisioningService {
 
     const { data, error } = await supabase
       .from('restaurant_profiles')
-      .select('*')
+      .select('*, restaurants(name)')
       .eq('restaurant_id', restaurantId)
       .single();
 
@@ -74,9 +74,14 @@ export class ProvisioningService {
       return null;
     }
 
+    const restaurantName = Array.isArray(data.restaurants)
+      ? (data.restaurants[0] as { name?: string })?.name ?? null
+      : (data.restaurants as { name?: string } | null)?.name ?? null;
+
     return {
       restaurantId: data.restaurant_id,
       tenantId: data.tenant_id,
+      restaurantName,
       status: data.status,
       wizardStep: data.wizard_step,
       wizardCompleted: data.wizard_completed,

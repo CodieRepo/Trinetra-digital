@@ -20,7 +20,11 @@ export const SetupWizardHeader: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-white font-semibold text-base tracking-tight">
-                {profile?.cuisineType ? `${profile.cuisineType} Setup` : 'Restaurant Setup Wizard'}
+                {profile?.restaurantName
+                  ? `${profile.restaurantName} Setup`
+                  : profile?.cuisineType
+                    ? `${profile.cuisineType} Setup`
+                    : 'Restaurant Setup Wizard'}
               </h1>
               <span className="px-2 py-0.5 text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full">
                 Milestone 3
