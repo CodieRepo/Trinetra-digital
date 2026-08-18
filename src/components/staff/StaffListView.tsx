@@ -1,66 +1,56 @@
 /**
- * Trinetra Restaurant OS — Milestone 2 Authentication & Terminal Security
+ * Trinetra Restaurant OS — Milestone H-2B Staff Directory
  * Component: StaffListView
- * Description: Operational staff directory view allowing Managers & Owners to manage team members,
- *              roles, PIN resets, and active login statuses.
+ * Description: Canonical operational staff directory view allowing Managers & Owners to manage
+ *              team members, all 7 roles, PIN resets, and active/inactive status via real database APIs.
  */
 
 'use client';
 
-import React, { useState } from 'react';
-import { Users, UserPlus, KeyRound, Edit2, Shield, Power } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Users, UserPlus, KeyRound, Edit2, Shield, Power, RefreshCw, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { StaffMember } from './types';
 import { StaffModal } from './StaffModal';
 import { ResetPinModal } from './ResetPinModal';
 import { StaffRole } from '../../types/auth';
 
-const MOCK_INITIAL_STAFF: StaffMember[] = [
-  {
-    id: 'eabf167a-6fea-4331-81a3-0bc87ee54f5e',
-    tenant_id: '1ab21b6e-d5ea-4395-81e4-ba2d06907194',
-    restaurant_id: 'a3c3e5f7-36e7-4409-8a25-76e4f7f47213',
-    name: 'Suresh Mehta',
-    role: 'manager',
-    email: 'suresh@spicegarden.com',
-    phone: '+91 9876543210',
-    is_active: true,
-    has_pin: true,
-    created_at: '2026-08-01T10:00:00Z',
-    last_login_at: '2026-08-05T14:30:00Z',
-  },
-  {
-    id: 'a5b835e8-9cf8-4944-b0da-0d111f329a23',
-    tenant_id: '1ab21b6e-d5ea-4395-81e4-ba2d06907194',
-    restaurant_id: 'a3c3e5f7-36e7-4409-8a25-76e4f7f47213',
-    name: 'Rajesh Kumar',
-    role: 'waiter',
-    email: 'rajesh@spicegarden.com',
-    phone: '+91 9876543211',
-    is_active: true,
-    has_pin: true,
-    created_at: '2026-08-02T11:00:00Z',
-    last_login_at: '2026-08-05T15:00:00Z',
-  },
-  {
-    id: 'c4d5e6f7-8901-2345-6789-0123456789ab',
-    tenant_id: '1ab21b6e-d5ea-4395-81e4-ba2d06907194',
-    restaurant_id: 'a3c3e5f7-36e7-4409-8a25-76e4f7f47213',
-    name: 'Anita Roy',
-    role: 'cashier',
-    email: 'anita@spicegarden.com',
-    phone: '+91 9876543212',
-    is_active: true,
-    has_pin: true,
-    created_at: '2026-08-03T12:00:00Z',
-    last_login_at: '2026-08-05T12:15:00Z',
-  },
-];
-
 export const StaffListView: React.FC = () => {
-  const [staffList, setStaffList] = useState<StaffMember[]>(MOCK_INITIAL_STAFF);
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState<boolean>(false);
   const [isResetPinModalOpen, setIsResetPinModalOpen] = useState<boolean>(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [busyStaffId, setBusyStaffId] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const fetchStaff = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch('/api/client/restaurant/staff', { cache: 'no-store' });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Failed to fetch staff (${res.status})`);
+      }
+      const data = await res.json();
+      setStaffList(data.staff || []);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load staff list';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStaff();
+  }, [fetchStaff]);
 
   const handleCreateStaff = () => {
     setSelectedStaff(null);
@@ -77,34 +67,77 @@ export const StaffListView: React.FC = () => {
     setIsResetPinModalOpen(true);
   };
 
-  const handleToggleActive = (staffId: string) => {
-    setStaffList((prev) =>
-      prev.map((s) => (s.id === staffId ? { ...s, is_active: !s.is_active } : s))
-    );
+  const handleToggleActive = async (staffId: string) => {
+    const member = staffList.find((s) => s.id === staffId);
+    if (!member) return;
+    const nextActive = !member.is_active;
+
+    try {
+      setBusyStaffId(staffId);
+      const res = await fetch('/api/client/restaurant/staff', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          staff_id: staffId,
+          is_active: nextActive,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update staff status');
+      }
+
+      showToast(`Staff member "${member.name}" ${nextActive ? 'reactivated' : 'deactivated'}.`);
+      await fetchStaff();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error updating staff status';
+      setError(msg);
+    } finally {
+      setBusyStaffId(null);
+    }
   };
 
   const handleSaveStaff = async (data: Partial<StaffMember>) => {
     if (selectedStaff) {
-      // Update existing staff
-      setStaffList((prev) =>
-        prev.map((s) => (s.id === selectedStaff.id ? ({ ...s, ...data } as StaffMember) : s))
-      );
+      // Edit existing staff
+      const res = await fetch('/api/client/restaurant/staff', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          staff_id: selectedStaff.id,
+          name: data.name,
+          role: data.role,
+          is_active: data.is_active,
+        }),
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || 'Failed to update staff member');
+      }
+
+      showToast(`Staff member "${data.name || selectedStaff.name}" updated successfully.`);
     } else {
       // Create new staff
-      const newStaff: StaffMember = {
-        id: crypto.randomUUID(),
-        tenant_id: '1ab21b6e-d5ea-4395-81e4-ba2d06907194',
-        restaurant_id: 'a3c3e5f7-36e7-4409-8a25-76e4f7f47213',
-        name: data.name || 'New Staff',
-        role: (data.role as StaffRole) || 'waiter',
-        email: data.email,
-        phone: data.phone,
-        is_active: data.is_active ?? true,
-        has_pin: false,
-        created_at: new Date().toISOString(),
-      };
-      setStaffList((prev) => [...prev, newStaff]);
+      const res = await fetch('/api/client/restaurant/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          role: data.role,
+        }),
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || 'Failed to create staff member');
+      }
+
+      showToast(`Staff member "${data.name}" added successfully.`);
     }
+
+    await fetchStaff();
   };
 
   const getRoleBadgeStyle = (role: StaffRole) => {
@@ -130,6 +163,14 @@ export const StaffListView: React.FC = () => {
 
   return (
     <div className="p-6 sm:p-8 bg-neutral-950 text-white min-h-screen select-none">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-neutral-900 border border-neutral-700 text-white shadow-2xl text-xs font-semibold">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Top Action Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 border-b border-neutral-900 pb-6">
         <div className="flex items-center gap-3">
@@ -137,20 +178,44 @@ export const StaffListView: React.FC = () => {
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white tracking-wide">Staff & Security Management</h1>
-            <p className="text-xs text-neutral-400">Manage employee accounts, RBAC roles, and PIN access</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-white tracking-wide">Staff & Security Management</h1>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-300 border border-neutral-700">
+                {staffList.length} Total
+              </span>
+            </div>
+            <p className="text-xs text-neutral-400 mt-0.5">Manage all 7 operational roles, terminal PIN access, and team status</p>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleCreateStaff}
-          className="h-12 px-5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>Add Staff Member</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={fetchStaff}
+            disabled={loading}
+            className="p-3 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors border border-neutral-800"
+            title="Refresh Roster"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            type="button"
+            onClick={handleCreateStaff}
+            className="h-12 px-5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Add Staff Member</span>
+          </button>
+        </div>
       </div>
+
+      {/* Error state */}
+      {error && (
+        <div className="mb-6 p-4 rounded-2xl bg-red-950/60 border border-red-800 text-red-300 text-xs flex items-center gap-2.5">
+          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Staff Directory Table */}
       <div className="bg-neutral-900/90 border border-neutral-800 rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl">
@@ -166,81 +231,128 @@ export const StaffListView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-800/60">
-              {staffList.map((member) => (
-                <tr key={member.id} className="hover:bg-neutral-800/40 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="font-bold text-white text-sm">{member.name}</div>
-                    <div className="text-neutral-400 text-[11px] font-mono mt-0.5">
-                      {member.email || member.phone || 'No contact details'}
+              {loading && staffList.length === 0 ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="py-4 px-6">
+                      <div className="h-4 bg-neutral-800 rounded w-32 mb-1.5" />
+                      <div className="h-3 bg-neutral-800/60 rounded w-20" />
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="h-6 bg-neutral-800 rounded-full w-20" />
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="h-6 bg-neutral-800 rounded-full w-16" />
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="h-4 bg-neutral-800 rounded w-24" />
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <div className="h-8 bg-neutral-800 rounded-xl w-24 ml-auto" />
+                    </td>
+                  </tr>
+                ))
+              ) : staffList.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-12 px-6 text-center text-neutral-400">
+                    <div className="w-12 h-12 rounded-2xl bg-neutral-800 text-neutral-400 flex items-center justify-center mx-auto mb-3">
+                      <Users className="w-6 h-6" />
                     </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold uppercase tracking-wider ${getRoleBadgeStyle(
-                        member.role
-                      )}`}
-                    >
-                      <Shield className="w-3 h-3" />
-                      <span>{member.role}</span>
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                        member.is_active
-                          ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800'
-                          : 'bg-red-950/60 text-red-300 border border-red-800'
-                      }`}
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          member.is_active ? 'bg-emerald-400' : 'bg-red-400'
-                        }`}
-                      />
-                      <span>{member.is_active ? 'Active' : 'Deactivated'}</span>
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    {member.has_pin ? (
-                      <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                        <KeyRound className="w-3.5 h-3.5" /> Configured
-                      </span>
-                    ) : (
-                      <span className="text-amber-400 font-semibold">PIN Pending</span>
-                    )}
-                  </td>
-                  <td className="py-4 px-6 text-right space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => handleOpenResetPin(member)}
-                      className="p-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-400 transition-colors"
-                      title="Reset Staff PIN"
-                    >
-                      <KeyRound className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleEditStaff(member)}
-                      className="p-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 transition-colors"
-                      title="Edit Profile"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleActive(member.id)}
-                      className={`p-2.5 rounded-xl transition-colors ${
-                        member.is_active
-                          ? 'bg-neutral-800 hover:bg-red-950 text-red-400'
-                          : 'bg-neutral-800 hover:bg-emerald-950 text-emerald-400'
-                      }`}
-                      title={member.is_active ? 'Deactivate Staff' : 'Activate Staff'}
-                    >
-                      <Power className="w-4 h-4" />
-                    </button>
+                    <p className="font-bold text-white">No Staff Members Found</p>
+                    <p className="text-xs text-neutral-500 mt-1">Add your team members to enable operations.</p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                staffList.map((member) => (
+                  <tr key={member.id} className={`hover:bg-neutral-800/40 transition-colors ${!member.is_active ? 'opacity-60' : ''}`}>
+                    <td className="py-4 px-6">
+                      <div className="font-bold text-white text-sm flex items-center gap-2">
+                        <span>{member.name}</span>
+                        {!member.is_active && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-neutral-500 text-[11px] font-mono mt-0.5">
+                        ID: {member.id.substring(0, 8)}...
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold uppercase tracking-wider ${getRoleBadgeStyle(
+                          member.role
+                        )}`}
+                      >
+                        <Shield className="w-3 h-3" />
+                        <span>{member.role}</span>
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                          member.is_active
+                            ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800'
+                            : 'bg-red-950/60 text-red-300 border border-red-800'
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            member.is_active ? 'bg-emerald-400' : 'bg-red-400'
+                          }`}
+                        />
+                        <span>{member.is_active ? 'Active' : 'Deactivated'}</span>
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      {member.has_pin ? (
+                        <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                          <KeyRound className="w-3.5 h-3.5" /> Configured
+                        </span>
+                      ) : (
+                        <span className="text-amber-400 font-semibold flex items-center gap-1">
+                          <KeyRound className="w-3.5 h-3.5" /> PIN Pending
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-4 px-6 text-right space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenResetPin(member)}
+                        className="p-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-400 transition-colors"
+                        title={member.has_pin ? 'Reset Staff PIN' : 'Set Initial PIN'}
+                      >
+                        <KeyRound className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleEditStaff(member)}
+                        className="p-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 transition-colors"
+                        title="Edit Profile"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busyStaffId === member.id}
+                        onClick={() => handleToggleActive(member.id)}
+                        className={`p-2.5 rounded-xl transition-colors ${
+                          member.is_active
+                            ? 'bg-neutral-800 hover:bg-red-950 text-red-400'
+                            : 'bg-neutral-800 hover:bg-emerald-950 text-emerald-400'
+                        }`}
+                        title={member.is_active ? 'Deactivate Staff' : 'Reactivate Staff'}
+                      >
+                        {busyStaffId === member.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Power className="w-4 h-4" />
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -260,11 +372,8 @@ export const StaffListView: React.FC = () => {
         staffMember={selectedStaff}
         onClose={() => setIsResetPinModalOpen(false)}
         onPinResetSuccess={() => {
-          if (selectedStaff) {
-            setStaffList((prev) =>
-              prev.map((s) => (s.id === selectedStaff.id ? { ...s, has_pin: true } : s))
-            );
-          }
+          showToast('Security PIN updated successfully.');
+          fetchStaff();
         }}
       />
     </div>

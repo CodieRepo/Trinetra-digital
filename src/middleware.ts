@@ -4,12 +4,14 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Allow public API routes (customer QR ordering, auth, health checks, webhooks)
+  // Allow public API routes (customer QR ordering, auth, health checks, webhooks, provisioning)
   if (
     pathname.startsWith('/api/r/') ||
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/health') ||
-    pathname.startsWith('/api/v1/webhooks/')
+    pathname.startsWith('/api/v1/webhooks/') ||
+    pathname.startsWith('/api/restaurant-os/') ||
+    pathname.startsWith('/restaurant-os/provisioning')
   ) {
     return NextResponse.next();
   }
@@ -73,6 +75,13 @@ export async function middleware(request: NextRequest) {
 
       if (!profile || profile.role !== 'super_admin') {
         return NextResponse.redirect(new URL('/admin', request.url))
+      }
+    }
+
+    // Protect restaurant-os portal routes
+    if (request.nextUrl.pathname.startsWith('/restaurant-os')) {
+      if (!user) {
+        return NextResponse.redirect(new URL('/admin', request.url));
       }
     }
   } catch (error) {

@@ -48,6 +48,19 @@ export async function authenticateStaffRequest(
   let staffContext: VerifiedStaffContext | null = null;
 
   if (jwtPayload) {
+    // Verify staff is still active in the database (guards against deactivated staff with valid JWT)
+    const db = getSupabaseAdmin();
+    const { data: staffRecord } = await db
+      .from("restaurant_staff")
+      .select("is_active")
+      .eq("id", jwtPayload.staff_id)
+      .eq("restaurant_id", jwtPayload.restaurant_id)
+      .maybeSingle();
+
+    if (!staffRecord || !staffRecord.is_active) {
+      return { context: null, errorResponse: { message: "Forbidden: Staff account has been deactivated", status: 403 } };
+    }
+
     staffContext = {
       staff_id: jwtPayload.staff_id,
       tenant_id: jwtPayload.tenant_id,

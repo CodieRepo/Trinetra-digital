@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { resolveRestaurantContext } from "../context";
+import { resolveRestaurantContext, RestaurantContextError } from "../context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,14 +25,23 @@ export async function GET(request: Request) {
       (sessions || []).map(async (session) => {
         const { data: table } = await db
           .from("restaurant_tables")
-          .select("id, table_number")
+          .select("id, table_number, floor_id, restaurant_floors ( id, name )")
           .eq("id", session.table_id)
           .eq("tenant_id", tenantId)
           .maybeSingle();
 
+        const enrichedTable = table
+          ? {
+              id: table.id,
+              table_number: table.table_number,
+              floor_id: table.floor_id || null,
+              floor_name: (table as any).restaurant_floors?.name || null,
+            }
+          : null;
+
         const { data: orders } = await db
           .from("restaurant_orders")
-          .select("id, status, total_amount, created_at")
+          .select("id, status, total_amount, created_at, order_source, created_by_staff_id")
           .eq("table_session_id", session.id)
           .eq("tenant_id", tenantId)
           .order("created_at", { ascending: true });
@@ -63,7 +72,7 @@ export async function GET(request: Request) {
 
         return {
           ...session,
-          table: table || null,
+          table: enrichedTable,
           orders: enrichedOrders,
           order_count: orderCount,
           session_total: sessionTotal,
@@ -75,6 +84,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ sessions: enriched });
   } catch (err: unknown) {
+    if (err instanceof RestaurantContextError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

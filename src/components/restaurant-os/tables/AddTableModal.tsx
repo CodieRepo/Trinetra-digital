@@ -1,13 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Plus, Loader2, LayoutGrid, AlertCircle } from 'lucide-react';
+import { X, Plus, Loader2, LayoutGrid, AlertCircle, Layers } from 'lucide-react';
+
+export interface FloorOption {
+  id: string;
+  name: string;
+}
 
 interface AddTableModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddTable: (tableNumber: string) => Promise<boolean>;
+  onAddTable: (tableNumber: string, floorId: string | null) => Promise<boolean>;
   existingTableNumbers: string[];
+  floors: FloorOption[];
+  defaultFloorId?: string | null;
 }
 
 export const AddTableModal: React.FC<AddTableModalProps> = ({
@@ -15,8 +22,11 @@ export const AddTableModal: React.FC<AddTableModalProps> = ({
   onClose,
   onAddTable,
   existingTableNumbers,
+  floors,
+  defaultFloorId = null,
 }) => {
   const [tableNumber, setTableNumber] = useState('');
+  const [selectedFloorId, setSelectedFloorId] = useState<string | null>(defaultFloorId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +48,7 @@ export const AddTableModal: React.FC<AddTableModalProps> = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const success = await onAddTable(cleanNumber);
+      const success = await onAddTable(cleanNumber, selectedFloorId);
       if (success) {
         setTableNumber('');
         onClose();
@@ -102,6 +112,31 @@ export const AddTableModal: React.FC<AddTableModalProps> = ({
               A unique identifier for waitstaff and digital QR guest ordering.
             </p>
           </div>
+
+          {/* Floor Assignment Dropdown */}
+          {floors.length > 0 && (
+            <div>
+              <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <Layers className="h-3.5 w-3.5 text-slate-500" />
+                Floor / Section
+              </label>
+              <select
+                value={selectedFloorId || ''}
+                onChange={(e) => setSelectedFloorId(e.target.value || null)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 shadow-xs cursor-pointer"
+              >
+                <option value="">— No Floor (Unassigned) —</option>
+                {floors.map((floor) => (
+                  <option key={floor.id} value={floor.id}>
+                    {floor.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-[11px] text-slate-500">
+                Assign this table to a dining floor or section.
+              </p>
+            </div>
+          )}
 
           {/* Preset quick suggestions */}
           <div>

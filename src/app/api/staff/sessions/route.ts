@@ -41,10 +41,13 @@ export async function GET(request: Request) {
     // Fetch tables & orders in parallel
     const [tablesRes, ordersRes] = await Promise.all([
       tableIds.length > 0
-        ? db.from("restaurant_tables").select("id, table_number").in("id", tableIds)
+        ? db
+            .from("restaurant_tables")
+            .select("id, table_number, floor_id, restaurant_floors ( id, name )")
+            .in("id", tableIds)
         : Promise.resolve({ data: [], error: null }),
       sessionIds.length > 0
-        ? db.from("restaurant_orders").select("id, table_session_id, status, notes, total_amount, created_at").in("table_session_id", sessionIds).order("created_at", { ascending: true })
+        ? db.from("restaurant_orders").select("id, table_session_id, status, notes, total_amount, created_at, order_source, created_by_staff_id").in("table_session_id", sessionIds).order("created_at", { ascending: true })
         : Promise.resolve({ data: [], error: null }),
     ]);
 
@@ -55,7 +58,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: ordersRes.error.message }, { status: 500 });
     }
 
-    const tablesMap = new Map((tablesRes.data || []).map((t) => [t.id, t]));
+    const tablesMap = new Map((tablesRes.data || []).map((t: any) => [t.id, t]));
     const ordersData = ordersRes.data || [];
     const orderIds = ordersData.map((o) => o.id);
 
@@ -105,7 +108,14 @@ export async function GET(request: Request) {
       return {
         id: s.id,
         table_id: s.table_id,
-        table: table ? { id: table.id, table_number: table.table_number } : null,
+        table: table
+          ? {
+              id: table.id,
+              table_number: table.table_number,
+              floor_id: table.floor_id || null,
+              floor_name: (table as any).restaurant_floors?.name || null,
+            }
+          : null,
         status: s.status,
         opened_at: s.opened_at,
         closed_at: s.closed_at,

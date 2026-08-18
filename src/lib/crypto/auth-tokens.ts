@@ -22,12 +22,6 @@ export function hashDeviceToken(rawToken: string): string {
   return crypto.createHash('sha256').update(rawToken).digest('hex');
 }
 
-/**
- * Compute SHA-256 hash of a staff PIN for secure database storage
- */
-export function hashStaffPin(rawPin: string): string {
-  return crypto.createHash('sha256').update(rawPin).digest('hex');
-}
 
 export interface StaffJwtPayload {
   tenant_id: string;
@@ -48,7 +42,8 @@ export function generateStaffJwt(
   payload: Omit<StaffJwtPayload, 'iat' | 'exp'>,
   ttlSeconds: number = 900 // Default 15 minutes
 ): { token: string; expires_at: string } {
-  const secret = process.env.JWT_SECRET || 'trinetra-pos-terminal-secret-key-2026';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('[FATAL] JWT_SECRET environment variable is required but not set. Staff JWT operations cannot proceed without it.');
   const now = Math.floor(Date.now() / 1000);
   const exp = now + ttlSeconds;
 
@@ -76,7 +71,8 @@ export function generateStaffJwt(
  */
 export function verifyStaffJwt(token: string): StaffJwtPayload | null {
   try {
-    const secret = process.env.JWT_SECRET || 'trinetra-pos-terminal-secret-key-2026';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('[FATAL] JWT_SECRET environment variable is required but not set. Staff JWT operations cannot proceed without it.');
     const parts = token.split('.');
     if (parts.length !== 3) return null;
 

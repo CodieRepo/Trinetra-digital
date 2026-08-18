@@ -5,8 +5,8 @@ import NotificationCenter from "@/components/common/NotificationCenter";
 import RestaurantProfileSettings from "./RestaurantProfileSettings";
 import ThermalReceiptModal, { ReceiptData } from "./ThermalReceiptModal";
 import { FloorTablesWorkspace } from "@/components/restaurant-os/tables/FloorTablesWorkspace";
+import { StaffManagementWorkspace } from "@/components/restaurant-os/staff/StaffManagementWorkspace";
 import {
-  Copy,
   Download,
   Loader2,
   Plus,
@@ -48,8 +48,17 @@ type TableRecord = {
   id: string;
   table_number: string;
   table_token: string;
+  floor_id: string | null;
+  floor_name: string | null;
   is_active: boolean;
   created_at: string;
+};
+
+type FloorRecord = {
+  id: string;
+  name: string;
+  display_order: number;
+  is_active: boolean;
 };
 
 type MenuCategory = {
@@ -69,15 +78,6 @@ type MenuItem = {
   is_available: boolean;
   is_veg: boolean;
   display_order: number;
-};
-
-type StaffRecord = {
-  id: string;
-  name: string;
-  role: "kitchen" | "waiter";
-  access_token: string;
-  is_active: boolean;
-  created_at: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -259,9 +259,9 @@ export default function RestaurantDashboard({
   };
   const [orders, setOrders] = useState<DashboardOrder[]>([]);
   const [tables, setTables] = useState<TableRecord[]>([]);
+  const [floors, setFloors] = useState<FloorRecord[]>([]);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
-  const [staff, setStaff] = useState<StaffRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tableNumber, setTableNumber] = useState("");
@@ -272,10 +272,6 @@ export default function RestaurantDashboard({
     description: "",
     price: "",
     is_veg: true,
-  });
-  const [staffForm, setStaffForm] = useState({
-    name: "",
-    role: "kitchen" as "kitchen" | "waiter",
   });
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -370,28 +366,29 @@ export default function RestaurantDashboard({
     }
 
     try {
-      const [ordersRes, tablesRes, menuRes, staffRes, sessionsRes] =
+      const [ordersRes, tablesRes, menuRes, sessionsRes, floorsRes] =
         await Promise.all([
           fetch("/api/client/restaurant/orders?limit=30", {
             cache: "no-store",
           }),
           fetch("/api/client/restaurant/tables", { cache: "no-store" }),
           fetch("/api/client/restaurant/menu", { cache: "no-store" }),
-          fetch("/api/client/restaurant/staff", { cache: "no-store" }),
           fetch("/api/client/restaurant/sessions", { cache: "no-store" }),
+          fetch("/api/client/restaurant/floors", { cache: "no-store" }),
         ]);
 
-      const [ordersData, tablesData, menuData, staffData, sessionsData] =
+      const [ordersData, tablesData, menuData, sessionsData, floorsData] =
         await Promise.all([
           readJson<{ orders: DashboardOrder[] }>(ordersRes),
           readJson<{ tables: TableRecord[] }>(tablesRes),
           readJson<{ categories: MenuCategory[]; items: MenuItem[] }>(menuRes),
-          readJson<{ staff: StaffRecord[] }>(staffRes),
           readJson<{ sessions: DashboardSession[] }>(sessionsRes),
+          readJson<{ floors: FloorRecord[] }>(floorsRes),
         ]);
 
       setOrders(ordersData.orders);
       setTables(tablesData.tables);
+      setFloors(floorsData.floors || []);
       setCategories(menuData.categories);
       if (menuData.categories.length > 0) {
         setItemForm((prev) => {
@@ -403,7 +400,6 @@ export default function RestaurantDashboard({
         });
       }
       setItems(menuData.items);
-      setStaff(staffData.staff);
       setSessions(sessionsData.sessions);
       setError(null);
     } catch (loadError) {
@@ -660,57 +656,6 @@ export default function RestaurantDashboard({
     } finally {
       setBusyKey(null);
     }
-  }
-
-  async function createStaff(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    try {
-      setBusyKey("staff:create");
-      const response = await fetch("/api/client/restaurant/staff", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(staffForm),
-      });
-      await readJson(response);
-      setStaffForm({ name: "", role: "kitchen" });
-      await loadAll(false);
-    } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Failed to create staff access.",
-      );
-    } finally {
-      setBusyKey(null);
-    }
-  }
-
-  async function deleteStaff(id: string) {
-    try {
-      setBusyKey(`staff:${id}`);
-      const response = await fetch("/api/client/restaurant/staff", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ staff_id: id }),
-      });
-      await readJson(response);
-      await loadAll(false);
-    } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Failed to delete staff member.",
-      );
-    } finally {
-      setBusyKey(null);
-    }
-  }
-
-  async function copyAccessLink(member: StaffRecord) {
-    const accessUrl = `${window.location.origin}/staff/ops?role=${member.role}&restaurant_id=${restaurantId}&token=${member.access_token}`;
-    await navigator.clipboard.writeText(accessUrl);
-    setToastMessage(`Copied staff access link for ${member.name} (${member.role})`);
-    setTimeout(() => setToastMessage(null), 3500);
   }
 
   // --- Session actions (Live Tables) ---
@@ -1463,15 +1408,16 @@ export default function RestaurantDashboard({
           <FloorTablesWorkspace
             tables={tables}
             sessions={sessions}
+            floors={floors}
             restaurantName={currentRestaurantName || restaurantName}
             currency={currency}
-            onAddTable={async (tableNum: string) => {
+            onAddTable={async (tableNum: string, floorId: string | null) => {
               try {
                 setBusyKey("table:create");
                 const res = await fetch("/api/client/restaurant/tables", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ table_number: tableNum }),
+                  body: JSON.stringify({ table_number: tableNum, floor_id: floorId }),
                 });
                 const json = await readJson<{ table: TableRecord }>(res);
                 if (json.table) {
@@ -1934,106 +1880,13 @@ export default function RestaurantDashboard({
         </section>
         )}
 
-        {/* ═══════════ STAFF TAB — kitchen + waiter access ═══════════ */}
+        {/* ═══════════ STAFF TAB — All 7 canonical roles & PIN admin ═══════════ */}
         {activeTab === "staff" && (
-        <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
-                Staff Management
-              </p>
-              <h2 className="mt-0.5 text-lg font-bold text-slate-900 tracking-tight">
-                Kitchen & Waiter Operations Access
-              </h2>
-            </div>
-          </div>
-          <form
-            onSubmit={createStaff}
-            className="mt-4 grid gap-3 md:grid-cols-[1fr_180px_140px]"
-          >
-            <input
-              value={staffForm.name}
-              onChange={(event) =>
-                setStaffForm((current) => ({
-                  ...current,
-                  name: event.target.value,
-                }))
-              }
-              placeholder="Staff member name"
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-amber-500 placeholder:text-slate-400 shadow-xs"
-            />
-            <select
-              value={staffForm.role}
-              onChange={(event) =>
-                setStaffForm((current) => ({
-                  ...current,
-                  role: event.target.value as "kitchen" | "waiter",
-                }))
-              }
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-amber-500 shadow-xs"
-            >
-              <option value="kitchen">
-                Kitchen Staff
-              </option>
-              <option value="waiter">
-                Floor Waiter
-              </option>
-            </select>
-            <button
-              type="submit"
-              disabled={busyKey === "staff:create"}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60 shadow-xs cursor-pointer"
-            >
-              Add Staff
-            </button>
-          </form>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {staff.map((member) => (
-              <div
-                key={member.id}
-                className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">
-                      {member.name}
-                    </p>
-                    <p className="mt-0.5 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-                      {member.role}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={busyKey === `staff:${member.id}`}
-                    onClick={() => void deleteStaff(member.id)}
-                    className="rounded-md border border-slate-200 bg-white p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-60 cursor-pointer shadow-xs"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                <div className="mt-3 space-y-2 rounded-lg border border-slate-200/80 bg-white p-3 text-xs text-slate-700 shadow-xs">
-                  <p className="font-mono text-[11px] text-slate-500 truncate">
-                    /staff/ops?role={member.role}&restaurant_id={restaurantId}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => void copyAccessLink(member)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 shadow-xs cursor-pointer"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                    Copy Access Link
-                  </button>
-                </div>
-              </div>
-            ))}
-            {!staff.length ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center text-slate-400 text-xs md:col-span-2 xl:col-span-3">
-                No staff access links created yet.
-              </div>
-            ) : null}
-          </div>
-        </section>
+          <StaffManagementWorkspace
+            restaurantId={restaurantId}
+            tenantId={tenantId}
+            userRole={userRole}
+          />
         )}
 
         {/* ═══════════ RESTAURANT PROFILE & SETTINGS TAB ═══════════ */}

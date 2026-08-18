@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { resolveRestaurantContext } from "../context";
+import {
+  resolveRestaurantContext,
+  requireStaffRole,
+  RestaurantContextError,
+} from "../context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,6 +38,9 @@ export async function GET(request: Request) {
       items: itemResult.data || [],
     });
   } catch (err: unknown) {
+    if (err instanceof RestaurantContextError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -43,7 +50,7 @@ export async function POST(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
-    const { tenantId, restaurantId } = await resolveRestaurantContext(request, body);
+    const { tenantId, restaurantId } = await requireStaffRole(request, ["owner", "manager"], body);
     if (!restaurantId) return NextResponse.json({ error: "No restaurant found" }, { status: 404 });
 
     if (body.type === "category") {
@@ -97,7 +104,7 @@ export async function POST(request: Request) {
         if (catCheck) activeCat = catCheck;
       }
 
-      // 2. If requested category is invalid for this restaurant, fallback to restaurant's first category
+      // 2. Fallback: Find first category in restaurant or create default
       if (!activeCat) {
         const { data: firstCat } = await db
           .from("menu_categories")
@@ -111,19 +118,19 @@ export async function POST(request: Request) {
         if (firstCat) {
           activeCat = firstCat;
         } else {
-          // If restaurant has no categories yet, auto-create default Starters category
-          const { data: newCat, error: newCatErr } = await db
+          // Create default category
+          const { data: newCat, error: createCatErr } = await db
             .from("menu_categories")
             .insert({
               tenant_id: tenantId,
               restaurant_id: restaurantId,
-              name: "Starters",
+              name: "General Menu",
               display_order: 1,
             })
             .select("id, name, display_order")
             .single();
 
-          if (newCatErr || !newCat) {
+          if (createCatErr || !newCat) {
             return NextResponse.json({ error: "Please create a menu category first." }, { status: 400 });
           }
           activeCat = newCat;
@@ -154,6 +161,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: "Invalid type" }, { status: 400 });
   } catch (err: unknown) {
+    if (err instanceof RestaurantContextError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -163,7 +173,7 @@ export async function PATCH(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
-    const { tenantId } = await resolveRestaurantContext(request, body);
+    const { tenantId } = await requireStaffRole(request, ["owner", "manager"], body);
 
     if (body.type === "item") {
       const updates: Record<string, unknown> = {};
@@ -183,6 +193,9 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ error: "Invalid type" }, { status: 400 });
   } catch (err: unknown) {
+    if (err instanceof RestaurantContextError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -192,7 +205,7 @@ export async function DELETE(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
-    const { tenantId } = await resolveRestaurantContext(request, body);
+    const { tenantId } = await requireStaffRole(request, ["owner", "manager"], body);
     const table = body.type === "category" ? "menu_categories" : "menu_items";
 
     const { error } = await db
@@ -204,6 +217,9 @@ export async function DELETE(request: Request) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
+    if (err instanceof RestaurantContextError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

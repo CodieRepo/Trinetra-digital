@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { resolveRestaurantContext } from "../context";
+import {
+  resolveRestaurantContext,
+  requireStaffRole,
+  RestaurantContextError,
+} from "../context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,7 +61,10 @@ export async function GET(request: Request) {
       },
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
+    if (err instanceof RestaurantContextError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -66,22 +73,6 @@ export async function POST(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
-    const { restaurantId } = await resolveRestaurantContext(request, body);
-
-    if (!restaurantId) {
-      return NextResponse.json({ error: "Restaurant context not found" }, { status: 404 });
-    }
-
-    // 1. Fetch restaurant to get tenant_id
-    const { data: restaurant, error: restErr } = await db
-      .from("restaurants")
-      .select("id, tenant_id, name, address, currency")
-      .eq("id", restaurantId)
-      .maybeSingle();
-
-    if (restErr || !restaurant) {
-      return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
-    }
 
     const {
       name,
@@ -96,6 +87,38 @@ export async function POST(request: Request) {
       service_charge_percent,
       payment_methods,
     } = body;
+
+    // Check if body includes owner-only financial/tax fields
+    const hasFinancialFields =
+      upi_id !== undefined ||
+      upi_qr_url !== undefined ||
+      business_gstin !== undefined ||
+      tax_rate_percent !== undefined ||
+      service_charge_percent !== undefined ||
+      payment_methods !== undefined;
+
+    // Enforce role authorization:
+    // Financial/tax settings require 'owner' role.
+    // General profile/receipt settings require 'owner' or 'manager'.
+    let caller;
+    if (hasFinancialFields) {
+      caller = await requireStaffRole(request, ["owner"], body);
+    } else {
+      caller = await requireStaffRole(request, ["owner", "manager"], body);
+    }
+
+    const restaurantId = caller.restaurantId;
+
+    // 1. Fetch restaurant to get tenant_id
+    const { data: restaurant, error: restErr } = await db
+      .from("restaurants")
+      .select("id, tenant_id, name, address, currency")
+      .eq("id", restaurantId)
+      .maybeSingle();
+
+    if (restErr || !restaurant) {
+      return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
+    }
 
     // 2. Update basic restaurant info if provided
     const restUpdatePayload: Record<string, any> = {};
@@ -153,7 +176,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, message: "Restaurant settings updated successfully" });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
+    if (err instanceof RestaurantContextError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

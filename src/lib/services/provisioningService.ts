@@ -128,7 +128,11 @@ export class ProvisioningService {
       if (brandTheme) updatePayload.brand_theme = brandTheme;
       if (restaurantName) {
         // Also update canonical restaurant name
-        await supabase.from('restaurants').update({ name: restaurantName }).eq('id', restaurantId);
+        const { error: nameError } = await supabase.from('restaurants').update({ name: restaurantName }).eq('id', restaurantId);
+        if (nameError) {
+          console.error('[ProvisioningService] Restaurant name update failed:', nameError.message);
+          // Continue — partial failure should not block profile update
+        }
       }
     }
 
@@ -201,18 +205,46 @@ export class ProvisioningService {
       }
     }
 
-    const { data, error } = await supabase
+    // Update existing profile safely without requiring tenant_id in updatePayload
+    const { data: updatedProfile, error: updateError } = await supabase
       .from('restaurant_profiles')
       .update(updatePayload)
       .eq('restaurant_id', restaurantId)
       .select()
-      .single();
+      .maybeSingle();
 
-    if (error || !data) {
-      throw new Error(`Failed to update wizard step: ${error?.message || 'Update failed'}`);
+    if (updateError) {
+      throw new Error(`Failed to update wizard step: ${updateError.message}`);
     }
 
-    return this.getRestaurantProfile(restaurantId) as Promise<RestaurantProfile>;
+    if (!updatedProfile) {
+      // Profile does not exist yet — fetch tenant_id from restaurants and upsert
+      const { data: restData } = await supabase
+        .from('restaurants')
+        .select('tenant_id')
+        .eq('id', restaurantId)
+        .maybeSingle();
+
+      const tenantId = restData?.tenant_id;
+      if (tenantId) {
+        const { error: insertError } = await supabase
+          .from('restaurant_profiles')
+          .upsert(
+            { ...updatePayload, restaurant_id: restaurantId, tenant_id: tenantId },
+            { onConflict: 'restaurant_id' }
+          );
+
+        if (insertError) {
+          throw new Error(`Failed to create restaurant profile: ${insertError.message}`);
+        }
+      }
+    }
+
+    const freshProfile = await this.getRestaurantProfile(restaurantId);
+    if (!freshProfile) {
+      throw new Error('Failed to retrieve restaurant profile after update.');
+    }
+    return freshProfile;
   }
 
   /**

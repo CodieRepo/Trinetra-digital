@@ -1,10 +1,65 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { 
+  UtensilsCrossed, 
+  ShoppingBag, 
+  Plus, 
+  Minus, 
+  Trash2, 
+  Search, 
+  X, 
+  Layers, 
+  CheckCircle2, 
+  AlertCircle,
+  Receipt,
+  Clock,
+  User,
+  ArrowRight
+} from "lucide-react";
 
 // ---------------------------------------------------------------------------
-// Types — orders view
+// Types
 // ---------------------------------------------------------------------------
+
+export type Floor = {
+  id: string;
+  name: string;
+  display_order?: number;
+};
+
+export type RestaurantTable = {
+  id: string;
+  table_number: string;
+  floor_id: string | null;
+  status: string;
+  is_active: boolean;
+};
+
+export type MenuCategory = {
+  id: string;
+  name: string;
+  display_order?: number;
+};
+
+export type MenuItem = {
+  id: string;
+  category_id: string;
+  name: string;
+  description?: string | null;
+  price: number;
+  is_veg: boolean;
+  is_available: boolean;
+};
+
+export type CartItem = {
+  id: string;
+  name: string;
+  price: number;
+  is_veg: boolean;
+  quantity: number;
+  notes: string;
+};
 
 type StaffOrder = {
   id: string;
@@ -12,14 +67,20 @@ type StaffOrder = {
   notes: string | null;
   total_amount: number;
   created_at: string;
+  order_source?: string | null;
+  created_by_staff_id?: string | null;
+  staff_name?: string | null;
   table: {
     id: string;
     table_number: string;
+    floor_id?: string | null;
+    floor_name?: string | null;
   } | null;
   items: Array<{
     id: string;
     name: string;
     quantity: number;
+    price?: number;
     notes: string | null;
   }>;
 };
@@ -31,10 +92,6 @@ type StaffPayload = {
   };
   orders: StaffOrder[];
 };
-
-// ---------------------------------------------------------------------------
-// Types — session/table view
-// ---------------------------------------------------------------------------
 
 type SessionOrder = {
   id: string;
@@ -51,7 +108,13 @@ type SessionOrder = {
 
 type TableSession = {
   id: string;
-  table: { id: string; table_number: string } | null;
+  table_id?: string;
+  table: { 
+    id: string; 
+    table_number: string;
+    floor_id?: string | null;
+    floor_name?: string | null;
+  } | null;
   status: string;
   opened_at: string;
   customer_name: string | null;
@@ -69,7 +132,7 @@ type SessionsPayload = {
 };
 
 // ---------------------------------------------------------------------------
-// Constants
+// Constants & Semantic Helpers (Warm Hospitality Theme)
 // ---------------------------------------------------------------------------
 
 const ACTIONS: Record<
@@ -92,19 +155,19 @@ const ACTIONS: Record<
     ready: [],
   },
   waiter: {
-    ready: [{ label: "Served", status: "served" }],
-    served: [{ label: "Close", status: "closed" }],
+    ready: [{ label: "Mark Served", status: "served" }],
+    served: [{ label: "Close Order", status: "closed" }],
   },
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  placed: "bg-amber-400/10 text-amber-200 border-amber-400/20",
-  accepted: "bg-sky-400/10 text-sky-200 border-sky-400/20",
-  preparing: "bg-violet-400/10 text-violet-200 border-violet-400/20",
-  ready: "bg-emerald-400/10 text-emerald-200 border-emerald-400/20",
-  served: "bg-teal-400/10 text-teal-200 border-teal-400/20",
-  closed: "bg-slate-400/10 text-slate-300 border-slate-400/20",
-  cancelled: "bg-rose-400/10 text-rose-300 border-rose-400/20",
+  placed: "bg-amber-50 text-amber-900 border-amber-200",
+  accepted: "bg-sky-50 text-sky-900 border-sky-200",
+  preparing: "bg-indigo-50 text-indigo-900 border-indigo-200",
+  ready: "bg-teal-50 text-teal-900 border-teal-200",
+  served: "bg-emerald-50 text-emerald-900 border-emerald-200",
+  closed: "bg-stone-100 text-stone-700 border-stone-300",
+  cancelled: "bg-rose-50 text-rose-900 border-rose-200",
 };
 
 function formatCurrency(amount: number) {
@@ -125,13 +188,11 @@ function timeAgo(isoString: string) {
 }
 
 function dwellMinutes(isoString: string) {
-  return Math.floor(
-    (Date.now() - new Date(isoString).getTime()) / 60000,
-  );
+  return Math.floor((Date.now() - new Date(isoString).getTime()) / 60000);
 }
 
 function isUrgent(isoString: string) {
-  return dwellMinutes(isoString) >= 5;
+  return dwellMinutes(isoString) >= 10;
 }
 
 // ---------------------------------------------------------------------------
@@ -142,40 +203,114 @@ export default function StaffOrdersPanel({
   restaurantId,
   role,
   token,
+  restaurantName,
 }: {
   restaurantId: string;
   role: "kitchen" | "waiter";
   token?: string;
+  restaurantName?: string;
 }) {
   const effectiveToken =
     token ||
     (typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("token") || ""
+      ? sessionStorage.getItem("trinetra_staff_token") ||
+        new URLSearchParams(window.location.search).get("token") ||
+        ""
       : "");
 
-  // Tabs: 'orders' (always) | 'tables' (waiter only)
-  const [activeTab, setActiveTab] = useState<"orders" | "tables">("orders");
+  // Waiter Tabs: 'tables' (Floor/Table Map) | 'orders' (Live Orders) | 'sessions' (Billing)
+  // Kitchen Tabs: 'orders' (Live Kitchen Queue)
+  const [activeTab, setActiveTab] = useState<"tables" | "orders" | "sessions">(
+    role === "waiter" ? "tables" : "orders"
+  );
 
-  // --- Orders state ---
+  // --- Floor / Table Discovery State ---
+  const [floors, setFloors] = useState<Floor[]>([]);
+  const [tables, setTables] = useState<RestaurantTable[]>([]);
+  const [selectedFloorId, setSelectedFloorId] = useState<string>("all");
+  const [loadingStructure, setLoadingStructure] = useState(false);
+
+  // --- Menu State (for Take Order) ---
+  const [categories, setCategories] = useState<MenuCategory[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loadingMenu, setLoadingMenu] = useState(false);
+
+  // --- Live Orders State ---
   const [payload, setPayload] = useState<StaffPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
-  // --- Sessions state ---
-  const [sessionsPayload, setSessionsPayload] =
-    useState<SessionsPayload | null>(null);
+  // --- Sessions State ---
+  const [sessionsPayload, setSessionsPayload] = useState<SessionsPayload | null>(null);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
   const [staffPaymentMethods, setStaffPaymentMethods] = useState<Record<string, string>>({});
   const [staffSettlingId, setStaffSettlingId] = useState<string | null>(null);
 
-  // --- Orders loading ---
+  // --- Take Order Modal State ---
+  const [isTakeOrderOpen, setIsTakeOrderOpen] = useState(false);
+  const [orderTargetTable, setOrderTargetTable] = useState<RestaurantTable | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
+  const [menuSearchQuery, setMenuSearchQuery] = useState("");
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [orderNotes, setOrderNotes] = useState("");
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [orderToast, setOrderToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [showMobileCartDrawer, setShowMobileCartDrawer] = useState(false);
+
+  // --- Load Floors & Tables ---
+  const loadFloorsAndTables = useCallback(async () => {
+    if (!effectiveToken) return;
+    try {
+      setLoadingStructure(true);
+      const headers = { Authorization: `Bearer ${effectiveToken}` };
+      const [floorsRes, tablesRes] = await Promise.all([
+        fetch("/api/client/restaurant/floors", { headers, cache: "no-store" }),
+        fetch("/api/client/restaurant/tables", { headers, cache: "no-store" }),
+      ]);
+
+      if (floorsRes.ok) {
+        const fData = await floorsRes.json();
+        setFloors(Array.isArray(fData.floors) ? fData.floors : []);
+      }
+      if (tablesRes.ok) {
+        const tData = await tablesRes.json();
+        setTables(Array.isArray(tData.tables) ? tData.tables : []);
+      }
+    } catch {
+      // Graceful fallback
+    } finally {
+      setLoadingStructure(false);
+    }
+  }, [effectiveToken]);
+
+  // --- Load Menu ---
+  const loadMenu = useCallback(async () => {
+    if (!effectiveToken) return;
+    try {
+      setLoadingMenu(true);
+      const headers = { Authorization: `Bearer ${effectiveToken}` };
+      const res = await fetch("/api/client/restaurant/menu", { headers, cache: "no-store" });
+      if (res.ok) {
+        const mData = await res.json();
+        setCategories(Array.isArray(mData.categories) ? mData.categories : []);
+        setMenuItems(Array.isArray(mData.items) ? mData.items : []);
+      }
+    } catch {
+      // Graceful fallback
+    } finally {
+      setLoadingMenu(false);
+    }
+  }, [effectiveToken]);
+
+  // --- Load Orders ---
   const loadOrders = useCallback(async () => {
     if (!effectiveToken) return;
     try {
-      // Use token authentication directly. If restaurantId is specified, pass it; otherwise token derives branch context.
-      const endpoint = restaurantId ? `/api/staff/orders?restaurant_id=${encodeURIComponent(restaurantId)}` : `/api/staff/orders`;
+      const endpoint = restaurantId
+        ? `/api/staff/orders?restaurant_id=${encodeURIComponent(restaurantId)}`
+        : `/api/staff/orders`;
       const res = await fetch(endpoint, {
         cache: "no-store",
         headers: { Authorization: `Bearer ${effectiveToken}` },
@@ -184,23 +319,21 @@ export default function StaffOrdersPanel({
       if (!res.ok) throw new Error(data.error || "Failed to load orders.");
       setPayload(data as StaffPayload);
       setError(null);
-    } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : "Failed to load orders.",
-      );
+    } catch {
+      setError("Couldn't refresh live order queue. Please check network connection.");
     } finally {
-      setLoading(false);
+      setLoadingOrders(false);
     }
   }, [restaurantId, effectiveToken]);
 
-  // --- Sessions loading ---
+  // --- Load Sessions ---
   const loadSessions = useCallback(async () => {
     if (!effectiveToken) return;
     try {
       setSessionsLoading(true);
-      const endpoint = restaurantId ? `/api/staff/sessions?restaurant_id=${encodeURIComponent(restaurantId)}` : `/api/staff/sessions`;
+      const endpoint = restaurantId
+        ? `/api/staff/sessions?restaurant_id=${encodeURIComponent(restaurantId)}`
+        : `/api/staff/sessions`;
       const res = await fetch(endpoint, {
         cache: "no-store",
         headers: { Authorization: `Bearer ${effectiveToken}` },
@@ -209,37 +342,42 @@ export default function StaffOrdersPanel({
       if (!res.ok) throw new Error(data.error || "Failed to load sessions.");
       setSessionsPayload(data as SessionsPayload);
       setSessionsError(null);
-    } catch (loadError) {
-      setSessionsError(
-        loadError instanceof Error
-          ? loadError.message
-          : "Failed to load sessions.",
-      );
+    } catch {
+      setSessionsError("Couldn't refresh active sessions. Please check network connection.");
     } finally {
       setSessionsLoading(false);
     }
   }, [restaurantId, effectiveToken]);
 
+  // --- Initial & Polling Lifecycle ---
   useEffect(() => {
     if (!effectiveToken) {
-      setError("Missing access token. Please access using a valid staff link.");
-      setLoading(false);
+      setError("Missing access token. Please access using a valid staff link or sign in.");
+      setLoadingOrders(false);
       return;
     }
 
     void loadOrders();
-    if (role === "waiter") void loadSessions();
+    if (role === "waiter") {
+      void loadFloorsAndTables();
+      void loadMenu();
+      void loadSessions();
+    }
 
     const interval = window.setInterval(() => {
       void loadOrders();
-      if (role === "waiter") void loadSessions();
+      if (role === "waiter") {
+        void loadSessions();
+        void loadFloorsAndTables();
+      }
     }, 5000);
 
     return () => {
       window.clearInterval(interval);
     };
-  }, [restaurantId, role, effectiveToken, loadOrders, loadSessions]);
+  }, [restaurantId, role, effectiveToken, loadOrders, loadSessions, loadFloorsAndTables, loadMenu]);
 
+  // --- Update Order Status ---
   async function updateStatus(orderId: string, status: string) {
     try {
       setUpdatingOrderId(orderId);
@@ -257,438 +395,1139 @@ export default function StaffOrdersPanel({
       await loadOrders();
       if (role === "waiter") await loadSessions();
     } catch (updateError) {
-      setError(
-        updateError instanceof Error
-          ? updateError.message
-          : "Failed to update order.",
-      );
+      setError(updateError instanceof Error ? updateError.message : "Failed to update order status.");
     } finally {
       setUpdatingOrderId(null);
     }
   }
 
-  // -----------------------------------------------------------------------
-  // Render
-  // -----------------------------------------------------------------------
+  // --- Floor Map Lookup ---
+  const floorNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const f of floors) {
+      map.set(f.id, f.name);
+    }
+    return map;
+  }, [floors]);
+
+  // --- Active Session Lookup by Table ID ---
+  const activeSessionByTableId = useMemo(() => {
+    const map = new Map<string, TableSession>();
+    for (const s of sessionsPayload?.sessions || []) {
+      const tid = s.table?.id || (s as any).table_id;
+      if (tid && s.status === "active") {
+        map.set(tid, s);
+      }
+    }
+    return map;
+  }, [sessionsPayload]);
+
+  // --- Filtered Tables by Floor (Canonical floor_id check) ---
+  const filteredTables = useMemo(() => {
+    return tables.filter((t) => {
+      if (selectedFloorId === "all") return true;
+      if (selectedFloorId === "unassigned") return !t.floor_id;
+      return t.floor_id === selectedFloorId;
+    });
+  }, [tables, selectedFloorId]);
+
+  // --- Filtered Menu Items ---
+  const filteredMenuItems = useMemo(() => {
+    return menuItems.filter((item) => {
+      const matchesCategory =
+        selectedCategoryId === "all" || item.category_id === selectedCategoryId;
+      const matchesSearch =
+        !menuSearchQuery ||
+        item.name.toLowerCase().includes(menuSearchQuery.toLowerCase()) ||
+        (item.description && item.description.toLowerCase().includes(menuSearchQuery.toLowerCase()));
+      return matchesCategory && matchesSearch;
+    });
+  }, [menuItems, selectedCategoryId, menuSearchQuery]);
+
+  // --- Cart Calculations ---
+  const cartSubtotal = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }, [cart]);
+
+  const cartTotalItems = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.quantity, 0);
+  }, [cart]);
+
+  // --- Cart Handlers ---
+  function handleAddToCart(item: MenuItem) {
+    if (!item.is_available) return;
+    setCart((prev) => {
+      const existing = prev.find((i) => i.id === item.id);
+      if (existing) {
+        return prev.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i));
+      }
+      return [
+        ...prev,
+        {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          is_veg: item.is_veg,
+          quantity: 1,
+          notes: "",
+        },
+      ];
+    });
+  }
+
+  function handleUpdateQuantity(itemId: string, delta: number) {
+    setCart((prev) =>
+      prev
+        .map((i) => {
+          if (i.id === itemId) {
+            const newQty = i.quantity + delta;
+            return newQty > 0 ? { ...i, quantity: newQty } : null;
+          }
+          return i;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  }
+
+  function handleUpdateItemNotes(itemId: string, notes: string) {
+    setCart((prev) => prev.map((i) => (i.id === itemId ? { ...i, notes } : i)));
+  }
+
+  function handleRemoveItem(itemId: string) {
+    setCart((prev) => prev.filter((i) => i.id !== itemId));
+  }
+
+  // --- Open Take Order Modal for Table ---
+  function openTakeOrderForTable(table: RestaurantTable) {
+    setOrderTargetTable(table);
+    setCart([]);
+    setOrderNotes("");
+    setSelectedCategoryId("all");
+    setMenuSearchQuery("");
+    setOrderToast(null);
+    setShowMobileCartDrawer(false);
+    setIsTakeOrderOpen(true);
+  }
+
+  // --- Submit Order ---
+  async function handleSubmitOrder() {
+    if (!orderTargetTable || cart.length === 0 || isSubmittingOrder) return;
+
+    try {
+      setIsSubmittingOrder(true);
+      setOrderToast(null);
+
+      const payload = {
+        table_id: orderTargetTable.id,
+        notes: orderNotes.trim() || undefined,
+        items: cart.map((i) => ({
+          item_id: i.id,
+          quantity: i.quantity,
+          notes: i.notes.trim() || undefined,
+        })),
+      };
+
+      const res = await fetch("/api/staff/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${effectiveToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to place order.");
+      }
+
+      setOrderToast({
+        message: `Order confirmed for Table ${orderTargetTable.table_number}! (${cartTotalItems} items • ${formatCurrency(cartSubtotal)})`,
+        type: "success",
+      });
+
+      // Clear cart and close modal after brief confirmation feedback
+      setTimeout(() => {
+        setCart([]);
+        setOrderNotes("");
+        setIsTakeOrderOpen(false);
+        setOrderToast(null);
+        setShowMobileCartDrawer(false);
+        void loadOrders();
+        void loadSessions();
+        setActiveTab("orders");
+      }, 1200);
+    } catch (e: any) {
+      setOrderToast({
+        message: e.message || "Failed to place order. Please retry.",
+        type: "error",
+      });
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render (Warm Hospitality Design System)
+  // ---------------------------------------------------------------------------
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(135deg,#111827_0%,#0f172a_45%,#172554_100%)] text-slate-50">
-      <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
-        {/* Header */}
-        <div className="mb-8 rounded-[30px] border border-cyan-300/20 bg-white/5 p-6 backdrop-blur">
-          <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/70">
-            Restaurant {role}
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold">
-            {role === "kitchen" ? "Kitchen queue" : "Waiter service board"}
-          </h1>
-          <p className="mt-2 text-sm text-slate-300">
-            {payload?.staff?.name
-              ? `${payload.staff.name} is signed in.`
-              : "Live orders update automatically in real-time."}
+    <div className="space-y-6">
+      
+      {/* Top Operational Summary Card */}
+      <div className="rounded-3xl border border-stone-200/90 bg-white p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {restaurantName && (
+              <span className="text-xs font-black uppercase tracking-wider text-stone-900 bg-stone-100 border border-stone-200 px-2.5 py-0.5 rounded-full">
+                {restaurantName}
+              </span>
+            )}
+            <span className="text-xs font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+              {role === "kitchen" ? "Kitchen Station" : "Waiter Operations"}
+            </span>
+            <span className="text-xs font-semibold text-stone-500">
+              {payload?.staff?.name ? `Staff: ${payload.staff.name}` : "Verified Staff Session"}
+            </span>
+          </div>
+          <h2 className="mt-2 text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+            {role === "kitchen" ? "Kitchen Dispatch Board" : "Dining Tables & Floors"}
+          </h2>
+          <p className="mt-1 text-xs sm:text-sm text-stone-600 font-medium">
+            {role === "kitchen"
+              ? "Real-time kitchen orders stream and preparation lifecycle."
+              : "Select a dining floor and tap any table to begin tableside ordering."}
           </p>
         </div>
 
-        {/* Tabs — waiter gets Orders + Tables */}
+        {/* Quick Operational Metrics */}
         {role === "waiter" && (
-          <div className="mb-6 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveTab("orders")}
-              className={`rounded-full px-5 py-2.5 text-sm font-medium transition ${
-                activeTab === "orders"
-                  ? "bg-cyan-400/15 text-cyan-100 border border-cyan-400/30"
-                  : "bg-white/5 text-slate-400 border border-white/10 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              Orders
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("tables")}
-              className={`rounded-full px-5 py-2.5 text-sm font-medium transition ${
-                activeTab === "tables"
-                  ? "bg-cyan-400/15 text-cyan-100 border border-cyan-400/30"
-                  : "bg-white/5 text-slate-400 border border-white/10 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              Tables
-              {sessionsPayload && sessionsPayload.sessions.length > 0 && (
-                <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-400/20 px-1.5 text-[11px] text-cyan-200">
-                  {sessionsPayload.sessions.length}
-                </span>
-              )}
-            </button>
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+            <div className="rounded-2xl border border-stone-200/80 bg-stone-50/80 px-3.5 py-2.5 text-center">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Total Tables</p>
+              <p className="text-lg sm:text-xl font-black text-stone-900 mt-0.5">{tables.length}</p>
+            </div>
+            <div className="rounded-2xl border border-amber-200/80 bg-amber-50/80 px-3.5 py-2.5 text-center">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Occupied</p>
+              <p className="text-lg sm:text-xl font-black text-amber-900 mt-0.5">{sessionsPayload?.sessions?.length || 0}</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/80 px-3.5 py-2.5 text-center">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Live Orders</p>
+              <p className="text-lg sm:text-xl font-black text-emerald-900 mt-0.5">{payload?.orders?.length || 0}</p>
+            </div>
           </div>
         )}
+      </div>
 
-        {/* Global errors */}
-        {error ? (
-          <div className="mb-6 rounded-3xl border border-rose-400/20 bg-rose-400/10 px-5 py-4 text-sm text-rose-100">
-            {error}
-          </div>
-        ) : null}
+      {/* Waiter Navigation Tabs (Tablet-friendly 44px+ touch targets) */}
+      {role === "waiter" && (
+        <div className="flex flex-wrap gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={() => setActiveTab("tables")}
+            className={`min-h-[46px] rounded-2xl px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-extrabold transition cursor-pointer flex items-center gap-2 ${
+              activeTab === "tables"
+                ? "bg-amber-500 text-stone-950 shadow-sm border border-amber-400"
+                : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 hover:text-stone-900"
+            }`}
+          >
+            <Layers size={16} />
+            <span>Floors & Tables</span>
+            <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+              activeTab === "tables" ? "bg-amber-600/30 text-stone-950" : "bg-stone-100 text-stone-600"
+            }`}>
+              {tables.length}
+            </span>
+          </button>
 
-        {/* ============================================================= */}
-        {/* ORDERS TAB (existing behavior)                                 */}
-        {/* ============================================================= */}
-        {activeTab === "orders" && (
-          <>
-            {loading ? (
-              <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/10 bg-white/5 px-6 py-12 text-center">
-                <div className="h-10 w-10 rounded-2xl border-2 border-cyan-300/20 border-t-cyan-300 animate-spin" />
-                <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
-                  Loading orders...
-                </p>
-              </div>
-            ) : null}
+          <button
+            type="button"
+            onClick={() => setActiveTab("orders")}
+            className={`min-h-[46px] rounded-2xl px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-extrabold transition cursor-pointer flex items-center gap-2 ${
+              activeTab === "orders"
+                ? "bg-amber-500 text-stone-950 shadow-sm border border-amber-400"
+                : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 hover:text-stone-900"
+            }`}
+          >
+            <UtensilsCrossed size={16} />
+            <span>Live Orders</span>
+            {payload?.orders && payload.orders.length > 0 && (
+              <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                activeTab === "orders" ? "bg-amber-600/30 text-stone-950" : "bg-amber-100 text-amber-900"
+              }`}>
+                {payload.orders.length}
+              </span>
+            )}
+          </button>
 
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {(payload?.orders ?? []).map((order) => {
-                const inKitchen =
-                  order.status === "placed" ||
-                  order.status === "accepted" ||
-                  order.status === "preparing";
-                const urgent = inKitchen && isUrgent(order.created_at);
-                return (
-                <div
-                  key={order.id}
-                  className={`rounded-[28px] border p-5 shadow-[0_24px_50px_rgba(0,0,0,0.4)] transition-all backdrop-blur-xl ${
-                    urgent
-                      ? "border-rose-500/80 bg-rose-950/30 shadow-rose-950/50 animate-urgent-dwell"
-                      : order.status === "placed"
-                      ? "border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-[#0d0e12]/90 shadow-amber-950/30"
-                      : order.status === "preparing"
-                      ? "border-indigo-500/40 bg-gradient-to-b from-indigo-500/10 to-[#0d0e12]/90 shadow-indigo-950/30"
-                      : "border-white/10 bg-[#0d0e12]/90"
+          <button
+            type="button"
+            onClick={() => setActiveTab("sessions")}
+            className={`min-h-[46px] rounded-2xl px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-extrabold transition cursor-pointer flex items-center gap-2 ${
+              activeTab === "sessions"
+                ? "bg-amber-500 text-stone-950 shadow-sm border border-amber-400"
+                : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 hover:text-stone-900"
+            }`}
+          >
+            <Receipt size={16} />
+            <span>Active Bills & Settlement</span>
+            {sessionsPayload?.sessions && sessionsPayload.sessions.length > 0 && (
+              <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                activeTab === "sessions" ? "bg-amber-600/30 text-stone-950" : "bg-emerald-100 text-emerald-900"
+              }`}>
+                {sessionsPayload.sessions.length}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Global Error Banner */}
+      {error && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs sm:text-sm text-rose-800 flex items-center gap-3 shadow-sm">
+          <AlertCircle size={18} className="text-rose-600 shrink-0" />
+          <span className="font-medium">{error}</span>
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* TAB 1: FLOORS & TABLES MAP (Waiter Primary Operational Workspace)  */}
+      {/* =================================================================== */}
+      {activeTab === "tables" && role === "waiter" && (
+        <div className="space-y-6">
+          
+          {/* Floor Selection Bar (Canonical floor_id filtering) */}
+          <div className="flex flex-wrap items-center gap-2 pb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-stone-500 mr-1 flex items-center gap-1.5">
+              <Layers size={14} className="text-amber-600" />
+              Floor:
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedFloorId("all")}
+              className={`min-h-[44px] rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
+                selectedFloorId === "all"
+                  ? "bg-stone-900 text-white shadow-sm"
+                  : "bg-white text-stone-600 hover:bg-stone-100 border border-stone-200"
+              }`}
+            >
+              All Tables ({tables.length})
+            </button>
+
+            {floors.map((floor) => {
+              const count = tables.filter((t) => t.floor_id === floor.id).length;
+              return (
+                <button
+                  key={floor.id}
+                  type="button"
+                  onClick={() => setSelectedFloorId(floor.id)}
+                  className={`min-h-[44px] rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
+                    selectedFloorId === floor.id
+                      ? "bg-stone-900 text-white shadow-sm"
+                      : "bg-white text-stone-600 hover:bg-stone-100 border border-stone-200"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-extrabold">
-                        Table Station
-                      </p>
-                      <div className="mt-1 flex items-center gap-2.5">
-                        <h2 className="text-3xl font-black text-white tracking-tight">
-                          {order.table?.table_number ?? "Unknown"}
-                        </h2>
-                        {urgent && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/50 bg-rose-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-rose-200 shadow-md">
-                            <span className="h-2 w-2 animate-ping rounded-full bg-rose-400" />
-                            {dwellMinutes(order.created_at)} MIN DWELL
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <span
-                      className={`rounded-2xl border px-3.5 py-1.5 text-xs font-black uppercase tracking-[0.2em] shadow-sm ${STATUS_BADGE[order.status] ?? "bg-cyan-500/10 text-cyan-200 border-cyan-500/20"}`}
-                    >
-                      {order.status}
-                    </span>
-                  </div>
+                  {floor.name} ({count})
+                </button>
+              );
+            })}
 
-                  <div className="mt-5 space-y-3 rounded-2xl border border-white/10 bg-black/40 p-4 shadow-inner">
-                    {order.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between gap-3 text-sm text-slate-200"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className={`font-black text-white ${role === "kitchen" ? "text-lg md:text-xl text-amber-200" : "text-sm"}`}>
-                            {item.name}
-                          </p>
-                          {item.notes ? (
-                            <p className="text-xs text-amber-300 font-bold bg-amber-950/60 px-2.5 py-1 rounded-xl border border-amber-500/40 mt-1.5 inline-block">
-                              Note: {item.notes}
-                            </p>
-                          ) : null}
-                        </div>
-                        <span className={`rounded-2xl font-black shrink-0 ${role === "kitchen" ? "bg-amber-500/25 text-amber-300 border border-amber-500/40 px-3.5 py-1.5 text-lg shadow-md" : "bg-white/10 px-2.5 py-1 text-xs"}`}>
-                          {item.quantity}x
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+            {tables.some((t) => !t.floor_id) && (
+              <button
+                type="button"
+                onClick={() => setSelectedFloorId("unassigned")}
+                className={`min-h-[44px] rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
+                  selectedFloorId === "unassigned"
+                    ? "bg-stone-900 text-white shadow-sm"
+                    : "bg-white text-stone-600 hover:bg-stone-100 border border-stone-200"
+                }`}
+              >
+                Unassigned ({tables.filter((t) => !t.floor_id).length})
+              </button>
+            )}
+          </div>
 
-                  {order.notes ? (
-                    <p className="mt-4 rounded-2xl border border-amber-500/50 bg-amber-950/40 px-4 py-3 text-xs md:text-sm font-black text-amber-200 backdrop-blur">
-                      Kitchen Special Note: {order.notes}
-                    </p>
-                  ) : null}
-
-                  <div className="mt-4 flex items-center justify-between text-xs text-slate-400 font-medium">
-                    <span>
-                      Placed at {new Date(order.created_at).toLocaleTimeString()}
-                    </span>
-                    <span className="font-extrabold text-white text-sm">
-                      {formatCurrency(order.total_amount)}
-                    </span>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-2.5">
-                    {(ACTIONS[role][order.status] ?? []).map((action) => (
-                      <button
-                        key={action.status}
-                        type="button"
-                        disabled={updatingOrderId === order.id}
-                        onClick={() => updateStatus(order.id, action.status)}
-                        className={`rounded-2xl px-5 py-2.5 text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer border ${
-                          action.status === "accepted"
-                            ? "bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-400/40 shadow-indigo-600/30"
-                            : action.status === "preparing"
-                            ? "bg-purple-600 hover:bg-purple-500 text-white border-purple-400/40 shadow-purple-600/30"
-                            : action.status === "ready"
-                            ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 shadow-emerald-600/30"
-                            : action.status === "served"
-                            ? "bg-teal-600 hover:bg-teal-500 text-white border-teal-400/40 shadow-teal-600/30"
-                            : "bg-white/5 hover:bg-white/10 text-slate-300 border-white/10"
-                        } disabled:cursor-not-allowed disabled:opacity-60`}
-                      >
-                        {updatingOrderId === order.id
-                          ? "Updating..."
-                          : action.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                );
-              })}
+          {/* Tables Grid */}
+          {loadingStructure && tables.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 rounded-3xl border border-stone-200 bg-white px-6 py-16 text-center shadow-sm">
+              <div className="h-8 w-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
+              <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Loading dining tables...</p>
             </div>
-
-            {!loading && !payload?.orders.length ? (
-              <div className="mt-8 rounded-[28px] border border-dashed border-white/15 bg-[#0d0e12]/60 px-6 py-16 text-center text-slate-400 backdrop-blur-xl">
-                <p className="text-base font-extrabold text-slate-200">
-                  No active orders right now
-                </p>
-                <p className="mt-1.5 text-xs text-slate-400 font-medium">
-                  New dining table orders will stream in automatically.
-                </p>
-              </div>
-            ) : null}
-          </>
-        )}
-
-        {/* ============================================================= */}
-        {/* TABLES TAB (waiter only — session grouping + close action)     */}
-        {/* ============================================================= */}
-        {activeTab === "tables" && role === "waiter" && (
-          <>
-            {sessionsError ? (
-              <div className="mb-6 rounded-3xl border border-rose-500/30 bg-rose-950/40 px-5 py-4 text-sm text-rose-200 backdrop-blur-xl">
-                {sessionsError}
-              </div>
-            ) : null}
-            {sessionsLoading && !sessionsPayload ? (
-              <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/10 bg-[#0d0e12]/80 px-6 py-16 text-center backdrop-blur-xl">
-                <div className="h-10 w-10 rounded-2xl border-2 border-indigo-400/20 border-t-indigo-400 animate-spin" />
-                <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
-                  Loading active table sessions...
-                </p>
-              </div>
-            ) : null}
-
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-2">
-              {(sessionsPayload?.sessions ?? []).map((session) => {
-                const latestOrder = session.orders[session.orders.length - 1];
-                const latestStatus = latestOrder?.status ?? "—";
+          ) : filteredTables.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-stone-300 bg-white p-12 text-center text-stone-500 shadow-sm">
+              <UtensilsCrossed size={36} className="mx-auto mb-3 text-stone-400" />
+              <p className="text-base font-extrabold text-stone-800">No tables on this floor</p>
+              <p className="text-xs text-stone-500 mt-1">Select another floor or configure tables in Admin Settings.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredTables.map((table) => {
+                const activeSession = activeSessionByTableId.get(table.id);
+                const isOccupied = Boolean(activeSession);
+                const floorName = table.floor_id ? floorNameMap.get(table.floor_id) || "Floor" : "Unassigned";
 
                 return (
                   <div
-                    key={session.id}
-                    className="rounded-[28px] border border-white/10 bg-[#0d0e12]/90 p-6 shadow-[0_25px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+                    key={table.id}
+                    className={`rounded-3xl border p-5 transition-all shadow-sm flex flex-col justify-between ${
+                      isOccupied
+                        ? "border-amber-300 bg-amber-50/30"
+                        : "border-stone-200/90 bg-white hover:border-stone-300"
+                    }`}
                   >
-                    {/* Session header */}
+                    <div>
+                      {/* Card Header: Table # & Floor */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500">
+                            {floorName}
+                          </span>
+                          <h3 className="text-3xl font-black text-stone-900 tracking-tight mt-0.5">
+                            {table.table_number}
+                          </h3>
+                        </div>
+                        <span
+                          className={`rounded-xl border px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider ${
+                            isOccupied
+                              ? "border-amber-200 bg-amber-100/90 text-amber-900"
+                              : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                          }`}
+                        >
+                          {isOccupied ? "Occupied" : "Available"}
+                        </span>
+                      </div>
+
+                      {/* Seated Session Details */}
+                      {isOccupied && activeSession ? (
+                        <div className="mt-4 rounded-2xl border border-stone-200/80 bg-white p-3.5 space-y-2 shadow-xs">
+                          {activeSession.customer_name && (
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-stone-800 truncate">
+                              <User size={13} className="text-stone-400 shrink-0" />
+                              <span className="truncate">{activeSession.customer_name}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-stone-500 font-medium">Orders: {activeSession.order_count}</span>
+                            <span className="font-black text-amber-900 text-sm">
+                              {formatCurrency(activeSession.session_total)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] text-stone-500 pt-1.5 border-t border-stone-100 font-medium">
+                            <span className="flex items-center gap-1">
+                              <Clock size={11} className="text-stone-400" />
+                              {timeAgo(activeSession.opened_at)}
+                            </span>
+                            <span className={activeSession.payment_status === "paid" ? "text-emerald-700 font-bold" : "text-amber-800 font-bold"}>
+                              {activeSession.payment_status === "paid" ? "Paid ✓" : "Unpaid"}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-4 rounded-2xl border border-dashed border-stone-200 bg-stone-50/50 p-3.5 text-center text-xs text-stone-500">
+                          Ready for guests
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Primary Action Button (48px Touch Target) */}
+                    <div className="mt-5 space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => openTakeOrderForTable(table)}
+                        className="h-12 w-full rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-black uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                      >
+                        <Plus size={16} />
+                        <span>Take Order</span>
+                      </button>
+
+                      {isOccupied && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab("orders")}
+                            className="min-h-[40px] rounded-xl border border-stone-200 bg-stone-50 hover:bg-stone-100 text-[11px] font-bold text-stone-700 transition cursor-pointer text-center"
+                          >
+                            Orders
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab("sessions")}
+                            className="min-h-[40px] rounded-xl border border-stone-200 bg-stone-50 hover:bg-stone-100 text-[11px] font-bold text-stone-700 transition cursor-pointer text-center"
+                          >
+                            Bill
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* TAB 2: LIVE ORDERS QUEUE (Existing Order Lifecycle)                */}
+      {/* =================================================================== */}
+      {activeTab === "orders" && (
+        <div className="space-y-6">
+          {loadingOrders && !payload?.orders ? (
+            <div className="flex flex-col items-center gap-3 rounded-3xl border border-stone-200 bg-white px-6 py-16 text-center shadow-sm">
+              <div className="h-8 w-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
+              <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Loading orders...</p>
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {(payload?.orders ?? []).map((order) => {
+              const inKitchen =
+                order.status === "placed" ||
+                order.status === "accepted" ||
+                order.status === "preparing";
+              const urgent = inKitchen && isUrgent(order.created_at);
+
+              return (
+                <div
+                  key={order.id}
+                  className={`rounded-3xl border p-5 shadow-sm transition-all flex flex-col justify-between ${
+                    urgent
+                      ? "border-rose-300 bg-rose-50/40"
+                      : order.status === "placed"
+                      ? "border-amber-300 bg-amber-50/30"
+                      : order.status === "ready"
+                      ? "border-teal-300 bg-teal-50/30"
+                      : "border-stone-200/90 bg-white"
+                  }`}
+                >
+                  <div>
+                    {/* Order Table Header */}
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-extrabold">
-                          Table Session
+                        <p className="text-[10px] uppercase tracking-wider text-stone-500 font-extrabold">
+                          {order.table?.floor_name || "Dining Floor"}
                         </p>
-                        <h2 className="mt-1 text-3xl font-black text-white tracking-tight">
-                          {session.table?.table_number ?? "Unknown"}
-                        </h2>
-                        {session.customer_name && (
-                          <p className="mt-1 text-sm font-bold text-indigo-300">
-                            {session.customer_name}
-                            {session.customer_phone && (
-                              <span className="ml-2 text-xs text-slate-400 font-mono font-normal">
-                                {session.customer_phone}
-                              </span>
-                            )}
+                        <div className="mt-0.5 flex items-center gap-2">
+                          <h3 className="text-3xl font-black text-stone-900 tracking-tight">
+                            {order.table?.table_number ?? "Table"}
+                          </h3>
+                          {urgent && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-100 px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-rose-900">
+                              <span className="h-1.5 w-1.5 rounded-full bg-rose-600 animate-pulse" />
+                              {dwellMinutes(order.created_at)}m Dwell
+                            </span>
+                          )}
+                        </div>
+                        {order.staff_name && (
+                          <p className="text-xs text-stone-500 font-medium mt-0.5">
+                            Waiter: <span className="text-stone-800 font-bold">{order.staff_name}</span>
                           </p>
                         )}
                       </div>
-                      <div className="flex flex-col items-end gap-1.5">
-                        <div className="flex items-center gap-1.5">
-                          {session.payment_status === "paid" && (
-                            <span className="rounded-full border border-emerald-400/40 bg-emerald-400/20 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-200 shadow-sm">
-                              Paid ✓
-                            </span>
-                          )}
-                          <span className="rounded-full border border-indigo-400/30 bg-indigo-500/15 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-indigo-200">
-                            Active
+                      <span
+                        className={`rounded-xl border px-3 py-1 text-xs font-extrabold uppercase tracking-wider ${
+                          STATUS_BADGE[order.status] ?? "bg-stone-100 text-stone-800 border-stone-200"
+                        }`}
+                      >
+                        {order.status}
+                      </span>
+                    </div>
+
+                    {/* Items List */}
+                    <div className="mt-4 space-y-2 rounded-2xl border border-stone-200/70 bg-stone-50/80 p-3.5">
+                      {order.items.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between gap-3 text-sm text-stone-800">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-stone-900 text-xs sm:text-sm">{item.name}</p>
+                            {item.notes ? (
+                              <p className="text-[11px] text-amber-900 font-semibold bg-amber-100/70 px-2 py-0.5 rounded-lg border border-amber-200/80 mt-1 inline-block">
+                                Note: {item.notes}
+                              </p>
+                            ) : null}
+                          </div>
+                          <span className="rounded-lg font-black bg-white border border-stone-200 px-2.5 py-1 text-xs shrink-0 text-stone-900">
+                            {item.quantity}x
                           </span>
-                        </div>
-                        <span className="text-[11px] font-bold text-slate-400">
-                          {timeAgo(session.opened_at)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Session metrics */}
-                    <div className="mt-4 grid grid-cols-3 gap-3">
-                      <div className="rounded-2xl border border-white/8 bg-black/40 px-3 py-3 text-center">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
-                          Orders
-                        </p>
-                        <p className="mt-1 text-xl font-black text-white">
-                          {session.order_count}
-                        </p>
-                      </div>
-                      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-3 py-3 text-center">
-                        <p className="text-[10px] uppercase tracking-wider text-amber-400 font-bold">
-                          Total Bill
-                        </p>
-                        <p className="mt-1 text-xl font-black text-amber-300">
-                          {formatCurrency(session.session_total)}
-                        </p>
-                      </div>
-                      <div className="rounded-2xl border border-white/8 bg-black/40 px-3 py-3 text-center">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
-                          Latest Status
-                        </p>
-                        <p className="mt-1 text-sm font-extrabold text-slate-200 capitalize">
-                          {latestStatus}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Order breakdown */}
-                    <div className="mt-4 max-h-48 space-y-2.5 overflow-y-auto custom-scrollbar pr-1">
-                      {session.orders.map((order, idx) => (
-                        <div
-                          key={order.id}
-                          className="rounded-2xl border border-white/8 bg-black/30 px-4 py-3"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-slate-400">
-                                Order #{idx + 1}
-                              </span>
-                              <span
-                                className={`rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${STATUS_BADGE[order.status] ?? "bg-cyan-300/10 text-cyan-100 border-cyan-300/20"}`}
-                              >
-                                {order.status}
-                              </span>
-                            </div>
-                            <span className="text-sm font-extrabold text-white">
-                              {formatCurrency(order.total_amount)}
-                            </span>
-                          </div>
-                          <div className="mt-2 space-y-1">
-                            {order.items.map((item) => (
-                              <div
-                                key={item.id}
-                                className="flex items-center justify-between text-xs text-slate-300"
-                              >
-                                <span>
-                                  {item.name}{" "}
-                                  <span className="text-amber-400 font-black">
-                                    x{item.quantity}
-                                  </span>
-                                </span>
-                              </div>
-                            ))}
-                          </div>
                         </div>
                       ))}
                     </div>
 
-                    {/* Waiter Payment Settlement Authority Bar */}
-                    {role === "waiter" && (
-                      <div className="mt-5 border-t border-white/10 pt-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-slate-300 font-bold">
-                            {session.payment_status === "paid" ? "Bill Settled ✓" : "Collect & Settle Payment:"}
-                          </span>
-                          <span className="text-xs font-black text-amber-300">
-                            Bill Total: {formatCurrency(session.session_total)}
-                          </span>
-                        </div>
+                    {order.notes && (
+                      <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-950">
+                        Special Instructions: {order.notes}
+                      </p>
+                    )}
+                  </div>
 
-                        {session.payment_status !== "paid" && (
-                          <div className="mt-3 flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-1 rounded-2xl bg-black/50 p-1.5 border border-white/10 text-[11px] font-black">
-                              {["cash", "upi", "card"].map((m) => (
-                                <button
-                                  key={m}
-                                  type="button"
-                                  onClick={() =>
-                                    setStaffPaymentMethods((prev) => ({ ...prev, [session.id]: m }))
-                                  }
-                                  className={`px-3 py-1.5 rounded-xl uppercase transition cursor-pointer ${
-                                    (staffPaymentMethods[session.id] || "cash") === m
-                                      ? "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-md shadow-amber-500/20"
-                                      : "text-slate-400 hover:text-white"
-                                  }`}
-                                >
-                                  {m}
-                                </button>
-                              ))}
-                            </div>
+                  <div>
+                    <div className="mt-4 flex items-center justify-between text-xs text-stone-500 font-medium border-t border-stone-100 pt-3">
+                      <span>Placed {timeAgo(order.created_at)}</span>
+                      <span className="font-extrabold text-stone-900 text-sm">
+                        {formatCurrency(order.total_amount)}
+                      </span>
+                    </div>
 
-                            <button
-                              type="button"
-                              disabled={staffSettlingId === session.id}
-                              onClick={async () => {
-                                try {
-                                  setStaffSettlingId(session.id);
-                                  const method = staffPaymentMethods[session.id] || "cash";
-                                  const res = await fetch("/api/staff/sessions/payment", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({
-                                      token,
-                                      session_id: session.id,
-                                      payment_method: method,
-                                    }),
-                                  });
-                                  if (!res.ok) {
-                                    const d = await res.json();
-                                    throw new Error(d.error || "Failed to settle bill");
-                                  }
-                                  void loadSessions();
-                                } catch (e: any) {
-                                  alert(e.message || "Failed to settle payment");
-                                } finally {
-                                  setStaffSettlingId(null);
-                                }
-                              }}
-                              className="rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2 text-xs font-black text-slate-950 hover:from-emerald-400 hover:to-teal-400 transition shadow-lg shadow-emerald-500/25 disabled:opacity-50 cursor-pointer border border-emerald-400/30"
-                            >
-                              {staffSettlingId === session.id ? "Settling..." : "Mark Paid ✓"}
-                            </button>
-                          </div>
+                    {/* Action Buttons (44px+ touch targets) */}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {(ACTIONS[role][order.status] ?? []).map((action) => (
+                        <button
+                          key={action.status}
+                          type="button"
+                          disabled={updatingOrderId === order.id}
+                          onClick={() => updateStatus(order.id, action.status)}
+                          className={`min-h-[44px] rounded-xl px-4 py-2 text-xs font-extrabold uppercase tracking-wider transition shadow-xs cursor-pointer border ${
+                            action.status === "served"
+                              ? "bg-teal-600 hover:bg-teal-500 text-white border-teal-600"
+                              : action.status === "accepted"
+                              ? "bg-sky-600 hover:bg-sky-500 text-white border-sky-600"
+                              : action.status === "preparing"
+                              ? "bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-600"
+                              : action.status === "ready"
+                              ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-600"
+                              : "bg-stone-900 hover:bg-stone-800 text-white border-stone-900"
+                          } disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+                          {updatingOrderId === order.id ? "Updating..." : action.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {!loadingOrders && !payload?.orders.length ? (
+            <div className="rounded-3xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center text-stone-500 shadow-sm">
+              <UtensilsCrossed size={40} className="mx-auto mb-3 text-stone-400" />
+              <p className="text-base font-extrabold text-stone-800">No active orders right now</p>
+              <p className="mt-1 text-xs text-stone-500 font-medium">
+                {role === "waiter"
+                  ? "Go to 'Floors & Tables' to take new guest orders."
+                  : "Incoming kitchen orders will appear here in real time."}
+              </p>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* TAB 3: ACTIVE BILLS & SETTLEMENT (Waiter Settlement Surface)        */}
+      {/* =================================================================== */}
+      {activeTab === "sessions" && role === "waiter" && (
+        <div className="space-y-6">
+          {sessionsError && (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs sm:text-sm text-rose-800">
+              {sessionsError}
+            </div>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {(sessionsPayload?.sessions ?? []).map((session) => {
+              return (
+                <div
+                  key={session.id}
+                  className="rounded-3xl border border-stone-200/90 bg-white p-5 sm:p-6 shadow-sm flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Session Header */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-stone-500 font-extrabold">
+                          {session.table?.floor_name || "Dining Floor"}
+                        </p>
+                        <h3 className="mt-0.5 text-3xl font-black text-stone-900 tracking-tight">
+                          {session.table?.table_number ?? "Table"}
+                        </h3>
+                        {session.customer_name && (
+                          <p className="text-xs font-bold text-stone-700 mt-1 flex items-center gap-1">
+                            <User size={13} className="text-stone-400" />
+                            <span>{session.customer_name} {session.customer_phone ? `(${session.customer_phone})` : ""}</span>
+                          </p>
                         )}
+                      </div>
+
+                      <div className="flex flex-col items-end gap-1">
+                        <span
+                          className={`rounded-xl border px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider ${
+                            session.payment_status === "paid"
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                              : "border-amber-200 bg-amber-50 text-amber-900"
+                          }`}
+                        >
+                          {session.payment_status === "paid" ? "Paid ✓" : "Unpaid"}
+                        </span>
+                        <span className="text-[11px] font-medium text-stone-500">
+                          Opened {timeAgo(session.opened_at)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Orders Summary */}
+                    <div className="mt-4 rounded-2xl border border-stone-200/80 bg-stone-50/70 p-3.5 space-y-2 max-h-48 overflow-y-auto">
+                      <p className="text-xs font-bold uppercase tracking-wider text-stone-500">
+                        Session Orders ({session.orders.length})
+                      </p>
+                      {session.orders.map((o, idx) => (
+                        <div key={o.id} className="flex items-center justify-between text-xs text-stone-700 py-1 border-b border-stone-200/60 last:border-0">
+                          <span className="font-medium">Order #{idx + 1} ({o.items.length} items)</span>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${STATUS_BADGE[o.status] || ""}`}>
+                              {o.status}
+                            </span>
+                            <span className="font-bold text-stone-900">{formatCurrency(o.total_amount)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Payment & Settlement Controls (44px+ touch targets) */}
+                  <div className="mt-5 border-t border-stone-100 pt-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-stone-600 font-bold">Total Bill:</span>
+                      <span className="text-2xl font-black text-amber-900">{formatCurrency(session.session_total)}</span>
+                    </div>
+
+                    {session.payment_status !== "paid" ? (
+                      <div className="mt-3 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-1 rounded-xl bg-stone-100 p-1 border border-stone-200 text-xs font-bold">
+                            {["cash", "upi", "card"].map((m) => (
+                              <button
+                                key={m}
+                                type="button"
+                                onClick={() =>
+                                  setStaffPaymentMethods((prev) => ({ ...prev, [session.id]: m }))
+                                }
+                                className={`min-h-[36px] px-3.5 py-1 rounded-lg uppercase transition cursor-pointer ${
+                                  (staffPaymentMethods[session.id] || "cash") === m
+                                    ? "bg-amber-500 text-stone-950 font-black shadow-xs"
+                                    : "text-stone-600 hover:text-stone-900"
+                                }`}
+                              >
+                                {m}
+                              </button>
+                            ))}
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={staffSettlingId === session.id}
+                            onClick={async () => {
+                              try {
+                                setStaffSettlingId(session.id);
+                                const method = staffPaymentMethods[session.id] || "cash";
+                                const res = await fetch("/api/staff/sessions/payment", {
+                                  method: "POST",
+                                  headers: { 
+                                    "Content-Type": "application/json",
+                                    Authorization: `Bearer ${effectiveToken}`,
+                                  },
+                                  body: JSON.stringify({
+                                    session_id: session.id,
+                                    payment_method: method,
+                                  }),
+                                });
+                                if (!res.ok) {
+                                  const d = await res.json();
+                                  throw new Error(d.error || "Failed to settle payment");
+                                }
+                                void loadSessions();
+                              } catch (e: any) {
+                                alert(e.message || "Failed to record payment");
+                              } finally {
+                                setStaffSettlingId(null);
+                              }
+                            }}
+                            className="min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-500 px-5 py-2 text-xs font-black text-white uppercase tracking-wider transition shadow-sm cursor-pointer disabled:opacity-50"
+                          >
+                            {staffSettlingId === session.id ? "Settling..." : "Record Payment ✓"}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-3 flex items-center justify-between">
+                        <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+                          <CheckCircle2 size={15} /> Payment Settled
+                        </span>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch("/api/staff/sessions/close", {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  Authorization: `Bearer ${effectiveToken}`,
+                                },
+                                body: JSON.stringify({ session_id: session.id }),
+                              });
+                              if (!res.ok) {
+                                const d = await res.json();
+                                throw new Error(d.error || "Failed to close session");
+                              }
+                              void loadSessions();
+                              void loadFloorsAndTables();
+                            } catch (e: any) {
+                              alert(e.message || "Failed to close table session");
+                            }
+                          }}
+                          className="min-h-[44px] rounded-xl border border-stone-300 bg-stone-900 px-4 py-2 text-xs font-bold text-white hover:bg-stone-800 transition cursor-pointer"
+                        >
+                          Close Table Session
+                        </button>
                       </div>
                     )}
                   </div>
-                );
-              })}
+                </div>
+              );
+            })}
+          </div>
+
+          {!sessionsLoading && !sessionsPayload?.sessions?.length && (
+            <div className="rounded-3xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center text-stone-500 shadow-sm">
+              <Receipt size={40} className="mx-auto mb-3 text-stone-400" />
+              <p className="text-base font-extrabold text-stone-800">No active dining sessions</p>
+              <p className="mt-1 text-xs text-stone-500 font-medium">Occupied tables with open sessions will appear here for billing settlement.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* TAKE ORDER WORKSPACE MODAL (Tablet-First Responsive Workspace)     */}
+      {/* =================================================================== */}
+      {isTakeOrderOpen && orderTargetTable && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-xs p-2 sm:p-4 md:p-6 overflow-y-auto">
+          <div className="relative w-full max-w-5xl rounded-3xl border border-stone-200 bg-white shadow-2xl overflow-hidden flex flex-col max-h-[94vh]">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-stone-200 px-5 sm:px-6 py-4 bg-stone-50/90">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-amber-500 flex items-center justify-center font-black text-stone-950 shrink-0">
+                  <UtensilsCrossed size={20} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base sm:text-lg font-black text-stone-900">
+                      Take Order: Table {orderTargetTable.table_number}
+                    </h3>
+                    <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                      {orderTargetTable.floor_id ? floorNameMap.get(orderTargetTable.floor_id) || "Floor" : "Dining Floor"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-500 font-medium">Browse menu, select items, and submit kitchen ticket.</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsTakeOrderOpen(false)}
+                className="h-11 w-11 rounded-2xl border border-stone-200 bg-white flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition cursor-pointer"
+                title="Close"
+              >
+                <X size={20} />
+              </button>
             </div>
 
-            {!sessionsLoading && !sessionsPayload?.sessions.length ? (
-              <div className="mt-8 rounded-[28px] border border-dashed border-white/12 px-6 py-12 text-center text-slate-400">
-                <p className="text-sm font-semibold text-slate-300">
-                  No active table sessions right now
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Occupied tables with open orders will appear here.
-                </p>
+            {/* Modal Body: Responsive Layout (Side-by-side on desktop/tablet-landscape, stack on tablet-portrait/mobile) */}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+              
+              {/* Left Column: Menu Search & Items List (lg:col-span-7) */}
+              <div className="lg:col-span-7 border-r border-stone-200 flex flex-col overflow-hidden bg-white">
+                
+                {/* Search & Category Filter Bar */}
+                <div className="p-4 border-b border-stone-200 space-y-3 bg-stone-50/50">
+                  <div className="relative">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+                    <input
+                      type="text"
+                      placeholder="Search menu items..."
+                      value={menuSearchQuery}
+                      onChange={(e) => setMenuSearchQuery(e.target.value)}
+                      className="h-12 w-full rounded-xl border border-stone-200 bg-white py-2 pl-10 pr-4 text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:border-amber-500 focus:outline-none shadow-xs font-medium"
+                    />
+                  </div>
+
+                  {/* Category Filter Pills (44px touch targets) */}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategoryId("all")}
+                      className={`min-h-[40px] rounded-xl px-4 py-1.5 text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                        selectedCategoryId === "all"
+                          ? "bg-amber-500 text-stone-950 font-black shadow-xs"
+                          : "bg-white text-stone-600 hover:bg-stone-100 border border-stone-200"
+                      }`}
+                    >
+                      All ({menuItems.length})
+                    </button>
+                    {categories.map((cat) => {
+                      const count = menuItems.filter((i) => i.category_id === cat.id).length;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setSelectedCategoryId(cat.id)}
+                          className={`min-h-[40px] rounded-xl px-4 py-1.5 text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                            selectedCategoryId === cat.id
+                              ? "bg-amber-500 text-stone-950 font-black shadow-xs"
+                              : "bg-white text-stone-600 hover:bg-stone-100 border border-stone-200"
+                          }`}
+                        >
+                          {cat.name} ({count})
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Menu Items List */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                  {loadingMenu ? (
+                    <div className="py-12 text-center text-stone-500 text-xs font-bold">Loading menu items...</div>
+                  ) : filteredMenuItems.length === 0 ? (
+                    <div className="py-12 text-center text-stone-400 text-xs font-medium">No menu items match your search.</div>
+                  ) : (
+                    filteredMenuItems.map((item) => {
+                      const inCart = cart.find((i) => i.id === item.id);
+                      return (
+                        <div
+                          key={item.id}
+                          className={`rounded-2xl border p-3.5 sm:p-4 flex items-center justify-between gap-3 transition ${
+                            !item.is_available
+                              ? "border-stone-100 bg-stone-50/60 opacity-60"
+                              : inCart
+                              ? "border-amber-300 bg-amber-50/30"
+                              : "border-stone-200/90 bg-white hover:border-stone-300"
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-2.5 w-2.5 rounded-full shrink-0 ${
+                                  item.is_veg ? "bg-emerald-500" : "bg-rose-500"
+                                }`}
+                                title={item.is_veg ? "Vegetarian" : "Non-Vegetarian"}
+                              />
+                              <h4 className="text-xs sm:text-sm font-bold text-stone-900 truncate">{item.name}</h4>
+                            </div>
+                            <p className="text-xs sm:text-sm font-extrabold text-amber-900 mt-1">
+                              {formatCurrency(item.price)}
+                            </p>
+                            {item.description && (
+                              <p className="text-[11px] text-stone-500 mt-0.5 line-clamp-1">
+                                {item.description}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            {!item.is_available ? (
+                              <span className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] font-bold uppercase text-rose-800">
+                                Sold Out
+                              </span>
+                            ) : inCart ? (
+                              <div className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 p-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateQuantity(item.id, -1)}
+                                  className="h-10 w-10 rounded-lg bg-white border border-stone-200 flex items-center justify-center text-stone-700 hover:bg-stone-100 transition cursor-pointer"
+                                  title="Decrease quantity"
+                                >
+                                  <Minus size={15} />
+                                </button>
+                                <span className="w-7 text-center text-xs font-black text-amber-950">
+                                  {inCart.quantity}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateQuantity(item.id, 1)}
+                                  className="h-10 w-10 rounded-lg bg-amber-500 flex items-center justify-center text-stone-950 font-black hover:bg-amber-400 transition cursor-pointer"
+                                  title="Increase quantity"
+                                >
+                                  <Plus size={15} />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleAddToCart(item)}
+                                className="h-11 rounded-xl bg-stone-100 hover:bg-amber-500 hover:text-stone-950 border border-stone-200 px-4 text-xs font-extrabold text-stone-800 transition cursor-pointer flex items-center gap-1.5 shadow-xs active:scale-95"
+                              >
+                                <Plus size={15} /> Add
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Mobile / Portrait Tablet Sticky Bottom Cart Bar */}
+                {cart.length > 0 && (
+                  <div className="lg:hidden p-3 border-t border-stone-200 bg-amber-50/95 backdrop-blur-xs flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold text-stone-900">{cartTotalItems} items in cart</p>
+                      <p className="text-sm font-black text-amber-950">{formatCurrency(cartSubtotal)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowMobileCartDrawer((prev) => !prev)}
+                      className="min-h-[44px] rounded-xl bg-stone-900 hover:bg-stone-800 text-white px-4 py-2 text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 cursor-pointer"
+                    >
+                      <ShoppingBag size={15} />
+                      <span>{showMobileCartDrawer ? "Back to Menu" : "Review Cart"}</span>
+                    </button>
+                  </div>
+                )}
               </div>
-            ) : null}
-          </>
-        )}
-      </div>
+
+              {/* Right Column: Order Cart & Submission (lg:col-span-5) */}
+              <div
+                className={`lg:col-span-5 flex-col justify-between bg-stone-50/80 p-5 overflow-y-auto custom-scrollbar border-t lg:border-t-0 ${
+                  showMobileCartDrawer ? "flex" : "hidden lg:flex"
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-stone-700 flex items-center gap-2">
+                      <ShoppingBag size={15} className="text-amber-600" />
+                      Order Cart ({cartTotalItems} items)
+                    </span>
+                    {cart.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setCart([])}
+                        className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                      >
+                        Clear Cart
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Toast Feedback */}
+                  {orderToast && (
+                    <div
+                      className={`my-3 rounded-2xl p-3 text-xs font-bold border flex items-center gap-2 shadow-sm ${
+                        orderToast.type === "success"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                          : "border-rose-200 bg-rose-50 text-rose-900"
+                      }`}
+                    >
+                      {orderToast.type === "success" ? (
+                        <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                      ) : (
+                        <AlertCircle size={16} className="text-rose-600 shrink-0" />
+                      )}
+                      <span>{orderToast.message}</span>
+                    </div>
+                  )}
+
+                  {/* Cart Items List */}
+                  <div className="mt-3 space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+                    {cart.length === 0 ? (
+                      <div className="py-12 text-center text-stone-400 text-xs font-medium">
+                        Cart is empty. Select items from the menu to build the order ticket.
+                      </div>
+                    ) : (
+                      cart.map((cItem) => (
+                        <div key={cItem.id} className="rounded-2xl border border-stone-200 bg-white p-3 space-y-2 shadow-2xs">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h5 className="text-xs font-bold text-stone-900">{cItem.name}</h5>
+                              <p className="text-[11px] text-amber-900 font-extrabold">
+                                {formatCurrency(cItem.price)} × {cItem.quantity} = {formatCurrency(cItem.price * cItem.quantity)}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateQuantity(cItem.id, -1)}
+                                className="h-8 w-8 rounded-lg bg-stone-100 flex items-center justify-center text-stone-700 hover:bg-stone-200 transition cursor-pointer"
+                              >
+                                <Minus size={13} />
+                              </button>
+                              <span className="w-6 text-center text-xs font-black text-stone-900">
+                                {cItem.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateQuantity(cItem.id, 1)}
+                                className="h-8 w-8 rounded-lg bg-amber-500 flex items-center justify-center text-stone-950 font-black hover:bg-amber-400 transition cursor-pointer"
+                              >
+                                <Plus size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveItem(cItem.id)}
+                                className="h-8 w-8 ml-1 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 hover:bg-rose-100 transition cursor-pointer"
+                                title="Remove item"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+
+                          <input
+                            type="text"
+                            placeholder="Special item note (e.g. less spicy)..."
+                            value={cItem.notes}
+                            onChange={(e) => handleUpdateItemNotes(cItem.id, e.target.value)}
+                            className="w-full rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1 text-[11px] text-stone-800 placeholder-stone-400 focus:border-amber-400 focus:outline-none"
+                          />
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Kitchen Special Notes Input */}
+                  <div className="mt-4">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-stone-600 block mb-1">
+                      Kitchen Special Instructions
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Serve starters first, VIP table..."
+                      value={orderNotes}
+                      onChange={(e) => setOrderNotes(e.target.value)}
+                      className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 placeholder-stone-400 focus:border-amber-400 focus:outline-none shadow-2xs font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* Cart Subtotal & Place Order Submission (48px Primary CTA) */}
+                <div className="mt-5 border-t border-stone-200 pt-4 space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-stone-600 font-bold">Order Subtotal:</span>
+                    <span className="text-xl font-black text-stone-900">{formatCurrency(cartSubtotal)}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={cart.length === 0 || isSubmittingOrder}
+                    onClick={handleSubmitOrder}
+                    className="h-12 w-full rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-black uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-98"
+                  >
+                    {isSubmittingOrder ? (
+                      <span>Placing Order...</span>
+                    ) : (
+                      <>
+                        <span>Place Order Ticket</span>
+                        <ArrowRight size={16} />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

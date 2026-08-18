@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { resolveRestaurantContext } from "../../context";
+import { resolveRestaurantContext, RestaurantContextError } from "../../context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,8 +25,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Authentication credentials required for billing actions." }, { status: 401 });
     }
 
-    // Lookup user role in users_roles or fallback to profiles
-    let role = "waiter";
+    // Lookup user role — fail closed if no valid role found
+    let role: string | null = null;
     const { data: roleData } = await db
       .from("users_roles")
       .select("role")
@@ -44,6 +44,13 @@ export async function POST(request: Request) {
         .maybeSingle();
       if (profile?.role === "super_admin") role = "super_admin";
       else if (profile?.role === "client_admin") role = "admin";
+    }
+
+    if (!role) {
+      return NextResponse.json(
+        { error: "Forbidden: No valid role found for billing operations. Authorization required." },
+        { status: 403 }
+      );
     }
 
     if (action === "mark_paid") {
@@ -188,6 +195,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (err: unknown) {
+    if (err instanceof RestaurantContextError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

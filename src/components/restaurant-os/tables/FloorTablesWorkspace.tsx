@@ -16,13 +16,15 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { TableQrModal } from './TableQrModal';
-import { AddTableModal } from './AddTableModal';
+import { AddTableModal, FloorOption } from './AddTableModal';
 import { DeleteTableModal } from './DeleteTableModal';
 
 export interface TableItem {
   id: string;
   table_number: string;
   table_token: string;
+  floor_id: string | null;
+  floor_name: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -50,9 +52,10 @@ export interface SessionData {
 interface FloorTablesWorkspaceProps {
   tables: TableItem[];
   sessions: SessionData[];
+  floors: FloorOption[];
   restaurantName: string;
   currency: string;
-  onAddTable: (tableNumber: string) => Promise<boolean>;
+  onAddTable: (tableNumber: string, floorId: string | null) => Promise<boolean>;
   onDeleteTable: (tableId: string) => Promise<void>;
   onExportAllQrs: () => Promise<void>;
   onRefresh: () => void;
@@ -63,6 +66,7 @@ interface FloorTablesWorkspaceProps {
 export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
   tables,
   sessions,
+  floors,
   restaurantName,
   currency,
   onAddTable,
@@ -92,43 +96,39 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
     return map;
   }, [sessions]);
 
-  // Derive floor/section categories from existing naming conventions
+  // Build dynamic floor/section tabs from persisted floor data
   const sections = useMemo(() => {
-    const list = [
+    const list: Array<{ id: string; label: string; count: number }> = [
       { id: 'all', label: 'All Tables', count: tables.length },
-      {
-        id: 'main',
-        label: 'Main Dining',
-        count: tables.filter((t) => t.table_number.startsWith('T-') || (!t.table_number.includes('-') && !t.table_number.startsWith('P') && !t.table_number.startsWith('TR'))).length,
-      },
-      {
-        id: 'private',
-        label: 'Private Dining',
-        count: tables.filter((t) => t.table_number.startsWith('PD-') || t.table_number.startsWith('VIP')).length,
-      },
-      {
-        id: 'terrace',
-        label: 'Terrace & Outdoor',
-        count: tables.filter((t) => t.table_number.startsWith('TR-') || t.table_number.startsWith('P-') || t.table_number.startsWith('O-')).length,
-      },
     ];
-    return list;
-  }, [tables]);
 
-  // Filtered tables
+    // Add a tab for each active floor
+    floors.forEach((floor) => {
+      list.push({
+        id: floor.id,
+        label: floor.name,
+        count: tables.filter((t) => t.floor_id === floor.id).length,
+      });
+    });
+
+    // Add Unassigned tab if there are tables without a floor
+    const unassignedCount = tables.filter((t) => !t.floor_id).length;
+    if (unassignedCount > 0) {
+      list.push({ id: 'unassigned', label: 'Unassigned', count: unassignedCount });
+    }
+
+    return list;
+  }, [tables, floors]);
+
+  // Filtered tables using persisted floor_id (not prefix heuristics)
   const filteredTables = useMemo(() => {
     return tables
       .filter((table) => {
-        // Section Filter
-        if (selectedSection === 'main') {
-          const isMain = table.table_number.startsWith('T-') || (!table.table_number.includes('-') && !table.table_number.startsWith('P') && !table.table_number.startsWith('TR'));
-          if (!isMain) return false;
-        } else if (selectedSection === 'private') {
-          const isPrivate = table.table_number.startsWith('PD-') || table.table_number.startsWith('VIP');
-          if (!isPrivate) return false;
-        } else if (selectedSection === 'terrace') {
-          const isTerrace = table.table_number.startsWith('TR-') || table.table_number.startsWith('P-') || table.table_number.startsWith('O-');
-          if (!isTerrace) return false;
+        // Floor/section filter using canonical floor_id
+        if (selectedSection === 'unassigned') {
+          if (table.floor_id) return false;
+        } else if (selectedSection !== 'all') {
+          if (table.floor_id !== selectedSection) return false;
         }
 
         const session = activeSessionMap.get(table.table_number.toLowerCase());
@@ -143,7 +143,8 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
           const q = searchQuery.toLowerCase();
           const matchesNum = table.table_number.toLowerCase().includes(q);
           const matchesGuest = session?.customer_name?.toLowerCase().includes(q);
-          return matchesNum || !!matchesGuest;
+          const matchesFloor = table.floor_name?.toLowerCase().includes(q);
+          return matchesNum || !!matchesGuest || !!matchesFloor;
         }
 
         return true;
@@ -208,6 +209,11 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
     const hrs = Math.floor(mins / 60);
     return `${hrs}h ${mins % 60}m seated`;
   };
+
+  // Determine the default floor for the Add Table modal
+  const defaultFloorForModal = selectedSection !== 'all' && selectedSection !== 'unassigned'
+    ? selectedSection
+    : floors.length > 0 ? floors[0].id : null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-150">
@@ -350,9 +356,15 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                         <h3 className="text-sm font-bold text-slate-900 font-mono">
                           Table {table.table_number}
                         </h3>
-                        <p className="text-[10px] text-slate-400 font-mono">
-                          Token: {table.table_token.slice(0, 8)}...
-                        </p>
+                        {table.floor_name ? (
+                          <p className="text-[10px] text-amber-700 font-semibold">
+                            {table.floor_name}
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-slate-400 font-mono">
+                            Token: {table.table_token.slice(0, 8)}...
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -500,6 +512,8 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
         onClose={() => setIsAddModalOpen(false)}
         onAddTable={onAddTable}
         existingTableNumbers={tables.map((t) => t.table_number)}
+        floors={floors}
+        defaultFloorId={defaultFloorForModal}
       />
 
       <DeleteTableModal

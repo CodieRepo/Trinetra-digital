@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { resolveRestaurantContext } from "../../context";
+import { resolveRestaurantContext, RestaurantContextError } from "../../context";
 import QRCode from "qrcode";
 import JSZip from "jszip";
 
@@ -69,8 +69,12 @@ export async function POST(request: Request) {
     const downloadUrl = `data:application/zip;base64,${base64Zip}`;
 
     return NextResponse.json({ success: true, download_url: downloadUrl });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("❌ QR Generation Error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    if (err instanceof RestaurantContextError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

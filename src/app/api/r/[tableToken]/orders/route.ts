@@ -134,7 +134,7 @@ export async function POST(
       });
     }
 
-    // Insert order record (status: 'placed')
+    // Insert order record (status: 'placed', source: 'qr', staff: null)
     const { data: order, error: orderErr } = await supabase
       .from("restaurant_orders")
       .insert({
@@ -146,6 +146,8 @@ export async function POST(
         status: "placed",
         notes: notes || null,
         total_amount: totalAmount,
+        order_source: "qr",
+        created_by_staff_id: null,
       })
       .select("id")
       .single();
