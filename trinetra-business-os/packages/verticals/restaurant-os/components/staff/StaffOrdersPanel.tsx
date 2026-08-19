@@ -239,7 +239,7 @@ export default function StaffOrdersPanel({
   const [payload, setPayload] = useState<StaffPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingOrders, setLoadingOrders] = useState(true);
-  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [updatingOrderIds, setUpdatingOrderIds] = useState<Set<string>>(new Set());
 
   // --- Sessions State ---
   const [sessionsPayload, setSessionsPayload] = useState<SessionsPayload | null>(null);
@@ -379,8 +379,10 @@ export default function StaffOrdersPanel({
 
   // --- Update Order Status ---
   async function updateStatus(orderId: string, status: string) {
+    // Duplicate-action guard: prevent rapid repeated taps
+    if (updatingOrderIds.has(orderId)) return;
     try {
-      setUpdatingOrderId(orderId);
+      setUpdatingOrderIds((prev) => new Set(prev).add(orderId));
       const res = await fetch(`/api/staff/orders/${orderId}/status`, {
         method: "POST",
         headers: {
@@ -397,7 +399,11 @@ export default function StaffOrdersPanel({
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : "Failed to update order status.");
     } finally {
-      setUpdatingOrderId(null);
+      setUpdatingOrderIds((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
     }
   }
 
@@ -923,6 +929,11 @@ export default function StaffOrdersPanel({
                             Waiter: <span className="text-stone-800 font-bold">{order.staff_name}</span>
                           </p>
                         )}
+                        {order.order_source && (
+                          <span className="inline-flex items-center rounded-lg border border-stone-200 bg-stone-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-stone-600 mt-1">
+                            {order.order_source === "waiter" ? "Waiter Order" : order.order_source === "qr" ? "QR Order" : order.order_source}
+                          </span>
+                        )}
                       </div>
                       <span
                         className={`rounded-xl border px-3 py-1 text-xs font-extrabold uppercase tracking-wider ${
@@ -967,15 +978,15 @@ export default function StaffOrdersPanel({
                       </span>
                     </div>
 
-                    {/* Action Buttons (44px+ touch targets) */}
+                    {/* Action Buttons (48px+ touch targets — H-4A) */}
                     <div className="mt-4 flex flex-wrap gap-2">
                       {(ACTIONS[role][order.status] ?? []).map((action) => (
                         <button
                           key={action.status}
                           type="button"
-                          disabled={updatingOrderId === order.id}
+                          disabled={updatingOrderIds.has(order.id)}
                           onClick={() => updateStatus(order.id, action.status)}
-                          className={`min-h-[44px] rounded-xl px-4 py-2 text-xs font-extrabold uppercase tracking-wider transition shadow-xs cursor-pointer border ${
+                          className={`min-h-[48px] rounded-xl px-4 py-2 text-xs font-extrabold uppercase tracking-wider transition shadow-xs cursor-pointer border ${
                             action.status === "served"
                               ? "bg-teal-600 hover:bg-teal-500 text-white border-teal-600"
                               : action.status === "accepted"
@@ -987,7 +998,7 @@ export default function StaffOrdersPanel({
                               : "bg-stone-900 hover:bg-stone-800 text-white border-stone-900"
                           } disabled:cursor-not-allowed disabled:opacity-50`}
                         >
-                          {updatingOrderId === order.id ? "Updating..." : action.label}
+                          {updatingOrderIds.has(order.id) ? "Updating..." : action.label}
                         </button>
                       ))}
                     </div>
