@@ -19,12 +19,24 @@ export async function GET(
     // Query table by table_token
     const { data: table, error: tableErr } = await supabase
       .from("restaurant_tables")
-      .select("id, restaurant_id, table_number, table_token, is_active")
+      .select("id, restaurant_id, table_number, table_token, floor_id, is_active")
       .eq("table_token", tableToken)
       .maybeSingle();
 
     if (tableErr || !table || table.is_active === false) {
       return NextResponse.json({ error: "Table not found or inactive" }, { status: 404 });
+    }
+
+    let floorName: string | null = null;
+    if (table.floor_id) {
+      const { data: floor } = await supabase
+        .from("restaurant_floors")
+        .select("name")
+        .eq("id", table.floor_id)
+        .maybeSingle();
+      if (floor) {
+        floorName = floor.name;
+      }
     }
 
     // Query restaurant info (standard guaranteed columns only)
@@ -89,6 +101,8 @@ export async function GET(
         id: table.id,
         table_number: table.table_number,
         table_token: table.table_token,
+        floor_id: table.floor_id || null,
+        floor_name: floorName || "Dining Area",
       },
       menu: {
         categories: categories || [],

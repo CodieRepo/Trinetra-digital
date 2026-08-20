@@ -2,7 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Minus, Plus, QrCode, ShoppingBag, User, Search } from "lucide-react";
+import {
+  Minus,
+  Plus,
+  QrCode,
+  ShoppingBag,
+  User,
+  Search,
+  Check,
+  AlertCircle,
+  X,
+  Sparkles,
+  ChevronRight,
+  UtensilsCrossed,
+} from "lucide-react";
 import SessionSummaryBar, {
   type SessionOrderSummary,
 } from "./SessionSummaryBar";
@@ -37,6 +50,8 @@ type MenuPayload = {
     id: string;
     table_number: string;
     table_token: string;
+    floor_id?: string | null;
+    floor_name?: string | null;
   };
   menu: {
     categories: MenuCategory[];
@@ -51,16 +66,19 @@ type CartEntry = {
 const SESSION_KEY = "akuafi:restaurant:session-token";
 
 function getOrCreateSessionToken() {
-  const existing = window.localStorage.getItem(SESSION_KEY);
+  const existing = typeof window !== "undefined" ? window.localStorage.getItem(SESSION_KEY) : null;
   if (existing) return existing;
   const created =
-    window.crypto?.randomUUID?.() ??
-    "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (char) => {
-      const randomValue = Math.floor(Math.random() * 16);
-      const nextValue = char === "x" ? randomValue : (randomValue & 0x3) | 0x8;
-      return nextValue.toString(16);
-    });
-  window.localStorage.setItem(SESSION_KEY, created);
+    typeof window !== "undefined" && window.crypto?.randomUUID?.()
+      ? window.crypto.randomUUID()
+      : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (char) => {
+          const randomValue = Math.floor(Math.random() * 16);
+          const nextValue = char === "x" ? randomValue : (randomValue & 0x3) | 0x8;
+          return nextValue.toString(16);
+        });
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(SESSION_KEY, created);
+  }
   return created;
 }
 
@@ -101,20 +119,38 @@ export default function PublicRestaurantMenu({
     latestOrderId: string | null;
   } | null>(null);
 
+  // Mobile cart drawer state
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+
+  // Category filter state
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
+
+  // Search and Dietary filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [vegFilter, setVegFilter] = useState<"all" | "veg" | "non-veg">("all");
+
   // --- Identity gate state ---
   const [showIdentityModal, setShowIdentityModal] = useState(false);
   const [identityName, setIdentityName] = useState("");
   const [identityPhone, setIdentityPhone] = useState("");
   const [identityError, setIdentityError] = useState<string | null>(null);
   const [identitySubmitting, setIdentitySubmitting] = useState(false);
-  // Whether this session already has identity set (loaded from API)
   const [hasIdentity, setHasIdentity] = useState(false);
-  // Whether the session is marked as paid (blocks new orders)
   const [sessionPaid, setSessionPaid] = useState(false);
 
+  // Placement success toast
+  const [placedSuccessInfo, setPlacedSuccessInfo] = useState<{
+    orderId: string;
+    tableNumber: string;
+    itemsCount: number;
+    total: number;
+  } | null>(null);
+
   const clearStoredSession = useCallback(() => {
-    window.localStorage.removeItem(getOrderKey(tableToken));
-    window.localStorage.removeItem(getSessionKey(tableToken));
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(getOrderKey(tableToken));
+      window.localStorage.removeItem(getSessionKey(tableToken));
+    }
     setSessionData(null);
   }, [tableToken]);
 
@@ -130,7 +166,7 @@ export default function PublicRestaurantMenu({
         if (!res.ok) {
           throw new Error(
             res.status === 404
-              ? "This table QR is inactive."
+              ? "This table QR is inactive or not found."
               : "Failed to load menu.",
           );
         }
@@ -139,15 +175,10 @@ export default function PublicRestaurantMenu({
         if (!active) return;
 
         const sessionToken = getOrCreateSessionToken();
-        const existingOrderId = window.localStorage.getItem(
-          getOrderKey(tableToken),
-        );
-        const storedSessionId = window.localStorage.getItem(
-          getSessionKey(tableToken),
-        );
+        const existingOrderId = typeof window !== "undefined" ? window.localStorage.getItem(getOrderKey(tableToken)) : null;
+        const storedSessionId = typeof window !== "undefined" ? window.localStorage.getItem(getSessionKey(tableToken)) : null;
 
-        // --- Session-aware order detection ---
-        // Try to load session summary first (covers multi-order case)
+        // Session-aware order detection
         const sessionParams = new URLSearchParams({
           session_token: sessionToken,
         });
@@ -168,13 +199,10 @@ export default function PublicRestaurantMenu({
             Array.isArray(sess.orders) &&
             sess.orders.length > 0
           ) {
-            // Valid active session with orders
-            window.localStorage.setItem(
-              getSessionKey(tableToken),
-              sess.session.id,
-            );
+            if (typeof window !== "undefined") {
+              window.localStorage.setItem(getSessionKey(tableToken), sess.session.id);
+            }
 
-            // Track identity state from server
             if (sess.session.customer_name) {
               setHasIdentity(true);
             }
@@ -182,7 +210,6 @@ export default function PublicRestaurantMenu({
               setSessionPaid(true);
             }
 
-            // Find the latest non-closed/cancelled order
             const latestActive = [...sess.orders]
               .reverse()
               .find(
@@ -191,16 +218,13 @@ export default function PublicRestaurantMenu({
               );
 
             if (latestActive && !browseMode) {
-              // Active order exists + not browsing → redirect to order tracking
-              window.localStorage.setItem(
-                getOrderKey(tableToken),
-                latestActive.id,
-              );
+              if (typeof window !== "undefined") {
+                window.localStorage.setItem(getOrderKey(tableToken), latestActive.id);
+              }
               navigate(`/r/${tableToken}/order/${latestActive.id}`, { replace: true });
               return;
             }
 
-            // Browse mode (or all orders are closed/served) → show session bar
             if (latestActive || sess.orders.length > 0) {
               setSessionData({
                 sessionId: sess.session.id,
@@ -215,19 +239,15 @@ export default function PublicRestaurantMenu({
               });
             }
           } else if (sess.session && sess.session.status === "closed") {
-            // Session was closed — clear stale references
-            window.localStorage.removeItem(getSessionKey(tableToken));
-            window.localStorage.removeItem(getOrderKey(tableToken));
+            clearStoredSession();
           } else if (
             sess.session &&
             sess.session.status === "active" &&
             (!sess.orders || sess.orders.length === 0)
           ) {
-            // Session exists with no orders yet (identity might be set)
-            window.localStorage.setItem(
-              getSessionKey(tableToken),
-              sess.session.id,
-            );
+            if (typeof window !== "undefined") {
+              window.localStorage.setItem(getSessionKey(tableToken), sess.session.id);
+            }
             if (sess.session.customer_name) {
               setHasIdentity(true);
             }
@@ -235,8 +255,6 @@ export default function PublicRestaurantMenu({
               setSessionPaid(true);
             }
           } else {
-            // No session found — might have a stale single order from before sessions existed
-            // Fall back to single-order check for backward compat
             if (existingOrderId) {
               const orderRes = await fetch(
                 `/api/r/orders/${existingOrderId}?session_token=${sessionToken}`,
@@ -247,70 +265,25 @@ export default function PublicRestaurantMenu({
                 const status = orderData?.order?.status;
                 const orderTableId = orderData?.order?.table_id;
 
-                if (
-                  !status ||
-                  !orderTableId ||
-                  orderTableId !== data.table.id
-                ) {
-                  window.localStorage.removeItem(getOrderKey(tableToken));
+                if (!status || !orderTableId || orderTableId !== data.table.id) {
+                  if (typeof window !== "undefined") window.localStorage.removeItem(getOrderKey(tableToken));
                 } else if (status === "closed" || status === "cancelled") {
-                  window.localStorage.removeItem(getOrderKey(tableToken));
+                  if (typeof window !== "undefined") window.localStorage.removeItem(getOrderKey(tableToken));
                 } else if (!browseMode) {
                   navigate(`/r/${tableToken}/order/${existingOrderId}`, { replace: true });
                   return;
-                } else {
-                  // Legacy single-order browse mode: wrap as session format
-                  const items = Array.isArray(orderData.items)
-                    ? orderData.items.map(
-                        (it: {
-                          id: string;
-                          name: string;
-                          price: number;
-                          quantity: number;
-                          notes: string | null;
-                        }) => ({
-                          id: it.id,
-                          name: it.name,
-                          price: Number(it.price),
-                          quantity: it.quantity,
-                          notes: it.notes ?? null,
-                        }),
-                      )
-                    : [];
-                  setSessionData({
-                    sessionId: "",
-                    orders: [
-                      {
-                        id: existingOrderId,
-                        status,
-                        notes: orderData.order?.notes ?? null,
-                        total_amount: Number(
-                          orderData.order?.total_amount ?? 0,
-                        ),
-                        created_at: orderData.order?.created_at ?? "",
-                        items,
-                      },
-                    ],
-                    sessionTotal: Number(orderData.order?.total_amount ?? 0),
-                    latestOrderId: existingOrderId,
-                  });
                 }
               } else {
-                window.localStorage.removeItem(getOrderKey(tableToken));
+                if (typeof window !== "undefined") window.localStorage.removeItem(getOrderKey(tableToken));
               }
             }
           }
-        } else {
-          // Session API failed — fall back to clearing stale data
-          window.localStorage.removeItem(getSessionKey(tableToken));
         }
 
         setPayload(data);
       } catch (loadError) {
         setError(
-          loadError instanceof Error
-            ? loadError.message
-            : "Failed to load menu.",
+          loadError instanceof Error ? loadError.message : "Failed to load menu.",
         );
       } finally {
         if (active) setLoading(false);
@@ -321,84 +294,9 @@ export default function PublicRestaurantMenu({
     return () => {
       active = false;
     };
-  }, [browseMode, navigate, tableToken]);
+  }, [browseMode, clearStoredSession, navigate, tableToken]);
 
-  // Poll session summary every 30s in browse mode
-  useEffect(() => {
-    if (!sessionData || !payload) return;
-
-    const interval = window.setInterval(async () => {
-      const sessionToken = window.localStorage.getItem(SESSION_KEY);
-      if (!sessionToken) return;
-      try {
-        const params = new URLSearchParams({ session_token: sessionToken });
-        if (sessionData.sessionId) {
-          params.set("table_session_id", sessionData.sessionId);
-        }
-        const res = await fetch(
-          `/api/r/${tableToken}/session?${params.toString()}`,
-          { cache: "no-store" },
-        );
-        if (!res.ok) {
-          clearStoredSession();
-          return;
-        }
-        const sess = await res.json();
-
-        if (!sess.session || sess.session.status === "closed") {
-          clearStoredSession();
-          return;
-        }
-
-        if (!Array.isArray(sess.orders) || sess.orders.length === 0) {
-          clearStoredSession();
-          return;
-        }
-
-        // Check if all orders are terminal
-        const allTerminal = sess.orders.every(
-          (o: SessionOrderSummary) =>
-            o.status === "closed" || o.status === "cancelled",
-        );
-        if (allTerminal) {
-          clearStoredSession();
-          return;
-        }
-
-        const latestActive = [...sess.orders]
-          .reverse()
-          .find(
-            (o: SessionOrderSummary) =>
-              o.status !== "closed" && o.status !== "cancelled",
-          );
-
-        setSessionData({
-          sessionId: sess.session.id,
-          orders: sess.orders,
-          sessionTotal: Number(
-            sess.session?.session_total ?? sess.session_total ?? 0,
-          ),
-          latestOrderId:
-            latestActive?.id ?? sess.orders[sess.orders.length - 1]?.id ?? null,
-        });
-
-        // Sync payment state from poll
-        if (sess.session.payment_status === "paid") {
-          setSessionPaid(true);
-        } else {
-          setSessionPaid(false);
-        }
-      } catch {
-        // Network error — keep current state, retry next interval
-      }
-    }, 30_000);
-
-    return () => window.clearInterval(interval);
-  }, [sessionData, payload, tableToken, clearStoredSession]);
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [vegFilter, setVegFilter] = useState<"all" | "veg" | "non-veg">("all");
-
+  // Group and filter items
   const groupedItems = useMemo(() => {
     let items = payload?.menu.items ?? [];
 
@@ -417,13 +315,19 @@ export default function PublicRestaurantMenu({
       items = items.filter((item) => !item.is_veg);
     }
 
-    return (payload?.menu.categories ?? [])
-      .map((category) => ({
-        ...category,
-        items: items.filter((item) => item.category_id === category.id),
-      }))
-      .filter((cat) => cat.items.length > 0);
-  }, [payload, searchQuery, vegFilter]);
+    const categories = (payload?.menu.categories ?? []).map((category) => ({
+      ...category,
+      items: items.filter((item) => item.category_id === category.id),
+    }));
+
+    if (selectedCategoryId === "all") {
+      return categories.filter((cat) => cat.items.length > 0);
+    }
+
+    return categories.filter(
+      (cat) => cat.id === selectedCategoryId && cat.items.length > 0,
+    );
+  }, [payload, searchQuery, vegFilter, selectedCategoryId]);
 
   const total = useMemo(() => {
     if (!payload) return 0;
@@ -434,8 +338,7 @@ export default function PublicRestaurantMenu({
   }, [cart, payload]);
 
   const cartItemsCount = useMemo(
-    () =>
-      Object.values(cart).reduce((sum, entry) => sum + entry.quantity, 0),
+    () => Object.values(cart).reduce((sum, entry) => sum + entry.quantity, 0),
     [cart],
   );
 
@@ -469,9 +372,10 @@ export default function PublicRestaurantMenu({
       setIdentitySubmitting(true);
       setIdentityError(null);
       const sessionToken = getOrCreateSessionToken();
-      const storedSessionId = window.localStorage.getItem(
-        getSessionKey(tableToken),
-      );
+      const storedSessionId =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem(getSessionKey(tableToken))
+          : null;
       const res = await fetch(`/api/r/${tableToken}/session/identify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -488,14 +392,12 @@ export default function PublicRestaurantMenu({
         throw new Error(data.error || "Failed to save identity.");
       }
 
-      // Store session id if newly created
-      if (data.session_id) {
+      if (data.session_id && typeof window !== "undefined") {
         window.localStorage.setItem(getSessionKey(tableToken), data.session_id);
       }
       setHasIdentity(true);
       setShowIdentityModal(false);
 
-      // Now proceed to place the order
       await placeOrderInner();
     } catch (identityErr) {
       setIdentityError(
@@ -517,11 +419,10 @@ export default function PublicRestaurantMenu({
     }));
 
     if (!items.length) {
-      setError("Add at least one item before placing the order.");
+      setError("Add at least one item before placing your order.");
       return;
     }
 
-    // Gate: if identity not yet set, show modal instead
     if (!hasIdentity) {
       setShowIdentityModal(true);
       return;
@@ -539,7 +440,7 @@ export default function PublicRestaurantMenu({
     }));
 
     if (!items.length) {
-      setError("Add at least one item before placing the order.");
+      setError("Add at least one item before placing your order.");
       return;
     }
 
@@ -547,9 +448,10 @@ export default function PublicRestaurantMenu({
       setSubmitting(true);
       setError(null);
       const sessionToken = getOrCreateSessionToken();
-      const storedSessionId = window.localStorage.getItem(
-        getSessionKey(tableToken),
-      );
+      const storedSessionId =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem(getSessionKey(tableToken))
+          : null;
       const res = await fetch(`/api/r/${tableToken}/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -563,327 +465,593 @@ export default function PublicRestaurantMenu({
 
       const data = await res.json();
       if (!res.ok) {
-        // If server says identity required (race condition / stale state)
         if (data.requires_identity) {
           setHasIdentity(false);
           setShowIdentityModal(true);
           return;
         }
-        // If server says session is paid
         if (data.session_paid) {
           setSessionPaid(true);
-          setError(
-            "This table's bill has been settled. No new orders allowed.",
-          );
+          setError("This table session has already been settled.");
           return;
         }
-        throw new Error(data.error || "Failed to place order.");
+        throw new Error(data.error || "We couldn't place your order. Please try again.");
       }
 
-      window.localStorage.setItem(getOrderKey(tableToken), data.order_id);
-      if (data.table_session_id) {
-        window.localStorage.setItem(
-          getSessionKey(tableToken),
-          data.table_session_id,
-        );
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(getOrderKey(tableToken), data.order_id);
+        if (data.table_session_id) {
+          window.localStorage.setItem(getSessionKey(tableToken), data.table_session_id);
+        }
       }
-      navigate(`/r/${tableToken}/order/${data.order_id}`);
+
+      setPlacedSuccessInfo({
+        orderId: data.order_id,
+        tableNumber: payload.table.table_number,
+        itemsCount: cartItemsCount,
+        total,
+      });
+
+      // Clear cart
+      setCart({});
+      setIsCartDrawerOpen(false);
+
+      // Transition to order tracking
+      setTimeout(() => {
+        navigate(`/r/${tableToken}/order/${data.order_id}`);
+      }, 1200);
     } catch (submitError) {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "Failed to place order.",
+          : "We couldn't place your order. Try again.",
       );
     } finally {
       setSubmitting(false);
     }
   }
 
+  // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_36%),linear-gradient(180deg,#140f0a_0%,#1f160d_45%,#0c0a09_100%)] text-stone-100 flex flex-col items-center justify-center gap-4">
-        <div className="h-12 w-12 rounded-2xl border-2 border-amber-300/20 border-t-amber-300 animate-spin" />
-        <p className="text-xs font-bold uppercase tracking-[0.3em] text-stone-400">
-          Loading menu...
+      <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex flex-col items-center justify-center gap-4 px-6">
+        <div className="h-10 w-10 rounded-full border-3 border-amber-500 border-t-transparent animate-spin" />
+        <p className="text-xs font-black uppercase tracking-widest text-stone-500">
+          Loading Menu...
         </p>
       </div>
     );
   }
 
-  if (error || !payload) {
+  // Error State
+  if (error && !payload) {
     return (
-      <div className="min-h-screen bg-stone-950 text-stone-100 flex items-center justify-center px-6 text-center">
-        {error || "Menu unavailable."}
+      <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex flex-col items-center justify-center px-6 text-center">
+        <div className="h-16 w-16 rounded-3xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
+          <AlertCircle size={32} />
+        </div>
+        <h2 className="text-xl font-black text-stone-900">Menu Unavailable</h2>
+        <p className="mt-1.5 text-sm text-stone-600 max-w-sm">{error}</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-5 min-h-[48px] px-6 py-2.5 rounded-2xl bg-stone-900 text-white text-xs font-black uppercase tracking-wider transition cursor-pointer active:scale-95 shadow-sm"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
 
+  if (!payload) return null;
+
   return (
-    <div className="min-h-screen bg-[#070709] bg-[radial-gradient(ellipse_80%_80%_at_50%_-10%,rgba(245,158,11,0.15),rgba(0,0,0,0))] text-slate-50 selection:bg-amber-500/30 selection:text-amber-200 font-sans">
-      <div
-        className={`mx-auto max-w-6xl px-4 py-8 md:px-8${sessionData || cartItemsCount > 0 ? " pb-28" : ""}`}
-      >
-        <div className="mb-8 rounded-[32px] border border-white/10 bg-[#0d0e12]/80 p-6 md:p-8 backdrop-blur-2xl shadow-[0_30px_70px_rgba(0,0,0,0.5)] md:flex md:items-end md:justify-between relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[90px] rounded-full pointer-events-none" />
-          <div className="relative z-10">
-            <p className="text-xs uppercase tracking-[0.35em] text-amber-400 font-extrabold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
+    <div className="min-h-screen bg-[#faf8f5] text-stone-900 font-sans antialiased pb-32">
+      {/* ── 1. Top Restaurant Header ── */}
+      <header className="sticky top-0 z-30 border-b border-stone-200/90 bg-white/95 backdrop-blur-md px-4 py-3 shadow-xs">
+        <div className="mx-auto max-w-5xl flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-black uppercase tracking-tight text-stone-900 truncate">
               {payload.restaurant.name}
-            </p>
-            <h1 className="mt-3 text-3xl font-black text-white md:text-5xl tracking-tight">
-              Digital Menu
             </h1>
-            {payload.restaurant.address ? (
-              <p className="mt-3 max-w-2xl text-sm text-slate-300 md:text-base font-medium">
-                {payload.restaurant.address}
-              </p>
-            ) : (
-              <p className="mt-3 max-w-2xl text-sm text-slate-300 md:text-base font-medium">
-                Table {payload.table.table_number} is active. Browse dishes, customize items, and place instant orders from your phone.
-              </p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 border border-amber-200/80 px-2.5 py-0.5 text-[11px] font-black text-amber-950 uppercase tracking-wide">
+                Table {payload.table.table_number} • {payload.table.floor_name || "Main Dining"}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {cartItemsCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsCartDrawerOpen(true)}
+                className="min-h-[42px] px-3.5 py-1.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+              >
+                <ShoppingBag size={15} />
+                <span>{cartItemsCount}</span>
+              </button>
             )}
           </div>
-          <div className="mt-6 inline-flex items-center gap-2.5 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-black text-amber-300 md:mt-0 shadow-lg backdrop-blur shrink-0 relative z-10">
-            <QrCode className="h-4 w-4 text-amber-400" />
-            Table #{payload.table.table_number} · {payload.restaurant.currency || "INR"}
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-4 pt-4 sm:pt-6 space-y-5">
+        {/* ── 2. Compact Welcome & Table Hero ── */}
+        <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 shadow-xs relative overflow-hidden">
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-amber-800 flex items-center gap-1.5">
+                <Sparkles size={14} className="text-amber-600" />
+                Digital Dining Table
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-1">
+                Order from your table
+              </h2>
+              <p className="text-xs sm:text-sm text-stone-600 font-medium mt-1">
+                Select your favorite dishes, customize options, and dispatch orders directly to the kitchen.
+              </p>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-xs font-black text-stone-800 shrink-0 self-start sm:self-auto">
+              <QrCode size={16} className="text-amber-700" />
+              <span>Table #{payload.table.table_number} · {payload.restaurant.currency || "INR"}</span>
+            </div>
           </div>
         </div>
 
-        {/* Search & Dietary Filters */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+        {/* ── 3. Search Bar & Dietary Filters ── */}
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search items by name or ingredients..."
-              className="w-full rounded-2xl border border-white/10 bg-white/5 pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-stone-500 focus:border-amber-300/40 focus:outline-none transition-all"
+              placeholder="Search dishes or ingredients..."
+              className="w-full min-h-[48px] rounded-2xl border border-stone-200 bg-white pl-11 pr-4 py-2.5 text-sm font-semibold text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:outline-none shadow-xs transition"
             />
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
             {[
-              {
-                id: "all" as const,
-                label: "All Items",
-                dot: null,
-              },
-              {
-                id: "veg" as const,
-                label: "Veg",
-                dot: "bg-emerald-500",
-              },
-              {
-                id: "non-veg" as const,
-                label: "Non-Veg",
-                dot: "bg-rose-500",
-              },
+              { id: "all" as const, label: "All Dishes", dot: null },
+              { id: "veg" as const, label: "Pure Veg", dot: "bg-emerald-600" },
+              { id: "non-veg" as const, label: "Non-Veg", dot: "bg-rose-600" },
             ].map((f) => (
               <button
                 key={f.id}
                 type="button"
                 onClick={() => setVegFilter(f.id)}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
+                className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer border shrink-0 active:scale-95 flex items-center gap-2 ${
                   vegFilter === f.id
-                    ? "bg-amber-300 text-stone-950 shadow-md"
-                    : "bg-white/5 text-stone-300 border border-white/10 hover:bg-white/10"
+                    ? "bg-stone-900 text-white border-stone-900 shadow-xs"
+                    : "bg-white text-stone-700 border-stone-200 hover:bg-stone-50"
                 }`}
               >
-                {f.dot ? (
-                  <span className={`h-2.5 w-2.5 rounded-full ${f.dot}`} />
-                ) : null}
-                {f.label}
+                {f.dot && <span className={`h-2.5 w-2.5 rounded-full ${f.dot}`} />}
+                <span>{f.label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.4fr_0.7fr]">
-          <div className="space-y-6">
-            {groupedItems.map((category) => (
-              <section
-                key={category.id}
-                className="rounded-[26px] border border-white/10 bg-white/5 p-5 shadow-[0_18px_45px_rgba(0,0,0,0.22)]"
+        {/* ── 4. Sticky Category Pills Navigation ── */}
+        <div className="sticky top-[61px] z-20 -mx-4 px-4 py-2.5 bg-[#faf8f5]/95 backdrop-blur-md border-y border-stone-200/80">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+            <button
+              type="button"
+              onClick={() => setSelectedCategoryId("all")}
+              className={`min-h-[44px] px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-wider transition cursor-pointer border shrink-0 active:scale-95 ${
+                selectedCategoryId === "all"
+                  ? "bg-amber-500 text-stone-950 border-amber-500 shadow-xs"
+                  : "bg-white text-stone-700 border-stone-200 hover:bg-stone-100"
+              }`}
+            >
+              All Items ({payload.menu.items.length})
+            </button>
+            {payload.menu.categories.map((cat) => {
+              const count = payload.menu.items.filter((i) => i.category_id === cat.id).length;
+              if (count === 0) return null;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                  className={`min-h-[44px] px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-wider transition cursor-pointer border shrink-0 active:scale-95 ${
+                    selectedCategoryId === cat.id
+                      ? "bg-amber-500 text-stone-950 border-amber-500 shadow-xs"
+                      : "bg-white text-stone-700 border-stone-200 hover:bg-stone-100"
+                  }`}
+                >
+                  {cat.name} ({count})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── 5. Menu Items Catalog ── */}
+        <div className="space-y-6">
+          {groupedItems.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center text-stone-500 shadow-xs">
+              <UtensilsCrossed size={40} className="mx-auto mb-3 text-stone-400" />
+              <p className="text-base font-black text-stone-800">No dishes match your selection</p>
+              <p className="mt-1 text-xs text-stone-500 font-medium">
+                Try searching for something else or switch filters to view available dishes.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setVegFilter("all");
+                  setSelectedCategoryId("all");
+                }}
+                className="mt-4 min-h-[44px] px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-black uppercase tracking-wider transition cursor-pointer"
               >
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-white">
+                Reset Filters
+              </button>
+            </div>
+          ) : (
+            groupedItems.map((category) => (
+              <section key={category.id} className="space-y-3">
+                <div className="flex items-center justify-between border-b border-stone-200/80 pb-2">
+                  <h3 className="text-lg font-black uppercase tracking-tight text-stone-900">
                     {category.name}
-                  </h2>
-                  <span className="text-xs uppercase tracking-[0.32em] text-stone-400">
-                    Fresh now
+                  </h3>
+                  <span className="text-xs font-bold text-stone-500">
+                    {category.items.length} {category.items.length === 1 ? "dish" : "dishes"}
                   </span>
                 </div>
-                <div className="space-y-4">
-                  {category.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="rounded-3xl border border-white/8 bg-stone-950/35 p-4 md:flex md:items-center md:justify-between"
-                    >
-                      <div className="flex items-start gap-4 md:max-w-[75%]">
-                        {item.image_url ? (
-                          <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-white/10">
-                            <img
-                              src={item.image_url}
-                              alt={item.name}
-                              className="h-full w-full object-cover"
-                              loading="lazy"
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                              }}
-                            />
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {category.items.map((item) => {
+                    const inCartQty = cart[item.id]?.quantity ?? 0;
+                    return (
+                      <div
+                        key={item.id}
+                        className="rounded-3xl border border-stone-200 bg-white p-4.5 sm:p-5 shadow-xs flex flex-col justify-between transition hover:border-amber-300"
+                      >
+                        <div>
+                          {/* Dietary & Title */}
+                          <div className="flex items-start gap-2.5 justify-between">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border-2 ${
+                                    item.is_veg ? "border-emerald-600" : "border-rose-600"
+                                  }`}
+                                  title={item.is_veg ? "Vegetarian" : "Non-Vegetarian"}
+                                >
+                                  <span
+                                    className={`h-1.5 w-1.5 rounded-full ${
+                                      item.is_veg ? "bg-emerald-600" : "bg-rose-600"
+                                    }`}
+                                  />
+                                </span>
+                                <h4 className="font-black text-stone-900 text-base sm:text-lg uppercase tracking-tight leading-snug">
+                                  {item.name}
+                                </h4>
+                              </div>
+
+                              {item.description && (
+                                <p className="mt-1.5 text-xs text-stone-600 line-clamp-2 font-medium leading-relaxed">
+                                  {item.description}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        ) : null}
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border-2 ${item.is_veg ? "border-emerald-500" : "border-rose-500"}`}
-                              title={item.is_veg ? "Veg" : "Non-Veg"}
-                            >
-                              <span
-                                className={`h-1.5 w-1.5 rounded-full ${item.is_veg ? "bg-emerald-500" : "bg-rose-500"}`}
-                              />
-                            </span>
-                            <h3 className="text-lg font-medium text-white">
-                              {item.name}
-                            </h3>
-                          </div>
-                          {item.description ? (
-                            <p className="mt-2 text-sm text-stone-400">
-                              {item.description}
-                            </p>
-                          ) : null}
-                          <p className="mt-3 text-sm font-semibold text-amber-200">
-                            {formatCurrency(
-                              Number(item.price),
-                              payload.restaurant.currency,
-                            )}
+                        </div>
+
+                        {/* Price & Add / Stepper Controls */}
+                        <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between gap-3">
+                          <p className="text-base sm:text-lg font-black text-stone-900 tracking-tight">
+                            {formatCurrency(Number(item.price), payload.restaurant.currency)}
                           </p>
+
+                          <div>
+                            {!item.is_available ? (
+                              <span className="inline-flex items-center px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs font-black uppercase tracking-wider">
+                                Sold Out
+                              </span>
+                            ) : inCartQty === 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(item.id, 1)}
+                                className="min-h-[44px] min-w-[96px] rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider px-4 py-2 transition cursor-pointer shadow-xs active:scale-95 flex items-center justify-center gap-1.5"
+                              >
+                                <Plus size={14} />
+                                <span>Add</span>
+                              </button>
+                            ) : (
+                              <div className="flex items-center gap-2 bg-stone-100 border border-stone-200 rounded-2xl p-1 shadow-xs">
+                                <button
+                                  type="button"
+                                  onClick={() => updateQuantity(item.id, -1)}
+                                  className="h-10 w-10 rounded-xl bg-white hover:bg-stone-200 text-stone-900 flex items-center justify-center font-black transition cursor-pointer active:scale-95 shadow-xs"
+                                >
+                                  <Minus size={15} />
+                                </button>
+                                <span className="w-8 text-center font-black text-stone-900 text-sm">
+                                  {inCartQty}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => updateQuantity(item.id, 1)}
+                                  className="h-10 w-10 rounded-xl bg-stone-900 hover:bg-stone-800 text-white flex items-center justify-center font-black transition cursor-pointer active:scale-95 shadow-xs"
+                                >
+                                  <Plus size={15} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="mt-4 flex items-center gap-3 md:mt-0">
-                        {!item.is_available ? (
-                          <span className="px-3 py-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-300 text-xs font-black uppercase tracking-wider">
-                            Sold Out
-                          </span>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => updateQuantity(item.id, -1)}
-                              className="rounded-full border border-white/10 bg-white/5 p-2 text-stone-200 hover:bg-white/10 transition-all cursor-pointer"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <div className="min-w-10 text-center text-lg font-semibold text-white">
-                              {cart[item.id]?.quantity ?? 0}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => updateQuantity(item.id, 1)}
-                              className="rounded-full border border-amber-200/20 bg-amber-300/10 p-2 text-amber-100 hover:bg-amber-300/20 transition-all cursor-pointer"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
-            ))}
-          </div>
+            ))
+          )}
+        </div>
 
-          <aside
-            id="order-panel"
-            className="sticky top-6 h-fit rounded-[28px] border border-amber-300/20 bg-black/30 p-5 backdrop-blur scroll-mt-6"
-          >
-            <div className="flex items-center gap-3 text-white">
-              <ShoppingBag className="h-5 w-5 text-amber-200" />
-              <h2 className="text-xl font-semibold">
-                {browseMode ? "New Order" : "Current Order"}
-              </h2>
-            </div>
-            <p className="mt-2 text-sm text-stone-400">
-              {browseMode
-                ? "Add more items to place a new order for this table."
-                : "Your items stay linked to this table on this device until the order is closed."}
-            </p>
+        {/* ── 6. Subtle Footer Attribution ── */}
+        <footer className="pt-8 pb-12 text-center text-xs font-semibold text-stone-400">
+          <p>{payload.restaurant.name} • Table #{payload.table.table_number}</p>
+          <p className="mt-1 text-[11px] text-stone-400">Powered by Trinetra Restaurant OS</p>
+        </footer>
+      </main>
 
-            <div className="mt-5 space-y-3">
-              {Object.entries(cart).length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-white/12 px-4 py-6 text-center text-sm text-stone-400">
-                  Your cart is empty.
+      {/* ── 7. Floating Sticky Mobile Order Bar ── */}
+      {cartItemsCount > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-40 p-4 bg-gradient-to-t from-[#faf8f5] via-[#faf8f5]/90 to-transparent pointer-events-none">
+          <div className="mx-auto max-w-lg pointer-events-auto">
+            <button
+              type="button"
+              onClick={() => setIsCartDrawerOpen(true)}
+              className="w-full min-h-[56px] rounded-2xl bg-stone-900 hover:bg-stone-800 text-white px-5 py-3 shadow-xl flex items-center justify-between gap-3 transition cursor-pointer active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-2.5 text-left">
+                <div className="h-9 w-9 rounded-xl bg-amber-500 text-stone-950 flex items-center justify-center font-black text-sm">
+                  {cartItemsCount}
                 </div>
-              ) : (
-                payload.menu.items
-                  .filter((item) => cart[item.id]?.quantity)
-                  .map((item) => (
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wider text-amber-300">
+                    {cartItemsCount === 1 ? "1 Dish Selected" : `${cartItemsCount} Dishes Selected`}
+                  </p>
+                  <p className="text-base font-black text-white">
+                    {formatCurrency(total, payload.restaurant.currency)}
+                  </p>
+                </div>
+              </div>
+
+              <span className="flex items-center gap-1 text-xs font-black uppercase tracking-wider text-amber-300">
+                <span>View Order</span>
+                <ChevronRight size={16} />
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 8. Bottom Sheet / Cart Drawer ── */}
+      {isCartDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4">
+          <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-stone-200 bg-white p-6 shadow-2xl max-h-[90vh] flex flex-col justify-between overflow-hidden animate-in slide-in-from-bottom-6 duration-200">
+            <div>
+              {/* Drawer Header */}
+              <div className="flex items-start justify-between gap-3 border-b border-stone-100 pb-4">
+                <div>
+                  <h3 className="text-xl font-black uppercase tracking-tight text-stone-900">
+                    Your Table Order
+                  </h3>
+                  <p className="text-xs font-bold text-amber-800 mt-0.5">
+                    Table {payload.table.table_number} • {payload.table.floor_name || "Main Dining"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCartDrawerOpen(false)}
+                  className="h-9 w-9 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Items List */}
+              <div className="mt-4 space-y-3 max-h-[42vh] overflow-y-auto pr-1">
+                {Object.entries(cart).map(([itemId, entry]) => {
+                  const item = payload.menu.items.find((i) => i.id === itemId);
+                  if (!item || entry.quantity <= 0) return null;
+                  return (
                     <div
-                      key={item.id}
-                      className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3 text-sm"
+                      key={itemId}
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-stone-200/90 bg-stone-50/60 p-3"
                     >
-                      <div>
-                        <p className="font-medium text-white">{item.name}</p>
-                        <p className="text-stone-400">
-                          Qty {cart[item.id]?.quantity ?? 0}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-black text-stone-900 text-sm uppercase tracking-tight truncate">
+                          {item.name}
+                        </p>
+                        <p className="text-xs font-bold text-stone-500 mt-0.5">
+                          {formatCurrency(Number(item.price) * entry.quantity, payload.restaurant.currency)}
                         </p>
                       </div>
-                      <p className="font-semibold text-amber-100">
-                        {formatCurrency(
-                          Number(item.price) * (cart[item.id]?.quantity ?? 0),
-                          payload.restaurant.currency,
-                        )}
-                      </p>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, -1)}
+                          className="h-8 w-8 rounded-lg bg-white border border-stone-200 text-stone-900 flex items-center justify-center font-black transition cursor-pointer"
+                        >
+                          <Minus size={13} />
+                        </button>
+                        <span className="w-6 text-center font-black text-stone-900 text-xs">
+                          {entry.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, 1)}
+                          className="h-8 w-8 rounded-lg bg-stone-900 text-white flex items-center justify-center font-black transition cursor-pointer"
+                        >
+                          <Plus size={13} />
+                        </button>
+                      </div>
                     </div>
-                  ))
+                  );
+                })}
+              </div>
+
+              {/* Special Instructions */}
+              <div className="mt-4">
+                <label className="block text-[11px] font-black uppercase tracking-wider text-stone-600 mb-1.5">
+                  Special Instructions
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="e.g. Less spicy, allergy notice, or serving preference..."
+                  rows={2}
+                  className="w-full rounded-2xl border border-stone-200 bg-stone-50 p-3 text-xs font-medium text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              {error && (
+                <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-800 flex items-center gap-2">
+                  <AlertCircle size={15} className="shrink-0 text-rose-600" />
+                  <span>{error}</span>
+                </div>
               )}
             </div>
 
-            <textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Notes for the kitchen, allergies, or serving requests"
-              className="mt-5 min-h-28 w-full rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500"
-            />
-
-            {error ? (
-              <p className="mt-3 text-sm text-rose-300">{error}</p>
-            ) : null}
-
-            {sessionPaid && (
-              <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-center text-sm text-emerald-200">
-                Your bill has been settled. Thank you for dining with us!
-              </div>
-            )}
-
-            <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-stone-400">
-                  Estimated total
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-white">
+            {/* Total & Submit */}
+            <div className="mt-6 pt-4 border-t border-stone-100 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-wider text-stone-500">
+                  Estimated Total
+                </span>
+                <span className="text-2xl font-black text-stone-900 tracking-tight">
                   {formatCurrency(total, payload.restaurant.currency)}
-                </p>
+                </span>
               </div>
+
               <button
                 type="button"
-                onClick={placeOrder}
                 disabled={submitting || sessionPaid}
-                className="rounded-full bg-amber-300 px-5 py-3 text-sm font-semibold text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={placeOrder}
+                className="w-full min-h-[52px] rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm uppercase tracking-wider transition shadow-sm cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] flex items-center justify-center gap-2"
               >
-                {sessionPaid
-                  ? "Bill Settled"
-                  : submitting
-                    ? "Placing..."
-                    : "Place Order"}
+                {sessionPaid ? (
+                  "Bill Settled"
+                ) : submitting ? (
+                  <>
+                    <div className="h-4 w-4 rounded-full border-2 border-stone-950 border-t-transparent animate-spin" />
+                    <span>Placing Order…</span>
+                  </>
+                ) : (
+                  <span>Place Order ({formatCurrency(total, payload.restaurant.currency)})</span>
+                )}
               </button>
             </div>
-          </aside>
+          </div>
         </div>
-      </div>
+      )}
 
-      {sessionData && payload && sessionData.orders.length > 0 && (
+      {/* ── 9. Warm Identity Gate Modal ── */}
+      {showIdentityModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-3xl border border-stone-200 bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-black">
+                <User size={20} />
+              </div>
+              <div>
+                <h3 className="text-lg font-black uppercase tracking-tight text-stone-900">
+                  Welcome to {payload.restaurant.name}
+                </h3>
+                <p className="text-xs font-medium text-stone-500">
+                  May we know your name so we can serve you better?
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3.5">
+              <div>
+                <label className="block text-[11px] font-black uppercase tracking-wider text-stone-600 mb-1">
+                  Your Name *
+                </label>
+                <input
+                  type="text"
+                  value={identityName}
+                  onChange={(e) => setIdentityName(e.target.value)}
+                  placeholder="e.g. Arun Sharma"
+                  autoFocus
+                  className="w-full min-h-[46px] rounded-2xl border border-stone-200 bg-stone-50 px-3.5 text-sm font-semibold text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-black uppercase tracking-wider text-stone-600 mb-1">
+                  Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  value={identityPhone}
+                  onChange={(e) => setIdentityPhone(e.target.value)}
+                  placeholder="e.g. 9876543210"
+                  className="w-full min-h-[46px] rounded-2xl border border-stone-200 bg-stone-50 px-3.5 text-sm font-semibold text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              {identityError && (
+                <p className="text-xs font-bold text-rose-600">{identityError}</p>
+              )}
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowIdentityModal(false);
+                  setIdentityError(null);
+                }}
+                className="min-h-[44px] px-4 rounded-xl border border-stone-200 text-stone-700 text-xs font-black uppercase tracking-wider hover:bg-stone-50 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={identitySubmitting}
+                onClick={submitIdentity}
+                className="min-h-[44px] px-5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-black uppercase tracking-wider transition cursor-pointer disabled:opacity-50 active:scale-95"
+              >
+                {identitySubmitting ? "Saving..." : "Continue & Place Order"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 10. Placement Success Toast ── */}
+      {placedSuccessInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-sm rounded-3xl border border-stone-200 bg-white p-6 text-center shadow-2xl">
+            <div className="h-14 w-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+              <Check size={28} className="stroke-[3]" />
+            </div>
+            <h3 className="text-xl font-black text-stone-900 uppercase tracking-tight">
+              Order Placed!
+            </h3>
+            <p className="text-xs font-bold text-amber-800 mt-1">
+              Table {placedSuccessInfo.tableNumber} • {placedSuccessInfo.itemsCount} Dishes
+            </p>
+            <p className="text-xs text-stone-500 font-medium mt-1">
+              Your ticket has been dispatched to the kitchen.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Session Summary Bar if already in session and browsing */}
+      {sessionData && payload && sessionData.orders.length > 0 && !isCartDrawerOpen && (
         <SessionSummaryBar
           orders={sessionData.orders}
           sessionTotal={sessionData.sessionTotal}
@@ -891,94 +1059,6 @@ export default function PublicRestaurantMenu({
           tableToken={tableToken}
           latestOrderId={sessionData.latestOrderId}
         />
-      )}
-
-      {/* ------- Mobile sticky cart bar (hidden on md+) ------- */}
-      {cartItemsCount > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-4 md:hidden">
-          <button
-            type="button"
-            onClick={() => {
-              document
-                .getElementById("order-panel")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-amber-300/25 bg-stone-950/95 px-5 py-3.5 shadow-[0_-4px_24px_rgba(0,0,0,0.45)] backdrop-blur-md cursor-pointer"
-          >
-            <span className="flex items-center gap-2.5 text-sm text-stone-200">
-              <ShoppingBag className="h-4 w-4 text-amber-200" />
-              <span className="font-semibold text-white">{cartItemsCount}</span>
-              {cartItemsCount === 1 ? "item" : "items"} in order
-            </span>
-            <span className="rounded-full bg-amber-300 px-4 py-2 text-xs font-bold text-stone-950">
-              View Cart · {formatCurrency(total, payload.restaurant.currency)}
-            </span>
-          </button>
-        </div>
-      )}
-
-      {/* ------- Identity gate modal ------- */}
-      {showIdentityModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md rounded-[28px] border border-amber-300/20 bg-stone-950 p-6 shadow-2xl">
-            <div className="flex items-center gap-3 text-white">
-              <User className="h-5 w-5 text-amber-200" />
-              <h2 className="text-xl font-semibold">Before you order</h2>
-            </div>
-            <p className="mt-2 text-sm text-stone-400">
-              Let us know who&apos;s at the table so the kitchen can serve you
-              better.
-            </p>
-
-            <label className="mt-5 block text-xs uppercase tracking-[0.3em] text-stone-400">
-              Your name
-            </label>
-            <input
-              type="text"
-              value={identityName}
-              onChange={(e) => setIdentityName(e.target.value)}
-              placeholder="e.g. Arun"
-              className="mt-1.5 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500 focus:border-amber-300/40"
-              autoFocus
-            />
-
-            <label className="mt-4 block text-xs uppercase tracking-[0.3em] text-stone-400">
-              Phone number
-            </label>
-            <input
-              type="tel"
-              value={identityPhone}
-              onChange={(e) => setIdentityPhone(e.target.value)}
-              placeholder="e.g. 9876543210"
-              className="mt-1.5 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-stone-500 focus:border-amber-300/40"
-            />
-
-            {identityError && (
-              <p className="mt-3 text-sm text-rose-300">{identityError}</p>
-            )}
-
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowIdentityModal(false);
-                  setIdentityError(null);
-                }}
-                className="rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-stone-300 hover:bg-white/10"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={submitIdentity}
-                disabled={identitySubmitting}
-                className="rounded-full bg-amber-300 px-5 py-2.5 text-sm font-semibold text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {identitySubmitting ? "Saving..." : "Continue & Place Order"}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
