@@ -25,8 +25,9 @@ export default function PageLayout({ children, hideFooter = false }: PageLayoutP
     location.pathname.startsWith("/r/");
 
   if (isStandalone) {
+    const isPublicQr = location.pathname.startsWith("/r/");
     return (
-      <div className="bg-[#09090B] text-slate-100 antialiased selection:bg-accent/25 selection:text-slate-100 min-h-screen">
+      <div className={`${isPublicQr ? "bg-[#faf8f5] text-stone-900" : "bg-[#09090B] text-slate-100"} antialiased selection:bg-accent/25 min-h-screen`}>
         {children}
       </div>
     );

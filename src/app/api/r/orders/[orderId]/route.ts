@@ -47,10 +47,27 @@ export async function GET(
     if (order.table_id) {
       const { data: tableData } = await supabase
         .from("restaurant_tables")
-        .select("id, table_number, table_token")
+        .select("id, table_number, table_token, floor_id")
         .eq("id", order.table_id)
         .maybeSingle();
-      table = tableData;
+
+      if (tableData) {
+        let floorName: string | null = null;
+        if (tableData.floor_id) {
+          const { data: floor } = await supabase
+            .from("restaurant_floors")
+            .select("name")
+            .eq("id", tableData.floor_id)
+            .maybeSingle();
+          if (floor) {
+            floorName = floor.name;
+          }
+        }
+        table = {
+          ...tableData,
+          floor_name: floorName || "Main Dining",
+        };
+      }
     }
 
     // Fetch order items

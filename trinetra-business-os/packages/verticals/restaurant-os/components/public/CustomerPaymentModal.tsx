@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { QrCode, Smartphone, Banknote, CheckCircle2, Copy, Check, ArrowRight, ShieldCheck, X, Heart } from "lucide-react";
+import {
+  QrCode,
+  Smartphone,
+  Banknote,
+  CheckCircle2,
+  Copy,
+  Check,
+  ShieldCheck,
+  X,
+  Heart,
+} from "lucide-react";
 
 export type PaymentModalProps = {
   tableToken: string;
@@ -50,18 +60,22 @@ export default function CustomerPaymentModal({
     maximumFractionDigits: 0,
   }).format(totalPayable);
 
-  const cleanUpiId = upiId || "theauracafe@upi";
-  
-  // Format standard UPI payment string with total payable (bill + tip)
+  const cleanUpiId = upiId || "spicegarden@upi";
+
+  // Format standard UPI payment intent string with total payable (bill + tip)
   const upiIntentString = `upi://pay?pa=${encodeURIComponent(cleanUpiId)}&pn=${encodeURIComponent(restaurantName)}&am=${totalPayable}&cu=INR&tn=${encodeURIComponent(`Table ${tableNumber || ""} Bill - ${sessionId.slice(0, 6)}`)}`;
 
   // Generated dynamic QR code URL
-  const generatedQrUrl = upiQrUrl || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiIntentString)}`;
+  const generatedQrUrl =
+    upiQrUrl ||
+    `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiIntentString)}`;
 
   const handleCopyUpi = () => {
-    navigator.clipboard.writeText(cleanUpiId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(cleanUpiId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const handleSelectTip = (preset: number) => {
@@ -84,7 +98,6 @@ export default function CustomerPaymentModal({
       }
       setSubmittedSuccess(true);
     } catch {
-      // Fallback success
       setSubmittedSuccess(true);
     } finally {
       setSubmitting(false);
@@ -92,79 +105,198 @@ export default function CustomerPaymentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 p-0 sm:p-4 backdrop-blur-xl animate-in fade-in duration-200">
-      <div className="w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] border border-amber-500/30 bg-[#0d0e12] p-6 text-slate-100 shadow-[0_30px_90px_rgba(245,158,11,0.2)] max-h-[92vh] overflow-y-auto relative overflow-hidden">
-        {/* Top ambient glow bar */}
-        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500" />
-        
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-stone-200 bg-white p-6 text-stone-900 shadow-2xl max-h-[92vh] overflow-y-auto relative">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 font-black text-slate-950 shadow-lg shadow-amber-500/30 border border-white/20">
-              <QrCode size={22} />
-            </div>
-            <div>
-              <h3 className="text-lg font-black text-white tracking-tight">Instant Online Payment</h3>
-              <p className="text-xs text-slate-400 font-medium">{restaurantName} · Table {tableNumber || "Guest"}</p>
-            </div>
+        <div className="flex items-start justify-between gap-3 border-b border-stone-100 pb-4">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-200/80 px-2.5 py-0.5 text-[11px] font-black text-amber-950 uppercase tracking-wide">
+              Table #{tableNumber || "Direct"} • Payment
+            </span>
+            <h3 className="mt-1 text-xl font-black uppercase tracking-tight text-stone-900">
+              {restaurantName}
+            </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-2xl p-2 text-slate-400 hover:bg-white/10 hover:text-white transition cursor-pointer border border-white/5"
+            className="h-9 w-9 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Amount & Tip Card */}
-        <div className="my-5 rounded-3xl border border-amber-500/30 bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-black/40 p-5 text-center shadow-xl backdrop-blur">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1 px-2 font-semibold">
-            <span>Bill Base: <strong className="text-white">{formattedBillAmount}</strong></span>
-            {tipAmount > 0 && (
-              <span className="text-amber-300 font-extrabold">+ Staff Tip: ₹{tipAmount}</span>
-            )}
+        {/* Bill Total Banner */}
+        <div className="mt-4 rounded-2xl bg-amber-50 border border-amber-200/90 p-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-wider text-amber-800">
+              Total Payable
+            </p>
+            <p className="text-2xl font-black text-stone-900 tracking-tight mt-0.5">
+              {formattedTotalPayable}
+            </p>
           </div>
-          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-400">Total Payable Amount</span>
-          <h2 className="mt-1 text-4xl font-black text-white tracking-tight">{formattedTotalPayable}</h2>
-          <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-3.5 py-1 text-[10px] font-black uppercase tracking-wider text-amber-300 border border-amber-500/30">
-            <ShieldCheck size={13} /> Instant Direct UPI Settlement
+          <div className="text-right">
+            <span className="text-[11px] font-bold text-stone-500 block">
+              Bill: {formattedBillAmount}
+            </span>
+            {tipAmount > 0 && (
+              <span className="text-[11px] font-black text-emerald-700 block">
+                + ₹{tipAmount} Tip
+              </span>
+            )}
           </div>
         </div>
 
-        {!submittedSuccess ? (
-          <>
-            {/* OPTIONAL TIP SELECTION BAR */}
-            <div className="mb-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 backdrop-blur">
-              <div className="flex items-center gap-2 mb-2.5 text-xs font-black text-rose-300">
-                <Heart size={15} className="fill-rose-400 text-rose-400 animate-pulse" />
-                <span>Add Tip for Waiter & Kitchen Team (Optional)</span>
+        {submittedSuccess ? (
+          <div className="mt-6 py-6 text-center space-y-3 animate-in zoom-in-95">
+            <div className="h-16 w-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+              <CheckCircle2 size={36} />
+            </div>
+            <h4 className="text-xl font-black text-stone-900 uppercase tracking-tight">
+              Payment Notified!
+            </h4>
+            <p className="text-xs text-stone-600 max-w-sm mx-auto font-medium">
+              We have notified the cashier of your {selectedMethod.toUpperCase()} payment for Table #{tableNumber}. Thank you for dining with us!
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-4 min-h-[48px] w-full rounded-2xl bg-stone-900 text-white text-xs font-black uppercase tracking-wider transition hover:bg-stone-800 cursor-pointer shadow-xs"
+            >
+              Back to Order Tracker
+            </button>
+          </div>
+        ) : (
+          <div className="mt-5 space-y-5">
+            {/* Payment Method Selector */}
+            <div>
+              <label className="block text-[11px] font-black uppercase tracking-wider text-stone-600 mb-2">
+                Select Payment Mode
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: "upi_qr" as const, label: "Scan QR", icon: QrCode },
+                  { id: "upi_app" as const, label: "UPI App", icon: Smartphone },
+                  { id: "cash" as const, label: "Cash", icon: Banknote },
+                ].map((m) => {
+                  const Icon = m.icon;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setSelectedMethod(m.id)}
+                      className={`min-h-[50px] rounded-2xl border p-2.5 flex flex-col items-center justify-center gap-1 text-xs font-black uppercase tracking-wider transition cursor-pointer active:scale-95 ${
+                        selectedMethod === m.id
+                          ? "bg-stone-900 text-white border-stone-900 shadow-xs"
+                          : "bg-white text-stone-700 border-stone-200 hover:bg-stone-50"
+                      }`}
+                    >
+                      <Icon size={16} />
+                      <span>{m.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {[0, 20, 50, 100].map((preset) => (
+            </div>
+
+            {/* Mode 1: Scan UPI QR */}
+            {selectedMethod === "upi_qr" && (
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-center space-y-3">
+                <div className="bg-white p-3 rounded-2xl border border-stone-200 inline-block shadow-xs">
+                  <img
+                    src={generatedQrUrl}
+                    alt="UPI QR Code"
+                    className="w-44 h-44 object-contain mx-auto"
+                  />
+                </div>
+
+                <div>
+                  <p className="text-xs font-black text-stone-900">
+                    Scan with any UPI App (GPay, PhonePe, Paytm)
+                  </p>
+                  <div className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700">
+                    <span className="font-mono text-[11px]">{cleanUpiId}</span>
+                    <button
+                      type="button"
+                      onClick={handleCopyUpi}
+                      className="text-amber-800 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      {copied ? <Check size={13} className="text-emerald-700" /> : <Copy size={13} />}
+                      <span>{copied ? "Copied!" : "Copy"}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Mode 2: Launch UPI App */}
+            {selectedMethod === "upi_app" && (
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-center space-y-3">
+                <p className="text-xs text-stone-600 font-medium">
+                  Tap below to open your preferred UPI payment app directly on your device:
+                </p>
+                <a
+                  href={upiIntentString}
+                  className="min-h-[52px] w-full rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition active:scale-95"
+                >
+                  <Smartphone size={16} />
+                  <span>Open UPI Payment App ({formattedTotalPayable})</span>
+                </a>
+              </div>
+            )}
+
+            {/* Mode 3: Pay by Cash */}
+            {selectedMethod === "cash" && (
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-center space-y-2">
+                <Banknote size={32} className="mx-auto text-amber-700" />
+                <p className="text-sm font-black text-stone-900">Pay Cash at Table</p>
+                <p className="text-xs text-stone-600 font-medium">
+                  Please keep exact cash ({formattedTotalPayable}) ready for your server.
+                </p>
+              </div>
+            )}
+
+            {/* Tip Selector */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[11px] font-black uppercase tracking-wider text-stone-600 flex items-center gap-1">
+                  <Heart size={13} className="text-rose-500" />
+                  Add Staff Tip (Optional)
+                </label>
+                {tipAmount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTip(0)}
+                    className="text-[10px] font-bold text-stone-500 hover:underline cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                {[0, 50, 100, 200].map((preset) => (
                   <button
                     key={preset}
                     type="button"
                     onClick={() => handleSelectTip(preset)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
-                      !isCustomTip && tipAmount === preset
-                        ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg shadow-rose-500/30 scale-105 border border-rose-400/40"
-                        : "bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10"
+                    className={`min-h-[44px] px-3.5 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer border shrink-0 active:scale-95 ${
+                      tipAmount === preset && !isCustomTip
+                        ? "bg-amber-500 text-stone-950 border-amber-500 shadow-xs"
+                        : "bg-white text-stone-700 border-stone-200 hover:bg-stone-50"
                     }`}
                   >
-                    {preset === 0 ? "No Tip" : `+₹${preset}`}
+                    {preset === 0 ? "No Tip" : `+ ₹${preset}`}
                   </button>
                 ))}
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsCustomTip(true);
-                    setTipAmount(0);
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                  onClick={() => setIsCustomTip(true)}
+                  className={`min-h-[44px] px-3.5 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer border shrink-0 active:scale-95 ${
                     isCustomTip
-                      ? "bg-rose-500 text-white shadow-md shadow-rose-500/30"
-                      : "bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10"
+                      ? "bg-amber-500 text-stone-950 border-amber-500 shadow-xs"
+                      : "bg-white text-stone-700 border-stone-200 hover:bg-stone-50"
                   }`}
                 >
                   Custom
@@ -172,211 +304,55 @@ export default function CustomerPaymentModal({
               </div>
 
               {isCustomTip && (
-                <div className="mt-2.5">
-                  <input
-                    type="number"
-                    placeholder="Enter custom tip amount (₹)"
-                    value={customTip}
-                    onChange={(e) => handleCustomTipChange(e.target.value)}
-                    className="w-full rounded-xl border border-rose-400/30 bg-black/40 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-rose-400 focus:outline-none"
-                  />
-                </div>
+                <input
+                  type="number"
+                  placeholder="Enter tip amount in ₹"
+                  value={customTip}
+                  onChange={(e) => handleCustomTipChange(e.target.value)}
+                  className="mt-2 w-full min-h-[44px] rounded-xl border border-stone-200 bg-white px-3 text-xs font-semibold text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:outline-none"
+                />
               )}
             </div>
-            {/* Method Tabs */}
-            <div className="grid grid-cols-3 gap-2 p-1 rounded-2xl bg-white/5 border border-white/10 text-xs font-bold mb-5">
-              <button
-                type="button"
-                onClick={() => setSelectedMethod("upi_qr")}
-                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition ${
-                  selectedMethod === "upi_qr"
-                    ? "bg-amber-500 text-slate-950 shadow-md font-extrabold"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <QrCode size={14} /> UPI QR
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedMethod("upi_app")}
-                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition ${
-                  selectedMethod === "upi_app"
-                    ? "bg-amber-500 text-slate-950 shadow-md font-extrabold"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <Smartphone size={14} /> UPI Apps
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedMethod("cash")}
-                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition ${
-                  selectedMethod === "cash"
-                    ? "bg-amber-500 text-slate-950 shadow-md font-extrabold"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <Banknote size={14} /> Cash
-              </button>
-            </div>
 
-            {/* TAB 1: UPI QR CODE */}
-            {selectedMethod === "upi_qr" && (
-              <div className="space-y-4 text-center animate-in fade-in">
-                <div className="inline-block rounded-2xl bg-white p-3 shadow-xl">
-                  {/* eslint-disable-next-html-img-element */}
-                  <img
-                    src={generatedQrUrl}
-                    alt="UPI Payment QR Code"
-                    className="h-44 w-44 rounded-xl object-contain mx-auto"
-                  />
-                </div>
-                <p className="text-xs text-slate-300">Scan with GPay, PhonePe, Paytm, BHIM, or any Banking App</p>
-
-                {/* VPA Copy Bar */}
-                <div className="flex items-center justify-between rounded-xl bg-white/5 px-3.5 py-2.5 border border-white/10 text-xs">
-                  <span className="text-slate-400">UPI VPA: <strong className="text-white">{cleanUpiId}</strong></span>
-                  <button
-                    type="button"
-                    onClick={handleCopyUpi}
-                    className="flex items-center gap-1 font-bold text-amber-400 hover:text-amber-300"
-                  >
-                    {copied ? <Check size={14} /> : <Copy size={14} />}
-                    {copied ? "Copied!" : "Copy"}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 2: DIRECT UPI INTENT LAUNCHERS */}
-            {selectedMethod === "upi_app" && (
-              <div className="space-y-3 animate-in fade-in">
-                <p className="text-xs text-slate-400 text-center mb-2">Tap your preferred app to open and pay directly:</p>
-
-                <a
-                  href={upiIntentString}
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/80 p-3.5 hover:border-amber-400/40 transition group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center font-bold text-xs">
-                      GPay
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-white group-hover:text-amber-300 transition">Google Pay</h4>
-                      <p className="text-[10px] text-slate-400">Instant UPI transfer</p>
-                    </div>
-                  </div>
-                  <ArrowRight size={16} className="text-slate-500 group-hover:text-white transition" />
-                </a>
-
-                <a
-                  href={upiIntentString}
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/80 p-3.5 hover:border-amber-400/40 transition group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center font-bold text-xs">
-                      Pe
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-white group-hover:text-amber-300 transition">PhonePe</h4>
-                      <p className="text-[10px] text-slate-400">Direct wallet / UPI app launch</p>
-                    </div>
-                  </div>
-                  <ArrowRight size={16} className="text-slate-500 group-hover:text-white transition" />
-                </a>
-
-                <a
-                  href={upiIntentString}
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/80 p-3.5 hover:border-amber-400/40 transition group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center font-bold text-xs">
-                      Paytm
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-white group-hover:text-amber-300 transition">Paytm / BHIM</h4>
-                      <p className="text-[10px] text-slate-400">Scan & Pay or UPI Intent</p>
-                    </div>
-                  </div>
-                  <ArrowRight size={16} className="text-slate-500 group-hover:text-white transition" />
-                </a>
-              </div>
-            )}
-
-            {/* TAB 3: CASH AT COUNTER */}
-            {selectedMethod === "cash" && (
-              <div className="space-y-3 text-center py-4 animate-in fade-in">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  <Banknote size={28} />
-                </div>
-                <h4 className="text-sm font-bold text-white">Pay via Cash at Counter</h4>
-                <p className="text-xs text-slate-400 max-w-xs mx-auto">
-                  Click below to request the waiter or cashier to collect cash at your table.
-                </p>
-              </div>
-            )}
-
-            {/* Optional UTR Input for UPI */}
+            {/* Optional UTR Number Input */}
             {selectedMethod !== "cash" && (
-              <div className="mt-4 pt-3 border-t border-white/10">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  UPI UTR / Reference No. (Optional proof)
+              <div>
+                <label className="block text-[11px] font-black uppercase tracking-wider text-stone-600 mb-1">
+                  UTR / Transaction ID (Optional)
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. 423456789012"
+                  placeholder="e.g. 324156789012"
                   value={utrNumber}
                   onChange={(e) => setUtrNumber(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
+                  className="w-full min-h-[44px] rounded-xl border border-stone-200 bg-white px-3 text-xs font-semibold text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:outline-none"
                 />
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="mt-5 space-y-2">
+            {/* Submit Action Button */}
+            <div className="pt-2">
               <button
                 type="button"
                 disabled={submitting}
                 onClick={handleNotifyPayment}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 py-3 text-xs font-black text-slate-950 shadow-lg shadow-amber-500/25 hover:from-amber-400 hover:to-yellow-400 transition active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                className="w-full min-h-[52px] rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-black text-xs uppercase tracking-wider transition cursor-pointer disabled:opacity-50 active:scale-95 shadow-xs flex items-center justify-center gap-2"
               >
                 {submitting ? (
-                  "Sending Request..."
-                ) : selectedMethod === "cash" ? (
-                  "Request Cash Collection"
+                  <>
+                    <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                    <span>Notifying Staff…</span>
+                  </>
                 ) : (
-                  "I Have Paid via UPI → Confirm"
+                  <>
+                    <ShieldCheck size={16} />
+                    <span>I Have Completed Payment ({formattedTotalPayable})</span>
+                  </>
                 )}
               </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-full py-2 text-xs font-bold text-slate-400 hover:text-white transition"
-              >
-                Cancel
-              </button>
             </div>
-          </>
-        ) : (
-          /* SUCCESS CONFIRMATION STATE */
-          <div className="py-8 text-center space-y-4 animate-in zoom-in-95">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              <CheckCircle2 size={36} />
-            </div>
-            <h3 className="text-xl font-black text-white">Payment Request Sent!</h3>
-            <p className="text-xs text-slate-300 max-w-xs mx-auto leading-relaxed">
-              We have notified the cashier and waiter for Table {tableNumber || "Session"}. The bill will be settled instantly.
-            </p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-4 rounded-2xl bg-white/10 px-6 py-2.5 text-xs font-extrabold text-white hover:bg-white/20 transition"
-            >
-              Done / Return to Tracker
-            </button>
           </div>
         )}
-
       </div>
     </div>
   );

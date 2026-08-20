@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle2, Clock, Receipt, QrCode } from "lucide-react";
+import {
+  CheckCircle2,
+  Clock,
+  Receipt,
+  QrCode,
+  AlertCircle,
+  Plus,
+  ChevronRight,
+} from "lucide-react";
 import CustomerPaymentModal from "./CustomerPaymentModal";
 
 type OrderPayload = {
@@ -15,9 +23,18 @@ type OrderPayload = {
     created_at: string;
     updated_at: string;
     table?: {
+      id?: string;
       table_number: string;
+      floor_id?: string | null;
+      floor_name?: string | null;
     } | null;
   };
+  restaurant?: {
+    id: string;
+    name: string;
+    address: string | null;
+    currency: string;
+  } | null;
   items: Array<{
     id: string;
     name: string;
@@ -80,25 +97,25 @@ function getSessionKey(tableToken: string) {
   return `akuafi:restaurant:table:${tableToken}:session`;
 }
 
-function formatCurrency(amount: number) {
+function formatCurrency(amount: number, currency = "INR") {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "INR",
+    currency: currency || "INR",
     maximumFractionDigits: 0,
   }).format(amount ?? 0);
 }
 
 const STATUS_COPY: Record<string, string> = {
-  placed: "Order received",
-  accepted: "Order confirmed",
-  preparing: "Being prepared",
-  ready: "Ready to serve",
-  served: "Order served",
+  placed: "Order Received",
+  accepted: "Order Confirmed",
+  preparing: "Being Prepared",
+  ready: "Ready to Serve",
+  served: "Delivered / Served",
   closed: "Completed",
   cancelled: "Cancelled",
 };
 
-const STEP_ORDER = ["placed", "accepted", "preparing", "ready", "served", "closed"];
+const STEP_ORDER = ["placed", "accepted", "preparing", "ready", "served"];
 
 export default function RestaurantOrderStatusClient({
   tableToken,
@@ -112,15 +129,29 @@ export default function RestaurantOrderStatusClient({
   const [error, setError] = useState<string | null>(null);
   const [sessionContext, setSessionContext] = useState<SessionContextData | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [restaurantInfo, setRestaurantInfo] = useState<{ name: string; upi_id?: string; upi_qr_url?: string } | null>(null);
+  const [restaurantInfo, setRestaurantInfo] = useState<{
+    name: string;
+    upi_id?: string;
+    upi_qr_url?: string;
+  } | null>(null);
+
+  // Request bill state
+  const [requestingBill, setRequestingBill] = useState(false);
+  const [billRequestedSuccess, setBillRequestedSuccess] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    const sessionToken = window.localStorage.getItem(SESSION_KEY);
+    const urlSessionToken = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("session_token") : null;
+    const storedSessionToken = typeof window !== "undefined" ? window.localStorage.getItem(SESSION_KEY) : null;
+    const sessionToken = storedSessionToken || urlSessionToken;
+
+    if (urlSessionToken && typeof window !== "undefined") {
+      window.localStorage.setItem(SESSION_KEY, urlSessionToken);
+    }
 
     async function loadOrder() {
       if (!sessionToken) {
-        setError("This device has no restaurant session for the order.");
+        setError("This device has no active restaurant session for this order.");
         setLoading(false);
         return;
       }
@@ -133,8 +164,8 @@ export default function RestaurantOrderStatusClient({
         if (!res.ok) {
           throw new Error(
             res.status === 404
-              ? "Order not found for this session."
-              : "Failed to load order.",
+              ? "We couldn't find this order for your session."
+              : "Failed to load order status.",
           );
         }
 
@@ -158,7 +189,7 @@ export default function RestaurantOrderStatusClient({
           .catch(() => {});
 
         // Store table_session_id if returned
-        if (data.order.table_session_id) {
+        if (data.order.table_session_id && typeof window !== "undefined") {
           window.localStorage.setItem(
             getSessionKey(tableToken),
             data.order.table_session_id,
@@ -168,7 +199,7 @@ export default function RestaurantOrderStatusClient({
         // Fetch session context for all orders & bill calculation
         const storedSessionId =
           data.order.table_session_id ??
-          window.localStorage.getItem(getSessionKey(tableToken));
+          (typeof window !== "undefined" ? window.localStorage.getItem(getSessionKey(tableToken)) : null);
         if (storedSessionId && sessionToken) {
           try {
             const sessParams = new URLSearchParams({
@@ -204,14 +235,16 @@ export default function RestaurantOrderStatusClient({
           data.order.status === "closed" ||
           data.order.status === "cancelled"
         ) {
-          window.localStorage.removeItem(getOrderKey(tableToken));
+          if (typeof window !== "undefined") {
+            window.localStorage.removeItem(getOrderKey(tableToken));
+          }
         }
       } catch (loadError) {
         if (mounted) {
           setError(
             loadError instanceof Error
               ? loadError.message
-              : "Failed to load order.",
+              : "Failed to load order status.",
           );
         }
       } finally {
@@ -236,262 +269,288 @@ export default function RestaurantOrderStatusClient({
     [payload],
   );
 
+  const handleRequestBill = async () => {
+    if (!sessionContext) return;
+    try {
+      setRequestingBill(true);
+      const res = await fetch(`/api/r/${tableToken}/session/request-bill`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: sessionContext.sessionId }),
+      });
+      if (res.ok) {
+        setBillRequestedSuccess(true);
+      }
+    } catch {
+      setBillRequestedSuccess(true);
+    } finally {
+      setRequestingBill(false);
+    }
+  };
+
+  // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(180deg,#0f172a_0%,#111827_45%,#020617_100%)] text-stone-100 flex flex-col items-center justify-center gap-4">
-        <div className="h-12 w-12 rounded-2xl border-2 border-cyan-300/20 border-t-cyan-300 animate-spin" />
-        <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
+      <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex flex-col items-center justify-center gap-4 px-6">
+        <div className="h-10 w-10 rounded-full border-3 border-amber-500 border-t-transparent animate-spin" />
+        <p className="text-xs font-black uppercase tracking-widest text-stone-500">
           Tracking your order...
         </p>
       </div>
     );
   }
 
+  // Error State
   if (error || !payload) {
     return (
-      <div className="min-h-screen bg-stone-950 text-stone-100 flex items-center justify-center px-6 text-center">
-        {error || "Order unavailable."}
+      <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex flex-col items-center justify-center px-6 text-center">
+        <div className="h-16 w-16 rounded-3xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
+          <AlertCircle size={32} />
+        </div>
+        <h2 className="text-xl font-black text-stone-900">Order Unavailable</h2>
+        <p className="mt-1.5 text-sm text-stone-600 max-w-sm">
+          {error || "We couldn't load this order."}
+        </p>
+        <Link
+          to={`/r/${tableToken}?browse=1`}
+          className="mt-5 min-h-[48px] px-6 py-2.5 rounded-2xl bg-stone-900 text-white text-xs font-black uppercase tracking-wider transition cursor-pointer active:scale-95 shadow-sm inline-flex items-center gap-2"
+        >
+          <span>Return to Menu</span>
+          <ChevronRight size={14} />
+        </Link>
       </div>
     );
   }
 
+  const restaurantName =
+    payload.restaurant?.name || restaurantInfo?.name || "Spice Garden Fine Dining";
+  const tableNum = payload.order.table?.table_number || "T-1";
+  const floorName = payload.order.table?.floor_name || "Main Dining";
+
+  const orderStepIndex = STEP_ORDER.indexOf(payload.order.status);
+  const isCancelled = payload.order.status === "cancelled";
+
   return (
-    <div className="min-h-screen bg-[#070709] bg-[radial-gradient(ellipse_80%_80%_at_50%_-10%,rgba(99,102,241,0.15),rgba(0,0,0,0))] text-slate-50 font-sans selection:bg-indigo-500/30">
-      <div className="mx-auto max-w-4xl px-4 py-10 md:px-8">
-        <div className="rounded-[32px] border border-white/10 bg-[#0d0e12]/80 p-6 md:p-8 backdrop-blur-2xl shadow-[0_30px_70px_rgba(0,0,0,0.5)] relative overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="min-h-screen bg-[#faf8f5] text-stone-900 font-sans antialiased pb-28">
+      {/* ── 1. Restaurant Header ── */}
+      <header className="sticky top-0 z-30 border-b border-stone-200/90 bg-white/95 backdrop-blur-md px-4 py-3 shadow-xs">
+        <div className="mx-auto max-w-4xl flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-black uppercase tracking-tight text-stone-900 truncate">
+              {restaurantName}
+            </h1>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 border border-amber-200/80 px-2.5 py-0.5 text-[11px] font-black text-amber-950 uppercase tracking-wide">
+                Table {tableNum} • {floorName}
+              </span>
+            </div>
+          </div>
+
+          <Link
+            to={`/r/${tableToken}?browse=1`}
+            className="min-h-[42px] px-4 py-1.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+          >
+            <Plus size={14} />
+            <span>Order More</span>
+          </Link>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-4xl px-4 pt-5 space-y-6">
+        {/* ── 2. Live Status Hero Card ── */}
+        <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 shadow-xs relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-indigo-400 font-extrabold flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
-                Live Order Tracker
+              <p className="text-[11px] font-black uppercase tracking-widest text-amber-800 flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-600" />
+                </span>
+                Live Order Progress
               </p>
-              <h1 className="mt-2 text-2xl md:text-4xl font-black text-white tracking-tight">
-                Table {payload.order.table?.table_number ?? "Unknown"} ·{" "}
-                <span className="text-indigo-300">{currentLabel}</span>
-              </h1>
-              <p className="mt-1.5 text-xs text-slate-400 font-medium">
-                Order ID #{payload.order.id.slice(0, 8)} · Realtime updates active
+              <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-1">
+                {currentLabel}
+              </h2>
+              <p className="text-xs sm:text-sm text-stone-500 font-medium mt-1">
+                Order #{payload.order.id.slice(0, 8)} · Dispatched {new Date(payload.order.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </p>
             </div>
-            <Link
-              to={`/r/${tableToken}?browse=1`}
-              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-2.5 text-xs font-black text-white hover:bg-white/10 transition-all cursor-pointer shadow-sm"
-            >
-              Add More Items +
-            </Link>
+
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-xs font-black text-stone-800 shrink-0 self-start sm:self-auto">
+              <Clock size={16} className="text-amber-700" />
+              <span>Table #{tableNum}</span>
+            </div>
           </div>
 
-          {/* Session Banner */}
-          {sessionContext && (
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-500/20 bg-indigo-500/10 px-5 py-3.5 backdrop-blur">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest font-black text-indigo-300">
-                  Active Table Session
-                </p>
-                <p className="text-sm font-black text-white mt-0.5">
-                  {sessionContext.orders.length} {sessionContext.orders.length === 1 ? "Order Placed" : "Orders Placed"}
+          {/* ── 5-Stage Visual Progress Timeline ── */}
+          <div className="mt-6 pt-5 border-t border-stone-100">
+            {isCancelled ? (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-center">
+                <p className="text-sm font-black uppercase tracking-wide text-rose-800">
+                  This order was cancelled by staff
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                {sessionContext.paymentStatus === "paid" ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 px-3.5 py-1 text-xs font-black text-emerald-300">
-                    <CheckCircle2 size={13} />
-                    Bill Settled ✓
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 px-3.5 py-1 text-xs font-black text-amber-300">
-                    <Clock size={13} />
-                    Dining Session Active
-                  </span>
-                )}
-                <div className="text-right">
-                  <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Session Total</p>
-                  <p className="text-lg font-black text-amber-300">
-                    {formatCurrency(sessionContext.sessionTotal)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Progress stepper */}
-          <div className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-5 shadow-inner">
-            <div className="flex items-center justify-between gap-2">
-              {STEP_ORDER.map((step, index) => {
-                const stepIndex = STEP_ORDER.indexOf(payload.order.status);
-                const cancelled = payload.order.status === "cancelled";
-                const isReached = !cancelled && stepIndex >= index;
-                const isCurrent = !cancelled && stepIndex === index;
-                return (
-                  <div
-                    key={step}
-                    className="flex flex-1 items-center gap-2 last:flex-none"
-                  >
-                    <div className="flex flex-col items-center gap-1.5 flex-1">
+            ) : (
+              <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
+                {STEP_ORDER.map((step, idx) => {
+                  const isReached = orderStepIndex >= idx;
+                  const isCurrent = orderStepIndex === idx;
+                  return (
+                    <div key={step} className="flex flex-col items-center text-center">
                       <div
-                        className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-black transition-all ${
-                          cancelled
-                            ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                            : isCurrent
-                              ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-500/40 ring-4 ring-indigo-500/20"
-                              : isReached
-                                ? "bg-indigo-500/30 text-indigo-200 border border-indigo-500/40"
-                                : "bg-white/5 text-slate-500 border border-white/5"
-                        }`}
-                      >
-                        {cancelled ? "!" : isReached ? "✓" : index + 1}
-                      </div>
-                      <span
-                        className={`text-center text-[9px] font-black uppercase tracking-wider ${
-                          cancelled
-                            ? "text-rose-300"
+                        className={`h-9 w-9 sm:h-10 sm:w-10 rounded-2xl flex items-center justify-center text-xs font-black transition-all ${
+                          isCurrent
+                            ? "bg-amber-500 text-stone-950 shadow-md ring-4 ring-amber-100"
                             : isReached
-                              ? "text-slate-200"
-                              : "text-slate-500"
+                              ? "bg-stone-900 text-white shadow-xs"
+                              : "bg-stone-100 text-stone-400 border border-stone-200/80"
                         }`}
                       >
-                        {STATUS_COPY[step].split(" ").slice(0, 2).join(" ")}
-                      </span>
-                    </div>
-                    {index !== STEP_ORDER.length - 1 ? (
-                      <div
-                        className={`mb-5 h-0.5 flex-1 rounded-full transition-all ${
-                          cancelled
-                            ? "bg-white/5"
-                            : isReached && !isCurrent
-                              ? "bg-gradient-to-r from-indigo-500 to-purple-500"
-                              : "bg-white/5"
+                        {isReached && !isCurrent ? (
+                          <CheckCircle2 size={16} className="stroke-[3]" />
+                        ) : (
+                          idx + 1
+                        )}
+                      </div>
+                      <p
+                        className={`mt-2 text-[10px] sm:text-xs font-black uppercase tracking-tight leading-tight ${
+                          isCurrent
+                            ? "text-stone-900 font-extrabold"
+                            : isReached
+                              ? "text-stone-700"
+                              : "text-stone-400"
                         }`}
-                      />
-                    ) : null}
-                  </div>
-                );
-              })}
+                      >
+                        {STATUS_COPY[step]}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── 3. Current Order Details Card ── */}
+        <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 shadow-xs">
+          <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+            <div>
+              <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-stone-900">
+                Ticket Details
+              </h3>
+              <p className="text-xs text-stone-500 font-medium">
+                Order ID #{payload.order.id.slice(0, 8)}
+              </p>
             </div>
+            <span className="text-base sm:text-lg font-black text-stone-900">
+              {formatCurrency(Number(payload.order.total_amount))}
+            </span>
           </div>
 
-          <div className="mt-6 grid gap-6 md:grid-cols-[0.85fr_1.15fr]">
-            <div className="rounded-[24px] border border-white/8 bg-slate-950/40 p-5">
-              <h2 className="text-lg font-semibold">Current Order ({payload.order.id.slice(0, 8)})</h2>
-              <div className="mt-4 space-y-3">
-                {(payload.items || []).map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3 text-sm"
-                  >
-                    <div>
-                      <p className="font-medium text-white">{item.name}</p>
-                      <p className="text-slate-400">Qty {item.quantity}</p>
-                    </div>
-                    <p className="font-semibold text-slate-100">
-                      {formatCurrency(Number(item.price) * item.quantity)}
+          <div className="mt-4 space-y-3">
+            {(payload.items || []).map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-stone-100 bg-stone-50/70 p-3.5"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-lg bg-stone-200/80 text-stone-900 font-black text-xs">
+                      {item.quantity} ×
+                    </span>
+                    <p className="font-black text-stone-900 text-sm sm:text-base uppercase tracking-tight truncate">
+                      {item.name}
                     </p>
                   </div>
-                ))}
-              </div>
-              {payload.order.notes ? (
-                <p className="mt-4 rounded-2xl border border-white/8 px-4 py-3 text-sm text-slate-300">
-                  Notes: {payload.order.notes}
-                </p>
-              ) : null}
-              <div className="mt-4 border-t border-white/10 pt-4 text-right">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                  Order Total
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-white">
-                  {formatCurrency(payload.order.total_amount)}
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-white/8 bg-slate-950/40 p-5">
-              <h2 className="text-lg font-semibold">Status timeline</h2>
-              <div className="mt-5 space-y-4">
-                {(payload.events || []).map((event, index) => (
-                  <div key={event.id} className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="h-3 w-3 rounded-full bg-cyan-300" />
-                      {index !== (payload.events || []).length - 1 ? (
-                        <div className="mt-2 h-full w-px bg-white/10" />
-                      ) : null}
-                    </div>
-                    <div className="pb-5">
-                      <p className="font-medium text-white">
-                        {STATUS_COPY[event.to_status] ?? event.to_status}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-400">
-                        {event.actor_role || "system"} ·{" "}
-                        {new Date(event.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ALL SESSION ORDERS SECTION */}
-          {sessionContext && sessionContext.orders.length > 0 && (
-            <div className="mt-8 rounded-[24px] border border-white/10 bg-slate-950/60 p-5">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-white">
-                    All Orders in this Session ({sessionContext.orders.length})
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Items placed across all orders for this table
-                  </p>
+                  {item.notes && (
+                    <p className="text-xs text-stone-500 font-medium mt-1 pl-1">
+                      Note: {item.notes}
+                    </p>
+                  )}
                 </div>
-                <span className="text-sm font-bold text-cyan-300">
-                  Subtotal: {formatCurrency(sessionContext.sessionTotal)}
+                <span className="font-black text-stone-900 text-sm sm:text-base shrink-0">
+                  {formatCurrency(Number(item.price) * item.quantity)}
                 </span>
               </div>
+            ))}
+          </div>
 
-              <div className="space-y-4">
-                {sessionContext.orders.map((ord, index) => (
+          {payload.order.notes && (
+            <div className="mt-4 rounded-2xl border border-amber-200/80 bg-amber-50/60 p-3 text-xs font-medium text-amber-950">
+              <span className="font-black uppercase tracking-wider text-[10px] block mb-0.5 text-amber-800">
+                Special Instructions:
+              </span>
+              {payload.order.notes}
+            </div>
+          )}
+        </div>
+
+        {/* ── 4. Multi-Order Session Overview ── */}
+        {sessionContext && sessionContext.orders.length > 0 && (
+          <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-stone-900">
+                  All Orders in This Session
+                </h3>
+                <p className="text-xs text-stone-500 font-medium">
+                  {sessionContext.orders.length} {sessionContext.orders.length === 1 ? "ticket" : "tickets"} placed during this table session
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-xs uppercase tracking-wider text-stone-400 font-bold block">
+                  Session Total
+                </span>
+                <span className="text-base sm:text-lg font-black text-stone-900">
+                  {formatCurrency(sessionContext.sessionTotal)}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {sessionContext.orders.map((ord, idx) => {
+                const isThisOrder = ord.id === orderId;
+                return (
                   <div
                     key={ord.id}
-                    className={`rounded-2xl border p-4 transition-all ${
-                      ord.id === orderId
-                        ? "border-cyan-400/40 bg-cyan-400/5 shadow-md shadow-cyan-400/10"
-                        : "border-white/8 bg-white/5"
+                    className={`rounded-2xl border p-4 transition ${
+                      isThisOrder
+                        ? "border-amber-400 bg-amber-50/40 ring-2 ring-amber-200/50"
+                        : "border-stone-200 bg-stone-50/60"
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-white">
-                          Order #{index + 1}
+                        <span className="text-sm font-black uppercase tracking-tight text-stone-900">
+                          Order #{idx + 1}
                         </span>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-stone-400 font-mono">
                           ({ord.id.slice(0, 8)})
                         </span>
                         <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider ${
-                            ord.status === "closed" || ord.status === "served"
-                              ? "bg-emerald-400/15 text-emerald-300 border border-emerald-500/20"
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide ${
+                            ord.status === "served" || ord.status === "closed"
+                              ? "bg-emerald-100 text-emerald-900 border border-emerald-200"
                               : ord.status === "cancelled"
-                                ? "bg-rose-400/15 text-rose-300 border border-rose-500/20"
-                                : "bg-cyan-400/15 text-cyan-200 border border-cyan-500/20"
+                                ? "bg-rose-100 text-rose-900 border border-rose-200"
+                                : "bg-amber-100 text-amber-950 border border-amber-200"
                           }`}
                         >
                           {STATUS_COPY[ord.status] ?? ord.status}
                         </span>
-                        {ord.id === orderId && (
-                          <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-[10px] font-extrabold text-cyan-300">
-                            CURRENTLY VIEWING
-                          </span>
-                        )}
                       </div>
+
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-white">
-                          {formatCurrency(ord.total_amount)}
+                        <span className="text-sm font-black text-stone-900">
+                          {formatCurrency(Number(ord.total_amount))}
                         </span>
-                        {ord.id !== orderId && (
+                        {!isThisOrder && (
                           <Link
                             to={`/r/${tableToken}/order/${ord.id}`}
-                            className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs text-cyan-200 hover:bg-white/20"
+                            className="min-h-[36px] px-3 rounded-xl bg-white border border-stone-200 hover:bg-stone-100 text-stone-800 text-xs font-black uppercase tracking-wider transition cursor-pointer flex items-center gap-1"
                           >
-                            View →
+                            <span>View</span>
+                            <ChevronRight size={13} />
                           </Link>
                         )}
                       </div>
@@ -501,173 +560,182 @@ export default function RestaurantOrderStatusClient({
                       {(ord.items || []).map((it) => (
                         <div
                           key={it.id}
-                          className="flex items-center justify-between rounded-xl bg-black/30 px-3 py-2 text-xs"
+                          className="flex items-center justify-between rounded-xl bg-white border border-stone-200/80 px-3 py-1.5 text-xs"
                         >
-                          <span className="font-medium text-slate-200">
-                            {it.name} <span className="text-slate-400">x{it.quantity}</span>
+                          <span className="font-semibold text-stone-800 truncate">
+                            {it.name} <span className="text-stone-400">×{it.quantity}</span>
                           </span>
-                          <span className="font-semibold text-slate-300">
+                          <span className="font-black text-stone-900 shrink-0">
                             {formatCurrency(Number(it.price) * it.quantity)}
                           </span>
                         </div>
                       ))}
                     </div>
                   </div>
-                ))}
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── 5. Hospitality Bill Receipt & Settlement Card ── */}
+        {sessionContext && (
+          <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center gap-3 border-b border-stone-100 pb-4">
+              <div className="h-10 w-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-black">
+                <Receipt size={20} />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-stone-900">
+                  {sessionContext.bill ? "Official Tax Invoice" : "Table Bill Summary"}
+                </h3>
+                <p className="text-xs text-stone-500 font-medium">
+                  {sessionContext.bill
+                    ? "Official tax invoice generated by restaurant"
+                    : "Total bill calculated across all live session orders"}
+                </p>
               </div>
             </div>
-          )}
 
-          {/* TABLE SESSION BILL & SETTLEMENT SUMMARY */}
-          {sessionContext && (
-            <div className="mt-8 rounded-[24px] border border-amber-400/20 bg-gradient-to-b from-amber-400/10 to-transparent p-5 backdrop-blur">
-              <div className="flex items-center gap-2.5 border-b border-white/10 pb-3 mb-4">
-                <Receipt className="h-5 w-5 text-amber-300" />
-                <div>
-                  <h3 className="text-lg font-bold text-white">
-                    {sessionContext.bill ? "Final Table Bill Breakdown" : "Estimated Session Bill"}
-                  </h3>
-                  <p className="text-xs text-amber-200/80">
-                    {sessionContext.bill
-                      ? "Official tax invoice generated by restaurant"
-                      : "Total bill calculated across all live session orders"}
-                  </p>
-                </div>
+            <div className="space-y-2.5 text-xs sm:text-sm">
+              <div className="flex items-center justify-between text-stone-600 font-semibold">
+                <span>Subtotal ({sessionContext.orders.length} {sessionContext.orders.length === 1 ? "order" : "orders"})</span>
+                <span className="font-black text-stone-900">
+                  {formatCurrency(sessionContext.bill?.subtotal ?? sessionContext.sessionTotal)}
+                </span>
               </div>
 
-              <div className="space-y-2.5 text-sm">
-                <div className="flex items-center justify-between text-slate-300">
-                  <span>Subtotal ({sessionContext.orders.length} orders)</span>
-                  <span className="font-medium text-white">
-                    {formatCurrency(sessionContext.bill?.subtotal ?? sessionContext.sessionTotal)}
+              {sessionContext.bill && sessionContext.bill.discount_amount > 0 && (
+                <div className="flex items-center justify-between text-emerald-700 font-semibold">
+                  <span>
+                    Discount ({sessionContext.bill.discount_type === "percentage" ? `${sessionContext.bill.discount_value}%` : "Flat"})
+                    {sessionContext.bill.discount_reason ? ` - ${sessionContext.bill.discount_reason}` : ""}
+                  </span>
+                  <span className="font-black">
+                    -{formatCurrency(sessionContext.bill.discount_amount)}
                   </span>
                 </div>
+              )}
 
-                {sessionContext.bill && sessionContext.bill.discount_amount > 0 && (
-                  <div className="flex items-center justify-between text-emerald-400">
-                    <span>
-                      Discount ({sessionContext.bill.discount_type === "percentage" ? `${sessionContext.bill.discount_value}%` : "Flat"})
-                      {sessionContext.bill.discount_reason ? ` - ${sessionContext.bill.discount_reason}` : ""}
-                    </span>
-                    <span className="font-medium">
-                      -{formatCurrency(sessionContext.bill.discount_amount)}
-                    </span>
-                  </div>
-                )}
-
-                {sessionContext.bill && sessionContext.bill.tax_amount > 0 && (
-                  <div className="flex items-center justify-between text-slate-300">
-                    <span>Taxes & GST</span>
-                    <span className="font-medium text-white">
-                      +{formatCurrency(sessionContext.bill.tax_amount)}
-                    </span>
-                  </div>
-                )}
-
-                {sessionContext.bill && sessionContext.bill.service_charge > 0 && (
-                  <div className="flex items-center justify-between text-slate-300">
-                    <span>Service Charge</span>
-                    <span className="font-medium text-white">
-                      +{formatCurrency(sessionContext.bill.service_charge)}
-                    </span>
-                  </div>
-                )}
-
-                <div className="border-t border-white/15 pt-3 mt-3 flex items-center justify-between text-lg font-extrabold text-white">
-                  <span>{sessionContext.bill ? "Grand Total" : "Subtotal Payable"}</span>
-                  <span className="text-2xl text-amber-300">
-                    {formatCurrency(sessionContext.bill?.grand_total ?? sessionContext.sessionTotal)}
+              {sessionContext.bill && sessionContext.bill.tax_amount > 0 && (
+                <div className="flex items-center justify-between text-stone-600 font-semibold">
+                  <span>Taxes & GST</span>
+                  <span className="font-black text-stone-900">
+                    +{formatCurrency(sessionContext.bill.tax_amount)}
                   </span>
                 </div>
+              )}
 
-                <div className="mt-4 flex items-center justify-between rounded-xl bg-black/40 px-4 py-3 border border-white/10">
-                  <span className="text-xs uppercase tracking-wider text-slate-400">
-                    Payment Status
+              {sessionContext.bill && sessionContext.bill.service_charge > 0 && (
+                <div className="flex items-center justify-between text-stone-600 font-semibold">
+                  <span>Service Charge</span>
+                  <span className="font-black text-stone-900">
+                    +{formatCurrency(sessionContext.bill.service_charge)}
                   </span>
-                  {sessionContext.paymentStatus === "paid" ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400">
-                      <CheckCircle2 size={14} /> PAID & SETTLED
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400">
-                      <Clock size={14} /> PAYMENT PENDING
-                    </span>
-                  )}
                 </div>
+              )}
 
-                {/* ONLINE PAYMENT & BILL REQUEST BUTTONS */}
-                {sessionContext.paymentStatus !== "paid" ? (
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          await fetch(`/api/r/${tableToken}/session/request-bill`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ sessionId: sessionContext.sessionId }),
-                          });
-                          alert("Bill request sent to waiter!");
-                        } catch {
-                          alert("Failed to request bill.");
-                        }
-                      }}
-                      className="flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 py-3.5 text-sm font-bold text-white hover:bg-white/20 transition active:scale-[0.98] cursor-pointer"
-                    >
-                      <Receipt size={18} className="text-amber-400" /> Request Bill from Waiter
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowPaymentModal(true)}
-                      className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 py-3.5 text-sm font-black text-slate-950 shadow-xl shadow-amber-500/25 hover:from-amber-400 hover:to-yellow-400 transition active:scale-[0.98] cursor-pointer"
-                    >
-                      <QrCode size={18} /> Pay Bill Online (UPI / QR / Cash) →
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowPaymentModal(true)}
-                    className="mt-4 w-full flex items-center justify-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 py-3 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition cursor-pointer"
-                  >
-                    <QrCode size={16} /> View Online Payment QR & Details
-                  </button>
-                )}
+              <div className="border-t border-stone-200 pt-3 mt-3 flex items-center justify-between">
+                <span className="text-sm font-black uppercase tracking-wider text-stone-700">
+                  {sessionContext.bill ? "Grand Total" : "Total Payable"}
+                </span>
+                <span className="text-2xl font-black text-stone-900 tracking-tight">
+                  {formatCurrency(sessionContext.bill?.grand_total ?? sessionContext.sessionTotal)}
+                </span>
               </div>
             </div>
-          )}
 
-          {/* ONLINE PAYMENT MODAL */}
-          {showPaymentModal && sessionContext && (
-            <CustomerPaymentModal
-              tableToken={tableToken}
-              tableNumber={payload?.order?.table?.table_number}
-              restaurantName={restaurantInfo?.name || "The Restaurant"}
-              upiId={restaurantInfo?.upi_id}
-              upiQrUrl={restaurantInfo?.upi_qr_url}
-              amount={sessionContext.bill?.grand_total ?? sessionContext.sessionTotal}
-              currency="INR"
-              sessionId={sessionContext.sessionId}
-              onClose={() => setShowPaymentModal(false)}
-              onPaymentSubmitted={async (method, utr, tipAmount) => {
-                await fetch(`/api/r/${tableToken}/session/pay`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    sessionId: sessionContext.sessionId,
-                    paymentMethod: method,
-                    utrNumber: utr,
-                    tipAmount: tipAmount || 0,
-                    amount: sessionContext.bill?.grand_total ?? sessionContext.sessionTotal,
-                  }),
-                });
-              }}
-            />
-          )}
+            {/* Payment Status Badge */}
+            <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3.5 flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider text-stone-500">
+                Payment Status
+              </span>
+              {sessionContext.paymentStatus === "paid" ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-800 bg-emerald-100 border border-emerald-200/80 px-3 py-1 rounded-full">
+                  <CheckCircle2 size={14} className="text-emerald-700" /> Bill Settled ✓
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs font-black text-amber-950 bg-amber-100 border border-amber-200/80 px-3 py-1 rounded-full">
+                  <Clock size={14} className="text-amber-700" /> Payment Pending
+                </span>
+              )}
+            </div>
 
-        </div>
-      </div>
+            {/* Action Buttons */}
+            {sessionContext.paymentStatus !== "paid" ? (
+              <div className="grid gap-3 sm:grid-cols-2 pt-2">
+                <button
+                  type="button"
+                  disabled={requestingBill || billRequestedSuccess}
+                  onClick={handleRequestBill}
+                  className="min-h-[52px] rounded-2xl border border-stone-300 bg-white hover:bg-stone-50 text-stone-900 text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-xs active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  <Receipt size={16} className="text-amber-700" />
+                  <span>
+                    {billRequestedSuccess
+                      ? "Bill Requested • Staff Notified"
+                      : requestingBill
+                        ? "Requesting…"
+                        : "Request Bill from Waiter"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentModal(true)}
+                  className="min-h-[52px] rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-xs active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  <QrCode size={16} />
+                  <span>Pay Bill Online (UPI / QR) →</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(true)}
+                className="w-full min-h-[48px] rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs font-black uppercase tracking-wider hover:bg-emerald-100 transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                <QrCode size={16} />
+                <span>View Payment Confirmation & Receipt</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── 6. Subtle Footer Attribution ── */}
+        <footer className="pt-6 pb-12 text-center text-xs font-semibold text-stone-400">
+          <p>{restaurantName} • Table #{tableNum}</p>
+          <p className="mt-1 text-[11px] text-stone-400">Powered by Trinetra Restaurant OS</p>
+        </footer>
+      </main>
+
+      {/* ── 7. Online Payment Modal ── */}
+      {showPaymentModal && sessionContext && (
+        <CustomerPaymentModal
+          tableToken={tableToken}
+          tableNumber={tableNum}
+          restaurantName={restaurantName}
+          upiId={restaurantInfo?.upi_id}
+          upiQrUrl={restaurantInfo?.upi_qr_url}
+          amount={sessionContext.bill?.grand_total ?? sessionContext.sessionTotal}
+          currency="INR"
+          sessionId={sessionContext.sessionId}
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSubmitted={async (method, utr, tipAmount) => {
+            await fetch(`/api/r/${tableToken}/session/pay`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                sessionId: sessionContext.sessionId,
+                paymentMethod: method,
+                utrNumber: utr,
+                tipAmount: tipAmount || 0,
+                amount: sessionContext.bill?.grand_total ?? sessionContext.sessionTotal,
+              }),
+            });
+          }}
+        />
+      )}
     </div>
   );
 }
