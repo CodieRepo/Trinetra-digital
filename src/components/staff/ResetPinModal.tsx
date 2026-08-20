@@ -10,6 +10,7 @@ import React, { useState } from 'react';
 import { KeyRound, X } from 'lucide-react';
 import { PinPad } from '../auth/ui/PinPad';
 import { StaffMember } from './types';
+import { createClient } from '@/lib/supabase/client';
 
 export interface ResetPinModalProps {
   isOpen: boolean;
@@ -34,9 +35,18 @@ export const ResetPinModal: React.FC<ResetPinModalProps> = ({
     setErrorMessage(null);
 
     try {
+      let authHeader: Record<string, string> = {};
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          authHeader = { Authorization: `Bearer ${session.access_token}` };
+        }
+      } catch {}
+
       const res = await fetch('/api/v1/auth/staff/set-pin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
           staff_id: staffMember.id,
           restaurant_id: staffMember.restaurant_id,

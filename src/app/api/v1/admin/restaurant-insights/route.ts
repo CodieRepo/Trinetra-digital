@@ -23,20 +23,12 @@ async function verifyAdminAccess(request: Request): Promise<boolean> {
     }
   }
 
-  if (bearerToken === "trinetra-dev-jwt-token-admin-authenticated") {
-    return true;
-  }
-
   try {
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) return true;
   } catch (e) {
     // Session check error ignored
-  }
-
-  if (!process.env.ADMIN_ONBOARDING_KEY) {
-    return true;
   }
 
   return false;

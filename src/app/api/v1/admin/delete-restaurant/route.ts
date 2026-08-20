@@ -16,16 +16,12 @@ async function verifyAdminAccess(request: Request): Promise<boolean> {
   if (process.env.SUPABASE_SERVICE_ROLE_KEY && (adminKey === process.env.SUPABASE_SERVICE_ROLE_KEY || bearerToken === process.env.SUPABASE_SERVICE_ROLE_KEY)) {
     return true;
   }
-  if (bearerToken === "trinetra-dev-jwt-token-admin-authenticated") {
-    return true;
-  }
   try {
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) return true;
   } catch (e) {}
 
-  if (!process.env.ADMIN_ONBOARDING_KEY) return true;
   return false;
 }
 

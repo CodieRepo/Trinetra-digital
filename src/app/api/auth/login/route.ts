@@ -13,21 +13,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Default admin fallback for quick login & development
-    if (
-      (username === "admin" || username === "admin@trinetra.com" || username === "satwik") &&
-      (password === "admin123" || password === "SatwikPal@123Shubham" || password === "admin")
-    ) {
-      return NextResponse.json({
-        token: "trinetra-dev-jwt-token-admin-authenticated",
-        user: {
-          id: "admin-default-id",
-          username: username,
-          role: "super_admin",
-        },
-      });
-    }
-
     // Map username to email if necessary
     const email = username.includes("@") ? username : `${username}@trinetra.com`;
 
@@ -55,11 +40,11 @@ export async function POST(request: Request) {
         });
       }
     } catch (e) {
-      console.warn("Supabase Auth sign-in failed, checking standard fallback:", e);
+      console.warn("Supabase Auth sign-in failed:", e);
     }
 
     return NextResponse.json(
-      { error: "Invalid credentials. Use admin / admin123 or valid Supabase credentials." },
+      { error: "Invalid credentials." },
       { status: 401 }
     );
   } catch (err: any) {

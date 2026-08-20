@@ -32,6 +32,19 @@ export async function POST(
       return NextResponse.json({ error: "Table not found" }, { status: 404 });
     }
 
+    // Verify session belongs to this specific table
+    const { data: sessionRecord } = await supabase
+      .from("restaurant_table_sessions")
+      .select("id")
+      .eq("id", sessionId)
+      .eq("table_id", table.id)
+      .eq("restaurant_id", table.restaurant_id)
+      .maybeSingle();
+
+    if (!sessionRecord) {
+      return NextResponse.json({ error: "Session not found for this table" }, { status: 404 });
+    }
+
     // Touch table_session updated_at to trigger realtime notification for staff
     const nowIso = new Date().toISOString();
     await supabase
@@ -39,7 +52,9 @@ export async function POST(
       .update({
         updated_at: nowIso,
       })
-      .eq("id", sessionId);
+      .eq("id", sessionId)
+      .eq("table_id", table.id)
+      .eq("restaurant_id", table.restaurant_id);
 
     return NextResponse.json({
       success: true,

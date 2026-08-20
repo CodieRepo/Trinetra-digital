@@ -18,6 +18,7 @@ import { StaffModal } from "@/components/staff/StaffModal";
 import { ResetPinModal } from "@/components/staff/ResetPinModal";
 import { StaffMember } from "@/components/staff/types";
 import { StaffRole } from "@/types/auth";
+import { createClient } from "@/lib/supabase/client";
 
 interface StaffManagementWorkspaceProps {
   restaurantId: string;
@@ -40,6 +41,20 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [busyStaffId, setBusyStaffId] = useState<string | null>(null);
 
+  const getAuthHeaders = useCallback(async (customHeaders: Record<string, string> = {}) => {
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      return {
+        ...customHeaders,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+    } catch {
+      return customHeaders;
+    }
+  }, []);
+
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToastMessage(message);
     setToastType(type);
@@ -50,7 +65,8 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch("/api/client/restaurant/staff", { cache: "no-store" });
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/client/restaurant/staff", { headers, cache: "no-store" });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || `Failed to fetch staff (${res.status})`);
@@ -63,7 +79,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     fetchStaff();
@@ -86,11 +102,12 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
 
   const handleSaveStaff = async (data: Partial<StaffMember>) => {
     try {
+      const headers = await getAuthHeaders({ "Content-Type": "application/json" });
       if (selectedStaff) {
         // Edit existing staff
         const res = await fetch("/api/client/restaurant/staff", {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             staff_id: selectedStaff.id,
             name: data.name,
@@ -109,7 +126,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
         // Create new staff
         const res = await fetch("/api/client/restaurant/staff", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             name: data.name,
             role: data.role,
@@ -142,9 +159,10 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
 
     try {
       setBusyStaffId(member.id);
+      const headers = await getAuthHeaders({ "Content-Type": "application/json" });
       const res = await fetch("/api/client/restaurant/staff", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           staff_id: member.id,
           is_active: nextActive,

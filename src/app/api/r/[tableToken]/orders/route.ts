@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/security/rateLimiter";
 
 export const runtime = "nodejs";
 
@@ -12,6 +13,17 @@ export async function POST(
 
     if (!tableToken) {
       return NextResponse.json({ error: "tableToken is required" }, { status: 400 });
+    }
+
+    // Rate limit: 20 order submissions per minute per table/client
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
+    const rateLimit = checkRateLimit(`qr-order:${tableToken}:${clientIp}`, 20, 60000);
+    if (!rateLimit.allowed) {
+      const retryAfter = Math.max(1, Math.ceil((rateLimit.resetAt - Date.now()) / 1000));
+      return NextResponse.json(
+        { error: "Too many order requests. Please wait a moment before submitting again." },
+        { status: 429, headers: { 'Retry-After': String(retryAfter) } }
+      );
     }
 
     const body = await request.json().catch(() => ({}));

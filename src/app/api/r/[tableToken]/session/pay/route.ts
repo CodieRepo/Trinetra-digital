@@ -32,12 +32,27 @@ export async function POST(
     const tipNote = tipAmount && Number(tipAmount) > 0 ? ` (+ ₹${tipAmount} Tip)` : "";
     const noteText = `Customer Payment Request (${paymentMethod?.toUpperCase() || "ONLINE"})${tipNote}${utrNumber ? ` - UTR: ${utrNumber}` : ""}`;
 
+    // Verify session belongs to this specific table
+    const { data: sessionRecord } = await supabase
+      .from("restaurant_table_sessions")
+      .select("id")
+      .eq("id", sessionId)
+      .eq("table_id", table.id)
+      .eq("restaurant_id", table.restaurant_id)
+      .maybeSingle();
+
+    if (!sessionRecord) {
+      return NextResponse.json({ error: "Session not found for this table" }, { status: 404 });
+    }
+
     await supabase
       .from("restaurant_table_sessions")
       .update({
         updated_at: new Date().toISOString(),
       })
-      .eq("id", sessionId);
+      .eq("id", sessionId)
+      .eq("table_id", table.id)
+      .eq("restaurant_id", table.restaurant_id);
 
     return NextResponse.json({
       success: true,

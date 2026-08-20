@@ -1,6 +1,7 @@
 const { execSync } = require('child_process');
 
 const suites = [
+  { name: 'H-8A Launch Security Remediations', script: 'scripts/verify_h8a_security_remediations.cjs' },
   { name: 'H-5B Customer Tracker & Settlement', script: 'scripts/verify_h5b_customer_tracker.cjs' },
   { name: 'H-5A Customer QR & Mobile Menu', script: 'scripts/verify_h5_customer_qr.cjs' },
   { name: 'H-4A/B Kitchen KDS', script: 'scripts/verify_h4_kitchen.cjs' },
@@ -18,7 +19,7 @@ const suites = [
 ];
 
 console.log('===============================================================');
-console.log('  RUNNING FULL REGRESSION SUITE (H-1A through H-5B)');
+console.log('  RUNNING FULL REGRESSION SUITE (H-1A through H-8A)');
 console.log('===============================================================\n');
 
 let totalSuites = suites.length;
