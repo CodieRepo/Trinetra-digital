@@ -89,14 +89,14 @@ export default function StaffOpsPage() {
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-lg md:text-xl font-black text-stone-900 tracking-tight truncate uppercase">
-                  {restaurantName || (role === "kitchen" ? "Kitchen Station" : "Waiter Service")}
+                  {restaurantName || (role === "kitchen" ? "Spice Garden Fine Dining" : "Waiter Service")}
                 </h1>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200 shrink-0">
-                  {role === "kitchen" ? "KDS Station" : "Waiter Board"}
+                  {role === "kitchen" ? "Kitchen Display Station" : "Waiter Board"}
                 </span>
               </div>
               <p className="text-xs text-stone-500 font-medium truncate mt-0.5">
-                {role === "kitchen" ? "Kitchen Dispatch Queue" : "Dining Floor & Tableside Ordering"}
+                {role === "kitchen" ? "Kitchen Dispatch & Prep Queue" : "Dining Floor & Tableside Ordering"}
                 <span className="mx-1.5 text-stone-300">•</span>
                 <span className="text-[11px] text-stone-400 font-semibold">Powered by Trinetra</span>
               </p>

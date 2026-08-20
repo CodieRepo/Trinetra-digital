@@ -20,6 +20,8 @@ export default function PageLayout({ children, hideFooter = false }: PageLayoutP
     location.pathname.startsWith("/super-admin") || 
     location.pathname.startsWith("/restaurant") || 
     location.pathname.startsWith("/staff/ops") ||
+    location.pathname.startsWith("/kitchen") ||
+    location.pathname.startsWith("/waiter") ||
     location.pathname.startsWith("/r/");
 
   if (isStandalone) {

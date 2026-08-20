@@ -141,15 +141,15 @@ const ACTIONS: Record<
 > = {
   kitchen: {
     placed: [
-      { label: "Accept", status: "accepted" },
+      { label: "Accept Ticket", status: "accepted" },
       { label: "Cancel", status: "cancelled" },
     ],
     accepted: [
-      { label: "Preparing", status: "preparing" },
+      { label: "Start Preparing", status: "preparing" },
       { label: "Cancel", status: "cancelled" },
     ],
     preparing: [
-      { label: "Ready", status: "ready" },
+      { label: "Mark Ready", status: "ready" },
       { label: "Cancel", status: "cancelled" },
     ],
     ready: [],
@@ -191,8 +191,21 @@ function dwellMinutes(isoString: string) {
   return Math.floor((Date.now() - new Date(isoString).getTime()) / 60000);
 }
 
-function isUrgent(isoString: string) {
-  return dwellMinutes(isoString) >= 10;
+function getDwellTier(isoString: string): "normal" | "warning" | "urgent" {
+  const mins = dwellMinutes(isoString);
+  if (mins >= 20) return "urgent";
+  if (mins >= 10) return "warning";
+  return "normal";
+}
+
+function getInFlightLabel(actionStatus: string) {
+  if (actionStatus === "accepted") return "Accepting…";
+  if (actionStatus === "preparing") return "Starting…";
+  if (actionStatus === "ready") return "Marking Ready…";
+  if (actionStatus === "served") return "Serving…";
+  if (actionStatus === "closed") return "Closing…";
+  if (actionStatus === "cancelled") return "Cancelling…";
+  return "Updating…";
 }
 
 // ---------------------------------------------------------------------------
@@ -240,6 +253,40 @@ export default function StaffOrdersPanel({
   const [error, setError] = useState<string | null>(null);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [updatingOrderIds, setUpdatingOrderIds] = useState<Set<string>>(new Set());
+  const [kitchenStatusFilter, setKitchenStatusFilter] = useState<"all" | "placed" | "accepted" | "preparing" | "ready" | "urgent">("all");
+
+  const { totalActiveCount, placedCount, acceptedCount, preparingCount, readyCount, urgentCount } = useMemo(() => {
+    const orders = payload?.orders ?? [];
+    let placed = 0;
+    let accepted = 0;
+    let preparing = 0;
+    let ready = 0;
+    let urgent = 0;
+    orders.forEach((o) => {
+      if (o.status === "placed") placed++;
+      if (o.status === "accepted") accepted++;
+      if (o.status === "preparing") preparing++;
+      if (o.status === "ready") ready++;
+      if (getDwellTier(o.created_at) === "urgent" && o.status !== "ready") urgent++;
+    });
+    return {
+      totalActiveCount: orders.length,
+      placedCount: placed,
+      acceptedCount: accepted,
+      preparingCount: preparing,
+      readyCount: ready,
+      urgentCount: urgent,
+    };
+  }, [payload?.orders]);
+
+  const visibleOrders = useMemo(() => {
+    const orders = payload?.orders ?? [];
+    if (role !== "kitchen" || kitchenStatusFilter === "all") return orders;
+    if (kitchenStatusFilter === "urgent") {
+      return orders.filter((o) => getDwellTier(o.created_at) === "urgent" && o.status !== "ready");
+    }
+    return orders.filter((o) => o.status === kitchenStatusFilter);
+  }, [payload?.orders, role, kitchenStatusFilter]);
 
   // --- Sessions State ---
   const [sessionsPayload, setSessionsPayload] = useState<SessionsPayload | null>(null);
@@ -874,133 +921,289 @@ export default function StaffOrdersPanel({
       )}
 
       {/* =================================================================== */}
-      {/* TAB 2: LIVE ORDERS QUEUE (Existing Order Lifecycle)                */}
+      {/* TAB 2: LIVE ORDERS QUEUE (Warm Hospitality Kitchen KDS)            */}
       {/* =================================================================== */}
       {activeTab === "orders" && (
         <div className="space-y-6">
+          {/* Error State Banner */}
+          {error && (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50/90 p-4 text-xs sm:text-sm text-rose-900 flex items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <AlertCircle size={18} className="text-rose-600 shrink-0" />
+                <p className="font-bold truncate">Couldn't refresh kitchen orders.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void loadOrders()}
+                className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs uppercase tracking-wider shrink-0 transition cursor-pointer shadow-xs active:scale-95"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Kitchen Operational Summary & Status Filter Chips */}
+          {role === "kitchen" && (
+            <div className="space-y-4">
+              {/* Staff Station Status Sub-Bar */}
+              <div className="flex items-center justify-between gap-3 flex-wrap bg-white border border-stone-200/90 rounded-2xl px-4 py-3 shadow-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="h-8 w-8 rounded-xl bg-amber-500/20 text-amber-950 flex items-center justify-center font-black text-xs shrink-0">
+                    <User size={16} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-stone-900 truncate">
+                      {payload?.staff?.name ? `${payload.staff.name} • Kitchen Staff` : "Kitchen Station Active"}
+                    </p>
+                    <p className="text-[11px] text-stone-500 font-medium truncate">
+                      Oldest-first dispatch queue • Auto-refreshes every 5s
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void loadOrders()}
+                  className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-extrabold text-xs uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5 active:scale-95 shrink-0"
+                >
+                  <Clock size={13} />
+                  <span>Refresh Queue</span>
+                </button>
+              </div>
+
+              {/* Metric Summary Counters */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                <div className="rounded-2xl border border-stone-200/90 bg-white p-3.5 shadow-xs">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500">Total Active</p>
+                  <p className="text-2xl font-black text-stone-900 mt-0.5">{totalActiveCount}</p>
+                </div>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-3.5 shadow-xs">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800">New / Placed</p>
+                  <p className="text-2xl font-black text-amber-950 mt-0.5">{placedCount}</p>
+                </div>
+                <div className="rounded-2xl border border-indigo-200 bg-indigo-50/60 p-3.5 shadow-xs">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-800">Preparing</p>
+                  <p className="text-2xl font-black text-indigo-950 mt-0.5">{preparingCount}</p>
+                </div>
+                <div className="rounded-2xl border border-teal-200 bg-teal-50/60 p-3.5 shadow-xs">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-teal-800">Ready</p>
+                  <p className="text-2xl font-black text-teal-950 mt-0.5">{readyCount}</p>
+                </div>
+                <div className="col-span-2 sm:col-span-1 rounded-2xl border border-rose-200 bg-rose-50/60 p-3.5 shadow-xs">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-rose-800">Urgent (&gt;20m)</p>
+                  <p className="text-2xl font-black text-rose-950 mt-0.5">{urgentCount}</p>
+                </div>
+              </div>
+
+              {/* Status Filter Chips */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                {[
+                  { id: "all", label: "All Tickets", count: totalActiveCount },
+                  { id: "placed", label: "New (Placed)", count: placedCount },
+                  { id: "accepted", label: "Accepted", count: acceptedCount },
+                  { id: "preparing", label: "Preparing", count: preparingCount },
+                  { id: "ready", label: "Ready", count: readyCount },
+                  { id: "urgent", label: "Urgent (>20m)", count: urgentCount },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setKitchenStatusFilter(f.id as any)}
+                    className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer border shrink-0 active:scale-95 ${
+                      kitchenStatusFilter === f.id
+                        ? "bg-stone-900 text-white border-stone-900 shadow-xs"
+                        : "bg-white text-stone-700 border-stone-200/90 hover:bg-stone-50"
+                    }`}
+                  >
+                    {f.label} ({f.count})
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Loading Indicator */}
           {loadingOrders && !payload?.orders ? (
             <div className="flex flex-col items-center gap-3 rounded-3xl border border-stone-200 bg-white px-6 py-16 text-center shadow-sm">
               <div className="h-8 w-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
-              <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Loading orders...</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Loading kitchen orders...</p>
             </div>
           ) : null}
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {(payload?.orders ?? []).map((order) => {
-              const inKitchen =
-                order.status === "placed" ||
-                order.status === "accepted" ||
-                order.status === "preparing";
-              const urgent = inKitchen && isUrgent(order.created_at);
+          {/* Orders Grid */}
+          <div className="grid gap-4.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {visibleOrders.map((order) => {
+              const dwellTier = getDwellTier(order.created_at);
+              const dwellMins = dwellMinutes(order.created_at);
 
               return (
                 <div
                   key={order.id}
-                  className={`rounded-3xl border p-5 shadow-sm transition-all flex flex-col justify-between ${
-                    urgent
-                      ? "border-rose-300 bg-rose-50/40"
+                  className={`rounded-3xl border-2 p-5 shadow-sm transition-all flex flex-col justify-between ${
+                    dwellTier === "urgent" && order.status !== "ready"
+                      ? "border-rose-300 bg-rose-50/50"
                       : order.status === "placed"
                       ? "border-amber-300 bg-amber-50/30"
+                      : order.status === "accepted"
+                      ? "border-sky-300 bg-sky-50/30"
+                      : order.status === "preparing"
+                      ? "border-indigo-300 bg-indigo-50/30"
                       : order.status === "ready"
                       ? "border-teal-300 bg-teal-50/30"
                       : "border-stone-200/90 bg-white"
                   }`}
                 >
                   <div>
-                    {/* Order Table Header */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-stone-500 font-extrabold">
+                    {/* Card Top Meta */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-stone-500 block truncate">
                           {order.table?.floor_name || "Dining Floor"}
-                        </p>
-                        <div className="mt-0.5 flex items-center gap-2">
-                          <h3 className="text-3xl font-black text-stone-900 tracking-tight">
+                        </span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <h3 className="text-3xl sm:text-4xl font-black text-stone-900 tracking-tight">
                             {order.table?.table_number ?? "Table"}
                           </h3>
-                          {urgent && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-100 px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-rose-900">
-                              <span className="h-1.5 w-1.5 rounded-full bg-rose-600 animate-pulse" />
-                              {dwellMinutes(order.created_at)}m Dwell
-                            </span>
-                          )}
                         </div>
-                        {order.staff_name && (
-                          <p className="text-xs text-stone-500 font-medium mt-0.5">
-                            Waiter: <span className="text-stone-800 font-bold">{order.staff_name}</span>
-                          </p>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span className="text-[11px] font-black tracking-wider text-stone-500 uppercase">
+                          ORDER #{order.id.slice(0, 6).toUpperCase()}
+                        </span>
+                        <span
+                          className={`rounded-xl border px-3 py-1 text-xs font-black uppercase tracking-wider ${
+                            STATUS_BADGE[order.status] ?? "bg-stone-100 text-stone-800 border-stone-200"
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Operational Context Sub-Bar */}
+                    <div className="mt-2.5 flex items-center justify-between gap-2 flex-wrap text-xs text-stone-600 font-semibold border-b border-stone-200/60 pb-2.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {order.staff_name ? (
+                          <span className="text-stone-800 font-bold">
+                            Waiter: {order.staff_name}
+                          </span>
+                        ) : order.order_source === "qr" ? (
+                          <span className="text-amber-900 font-bold">
+                            Customer QR
+                          </span>
+                        ) : (
+                          <span className="text-stone-600">
+                            POS Direct
+                          </span>
                         )}
+
                         {order.order_source && (
-                          <span className="inline-flex items-center rounded-lg border border-stone-200 bg-stone-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-stone-600 mt-1">
-                            {order.order_source === "waiter" ? "Waiter Order" : order.order_source === "qr" ? "QR Order" : order.order_source}
+                          <span className="inline-flex items-center rounded-lg border border-stone-200 bg-stone-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-stone-700">
+                            {order.order_source === "waiter"
+                              ? "Waiter Order"
+                              : order.order_source === "qr"
+                              ? "QR Order"
+                              : "POS Order"}
                           </span>
                         )}
                       </div>
+
+                      {/* Elapsed Dwell Badge */}
                       <span
-                        className={`rounded-xl border px-3 py-1 text-xs font-extrabold uppercase tracking-wider ${
-                          STATUS_BADGE[order.status] ?? "bg-stone-100 text-stone-800 border-stone-200"
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide border ${
+                          dwellTier === "urgent"
+                            ? "bg-rose-100 text-rose-950 border-rose-300"
+                            : dwellTier === "warning"
+                            ? "bg-amber-100 text-amber-950 border-amber-300"
+                            : "bg-stone-100 text-stone-700 border-stone-200"
                         }`}
                       >
-                        {order.status}
+                        <span
+                          className={`h-2 w-2 rounded-full ${
+                            dwellTier === "urgent"
+                              ? "bg-rose-600 animate-pulse"
+                              : dwellTier === "warning"
+                              ? "bg-amber-600"
+                              : "bg-stone-400"
+                          }`}
+                        />
+                        {dwellMins}m Dwell
                       </span>
                     </div>
 
-                    {/* Items List */}
-                    <div className="mt-4 space-y-2 rounded-2xl border border-stone-200/70 bg-stone-50/80 p-3.5">
+                    {/* Order Items with Quantity Dominance */}
+                    <div className="mt-3.5 space-y-2.5 rounded-2xl border border-stone-200/80 bg-stone-50/90 p-3.5">
                       {order.items.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between gap-3 text-sm text-stone-800">
-                          <div className="min-w-0 flex-1">
-                            <p className="font-bold text-stone-900 text-xs sm:text-sm">{item.name}</p>
+                        <div key={item.id} className="flex items-start gap-3 text-stone-900">
+                          {/* Visual Quantity Dominance */}
+                          <span className="rounded-xl font-black bg-stone-900 text-white px-3 py-1 text-sm sm:text-base shrink-0 shadow-xs">
+                            {item.quantity} ×
+                          </span>
+
+                          <div className="min-w-0 flex-1 pt-0.5">
+                            <p className="font-black text-stone-900 text-sm sm:text-base uppercase tracking-tight leading-snug">
+                              {item.name}
+                            </p>
                             {item.notes ? (
-                              <p className="text-[11px] text-amber-900 font-semibold bg-amber-100/70 px-2 py-0.5 rounded-lg border border-amber-200/80 mt-1 inline-block">
-                                Note: {item.notes}
+                              <p className="text-xs text-amber-950 font-bold bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-300 mt-1 inline-block">
+                                ⚠️ Note: {item.notes}
                               </p>
                             ) : null}
                           </div>
-                          <span className="rounded-lg font-black bg-white border border-stone-200 px-2.5 py-1 text-xs shrink-0 text-stone-900">
-                            {item.quantity}x
-                          </span>
                         </div>
                       ))}
                     </div>
 
+                    {/* Special Order Instructions / Allergies Callout Box */}
                     {order.notes && (
-                      <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-950">
-                        Special Instructions: {order.notes}
-                      </p>
+                      <div className="mt-3 rounded-2xl border-2 border-amber-300 bg-amber-50/95 p-3 text-xs font-black text-amber-950 uppercase tracking-wide flex items-start gap-2 shadow-xs">
+                        <span className="text-amber-800 font-extrabold shrink-0">⚠️ SPECIAL INSTRUCTIONS:</span>
+                        <span className="font-black text-stone-950">{order.notes}</span>
+                      </div>
                     )}
                   </div>
 
-                  <div>
-                    <div className="mt-4 flex items-center justify-between text-xs text-stone-500 font-medium border-t border-stone-100 pt-3">
+                  {/* Card Footer & Action Buttons (52–56px Primary Touch Targets) */}
+                  <div className="mt-4 pt-3 border-t border-stone-200/60">
+                    <div className="flex items-center justify-between text-xs text-stone-500 font-medium mb-3">
                       <span>Placed {timeAgo(order.created_at)}</span>
                       <span className="font-extrabold text-stone-900 text-sm">
                         {formatCurrency(order.total_amount)}
                       </span>
                     </div>
 
-                    {/* Action Buttons (48px+ touch targets — H-4A) */}
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {(ACTIONS[role][order.status] ?? []).map((action) => (
-                        <button
-                          key={action.status}
-                          type="button"
-                          disabled={updatingOrderIds.has(order.id)}
-                          onClick={() => updateStatus(order.id, action.status)}
-                          className={`min-h-[48px] rounded-xl px-4 py-2 text-xs font-extrabold uppercase tracking-wider transition shadow-xs cursor-pointer border ${
-                            action.status === "served"
-                              ? "bg-teal-600 hover:bg-teal-500 text-white border-teal-600"
-                              : action.status === "accepted"
-                              ? "bg-sky-600 hover:bg-sky-500 text-white border-sky-600"
-                              : action.status === "preparing"
-                              ? "bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-600"
-                              : action.status === "ready"
-                              ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-600"
-                              : "bg-stone-900 hover:bg-stone-800 text-white border-stone-900"
-                          } disabled:cursor-not-allowed disabled:opacity-50`}
-                        >
-                          {updatingOrderIds.has(order.id) ? "Updating..." : action.label}
-                        </button>
-                      ))}
+                    {/* Action Buttons (52–56px touch target — H-4B) */}
+                    <div className="flex flex-col gap-2">
+                      {(ACTIONS[role][order.status] ?? []).map((action) => {
+                        const isPrimary = action.status !== "cancelled";
+                        const isUpdating = updatingOrderIds.has(order.id);
+
+                        return (
+                          <button
+                            key={action.status}
+                            type="button"
+                            disabled={isUpdating}
+                            onClick={() => updateStatus(order.id, action.status)}
+                            className={`w-full rounded-2xl px-4 py-3 text-xs sm:text-sm font-black uppercase tracking-wider transition shadow-sm cursor-pointer border flex items-center justify-center gap-2 ${
+                              isPrimary ? "min-h-[52px]" : "min-h-[44px]"
+                            } ${
+                              action.status === "accepted"
+                                ? "bg-sky-600 hover:bg-sky-500 text-white border-sky-600 active:scale-[0.98]"
+                                : action.status === "preparing"
+                                ? "bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-600 active:scale-[0.98]"
+                                : action.status === "ready"
+                                ? "bg-teal-600 hover:bg-teal-500 text-white border-teal-600 active:scale-[0.98]"
+                                : action.status === "served"
+                                ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-600 active:scale-[0.98]"
+                                : "bg-white hover:bg-rose-50 text-rose-800 border-rose-200 active:scale-[0.98]"
+                            } disabled:cursor-not-allowed disabled:opacity-50`}
+                          >
+                            {isUpdating
+                              ? getInFlightLabel(action.status)
+                              : action.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -1008,15 +1211,25 @@ export default function StaffOrdersPanel({
             })}
           </div>
 
-          {!loadingOrders && !payload?.orders.length ? (
+          {/* Empty State */}
+          {!loadingOrders && visibleOrders.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center text-stone-500 shadow-sm">
-              <UtensilsCrossed size={40} className="mx-auto mb-3 text-stone-400" />
-              <p className="text-base font-extrabold text-stone-800">No active orders right now</p>
-              <p className="mt-1 text-xs text-stone-500 font-medium">
-                {role === "waiter"
-                  ? "Go to 'Floors & Tables' to take new guest orders."
-                  : "Incoming kitchen orders will appear here in real time."}
+              <UtensilsCrossed size={48} className="mx-auto mb-3.5 text-stone-400" />
+              <h3 className="text-lg font-black text-stone-900">
+                {kitchenStatusFilter !== "all" ? `No ${kitchenStatusFilter} orders` : "Kitchen is clear"}
+              </h3>
+              <p className="mt-1.5 text-xs text-stone-500 font-medium max-w-sm mx-auto">
+                {kitchenStatusFilter !== "all"
+                  ? "Switch to 'All Tickets' or wait for new tickets to enter this stage."
+                  : "No active orders right now. Incoming guest and tableside orders will appear here automatically."}
               </p>
+              <button
+                type="button"
+                onClick={() => void loadOrders()}
+                className="mt-4 min-h-[44px] inline-flex items-center gap-2 rounded-xl bg-stone-100 hover:bg-stone-200 px-4 py-2 text-xs font-extrabold uppercase text-stone-700 transition cursor-pointer active:scale-95"
+              >
+                Refresh Queue
+              </button>
             </div>
           ) : null}
         </div>
