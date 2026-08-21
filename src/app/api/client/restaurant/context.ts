@@ -100,37 +100,45 @@ export async function resolveRestaurantContext(request: Request, bodyData?: any)
   }
 
   // ─── Step 2: Resolve verified tenant from authenticated identity ─────────────
+  const requestedTenantId = url.searchParams.get("tenant_id") || request.headers.get("x-tenant-id") || bodyData?.tenant_id;
+  const requestedRestaurantId = url.searchParams.get("restaurant_id") || request.headers.get("x-restaurant-id") || bodyData?.restaurant_id;
+
   let verifiedTenantId: string | null = null;
+  let isSuperAdmin = false;
 
   if (userId) {
-    const { data: roleData } = await db
+    const { data: roleRows } = await db
       .from("users_roles")
-      .select("tenant_id")
-      .eq("user_id", userId)
+      .select("tenant_id, role")
+      .eq("user_id", userId);
+
+    const { data: profile } = await db
+      .from("profiles")
+      .select("tenant_id, role")
+      .eq("id", userId)
       .maybeSingle();
 
-    if (roleData?.tenant_id) {
-      verifiedTenantId = roleData.tenant_id;
-    } else {
-      const { data: profile } = await db
-        .from("profiles")
-        .select("tenant_id")
-        .eq("id", userId)
-        .maybeSingle();
+    if (
+      profile?.role === "super_admin" ||
+      profile?.role === "client_admin" ||
+      roleRows?.some((r) => r.role === "super_admin" || r.role === "client_admin")
+    ) {
+      isSuperAdmin = true;
+    }
 
-      if (profile?.tenant_id) {
-        verifiedTenantId = profile.tenant_id;
-      }
+    if (roleRows && roleRows.length > 0) {
+      const matched = requestedTenantId ? roleRows.find((r) => r.tenant_id === requestedTenantId.trim()) : null;
+      verifiedTenantId = matched?.tenant_id || roleRows[0].tenant_id;
+    } else if (profile?.tenant_id) {
+      verifiedTenantId = profile.tenant_id;
     }
   }
 
   // ─── Step 3: Resolve restaurant context ──────────────────────────────────────
-  const requestedTenantId = url.searchParams.get("tenant_id") || request.headers.get("x-tenant-id") || bodyData?.tenant_id;
-  const requestedRestaurantId = url.searchParams.get("restaurant_id") || request.headers.get("x-restaurant-id") || bodyData?.restaurant_id;
 
   // ─── AUTHENTICATED PATH ──────────────────────────────────────────────────────
-  if (userId && verifiedTenantId) {
-    const tenantId: string = verifiedTenantId;
+  if (userId && (verifiedTenantId || isSuperAdmin)) {
+    let tenantId: string = verifiedTenantId || "";
     let restaurantId: string | null = null;
 
     // If client supplies a restaurant_id, validate it belongs to the authenticated tenant
@@ -145,7 +153,7 @@ export async function resolveRestaurantContext(request: Request, bodyData?: any)
         throw new RestaurantContextError("Forbidden: Requested restaurant not found.", 403);
       }
 
-      if (restRow.tenant_id !== verifiedTenantId) {
+      if (!isSuperAdmin && restRow.tenant_id !== verifiedTenantId) {
         // IDOR BLOCKED: authenticated user attempting cross-tenant access
         throw new RestaurantContextError(
           "Forbidden: You do not have permission to access this restaurant.",
@@ -154,27 +162,33 @@ export async function resolveRestaurantContext(request: Request, bodyData?: any)
       }
 
       restaurantId = restRow.id;
+      tenantId = restRow.tenant_id;
     }
 
     // If client supplies a tenant_id, it must match the authenticated tenant
-    if (requestedTenantId && requestedTenantId !== "default" && requestedTenantId.trim() !== verifiedTenantId) {
+    if (requestedTenantId && requestedTenantId !== "default" && !isSuperAdmin && requestedTenantId.trim() !== verifiedTenantId) {
       throw new RestaurantContextError(
         "Forbidden: Tenant ID mismatch with authenticated identity.",
         403
       );
     }
 
+    if (isSuperAdmin && requestedTenantId && requestedTenantId !== "default" && !restaurantId) {
+      tenantId = requestedTenantId.trim();
+    }
+
     // If no specific restaurant requested, resolve from authenticated tenant
-    if (!restaurantId) {
+    if (!restaurantId && tenantId) {
       const { data: restRow } = await db
         .from("restaurants")
         .select("id, tenant_id")
-        .eq("tenant_id", verifiedTenantId)
+        .eq("tenant_id", tenantId)
         .limit(1)
         .maybeSingle();
 
       if (restRow) {
         restaurantId = restRow.id;
+        tenantId = restRow.tenant_id;
       }
     }
 

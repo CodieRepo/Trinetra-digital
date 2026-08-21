@@ -28,6 +28,7 @@ interface StaffManagementWorkspaceProps {
 
 export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> = ({
   restaurantId,
+  tenantId,
 }) => {
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -49,11 +50,25 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
       return {
         ...customHeaders,
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(tenantId ? { "x-tenant-id": tenantId } : {}),
+        ...(restaurantId && restaurantId !== "default" ? { "x-restaurant-id": restaurantId } : {}),
       };
     } catch {
-      return customHeaders;
+      return {
+        ...customHeaders,
+        ...(tenantId ? { "x-tenant-id": tenantId } : {}),
+        ...(restaurantId && restaurantId !== "default" ? { "x-restaurant-id": restaurantId } : {}),
+      };
     }
-  }, []);
+  }, [tenantId, restaurantId]);
+
+  const getStaffApiUrl = useCallback(() => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+    const url = new URL("/api/client/restaurant/staff", origin);
+    if (tenantId) url.searchParams.set("tenant_id", tenantId);
+    if (restaurantId && restaurantId !== "default") url.searchParams.set("restaurant_id", restaurantId);
+    return url.toString();
+  }, [tenantId, restaurantId]);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToastMessage(message);
@@ -66,7 +81,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
       setLoading(true);
       setError(null);
       const headers = await getAuthHeaders();
-      const res = await fetch("/api/client/restaurant/staff", { headers, cache: "no-store" });
+      const res = await fetch(getStaffApiUrl(), { headers, cache: "no-store" });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || `Failed to fetch staff (${res.status})`);
@@ -79,7 +94,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeaders]);
+  }, [getAuthHeaders, getStaffApiUrl]);
 
   useEffect(() => {
     fetchStaff();
@@ -103,13 +118,16 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
   const handleSaveStaff = async (data: Partial<StaffMember>) => {
     try {
       const headers = await getAuthHeaders({ "Content-Type": "application/json" });
+      const apiUrl = getStaffApiUrl();
       if (selectedStaff) {
         // Edit existing staff
-        const res = await fetch("/api/client/restaurant/staff", {
+        const res = await fetch(apiUrl, {
           method: "PATCH",
           headers,
           body: JSON.stringify({
             staff_id: selectedStaff.id,
+            tenant_id: tenantId,
+            restaurant_id: restaurantId,
             name: data.name,
             role: data.role,
             is_active: data.is_active,
@@ -124,10 +142,12 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
         showToast(`Staff member "${data.name || selectedStaff.name}" updated successfully.`);
       } else {
         // Create new staff
-        const res = await fetch("/api/client/restaurant/staff", {
+        const res = await fetch(apiUrl, {
           method: "POST",
           headers,
           body: JSON.stringify({
+            tenant_id: tenantId,
+            restaurant_id: restaurantId,
             name: data.name,
             role: data.role,
           }),
@@ -160,11 +180,13 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
     try {
       setBusyStaffId(member.id);
       const headers = await getAuthHeaders({ "Content-Type": "application/json" });
-      const res = await fetch("/api/client/restaurant/staff", {
+      const res = await fetch(getStaffApiUrl(), {
         method: "PATCH",
         headers,
         body: JSON.stringify({
           staff_id: member.id,
+          tenant_id: tenantId,
+          restaurant_id: restaurantId,
           is_active: nextActive,
         }),
       });
@@ -462,6 +484,8 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
       <ResetPinModal
         isOpen={isResetPinModalOpen}
         staffMember={selectedStaff}
+        restaurantId={restaurantId}
+        tenantId={tenantId}
         onClose={() => setIsResetPinModalOpen(false)}
         onPinResetSuccess={() => {
           showToast("Security PIN configured successfully.");

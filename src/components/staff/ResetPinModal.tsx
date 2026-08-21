@@ -15,6 +15,8 @@ import { createClient } from '@/lib/supabase/client';
 export interface ResetPinModalProps {
   isOpen: boolean;
   staffMember: StaffMember | null;
+  restaurantId?: string;
+  tenantId?: string;
   onClose: () => void;
   onPinResetSuccess?: () => void;
 }
@@ -22,6 +24,8 @@ export interface ResetPinModalProps {
 export const ResetPinModal: React.FC<ResetPinModalProps> = ({
   isOpen,
   staffMember,
+  restaurantId,
+  tenantId,
   onClose,
   onPinResetSuccess,
 }) => {
@@ -44,12 +48,21 @@ export const ResetPinModal: React.FC<ResetPinModalProps> = ({
         }
       } catch {}
 
+      const targetRestaurantId = staffMember.restaurant_id || restaurantId;
+      const targetTenantId = staffMember.tenant_id || tenantId;
+
       const res = await fetch('/api/v1/auth/staff/set-pin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeader },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(targetTenantId ? { 'x-tenant-id': targetTenantId } : {}),
+          ...(targetRestaurantId && targetRestaurantId !== 'default' ? { 'x-restaurant-id': targetRestaurantId } : {}),
+          ...authHeader,
+        },
         body: JSON.stringify({
           staff_id: staffMember.id,
-          restaurant_id: staffMember.restaurant_id,
+          restaurant_id: targetRestaurantId,
+          tenant_id: targetTenantId,
           pin: newPin,
         }),
       });

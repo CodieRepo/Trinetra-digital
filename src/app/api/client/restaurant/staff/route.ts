@@ -46,6 +46,8 @@ export async function GET(request: Request) {
       const decoded = decodeStaffRecord(s);
       return {
         id: decoded.id,
+        tenant_id: tenantId,
+        restaurant_id: restaurantId,
         name: decoded.name,
         role: decoded.role,
         is_active: decoded.is_active,
