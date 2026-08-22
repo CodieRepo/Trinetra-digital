@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 const staffLoginSchema = z.object({
   restaurant_id: z.string().uuid("Invalid restaurant ID format"),
-  device_token: z.string().optional().default("mobile-pos"),
+  device_token: z.string().min(16).optional().default("trinetra-web-pos-terminal-station"),
   pin: z.string().min(4, "PIN must be at least 4 digits").max(8, "PIN max 8 digits"),
 });
 
