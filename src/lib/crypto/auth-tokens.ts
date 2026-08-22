@@ -6,7 +6,7 @@
  */
 
 import crypto from 'crypto';
-import { StaffRole, SessionType } from '../../types/auth';
+import { StaffRole, SessionType } from '../../types/auth/index';
 
 /**
  * Generate a 256-bit high-entropy random hex token (64 characters)
