@@ -182,6 +182,18 @@ export async function authenticateStaffRequest(
           targetRestaurantId = defaultRest.id;
           targetTenantId = defaultRest.tenant_id;
         }
+      } else if (isSuperAdmin) {
+        const { data: defaultRest } = await db
+          .from("restaurants")
+          .select("id, tenant_id")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (defaultRest) {
+          targetRestaurantId = defaultRest.id;
+          targetTenantId = defaultRest.tenant_id;
+        }
       }
 
       if (targetRestaurantId && targetTenantId) {

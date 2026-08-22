@@ -436,11 +436,12 @@ export default function StaffOrdersPanel({
           "Content-Type": "application/json",
           Authorization: `Bearer ${effectiveToken}`,
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, restaurant_id: restaurantId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update order.");
 
+      setError(null);
       await loadOrders();
       if (role === "waiter") await loadSessions();
     } catch (updateError) {
@@ -735,8 +736,8 @@ export default function StaffOrdersPanel({
         </div>
       )}
 
-      {/* Global Error Banner */}
-      {error && (
+      {/* Global Error Banner (Only for non-orders tab to avoid duplicate) */}
+      {error && activeTab !== "orders" && (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs sm:text-sm text-rose-800 flex items-center gap-3 shadow-sm">
           <AlertCircle size={18} className="text-rose-600 shrink-0" />
           <span className="font-medium">{error}</span>
@@ -930,7 +931,7 @@ export default function StaffOrdersPanel({
             <div className="rounded-2xl border border-rose-200 bg-rose-50/90 p-4 text-xs sm:text-sm text-rose-900 flex items-center justify-between gap-3 shadow-xs">
               <div className="flex items-center gap-2.5 min-w-0">
                 <AlertCircle size={18} className="text-rose-600 shrink-0" />
-                <p className="font-bold truncate">Couldn't refresh kitchen orders.</p>
+                <p className="font-bold truncate">{error || "Couldn't refresh kitchen orders."}</p>
               </div>
               <button
                 type="button"

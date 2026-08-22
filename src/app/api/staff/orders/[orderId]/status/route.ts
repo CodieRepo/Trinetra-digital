@@ -27,7 +27,21 @@ export async function POST(
     }
 
     const body = await request.json().catch(() => ({}));
-    const { context: staff, errorResponse } = await authenticateStaffRequest(request, body, body.restaurant_id || null);
+    const url = new URL(request.url);
+    let targetRestaurantHint = body?.restaurant_id || url.searchParams.get("restaurant_id");
+
+    if (!targetRestaurantHint) {
+      const { data: ordHint } = await getSupabaseAdmin()
+        .from("restaurant_orders")
+        .select("restaurant_id")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (ordHint?.restaurant_id) {
+        targetRestaurantHint = ordHint.restaurant_id;
+      }
+    }
+
+    const { context: staff, errorResponse } = await authenticateStaffRequest(request, body, targetRestaurantHint || null);
     if (errorResponse || !staff) {
       return NextResponse.json({ error: errorResponse?.message || "Unauthorized" }, { status: errorResponse?.status || 401 });
     }
