@@ -15,7 +15,7 @@ export type NotificationItem = {
   read: boolean;
 };
 
-// Global AudioContext singleton to prevent browser policy block
+// Global AudioContext singleton - initialized ONLY after user interaction
 let globalAudioCtx: AudioContext | null = null;
 
 function getAudioContext(): AudioContext | null {
@@ -23,7 +23,9 @@ function getAudioContext(): AudioContext | null {
   if (!globalAudioCtx) {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (AudioCtx) {
-      globalAudioCtx = new AudioCtx();
+      try {
+        globalAudioCtx = new AudioCtx();
+      } catch {}
     }
   }
   if (globalAudioCtx && globalAudioCtx.state === "suspended") {
@@ -34,14 +36,18 @@ function getAudioContext(): AudioContext | null {
 
 if (typeof window !== "undefined") {
   const unlockAudio = () => {
-    const ctx = getAudioContext();
-    if (ctx && ctx.state === "suspended") {
-      ctx.resume().catch(() => {});
-    }
+    try {
+      if (!globalAudioCtx) {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) globalAudioCtx = new AudioCtx();
+      } else if (globalAudioCtx.state === "suspended") {
+        globalAudioCtx.resume().catch(() => {});
+      }
+    } catch {}
   };
-  window.addEventListener("click", unlockAudio, { once: true });
-  window.addEventListener("keydown", unlockAudio, { once: true });
-  window.addEventListener("touchstart", unlockAudio, { once: true });
+  window.addEventListener("click", unlockAudio, { once: true, passive: true });
+  window.addEventListener("keydown", unlockAudio, { once: true, passive: true });
+  window.addEventListener("touchstart", unlockAudio, { once: true, passive: true });
 }
 
 // Web Audio API Synthesizer for zero-dependency sound chimes
@@ -212,9 +218,15 @@ export function useRealtimeNotifications(restaurantId?: string | null, _role?: s
             }
           }
         )
-        .subscribe();
+        .subscribe((status: string) => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            try {
+              if (channel) void supabase.removeChannel(channel);
+            } catch {}
+          }
+        });
     } catch (subErr) {
-      console.warn("[RealtimeNotif] Subscription notice:", subErr);
+      // Safe fallback to polling
     }
 
     return () => {

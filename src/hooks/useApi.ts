@@ -325,7 +325,13 @@ export function useDashboard() {
           fetchGlobalMetrics();
         }
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          try {
+            void supabase.removeChannel(channel);
+          } catch {}
+        }
+      });
 
     return () => {
       console.log(`🔌 Cleaning up Realtime channel for tenant_id = ${tenantId}`);

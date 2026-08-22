@@ -40,7 +40,13 @@ export function useRealtimeLeads() {
           fetchLeads();
         }
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          try {
+            void supabase.removeChannel(channel);
+          } catch {}
+        }
+      });
 
     return () => {
       clearInterval(interval);

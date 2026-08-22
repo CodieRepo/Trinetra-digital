@@ -68,7 +68,13 @@ export function useRealtimeMessages(selectedLeadId: string | null) {
         { event: "INSERT", schema: "public", table: "lead_notes", filter: `lead_id=eq.${selectedLeadId}` },
         () => loadLeadDetails()
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          try {
+            void supabase.removeChannel(channel);
+          } catch {}
+        }
+      });
 
     return () => {
       clearInterval(interval);

@@ -528,7 +528,13 @@ export default function StaffOrdersPanel({
             }
           }
         )
-        .subscribe();
+        .subscribe((status: string) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            try {
+              if (channel) void supabase.removeChannel(channel);
+            } catch {}
+          }
+        });
     } catch {
       // Fallback seamlessly to polling if WebSocket fails
     }
