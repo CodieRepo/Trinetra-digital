@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import { createClient } from "../lib/supabase/client";
 import { Lead } from "../types/crm";
 
 export function useRealtimeLeads() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   const fetchLeads = async () => {
     try {
@@ -24,33 +22,13 @@ export function useRealtimeLeads() {
   useEffect(() => {
     fetchLeads();
 
-    // 1. Polling interval fallback for instant UI updates (every 3 seconds)
+    // Fast polling interval for instant UI updates (every 3 seconds)
     const interval = setInterval(() => {
       fetchLeads();
     }, 3000);
 
-    // 2. Subscribe to Supabase Realtime changes on 'leads' table
-    const channel = supabase
-      .channel("realtime-leads-channel")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "leads" },
-        (payload) => {
-          console.log("⚡ Realtime Lead Event:", payload);
-          fetchLeads();
-        }
-      )
-      .subscribe((status: string) => {
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          try {
-            void supabase.removeChannel(channel);
-          } catch {}
-        }
-      });
-
     return () => {
       clearInterval(interval);
-      supabase.removeChannel(channel);
     };
   }, []);
 

@@ -274,70 +274,7 @@ export function useDashboard() {
     resolveTenantId();
   }, [token]);
 
-  // 🔔 Tenant-Scoped Supabase Realtime Subscriptions (Phase 3)
-  useEffect(() => {
-    if (!token || !tenantId) return;
-
-    console.log(`🔌 Establishing Realtime CRM sync channel...`);
-    const supabase = createClient();
-    
-    const channel = supabase
-      .channel(`crm-global-realtime-channel`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bhash_conversations" },
-        async (payload) => {
-          console.log("⚡ Realtime Bhash Conversation Event:", payload);
-          fetchGlobalMetrics();
-          if (selectedLeadId) {
-            try {
-              const freshDetails = await apiService.leads.get(selectedLeadId);
-              setLeadDetail(freshDetails);
-            } catch (e) {}
-          }
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "leads" },
-        () => {
-          console.log("⚡ Realtime Lead Event");
-          fetchGlobalMetrics();
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "messages" },
-        async () => {
-          fetchGlobalMetrics();
-          if (selectedLeadId) {
-            try {
-              const freshDetails = await apiService.leads.get(selectedLeadId);
-              setLeadDetail(freshDetails);
-            } catch (e) {}
-          }
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "contacts" },
-        () => {
-          fetchGlobalMetrics();
-        }
-      )
-      .subscribe((status: string) => {
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          try {
-            void supabase.removeChannel(channel);
-          } catch {}
-        }
-      });
-
-    return () => {
-      console.log(`🔌 Cleaning up Realtime channel for tenant_id = ${tenantId}`);
-      supabase.removeChannel(channel);
-    };
-  }, [token, tenantId, selectedLeadId, fetchGlobalMetrics]);
+  // Fast Polling Sync for CRM metrics (Every 5s for silent, reliable updates)
 
   // ⏰ Slow Fallback Polling (Backs up Realtime in case of connection drop)
   useEffect(() => {
@@ -409,6 +346,7 @@ export function useDashboard() {
     refreshing,
     backendOnline,
     latestApiError,
+    tenantId,
     
     // Operations
     sendManualMessage,

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { 
   UtensilsCrossed, 
   ShoppingBag, 
@@ -493,69 +492,17 @@ export default function StaffOrdersPanel({
       void loadSessions();
     }
 
-    // 1. Instant Supabase Realtime WebSocket Subscription
-    let channel: any = null;
-    try {
-      const supabase = createClient();
-      const channelName = `realtime-staff-orders-${restaurantId || 'global'}-${role}`;
-      channel = supabase
-        .channel(channelName)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'restaurant_orders',
-            ...(restaurantId ? { filter: `restaurant_id=eq.${restaurantId}` } : {}),
-          },
-          () => {
-            void loadOrders();
-            if (role === "waiter") void loadSessions();
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'restaurant_tables',
-            ...(restaurantId ? { filter: `restaurant_id=eq.${restaurantId}` } : {}),
-          },
-          () => {
-            if (role === "waiter") {
-              void loadFloorsAndTables();
-              void loadSessions();
-            }
-          }
-        )
-        .subscribe((status: string) => {
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            try {
-              if (channel) void supabase.removeChannel(channel);
-            } catch {}
-          }
-        });
-    } catch {
-      // Fallback seamlessly to polling if WebSocket fails
-    }
-
-    // 2. Continuous Fallback Polling (Every 5s for fail-safe live sync)
+    // Continuous Live Sync Polling Engine (Every 4s for zero-console-error live operations)
     const interval = window.setInterval(() => {
       void loadOrders();
       if (role === "waiter") {
         void loadSessions();
         void loadFloorsAndTables();
       }
-    }, 5000);
+    }, 4000);
 
     return () => {
       window.clearInterval(interval);
-      if (channel) {
-        try {
-          const supabase = createClient();
-          supabase.removeChannel(channel);
-        } catch {}
-      }
     };
   }, [restaurantId, role, effectiveToken, loadOrders, loadSessions, loadFloorsAndTables, loadMenu]);
 

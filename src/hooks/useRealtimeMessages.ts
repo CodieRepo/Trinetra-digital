@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import { createClient } from "../lib/supabase/client";
 import { Lead, ConversationMessage, TimelineEvent, Task, LeadNote } from "../types/crm";
 
 export function useRealtimeMessages(selectedLeadId: string | null) {
@@ -9,7 +8,6 @@ export function useRealtimeMessages(selectedLeadId: string | null) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notes, setNotes] = useState<LeadNote[]>([]);
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
 
   const loadLeadDetails = useCallback(async () => {
     if (!selectedLeadId) return;
@@ -35,50 +33,13 @@ export function useRealtimeMessages(selectedLeadId: string | null) {
 
     if (!selectedLeadId) return;
 
-    // 1. Polling interval fallback for active lead messages (every 3 seconds)
+    // Polling interval for active lead messages (every 3 seconds)
     const interval = setInterval(() => {
       loadLeadDetails();
     }, 3000);
 
-    // 2. Realtime channel for messages, conversations, timeline, tasks, notes
-    const channel = supabase
-      .channel(`lead-details-${selectedLeadId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `lead_id=eq.${selectedLeadId}` },
-        () => loadLeadDetails()
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "bhash_conversations", filter: `lead_id=eq.${selectedLeadId}` },
-        () => loadLeadDetails()
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "timeline_events", filter: `lead_id=eq.${selectedLeadId}` },
-        () => loadLeadDetails()
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tasks", filter: `lead_id=eq.${selectedLeadId}` },
-        () => loadLeadDetails()
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "lead_notes", filter: `lead_id=eq.${selectedLeadId}` },
-        () => loadLeadDetails()
-      )
-      .subscribe((status: string) => {
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          try {
-            void supabase.removeChannel(channel);
-          } catch {}
-        }
-      });
-
     return () => {
       clearInterval(interval);
-      supabase.removeChannel(channel);
     };
   }, [selectedLeadId, loadLeadDetails]);
 
