@@ -8,7 +8,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, UserPlus, KeyRound, Edit2, Shield, Power, RefreshCw, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Users, UserPlus, KeyRound, Edit2, Shield, Trash2, RefreshCw, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { StaffMember } from './types';
 import { StaffModal } from './StaffModal';
 import { ResetPinModal } from './ResetPinModal';
@@ -22,6 +22,7 @@ export const StaffListView: React.FC = () => {
   const [isStaffModalOpen, setIsStaffModalOpen] = useState<boolean>(false);
   const [isResetPinModalOpen, setIsResetPinModalOpen] = useState<boolean>(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null);
   const [busyStaffId, setBusyStaffId] = useState<string | null>(null);
 
   const showToast = (message: string) => {
@@ -67,31 +68,34 @@ export const StaffListView: React.FC = () => {
     setIsResetPinModalOpen(true);
   };
 
-  const handleToggleActive = async (staffId: string) => {
-    const member = staffList.find((s) => s.id === staffId);
-    if (!member) return;
-    const nextActive = !member.is_active;
+  const handleDeleteStaff = (staff: StaffMember) => {
+    setStaffToDelete(staff);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!staffToDelete) return;
+    const member = staffToDelete;
 
     try {
-      setBusyStaffId(staffId);
+      setBusyStaffId(member.id);
       const res = await fetch('/api/client/restaurant/staff', {
-        method: 'PATCH',
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          staff_id: staffId,
-          is_active: nextActive,
+          staff_id: member.id,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to update staff status');
+        throw new Error(data.error || 'Failed to delete staff member');
       }
 
-      showToast(`Staff member "${member.name}" ${nextActive ? 'reactivated' : 'deactivated'}.`);
+      showToast(`Staff member "${member.name}" deleted successfully.`);
+      setStaffToDelete(null);
       await fetchStaff();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error updating staff status';
+      const msg = err instanceof Error ? err.message : 'Error deleting staff member';
       setError(msg);
     } finally {
       setBusyStaffId(null);
@@ -335,18 +339,14 @@ export const StaffListView: React.FC = () => {
                       <button
                         type="button"
                         disabled={busyStaffId === member.id}
-                        onClick={() => handleToggleActive(member.id)}
-                        className={`p-2.5 rounded-xl transition-colors ${
-                          member.is_active
-                            ? 'bg-neutral-800 hover:bg-red-950 text-red-400'
-                            : 'bg-neutral-800 hover:bg-emerald-950 text-emerald-400'
-                        }`}
-                        title={member.is_active ? 'Deactivate Staff' : 'Reactivate Staff'}
+                        onClick={() => handleDeleteStaff(member)}
+                        className="p-2.5 rounded-xl bg-neutral-800 hover:bg-red-950 text-red-400 transition-colors cursor-pointer"
+                        title="Delete Staff Member"
                       >
                         {busyStaffId === member.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
-                          <Power className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" />
                         )}
                       </button>
                     </td>
@@ -376,6 +376,56 @@ export const StaffListView: React.FC = () => {
           fetchStaff();
         }}
       />
+
+      {/* Delete Confirmation Modal */}
+      {staffToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/80 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-neutral-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-neutral-800 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-950/80 border border-red-800 text-red-400 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white">Delete Staff Member</h3>
+                <p className="text-xs text-neutral-400">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-neutral-300 leading-relaxed">
+              Are you sure you want to permanently delete <strong className="text-white">{staffToDelete.name}</strong> ({staffToDelete.role})? Their security PIN and operations link will be permanently revoked immediately.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={busyStaffId === staffToDelete.id}
+                onClick={() => setStaffToDelete(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-300 hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busyStaffId === staffToDelete.id}
+                onClick={handleConfirmDelete}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-xs transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {busyStaffId === staffToDelete.id ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Yes, Delete Staff</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

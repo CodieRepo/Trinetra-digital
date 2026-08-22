@@ -229,22 +229,37 @@ export async function DELETE(request: Request) {
     const db = getSupabaseAdmin();
     const body = await request.json();
 
-    // Enforce role authorization: only owner and manager can deactivate staff
+    // Enforce role authorization: only owner and manager can delete staff
     const caller = await requireStaffRole(request, ["owner", "manager"], body);
 
     if (!body.staff_id) {
       return NextResponse.json({ error: "staff_id is required." }, { status: 400 });
     }
 
+    // 1. Delete associated PIN credentials so terminal access stops immediately
+    await db
+      .from("restaurant_staff_pins")
+      .delete()
+      .eq("staff_id", body.staff_id);
+
+    // 2. Clean up any registered mobile push devices
+    try {
+      await db
+        .from("staff_push_devices")
+        .delete()
+        .eq("staff_id", body.staff_id);
+    } catch {}
+
+    // 3. Permanently delete staff record from database
     const { error } = await db
       .from("restaurant_staff")
-      .update({ is_active: false })
+      .delete()
       .eq("id", body.staff_id)
       .eq("tenant_id", caller.tenantId)
       .eq("restaurant_id", caller.restaurantId);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true, message: "Staff member deactivated." });
+    return NextResponse.json({ success: true, message: "Staff member permanently deleted." });
   } catch (err: unknown) {
     if (err instanceof RestaurantContextError) {
       return NextResponse.json({ error: err.message }, { status: err.status });

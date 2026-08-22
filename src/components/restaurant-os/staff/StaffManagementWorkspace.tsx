@@ -7,7 +7,7 @@ import {
   KeyRound,
   Edit2,
   Shield,
-  Power,
+  Trash2,
   Copy,
   CheckCircle2,
   AlertCircle,
@@ -40,6 +40,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
   const [isStaffModalOpen, setIsStaffModalOpen] = useState<boolean>(false);
   const [isResetPinModalOpen, setIsResetPinModalOpen] = useState<boolean>(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null);
   const [busyStaffId, setBusyStaffId] = useState<string | null>(null);
 
   const getAuthHeaders = useCallback(async (customHeaders: Record<string, string> = {}) => {
@@ -169,37 +170,37 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
     }
   };
 
-  const handleToggleActive = async (member: StaffMember) => {
-    const nextActive = !member.is_active;
-    const actionLabel = nextActive ? "reactivate" : "deactivate";
+  const handleDeleteStaff = (member: StaffMember) => {
+    setStaffToDelete(member);
+  };
 
-    if (!confirm(`Are you sure you want to ${actionLabel} ${member.name}?`)) {
-      return;
-    }
+  const handleConfirmDelete = async () => {
+    if (!staffToDelete) return;
+    const member = staffToDelete;
 
     try {
       setBusyStaffId(member.id);
       const headers = await getAuthHeaders({ "Content-Type": "application/json" });
       const res = await fetch(getStaffApiUrl(), {
-        method: "PATCH",
+        method: "DELETE",
         headers,
         body: JSON.stringify({
           staff_id: member.id,
           tenant_id: tenantId,
           restaurant_id: restaurantId,
-          is_active: nextActive,
         }),
       });
 
       const resData = await res.json();
       if (!res.ok) {
-        throw new Error(resData.error || `Failed to ${actionLabel} staff`);
+        throw new Error(resData.error || "Failed to delete staff member");
       }
 
-      showToast(`Staff member "${member.name}" ${nextActive ? "reactivated" : "deactivated"}.`);
+      showToast(`Staff member "${member.name}" deleted successfully.`);
+      setStaffToDelete(null);
       await fetchStaff();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : `Failed to ${actionLabel} staff`;
+      const msg = err instanceof Error ? err.message : "Failed to delete staff member";
       showToast(msg, "error");
     } finally {
       setBusyStaffId(null);
@@ -448,18 +449,14 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
                         <button
                           type="button"
                           disabled={busyStaffId === member.id}
-                          onClick={() => handleToggleActive(member)}
-                          className={`p-2 rounded-lg border transition-colors cursor-pointer shadow-xs disabled:opacity-50 ${
-                            member.is_active
-                              ? "border-slate-200 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600"
-                              : "border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700"
-                          }`}
-                          title={member.is_active ? "Deactivate Staff Member" : "Reactivate Staff Member"}
+                          onClick={() => handleDeleteStaff(member)}
+                          className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-500 hover:text-rose-600 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                          title="Delete Staff Member"
                         >
                           {busyStaffId === member.id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           ) : (
-                            <Power className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
                           )}
                         </button>
                       </td>
@@ -492,6 +489,56 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
           fetchStaff();
         }}
       />
+
+      {/* Delete Confirmation Modal */}
+      {staffToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Delete Staff Member</h3>
+                <p className="text-xs text-slate-500">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Are you sure you want to permanently delete <strong className="text-slate-900">{staffToDelete.name}</strong> ({staffToDelete.role})? Their security PIN and operations terminal link will be permanently revoked immediately.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={busyStaffId === staffToDelete.id}
+                onClick={() => setStaffToDelete(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busyStaffId === staffToDelete.id}
+                onClick={handleConfirmDelete}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {busyStaffId === staffToDelete.id ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Yes, Delete Staff</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
