@@ -9,7 +9,7 @@ export async function GET() {
     short_name: "Restaurant OS",
     description: "Commercial Operating System & Terminal for Restaurants",
     start_url: "/restaurant",
-    scope: "/restaurant",
+    scope: "/",
     display: "standalone",
     orientation: "any",
     background_color: "#070709",
