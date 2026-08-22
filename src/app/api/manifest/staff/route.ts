@@ -9,7 +9,7 @@ export async function GET() {
     short_name: "Staff OS",
     description: "Kitchen KDS Station & Waiter Order Dispatch Terminal",
     start_url: "/staff/ops",
-    scope: "/staff/",
+    scope: "/staff",
     display: "standalone",
     orientation: "any",
     background_color: "#070709",
