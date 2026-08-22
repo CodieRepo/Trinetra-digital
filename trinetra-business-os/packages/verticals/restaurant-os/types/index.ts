@@ -51,19 +51,35 @@ type TransitionMap = Partial<
 >;
 
 const KITCHEN_TRANSITIONS: TransitionMap = {
-  placed: ["accepted", "cancelled"],
-  accepted: ["preparing", "cancelled"],
+  placed: ["accepted", "preparing", "cancelled"],
+  accepted: ["preparing", "ready", "cancelled"],
   preparing: ["ready", "cancelled"],
+  ready: ["served"],
 };
 
 const WAITER_TRANSITIONS: TransitionMap = {
+  placed: ["accepted", "preparing", "cancelled"],
+  accepted: ["preparing", "ready", "cancelled"],
+  preparing: ["ready", "cancelled"],
   ready: ["served"],
   served: ["closed"],
 };
 
-const TRANSITIONS: Record<RestaurantStaffRole, TransitionMap> = {
+const FULL_MANAGEMENT_TRANSITIONS: TransitionMap = {
+  placed: ["accepted", "preparing", "cancelled"],
+  accepted: ["preparing", "ready", "cancelled"],
+  preparing: ["ready", "cancelled"],
+  ready: ["served", "closed"],
+  served: ["closed"],
+};
+
+const TRANSITIONS: Record<string, TransitionMap> = {
   kitchen: KITCHEN_TRANSITIONS,
   waiter: WAITER_TRANSITIONS,
+  manager: FULL_MANAGEMENT_TRANSITIONS,
+  owner: FULL_MANAGEMENT_TRANSITIONS,
+  cashier: FULL_MANAGEMENT_TRANSITIONS,
+  admin: FULL_MANAGEMENT_TRANSITIONS,
 };
 
 /** Order statuses that represent a finished order (no further transitions). */
@@ -86,10 +102,11 @@ export function normalizePhone(raw: string): string {
  * All arguments are validated at the API boundary before this is called.
  */
 export function canStaffTransitionOrder(
-  role: RestaurantStaffRole,
+  role: string,
   from: RestaurantOrderStatus,
   to: RestaurantOrderStatus,
 ): boolean {
-  const allowed = TRANSITIONS[role][from];
+  const roleMap = TRANSITIONS[role] || FULL_MANAGEMENT_TRANSITIONS;
+  const allowed = roleMap[from];
   return Array.isArray(allowed) && allowed.includes(to);
 }

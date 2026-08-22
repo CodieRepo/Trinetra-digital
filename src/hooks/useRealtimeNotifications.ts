@@ -141,19 +141,17 @@ export function useRealtimeNotifications(restaurantId?: string | null, _role?: s
     setNotifications([]);
   }, []);
 
-  // 1. Supabase WebSockets Subscription with unique channel names & safe error handling
+  // 1. Supabase WebSockets Subscription with single stable channel & safe error handling
   useEffect(() => {
     if (!restaurantId) return;
 
     const supabase = createClient();
-    const channelId = Math.random().toString(36).substr(2, 6);
-
-    let ordersChannel: any = null;
-    let sessionsChannel: any = null;
+    const channelName = `notifs-live-${restaurantId}`;
+    let channel: any = null;
 
     try {
-      ordersChannel = supabase
-        .channel(`orders-${restaurantId}-${channelId}`)
+      channel = supabase
+        .channel(channelName)
         .on(
           "postgres_changes",
           {
@@ -195,10 +193,6 @@ export function useRealtimeNotifications(restaurantId?: string | null, _role?: s
             }
           }
         )
-        .subscribe();
-
-      sessionsChannel = supabase
-        .channel(`sessions-${restaurantId}-${channelId}`)
         .on(
           "postgres_changes",
           {
@@ -220,13 +214,12 @@ export function useRealtimeNotifications(restaurantId?: string | null, _role?: s
         )
         .subscribe();
     } catch (subErr) {
-      console.warn("[RealtimeNotif] Subscription note:", subErr);
+      console.warn("[RealtimeNotif] Subscription notice:", subErr);
     }
 
     return () => {
       try {
-        if (ordersChannel) void supabase.removeChannel(ordersChannel);
-        if (sessionsChannel) void supabase.removeChannel(sessionsChannel);
+        if (channel) void supabase.removeChannel(channel);
       } catch {
         // Safe cleanup
       }

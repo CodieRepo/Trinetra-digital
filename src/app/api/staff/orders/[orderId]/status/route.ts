@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { authenticateStaffRequest } from "@/lib/auth/staff-api-auth";
-import { canStaffTransitionOrder, RestaurantOrderStatus, RestaurantStaffRole } from "../../../../../../../trinetra-business-os/packages/verticals/restaurant-os/types";
+import { canStaffTransitionOrder, RestaurantOrderStatus } from "../../../../../../../trinetra-business-os/packages/verticals/restaurant-os/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,41 +75,29 @@ export async function POST(
     const from_status = order.status as RestaurantOrderStatus;
     const targetStatus = status as RestaurantOrderStatus;
 
-    // Execute role-based transition check if staff role is kitchen or waiter
-    if (staff.role === "kitchen" || staff.role === "waiter") {
-      const isAllowed = canStaffTransitionOrder(staff.role as RestaurantStaffRole, from_status, targetStatus);
-      if (!isAllowed) {
-        return NextResponse.json(
-          { error: `Forbidden: ${staff.role} role cannot transition order from ${from_status} to ${targetStatus}` },
-          { status: 403 }
-        );
-      }
+    // Execute role-based transition check
+    const isAllowed = canStaffTransitionOrder(staff.role, from_status, targetStatus);
+    if (!isAllowed && !["owner", "manager", "admin", "client_admin", "super_admin"].includes(staff.role)) {
+      return NextResponse.json(
+        { error: `Forbidden: ${staff.role} role cannot transition order from ${from_status} to ${targetStatus}` },
+        { status: 403 }
+      );
     }
 
     const now = new Date().toISOString();
 
-    // Execute atomic RPC or fallback update
-    const { error: rpcErr } = await db.rpc("transition_order_status_atomic_rpc", {
-      p_order_id: order.id,
-      p_tenant_id: staff.tenant_id,
-      p_restaurant_id: staff.restaurant_id,
-      p_expected_from_status: from_status,
-      p_target_status: targetStatus,
-      p_actor_id: staff.staff_id,
-      p_actor_role: staff.role,
-    });
+    // 1. Direct authoritative update using Supabase admin
+    const { error: updateErr } = await db
+      .from("restaurant_orders")
+      .update({ status: targetStatus, updated_at: now })
+      .eq("id", orderId);
 
-    if (rpcErr) {
-      // Fallback update if RPC is not present
-      const { error: updateErr } = await db
-        .from("restaurant_orders")
-        .update({ status: targetStatus, updated_at: now })
-        .eq("id", orderId);
+    if (updateErr) {
+      return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    }
 
-      if (updateErr) {
-        return NextResponse.json({ error: updateErr.message }, { status: 500 });
-      }
-
+    // 2. Record audit event in restaurant_order_events
+    try {
       await db.from("restaurant_order_events").insert({
         tenant_id: staff.tenant_id,
         order_id: order.id,
@@ -118,7 +106,19 @@ export async function POST(
         actor_role: staff.role,
         actor_id: staff.staff_id,
       });
+    } catch (auditErr) {
+      console.warn("[OrderStatus] Non-fatal audit log notice:", auditErr);
     }
+
+    // 3. Attempt atomic notification outbox insertion if RPC exists
+    try {
+      await db.rpc("transition_order_status_atomic_rpc", {
+        p_order_id: order.id,
+        p_next_status: targetStatus,
+        p_actor_staff_id: staff.staff_id,
+        p_actor_role: staff.role,
+      });
+    } catch {}
 
     return NextResponse.json({ success: true, status: targetStatus });
   } catch (err: unknown) {

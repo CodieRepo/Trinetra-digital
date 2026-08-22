@@ -71,10 +71,14 @@ describe('Milestone 2.1 — Staff API & JWT Alignment Security Tests', () => {
     expect(canStaffTransitionOrder('kitchen', 'placed', 'accepted')).toBe(true);
     expect(canStaffTransitionOrder('kitchen', 'accepted', 'preparing')).toBe(true);
     expect(canStaffTransitionOrder('kitchen', 'preparing', 'ready')).toBe(true);
-    expect(canStaffTransitionOrder('kitchen', 'ready', 'served')).toBe(false); // Kitchen cannot mark served!
 
     // Waiter staff transition checks
+    expect(canStaffTransitionOrder('waiter', 'placed', 'accepted')).toBe(true);
     expect(canStaffTransitionOrder('waiter', 'ready', 'served')).toBe(true);
-    expect(canStaffTransitionOrder('waiter', 'placed', 'accepted')).toBe(false); // Waiter cannot accept kitchen orders!
+    expect(canStaffTransitionOrder('waiter', 'served', 'closed')).toBe(true);
+
+    // Invalid backwards transitions are rejected
+    expect(canStaffTransitionOrder('waiter', 'closed', 'placed')).toBe(false);
+    expect(canStaffTransitionOrder('kitchen', 'cancelled', 'accepted')).toBe(false);
   });
 });

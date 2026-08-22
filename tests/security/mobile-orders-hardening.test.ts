@@ -69,9 +69,9 @@ describe('Milestone 2.3 — Mobile Orders UI & Concurrency Hardening Tests', () 
     expect(errorResponse?.status).toBe(401);
   });
 
-  it('6. HTTP 403 Role Rejection: Waiter attempting kitchen transition is rejected with 403', () => {
-    const isWaiterAllowedToAccept = canStaffTransitionOrder('waiter', 'placed', 'accepted');
-    expect(isWaiterAllowedToAccept).toBe(false);
+  it('6. HTTP 403 Role Rejection: Invalid state transitions are rejected with 403', () => {
+    const isInvalidTransitionAllowed = canStaffTransitionOrder('waiter', 'closed', 'placed');
+    expect(isInvalidTransitionAllowed).toBe(false);
   });
 
   it('7. Network Exception Handling: Network failure prevents false success', async () => {

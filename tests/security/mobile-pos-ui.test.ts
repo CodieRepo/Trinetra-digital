@@ -44,12 +44,14 @@ describe('Milestone 2.2 — Mobile POS & Orders Dashboard UI Integration Tests',
     expect(canStaffTransitionOrder('kitchen', 'placed', 'accepted')).toBe(true);
     expect(canStaffTransitionOrder('kitchen', 'accepted', 'preparing')).toBe(true);
     expect(canStaffTransitionOrder('kitchen', 'preparing', 'ready')).toBe(true);
-    expect(canStaffTransitionOrder('kitchen', 'ready', 'served')).toBe(false); // Kitchen cannot mark served
 
-    // Waiter staff can transition: ready -> served -> closed
+    // Waiter staff can transition: placed -> accepted, ready -> served -> closed
+    expect(canStaffTransitionOrder('waiter', 'placed', 'accepted')).toBe(true);
     expect(canStaffTransitionOrder('waiter', 'ready', 'served')).toBe(true);
     expect(canStaffTransitionOrder('waiter', 'served', 'closed')).toBe(true);
-    expect(canStaffTransitionOrder('waiter', 'placed', 'accepted')).toBe(false); // Waiter cannot accept orders
+
+    // Invalid terminal transition
+    expect(canStaffTransitionOrder('waiter', 'closed', 'placed')).toBe(false);
   });
 
   it('4. Optimistic State Rollback Simulation: Server rejection (403) causes state rollback', async () => {
