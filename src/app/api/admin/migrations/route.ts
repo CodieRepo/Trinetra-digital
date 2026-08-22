@@ -23,24 +23,38 @@ export async function GET(request: Request) {
   try {
     await client.connect();
 
-    // 1. Enable Supabase Realtime publication on restaurant tables
+    // 1. Enable Supabase Realtime publication on all operational restaurant tables
     const realtimeSql = `
       DO $$
+      DECLARE
+        tbl text;
+        tables text[] := ARRAY[
+          'restaurant_orders',
+          'restaurant_order_items',
+          'restaurant_tables',
+          'restaurant_table_sessions',
+          'restaurant_bills',
+          'kitchen_tickets',
+          'kitchen_ticket_items',
+          'restaurant_staff'
+        ];
       BEGIN
         IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
-          IF NOT EXISTS (
-            SELECT 1 FROM pg_publication_tables 
-            WHERE pubname = 'supabase_realtime' AND tablename = 'restaurant_orders'
-          ) THEN
-            ALTER PUBLICATION supabase_realtime ADD TABLE restaurant_orders;
-          END IF;
-
-          IF NOT EXISTS (
-            SELECT 1 FROM pg_publication_tables 
-            WHERE pubname = 'supabase_realtime' AND tablename = 'restaurant_table_sessions'
-          ) THEN
-            ALTER PUBLICATION supabase_realtime ADD TABLE restaurant_table_sessions;
-          END IF;
+          FOREACH tbl IN ARRAY tables LOOP
+            IF EXISTS (
+              SELECT 1 FROM information_schema.tables 
+              WHERE table_schema = 'public' AND table_name = tbl
+            ) AND NOT EXISTS (
+              SELECT 1 FROM pg_publication_tables 
+              WHERE pubname = 'supabase_realtime' AND tablename = tbl
+            ) THEN
+              BEGIN
+                EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE public.%I', tbl);
+              EXCEPTION WHEN OTHERS THEN
+                NULL;
+              END;
+            END IF;
+          END LOOP;
         END IF;
       END $$;
     `;

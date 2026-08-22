@@ -1,6 +1,5 @@
-"use client";
-
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { 
   UtensilsCrossed, 
   ShoppingBag, 
@@ -208,6 +207,34 @@ function getInFlightLabel(actionStatus: string) {
   return "Updating…";
 }
 
+function classifyStaffApiError(status?: number, rawError?: string, errorObj?: any): {
+  is401: boolean;
+  message: string;
+} {
+  if (
+    status === 401 ||
+    rawError?.toLowerCase().includes("unauthorized") ||
+    rawError?.toLowerCase().includes("invalid or expired staff token")
+  ) {
+    return { is401: true, message: "Session expired. Please sign in again." };
+  }
+  if (
+    status === 403 ||
+    rawError?.toLowerCase().includes("forbidden") ||
+    rawError?.toLowerCase().includes("not have permission") ||
+    rawError?.toLowerCase().includes("cannot transition")
+  ) {
+    return { is401: false, message: rawError || "You are not authorized for this restaurant or action." };
+  }
+  if (status && status >= 500) {
+    return { is401: false, message: "Restaurant service temporarily unavailable." };
+  }
+  if (errorObj instanceof TypeError || (typeof window !== "undefined" && !window.navigator?.onLine)) {
+    return { is401: false, message: "Network connection lost. Retrying..." };
+  }
+  return { is401: false, message: rawError || errorObj?.message || "An unexpected error occurred." };
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -217,11 +244,13 @@ export default function StaffOrdersPanel({
   role,
   token,
   restaurantName,
+  onUnauthorized,
 }: {
   restaurantId: string;
   role: "kitchen" | "waiter";
   token?: string;
   restaurantName?: string;
+  onUnauthorized?: (message?: string) => void;
 }) {
   const effectiveToken =
     token ||
@@ -254,6 +283,18 @@ export default function StaffOrdersPanel({
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [updatingOrderIds, setUpdatingOrderIds] = useState<Set<string>>(new Set());
   const [kitchenStatusFilter, setKitchenStatusFilter] = useState<"all" | "placed" | "accepted" | "preparing" | "ready" | "urgent">("all");
+
+  // Centralized 401 state eviction callback
+  const handleAuthEviction = useCallback((msg?: string) => {
+    setPayload(null);
+    setSessionsPayload(null);
+    setFloors([]);
+    setTables([]);
+    setMenuItems([]);
+    setCategories([]);
+    setError(msg || "Session expired. Please sign in again.");
+    onUnauthorized?.(msg || "Session expired. Please enter your PIN.");
+  }, [onUnauthorized]);
 
   const { totalActiveCount, placedCount, acceptedCount, preparingCount, readyCount, urgentCount } = useMemo(() => {
     const orders = payload?.orders ?? [];
@@ -317,6 +358,11 @@ export default function StaffOrdersPanel({
         fetch("/api/client/restaurant/tables", { headers, cache: "no-store" }),
       ]);
 
+      if (floorsRes.status === 401 || tablesRes.status === 401) {
+        handleAuthEviction();
+        return;
+      }
+
       if (floorsRes.ok) {
         const fData = await floorsRes.json();
         setFloors(Array.isArray(fData.floors) ? fData.floors : []);
@@ -330,7 +376,7 @@ export default function StaffOrdersPanel({
     } finally {
       setLoadingStructure(false);
     }
-  }, [effectiveToken]);
+  }, [effectiveToken, handleAuthEviction]);
 
   // --- Load Menu ---
   const loadMenu = useCallback(async () => {
@@ -339,6 +385,10 @@ export default function StaffOrdersPanel({
       setLoadingMenu(true);
       const headers = { Authorization: `Bearer ${effectiveToken}` };
       const res = await fetch("/api/client/restaurant/menu", { headers, cache: "no-store" });
+      if (res.status === 401) {
+        handleAuthEviction();
+        return;
+      }
       if (res.ok) {
         const mData = await res.json();
         setCategories(Array.isArray(mData.categories) ? mData.categories : []);
@@ -349,7 +399,7 @@ export default function StaffOrdersPanel({
     } finally {
       setLoadingMenu(false);
     }
-  }, [effectiveToken]);
+  }, [effectiveToken, handleAuthEviction]);
 
   // --- Load Orders ---
   const loadOrders = useCallback(async () => {
@@ -362,16 +412,32 @@ export default function StaffOrdersPanel({
         cache: "no-store",
         headers: { Authorization: `Bearer ${effectiveToken}` },
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load orders.");
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        handleAuthEviction();
+        return;
+      }
+      if (!res.ok) {
+        const classified = classifyStaffApiError(res.status, data.error);
+        if (classified.is401) {
+          handleAuthEviction(classified.message);
+          return;
+        }
+        throw new Error(classified.message);
+      }
       setPayload(data as StaffPayload);
       setError(null);
-    } catch {
-      setError("Couldn't refresh live order queue. Please check network connection.");
+    } catch (err: any) {
+      const classified = classifyStaffApiError(undefined, undefined, err);
+      if (classified.is401) {
+        handleAuthEviction(classified.message);
+      } else {
+        setError(classified.message);
+      }
     } finally {
       setLoadingOrders(false);
     }
-  }, [restaurantId, effectiveToken]);
+  }, [restaurantId, effectiveToken, handleAuthEviction]);
 
   // --- Load Sessions ---
   const loadSessions = useCallback(async () => {
@@ -385,18 +451,34 @@ export default function StaffOrdersPanel({
         cache: "no-store",
         headers: { Authorization: `Bearer ${effectiveToken}` },
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load sessions.");
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        handleAuthEviction();
+        return;
+      }
+      if (!res.ok) {
+        const classified = classifyStaffApiError(res.status, data.error);
+        if (classified.is401) {
+          handleAuthEviction(classified.message);
+          return;
+        }
+        throw new Error(classified.message);
+      }
       setSessionsPayload(data as SessionsPayload);
       setSessionsError(null);
-    } catch {
-      setSessionsError("Couldn't refresh active sessions. Please check network connection.");
+    } catch (err: any) {
+      const classified = classifyStaffApiError(undefined, undefined, err);
+      if (classified.is401) {
+        handleAuthEviction(classified.message);
+      } else {
+        setSessionsError(classified.message);
+      }
     } finally {
       setSessionsLoading(false);
     }
-  }, [restaurantId, effectiveToken]);
+  }, [restaurantId, effectiveToken, handleAuthEviction]);
 
-  // --- Initial & Polling Lifecycle ---
+  // --- Initial, Realtime WebSocket & Polling Lifecycle ---
   useEffect(() => {
     if (!effectiveToken) {
       setError("Missing access token. Please access using a valid staff link or sign in.");
@@ -411,6 +493,47 @@ export default function StaffOrdersPanel({
       void loadSessions();
     }
 
+    // 1. Instant Supabase Realtime WebSocket Subscription
+    let channel: any = null;
+    try {
+      const supabase = createClient();
+      const channelName = `realtime-staff-orders-${restaurantId || 'global'}-${role}`;
+      channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'restaurant_orders',
+            ...(restaurantId ? { filter: `restaurant_id=eq.${restaurantId}` } : {}),
+          },
+          () => {
+            void loadOrders();
+            if (role === "waiter") void loadSessions();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'restaurant_tables',
+            ...(restaurantId ? { filter: `restaurant_id=eq.${restaurantId}` } : {}),
+          },
+          () => {
+            if (role === "waiter") {
+              void loadFloorsAndTables();
+              void loadSessions();
+            }
+          }
+        )
+        .subscribe();
+    } catch {
+      // Fallback seamlessly to polling if WebSocket fails
+    }
+
+    // 2. Continuous Fallback Polling (Every 5s for fail-safe live sync)
     const interval = window.setInterval(() => {
       void loadOrders();
       if (role === "waiter") {
@@ -421,6 +544,12 @@ export default function StaffOrdersPanel({
 
     return () => {
       window.clearInterval(interval);
+      if (channel) {
+        try {
+          const supabase = createClient();
+          supabase.removeChannel(channel);
+        } catch {}
+      }
     };
   }, [restaurantId, role, effectiveToken, loadOrders, loadSessions, loadFloorsAndTables, loadMenu]);
 
@@ -438,14 +567,30 @@ export default function StaffOrdersPanel({
         },
         body: JSON.stringify({ status, restaurant_id: restaurantId }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update order.");
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        handleAuthEviction();
+        return;
+      }
+      if (!res.ok) {
+        const classified = classifyStaffApiError(res.status, data.error);
+        if (classified.is401) {
+          handleAuthEviction(classified.message);
+          return;
+        }
+        throw new Error(classified.message);
+      }
 
       setError(null);
       await loadOrders();
       if (role === "waiter") await loadSessions();
-    } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : "Failed to update order status.");
+    } catch (updateError: any) {
+      const classified = classifyStaffApiError(undefined, undefined, updateError);
+      if (classified.is401) {
+        handleAuthEviction(classified.message);
+      } else {
+        setError(classified.message);
+      }
     } finally {
       setUpdatingOrderIds((prev) => {
         const next = new Set(prev);
@@ -590,9 +735,18 @@ export default function StaffOrdersPanel({
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        handleAuthEviction();
+        return;
+      }
       if (!res.ok) {
-        throw new Error(data.error || "Failed to place order.");
+        const classified = classifyStaffApiError(res.status, data.error);
+        if (classified.is401) {
+          handleAuthEviction(classified.message);
+          return;
+        }
+        throw new Error(classified.message);
       }
 
       setOrderToast({
@@ -612,10 +766,15 @@ export default function StaffOrdersPanel({
         setActiveTab("orders");
       }, 1200);
     } catch (e: any) {
-      setOrderToast({
-        message: e.message || "Failed to place order. Please retry.",
-        type: "error",
-      });
+      const classified = classifyStaffApiError(undefined, undefined, e);
+      if (classified.is401) {
+        handleAuthEviction(classified.message);
+      } else {
+        setOrderToast({
+          message: classified.message || "Failed to place order. Please retry.",
+          type: "error",
+        });
+      }
     } finally {
       setIsSubmittingOrder(false);
     }
@@ -1354,13 +1513,27 @@ export default function StaffOrdersPanel({
                                     payment_method: method,
                                   }),
                                 });
+                                const d = await res.json().catch(() => ({}));
+                                if (res.status === 401) {
+                                  handleAuthEviction();
+                                  return;
+                                }
                                 if (!res.ok) {
-                                  const d = await res.json();
-                                  throw new Error(d.error || "Failed to settle payment");
+                                  const classified = classifyStaffApiError(res.status, d.error);
+                                  if (classified.is401) {
+                                    handleAuthEviction(classified.message);
+                                    return;
+                                  }
+                                  throw new Error(classified.message);
                                 }
                                 void loadSessions();
                               } catch (e: any) {
-                                alert(e.message || "Failed to record payment");
+                                const classified = classifyStaffApiError(undefined, undefined, e);
+                                if (classified.is401) {
+                                  handleAuthEviction(classified.message);
+                                } else {
+                                  alert(classified.message || "Failed to record payment");
+                                }
                               } finally {
                                 setStaffSettlingId(null);
                               }
@@ -1388,14 +1561,28 @@ export default function StaffOrdersPanel({
                                 },
                                 body: JSON.stringify({ session_id: session.id }),
                               });
+                              const d = await res.json().catch(() => ({}));
+                              if (res.status === 401) {
+                                handleAuthEviction();
+                                return;
+                              }
                               if (!res.ok) {
-                                const d = await res.json();
-                                throw new Error(d.error || "Failed to close session");
+                                const classified = classifyStaffApiError(res.status, d.error);
+                                if (classified.is401) {
+                                  handleAuthEviction(classified.message);
+                                  return;
+                                }
+                                throw new Error(classified.message);
                               }
                               void loadSessions();
                               void loadFloorsAndTables();
                             } catch (e: any) {
-                              alert(e.message || "Failed to close table session");
+                              const classified = classifyStaffApiError(undefined, undefined, e);
+                              if (classified.is401) {
+                                handleAuthEviction(classified.message);
+                              } else {
+                                alert(classified.message || "Failed to close table session");
+                              }
                             }
                           }}
                           className="min-h-[44px] rounded-xl border border-stone-300 bg-stone-900 px-4 py-2 text-xs font-bold text-white hover:bg-stone-800 transition cursor-pointer"

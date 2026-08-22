@@ -237,9 +237,33 @@ export function useRealtimeNotifications(restaurantId?: string | null, _role?: s
   useEffect(() => {
     if (!restaurantId) return;
 
+    const supabase = createClient();
+
     async function pollLatestOrders() {
       try {
-        const res = await fetch(`/api/client/restaurant/orders?restaurant_id=${restaurantId}`);
+        let activeToken = typeof window !== "undefined" ? sessionStorage.getItem("trinetra_staff_token") : null;
+        if (!activeToken) {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.access_token) {
+              activeToken = session.access_token;
+            }
+          } catch {}
+        }
+
+        // Only poll authenticated endpoint if an active token is present
+        if (!activeToken) return;
+
+        const res = await fetch(`/api/client/restaurant/orders?restaurant_id=${restaurantId}`, {
+          headers: { Authorization: `Bearer ${activeToken}` },
+          cache: "no-store",
+        });
+
+        if (res.status === 401) {
+          // Token expired or invalid; safely skip
+          return;
+        }
+
         if (!res.ok) return;
         const data = await res.json();
         const orders = data.orders || [];
@@ -263,7 +287,7 @@ export function useRealtimeNotifications(restaurantId?: string | null, _role?: s
           }
         }
       } catch {
-        // Silent catch
+        // Silent catch for background notification poll
       }
     }
 

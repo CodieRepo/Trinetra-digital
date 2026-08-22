@@ -45,6 +45,17 @@ export default function StaffOpsPage() {
   const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
+  // Centralized 401 Unauthorized Eviction Callback
+  const handleUnauthorized = useCallback((message?: string) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("trinetra_staff_token");
+    }
+    setToken("");
+    setStaffInfo(null);
+    setPinInput("");
+    setAuthError(message || "Session expired. Please enter your PIN.");
+  }, []);
+
   // 1. Session Detection: Check URL token -> SessionStorage -> Supabase Auth Session
   useEffect(() => {
     async function initAuth() {
@@ -57,25 +68,44 @@ export default function StaffOpsPage() {
 
       const savedToken = typeof window !== "undefined" ? sessionStorage.getItem("trinetra_staff_token") : null;
       if (savedToken) {
+        // Validate client-side if it's an expired JWT before rendering
+        try {
+          const parts = savedToken.split(".");
+          if (parts.length === 3) {
+            const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+            const decoded = JSON.parse(decodeURIComponent(atob(base64).split("").map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")));
+            if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
+              handleUnauthorized("Session expired. Please enter your PIN.");
+              return;
+            }
+            if (decoded.staff_name && decoded.role) {
+              setStaffInfo({ staff_id: decoded.staff_id, name: decoded.staff_name, role: decoded.role });
+            }
+          }
+        } catch {}
+
         setToken(savedToken);
         return;
       }
 
-      // Check active Supabase admin/owner session in current browser
-      try {
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.access_token) {
-          sessionStorage.setItem("trinetra_staff_token", session.access_token);
-          setToken(session.access_token);
+      // Check active Supabase admin/owner session ONLY if explicitly requested via ?preview=admin
+      const isExplicitPreview = searchParams.get("preview") === "admin";
+      if (isExplicitPreview) {
+        try {
+          const supabase = createClient();
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            sessionStorage.setItem("trinetra_staff_token", session.access_token);
+            setToken(session.access_token);
+          }
+        } catch {
+          // No active Supabase session; staff will use PIN lockscreen
         }
-      } catch {
-        // No active Supabase session; staff will use PIN lockscreen
       }
     }
 
     void initAuth();
-  }, [searchParams]);
+  }, [searchParams, handleUnauthorized]);
 
   // 2. Fetch Restaurant Settings & Name once token is present
   useEffect(() => {
@@ -86,6 +116,10 @@ export default function StaffOpsPage() {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         });
+        if (res.status === 401) {
+          handleUnauthorized("Session expired. Please enter your PIN.");
+          return;
+        }
         if (res.ok) {
           const data = await res.json();
           if (data?.settings?.name) {
@@ -97,7 +131,7 @@ export default function StaffOpsPage() {
       }
     }
     void fetchRestaurantInfo();
-  }, [token]);
+  }, [token, handleUnauthorized]);
 
   // 3. Handle PIN Digit Press
   const handleDigitPress = (digit: string) => {
@@ -405,6 +439,7 @@ export default function StaffOpsPage() {
             role={role}
             token={token}
             restaurantName={restaurantName}
+            onUnauthorized={handleUnauthorized}
           />
         </main>
       )}
