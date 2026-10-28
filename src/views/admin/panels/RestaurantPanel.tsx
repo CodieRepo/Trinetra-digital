@@ -1,5 +1,6 @@
-import { createClient } from "@/lib/supabase/client";
 "use client";
+
+import { createClient } from "@/lib/supabase/client";
 
 import { useEffect, useState, useMemo } from "react";
 import { 
@@ -52,7 +53,10 @@ export default function RestaurantPanel() {
       const { data: { session } } = await supabase.auth.getSession();
       const headers: Record<string, string> = {};
       if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
-      const res = await fetch("/api/v1/admin/restaurant-insights", { headers });
+      const res = await fetch("/api/v1/admin/restaurant-insights", {
+        headers,
+        credentials: "include",
+      });
       const data = await res.json();
       if (data.success && Array.isArray(data.insights)) {
         setRestaurants(data.insights);
@@ -118,6 +122,7 @@ export default function RestaurantPanel() {
       const res = await fetch("/api/v1/admin/onboard-restaurant", {
         method: "POST",
         headers,
+        credentials: "include",
         body: JSON.stringify(formData)
       });
       const data = await res.json();
@@ -156,6 +161,7 @@ export default function RestaurantPanel() {
       const res = await fetch("/api/v1/admin/delete-restaurant", {
         method: "POST",
         headers,
+        credentials: "include",
         body: JSON.stringify({ restaurant_id: restaurantId }),
       });
       const data = await res.json();

@@ -141,11 +141,15 @@ export async function POST(request: Request) {
     const restaurantId = restaurant.id;
 
     // 5. Insert Users Roles assignment
-    await db.from("users_roles").insert({
-      user_id: userId,
-      tenant_id: tenantId,
-      role: "owner",
-    });
+    try {
+      await db.from("users_roles").insert({
+        user_id: userId,
+        tenant_id: tenantId,
+        role: "owner",
+      });
+    } catch (roleErr: any) {
+      console.warn("[Onboarding] Users_roles insert note:", roleErr?.message);
+    }
 
     // 6. Seed Default Menu Categories
     console.log("[Onboarding] Seeding menu categories...");
