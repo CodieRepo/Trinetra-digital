@@ -34,7 +34,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // 1. Create User in Supabase Auth
+    // 1. Resolve or Create User in Supabase Auth
+    let userId: string;
+    let isNewUser = false;
+
     const { data: authUser, error: authError } = await db.auth.admin.createUser({
       email,
       password,
@@ -42,15 +45,31 @@ export async function POST(request: Request) {
       user_metadata: { name: owner_name, phone },
     });
 
-    if (authError || !authUser.user) {
+    if (authError && authError.message?.toLowerCase().includes("already")) {
+      const { data: usersData } = await db.auth.admin.listUsers();
+      const existing = usersData?.users?.find(
+        (u) => u.email?.toLowerCase() === email.toLowerCase()
+      );
+      if (!existing) {
+        return NextResponse.json(
+          { success: false, error: authError.message },
+          { status: 400 }
+        );
+      }
+      userId = existing.id;
+      if (password) {
+        await db.auth.admin.updateUserById(userId, { password });
+      }
+    } else if (authError || !authUser?.user) {
       console.error("[Onboarding] Auth creation failed:", authError);
       return NextResponse.json(
         { success: false, error: authError?.message || "Failed to create authentication account." },
         { status: 400 }
       );
+    } else {
+      userId = authUser.user.id;
+      isNewUser = true;
     }
-
-    const userId = authUser.user.id;
     const tenantId = crypto.randomUUID();
     const slug = restaurant_name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
@@ -66,7 +85,7 @@ export async function POST(request: Request) {
 
     if (tenantErr) {
       console.error("[Onboarding] Tenant insert failed:", tenantErr);
-      await db.auth.admin.deleteUser(userId); // Rollback auth user
+      if (isNewUser) await db.auth.admin.deleteUser(userId); // Rollback auth user only if newly created
       return NextResponse.json({ success: false, error: tenantErr.message }, { status: 500 });
     }
 
@@ -81,13 +100,13 @@ export async function POST(request: Request) {
       // Ignore if organizations table does not exist
     }
 
-    // 3. Insert Profile record (legacy profiles system check)
-    const { error: profileErr } = await db.from("profiles").insert({
+    // 3. Upsert Profile record (legacy profiles system check)
+    const { error: profileErr } = await db.from("profiles").upsert({
       id: userId,
       tenant_id: tenantId,
       username: email,
       role: "client_admin",
-    });
+    }, { onConflict: "id" });
 
     if (profileErr) {
       console.warn("[Onboarding] Profile insert note:", profileErr.message);

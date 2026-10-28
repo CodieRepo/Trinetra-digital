@@ -1,3 +1,4 @@
+import { createClient } from "@/lib/supabase/client";
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -25,6 +26,7 @@ interface RestaurantInsight {
 }
 
 export default function RestaurantPanel() {
+  const supabase = useMemo(() => createClient(), []);
   const { success, error: toastError } = useToast();
   const [restaurants, setRestaurants] = useState<RestaurantInsight[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,10 @@ export default function RestaurantPanel() {
   const loadRestaurants = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/v1/admin/restaurant-insights");
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {};
+      if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+      const res = await fetch("/api/v1/admin/restaurant-insights", { headers });
       const data = await res.json();
       if (data.success && Array.isArray(data.insights)) {
         setRestaurants(data.insights);
@@ -107,9 +112,12 @@ export default function RestaurantPanel() {
     e.preventDefault();
     try {
       setBusy(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
       const res = await fetch("/api/v1/admin/onboard-restaurant", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(formData)
       });
       const data = await res.json();
@@ -142,9 +150,12 @@ export default function RestaurantPanel() {
     }
     try {
       setBusy(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
       const res = await fetch("/api/v1/admin/delete-restaurant", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ restaurant_id: restaurantId }),
       });
       const data = await res.json();
