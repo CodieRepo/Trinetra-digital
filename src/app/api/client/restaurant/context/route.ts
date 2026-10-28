@@ -38,6 +38,8 @@ export async function GET(request: Request) {
       role = roleRows.data.role;
     } else if (profileRow.data?.role) {
       role = profileRow.data.role === "client_admin" ? "admin" : (profileRow.data.role || "owner");
+    } else if (user.user_metadata?.role) {
+      role = user.user_metadata.role;
     }
 
     // 4. Fetch restaurant details

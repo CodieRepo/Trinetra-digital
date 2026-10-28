@@ -140,6 +140,22 @@ export async function POST(request: Request) {
 
     const restaurantId = restaurant.id;
 
+    // 4b. Bind owner auth metadata to permanently link tenant & restaurant
+    try {
+      await db.auth.admin.updateUserById(userId, {
+        user_metadata: {
+          name: owner_name,
+          phone,
+          tenant_id: tenantId,
+          restaurant_id: restaurantId,
+          role: "owner",
+        },
+      });
+      console.log(`[Onboarding] Linked owner auth metadata: tenant ${tenantId}, restaurant ${restaurantId}`);
+    } catch (metaErr: any) {
+      console.warn("[Onboarding] User metadata update note:", metaErr?.message);
+    }
+
     // 5. Insert Users Roles assignment
     try {
       await db.from("users_roles").insert({
