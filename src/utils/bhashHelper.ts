@@ -1,78 +1,207 @@
-import crypto from "crypto";
+import * as crypto from "crypto";
+
+export interface ParsedBhashPayload {
+  mobile: string;
+  rawMobile: string;
+  message: string;
+  name?: string;
+}
+
+export interface ParseBhashResult {
+  success: boolean;
+  data?: ParsedBhashPayload;
+  error?: string;
+}
 
 /**
- * Parses the raw plain text payload from BhashSMS webhook.
- * Example format: "Mobile: 919876543210, Message: Hello, Name: Rahul"
+ * Normalizes a phone number to canonical 10-digit format for Indian numbers.
+ * Strips all non-digit characters, removes leading 91 or 0 if applicable.
  */
-export function parsePlainTextPayload(body: string) {
-  const mobileLabel = "Mobile:";
-  const messageLabel = "Message:";
-  const nameLabel = "Name:";
+export function normalizePhoneNumber(rawPhone: string): string {
+  if (!rawPhone) return "";
+  const digits = rawPhone.replace(/\D/g, "");
+  
+  if (digits.length === 10) {
+    return digits;
+  }
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return digits.slice(2);
+  }
+  if (digits.length === 11 && digits.startsWith("0")) {
+    return digits.slice(1);
+  }
+  if (digits.length > 10 && digits.startsWith("91")) {
+    return digits.slice(-10);
+  }
+  if (digits.length >= 10) {
+    return digits.slice(-10);
+  }
+  return "";
+}
 
-  const mobileIdx = body.indexOf(mobileLabel);
-  const messageIdx = body.indexOf(messageLabel);
-  const nameIdx = body.indexOf(nameLabel);
+/**
+ * Generates an internal unique event ID for Bhash incoming deliveries.
+ * Explicitly decoupled from provider message ID.
+ */
+export function generateInternalEventId(): string {
+  const uuid = typeof crypto.randomUUID === "function" 
+    ? crypto.randomUUID() 
+    : crypto.randomBytes(16).toString("hex");
+  return `bhash_evt_${uuid}`;
+}
 
-  let mobile = "";
-  let message = "";
-  let name = "";
-
-  if (mobileIdx !== -1) {
-    let mobileEnd = body.length;
-    if (messageIdx > mobileIdx) mobileEnd = messageIdx;
-    else if (nameIdx > mobileIdx) mobileEnd = nameIdx;
-    
-    mobile = body.substring(mobileIdx + mobileLabel.length, mobileEnd).trim();
-    if (mobile.endsWith(",")) mobile = mobile.slice(0, -1).trim();
+/**
+ * Robust marker-based parser for BhashSMS plain-text incoming webhook payloads.
+ * Format: "Mobile: 919876543210, Message: Hello from Bhash, Name: Bhash"
+ *
+ * Requirements:
+ * - Preserves commas, colons, emojis, and special characters inside Message.
+ * - Handles arbitrary field order.
+ * - Trims extraneous whitespace.
+ * - Rejects missing Mobile or Message fields safely.
+ * - Includes defensive JSON fallback if body is JSON.
+ */
+export function parseBhashPlainTextPayload(body: string): ParseBhashResult {
+  if (!body || typeof body !== "string" || body.trim() === "") {
+    return { success: false, error: "Empty or invalid request payload" };
   }
 
-  if (messageIdx !== -1) {
-    let messageEnd = body.length;
-    const markers = [
-      { name: "Name:", idx: nameIdx },
-      { name: "Mobile:", idx: mobileIdx }
-    ].filter(m => m.idx > messageIdx)
-     .sort((a, b) => a.idx - b.idx);
+  const trimmed = body.trim();
 
-    if (markers.length > 0) messageEnd = markers[0].idx;
+  // Defensive JSON fallback if payload arrives as JSON
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    try {
+      const json = JSON.parse(trimmed);
+      const rawMobile = String(json.mobile || json.phone || json.from || "").trim();
+      const message = String(json.message || json.text || json.body || "").trim();
+      const name = json.name || json.sender_name || undefined;
 
-    message = body.substring(messageIdx + messageLabel.length, messageEnd).trim();
-    if (message.endsWith(",")) message = message.slice(0, -1).trim();
+      if (!rawMobile) {
+        return { success: false, error: "Malformed JSON payload: Missing Mobile field" };
+      }
+      if (!message) {
+        return { success: false, error: "Malformed JSON payload: Missing Message field" };
+      }
+
+      const mobile = normalizePhoneNumber(rawMobile);
+      if (!mobile || mobile.length < 10) {
+        return { success: false, error: "Invalid Mobile number in JSON: must contain at least 10 digits" };
+      }
+
+      return {
+        success: true,
+        data: {
+          mobile,
+          rawMobile,
+          message,
+          name: name ? String(name).trim() : undefined,
+        },
+      };
+    } catch {
+      // Fall through to plain text parsing if JSON parse fails
+    }
   }
 
-  if (nameIdx !== -1) {
-    let nameEnd = body.length;
-    const markers = [
-      { name: "Message:", idx: messageIdx },
-      { name: "Mobile:", idx: mobileIdx }
-    ].filter(m => m.idx > nameIdx)
-     .sort((a, b) => a.idx - b.idx);
+  // Marker detection: matches field labels preceded by start-of-string or comma
+  const markerRegexes = [
+    { key: "mobile", regex: /(?:^|,)\s*Mobile\s*:/i },
+    { key: "message", regex: /(?:^|,)\s*Message\s*:/i },
+    { key: "name", regex: /(?:^|,)\s*Name\s*:/i },
+  ];
 
-    if (markers.length > 0) nameEnd = markers[0].idx;
+  const foundMarkers: { key: string; startIndex: number; valueStartIndex: number }[] = [];
 
-    name = body.substring(nameIdx + nameLabel.length, nameEnd).trim();
-    if (name.endsWith(",")) name = name.slice(0, -1).trim();
+  for (const m of markerRegexes) {
+    const match = m.regex.exec(trimmed);
+    if (match) {
+      foundMarkers.push({
+        key: m.key,
+        startIndex: match.index,
+        valueStartIndex: match.index + match[0].length,
+      });
+    }
   }
 
-  // Cleanup phone number: remove non-digits
-  let cleanedPhone = mobile.replace(/\D/g, "");
-  if (cleanedPhone.startsWith("91") && cleanedPhone.length === 12) {
-    cleanedPhone = cleanedPhone.substring(2);
+  // Validate required markers
+  const hasMobile = foundMarkers.some((m) => m.key === "mobile");
+  const hasMessage = foundMarkers.some((m) => m.key === "message");
+
+  if (!hasMobile) {
+    return { success: false, error: "Malformed plain text payload: Missing required 'Mobile:' field" };
+  }
+  if (!hasMessage) {
+    return { success: false, error: "Malformed plain text payload: Missing required 'Message:' field" };
+  }
+
+  // Sort markers by their position in the raw string
+  foundMarkers.sort((a, b) => a.startIndex - b.startIndex);
+
+  const values: Record<string, string> = {};
+
+  for (let i = 0; i < foundMarkers.length; i++) {
+    const current = foundMarkers[i];
+    const next = foundMarkers[i + 1];
+    const valueEndIndex = next ? next.startIndex : trimmed.length;
+
+    let rawVal = trimmed.substring(current.valueStartIndex, valueEndIndex).trim();
+    // Strip trailing comma if present at the boundary
+    if (rawVal.endsWith(",")) {
+      rawVal = rawVal.slice(0, -1).trim();
+    }
+    values[current.key] = rawVal;
+  }
+
+  const rawMobile = values.mobile || "";
+  const rawMessage = values.message !== undefined ? values.message : "";
+  const rawName = values.name || "";
+
+  if (!rawMobile) {
+    return { success: false, error: "Malformed plain text payload: 'Mobile:' value is empty" };
+  }
+  if (!rawMessage) {
+    return { success: false, error: "Malformed plain text payload: 'Message:' value is empty" };
+  }
+
+  const normalizedMobile = normalizePhoneNumber(rawMobile);
+  if (!normalizedMobile || normalizedMobile.length < 10) {
+    return { success: false, error: `Invalid Mobile number '${rawMobile}': must contain at least 10 valid digits` };
   }
 
   return {
-    mobile: cleanedPhone,
-    message: message || "",
-    name: name || undefined
+    success: true,
+    data: {
+      mobile: normalizedMobile,
+      rawMobile,
+      message: rawMessage,
+      name: rawName ? rawName : undefined,
+    },
   };
 }
 
 /**
- * Computes a stable SHA256 fingerprint for message deduplication.
- * Resolves collisions using 1-minute time windows.
+ * Backwards compatibility wrapper for existing callers.
+ */
+export function parsePlainTextPayload(body: string) {
+  const result = parseBhashPlainTextPayload(body);
+  if (result.success && result.data) {
+    return {
+      mobile: result.data.mobile,
+      message: result.data.message,
+      name: result.data.name,
+    };
+  }
+  return {
+    mobile: "",
+    message: "",
+    name: undefined,
+  };
+}
+
+/**
+ * Computes a stable SHA256 fingerprint for outbound or batch deduplication.
  */
 export function generateFingerprint(phone: string, message: string, timestamp?: string): string {
-  const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+  const cleanPhone = normalizePhoneNumber(phone);
   const cleanMsg = message.toLowerCase().replace(/\s+/g, "").trim();
   
   const time = timestamp ? new Date(timestamp) : new Date();
@@ -85,3 +214,4 @@ export function generateFingerprint(phone: string, message: string, timestamp?: 
 
   return crypto.createHash("sha256").update(`${cleanPhone}-${cleanMsg}-${minuteStamp}`).digest("hex");
 }
+

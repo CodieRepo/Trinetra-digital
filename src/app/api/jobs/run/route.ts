@@ -7,14 +7,17 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
-    const secret = process.env.JOB_SECRET_KEY || "outbox_worker_secret_123";
+    const secret = process.env.JOB_SECRET_KEY;
+    if (!secret) {
+      return NextResponse.json({ error: "Server misconfiguration: JOB_SECRET_KEY is required" }, { status: 500 });
+    }
 
-    if (authHeader !== `Bearer ${secret}`) {
-      // Internal execution check
-      const url = new URL(request.url);
-      if (url.searchParams.get("secret") !== secret) {
-        return NextResponse.json({ error: "Unauthorized worker access" }, { status: 401 });
-      }
+    const url = new URL(request.url);
+    const querySecret = url.searchParams.get("secret");
+    const isAuthorized = authHeader === `Bearer ${secret}` || querySecret === secret;
+
+    if (!isAuthorized) {
+      return NextResponse.json({ error: "Unauthorized worker access" }, { status: 401 });
     }
 
     const { processed, failed } = await notificationOutboxService.processBatch(10, "cron_outbox_worker");

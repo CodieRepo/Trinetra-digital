@@ -173,19 +173,24 @@ export async function PATCH(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
-    const { tenantId } = await requireStaffRole(request, ["owner", "manager"], body);
+    const { tenantId, restaurantId } = await requireStaffRole(request, ["owner", "manager"], body);
 
     if (body.type === "item") {
       const updates: Record<string, unknown> = {};
       if (body.is_available !== undefined) updates.is_available = body.is_available;
       if (body.name !== undefined) updates.name = body.name;
-      if (body.price !== undefined) updates.price = body.price;
+      if (body.description !== undefined) updates.description = body.description;
+      if (body.price !== undefined) updates.price = Number(body.price);
+      if (body.is_veg !== undefined) updates.is_veg = Boolean(body.is_veg);
+      if (body.category_id !== undefined) updates.category_id = body.category_id;
+      if (body.image_url !== undefined) updates.image_url = body.image_url;
 
       const { error } = await db
         .from("menu_items")
         .update(updates)
         .eq("id", body.id)
-        .eq("tenant_id", tenantId);
+        .eq("tenant_id", tenantId)
+        .eq("restaurant_id", restaurantId);
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ success: true });
@@ -205,14 +210,15 @@ export async function DELETE(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
-    const { tenantId } = await requireStaffRole(request, ["owner", "manager"], body);
+    const { tenantId, restaurantId } = await requireStaffRole(request, ["owner", "manager"], body);
     const table = body.type === "category" ? "menu_categories" : "menu_items";
 
     const { error } = await db
       .from(table)
       .delete()
       .eq("id", body.id)
-      .eq("tenant_id", tenantId);
+      .eq("tenant_id", tenantId)
+      .eq("restaurant_id", restaurantId);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });

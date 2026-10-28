@@ -14,10 +14,15 @@ import {
   User,
   CheckCircle2,
   ChevronRight,
+  Users,
+  UtensilsCrossed,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { TableQrModal } from './TableQrModal';
 import { AddTableModal, FloorOption } from './AddTableModal';
 import { DeleteTableModal } from './DeleteTableModal';
+import { StartSessionModal } from './StartSessionModal';
+import { TransferTableModal } from './TransferTableModal';
 
 export interface TableItem {
   id: string;
@@ -60,6 +65,9 @@ interface FloorTablesWorkspaceProps {
   onExportAllQrs: () => Promise<void>;
   onRefresh: () => void;
   onSelectTableSession?: (session: SessionData) => void;
+  onStartSession?: (tableId: string, customerName?: string, customerPhone?: string) => Promise<boolean>;
+  onTransferSession?: (sessionId: string, targetTableId: string) => Promise<boolean>;
+  onTakeOrder?: (table: TableItem) => void;
   isExportingQrs?: boolean;
 }
 
@@ -74,6 +82,9 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
   onExportAllQrs,
   onRefresh,
   onSelectTableSession,
+  onStartSession,
+  onTransferSession,
+  onTakeOrder,
   isExportingQrs = false,
 }) => {
   const [selectedSection, setSelectedSection] = useState<string>('all');
@@ -84,6 +95,8 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
   const [qrModalTable, setQrModalTable] = useState<TableItem | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deleteModalTable, setDeleteModalTable] = useState<TableItem | null>(null);
+  const [startSessionTable, setStartSessionTable] = useState<TableItem | null>(null);
+  const [transferSession, setTransferSession] = useState<SessionData | null>(null);
 
   // Map active session by table_number
   const activeSessionMap = useMemo(() => {
@@ -95,6 +108,13 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
     });
     return map;
   }, [sessions]);
+
+  // Tables available for seating or transfer
+  const availableTables = useMemo(() => {
+    return tables.filter(
+      (t) => t.is_active !== false && !activeSessionMap.has(t.table_number.toLowerCase())
+    );
+  }, [tables, activeSessionMap]);
 
   // Build dynamic floor/section tabs from persisted floor data
   const sections = useMemo(() => {
@@ -131,20 +151,19 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
           if (table.floor_id !== selectedSection) return false;
         }
 
+        // Status filter
         const session = activeSessionMap.get(table.table_number.toLowerCase());
-
-        // Status Filter
         if (statusFilter === 'available' && session) return false;
         if (statusFilter === 'occupied' && (!session || session.payment_status === 'paid')) return false;
         if (statusFilter === 'billing' && (!session || session.payment_status !== 'paid')) return false;
 
-        // Search Query
+        // Search query
         if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          const matchesNum = table.table_number.toLowerCase().includes(q);
+          const q = searchQuery.toLowerCase().trim();
+          const matchesTable = table.table_number.toLowerCase().includes(q);
           const matchesGuest = session?.customer_name?.toLowerCase().includes(q);
-          const matchesFloor = table.floor_name?.toLowerCase().includes(q);
-          return matchesNum || !!matchesGuest || !!matchesFloor;
+          const matchesPhone = session?.customer_phone?.includes(q);
+          if (!matchesTable && !matchesGuest && !matchesPhone) return false;
         }
 
         return true;
@@ -413,13 +432,21 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="my-5 flex flex-col items-center justify-center text-center py-2">
+                    <div
+                      onClick={() => onStartSession && setStartSessionTable(table)}
+                      className={`my-5 flex flex-col items-center justify-center text-center py-2 rounded-xl border border-dashed border-emerald-100 bg-emerald-50/30 transition ${
+                        onStartSession ? 'hover:bg-emerald-50/60 hover:border-emerald-300 cursor-pointer' : ''
+                      }`}
+                      title={onStartSession ? 'Click to seat guests' : undefined}
+                    >
                       <div className="h-8 w-8 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mb-1.5">
                         <CheckCircle2 className="h-4 w-4" />
                       </div>
                       <p className="text-xs font-bold text-slate-700">Ready for Seating</p>
                       <p className="text-[11px] text-slate-400 max-w-[180px]">
-                        Scan QR code or take an order to start dining session.
+                        {onStartSession
+                          ? 'Click to seat guests or scan QR to start.'
+                          : 'Scan QR code or take an order to start dining session.'}
                       </p>
                     </div>
                   )}
@@ -447,16 +474,67 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                     </button>
                   </div>
 
-                  {session && onSelectTableSession ? (
-                    <button
-                      type="button"
-                      onClick={() => onSelectTableSession(session)}
-                      className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition cursor-pointer shadow-xs"
-                    >
-                      <span>Session</span>
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
-                  ) : null}
+                  {session ? (
+                    <div className="flex items-center gap-1.5">
+                      {onTakeOrder && (
+                        <button
+                          type="button"
+                          onClick={() => onTakeOrder(table)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition cursor-pointer shadow-2xs"
+                          title="Punch order for this table in POS"
+                        >
+                          <UtensilsCrossed className="h-3.5 w-3.5 text-amber-700" />
+                          <span className="hidden sm:inline">Order</span>
+                        </button>
+                      )}
+                      {onTransferSession && (
+                        <button
+                          type="button"
+                          onClick={() => setTransferSession(session)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+                          title="Transfer party to another table"
+                        >
+                          <ArrowRightLeft className="h-3.5 w-3.5 text-indigo-600" />
+                          <span className="hidden sm:inline">Move</span>
+                        </button>
+                      )}
+                      {onSelectTableSession && (
+                        <button
+                          type="button"
+                          onClick={() => onSelectTableSession(session)}
+                          className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition cursor-pointer shadow-xs"
+                        >
+                          <span>Session</span>
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      {onStartSession && (
+                        <button
+                          type="button"
+                          onClick={() => setStartSessionTable(table)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer shadow-2xs"
+                          title="Seat guests on table"
+                        >
+                          <Users className="h-3.5 w-3.5 text-slate-600" />
+                          <span className="hidden sm:inline">Seat</span>
+                        </button>
+                      )}
+                      {onTakeOrder && (
+                        <button
+                          type="button"
+                          onClick={() => onTakeOrder(table)}
+                          className="inline-flex items-center gap-1 rounded-lg bg-amber-500 hover:bg-amber-600 px-3 py-1.5 text-xs font-bold text-white transition cursor-pointer shadow-xs"
+                          title="Punch order for this table"
+                        >
+                          <UtensilsCrossed className="h-3.5 w-3.5" />
+                          <span>Take Order</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -528,6 +606,21 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
         hasActiveSession={
           deleteModalTable ? activeSessionMap.has(deleteModalTable.table_number.toLowerCase()) : false
         }
+      />
+
+      <StartSessionModal
+        isOpen={!!startSessionTable}
+        onClose={() => setStartSessionTable(null)}
+        table={startSessionTable}
+        onStartSession={onStartSession}
+      />
+
+      <TransferTableModal
+        isOpen={!!transferSession}
+        onClose={() => setTransferSession(null)}
+        session={transferSession}
+        availableTables={availableTables}
+        onTransferSession={onTransferSession}
       />
     </div>
   );

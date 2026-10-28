@@ -100,8 +100,10 @@ export async function POST(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json().catch(() => ({}));
-    const { tenantId, restaurantId } = await resolveRestaurantContext(request, body);
-
+    const { tenantId, restaurantId, isAuthenticated } = await resolveRestaurantContext(request, body);
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: "Unauthorized: Authentication required" }, { status: 401 });
+    }
     if (!restaurantId || !tenantId) {
       return NextResponse.json({ error: "Restaurant context not found" }, { status: 400 });
     }
@@ -294,6 +296,75 @@ export async function POST(request: Request) {
       },
       session_id: activeSession.id,
     });
+  } catch (err: unknown) {
+    if (err instanceof RestaurantContextError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const db = getSupabaseAdmin();
+    const body = await request.json().catch(() => ({}));
+    const { tenantId, restaurantId, isAuthenticated } = await resolveRestaurantContext(request, body);
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: "Unauthorized: Authentication required" }, { status: 401 });
+    }
+    if (!restaurantId || !tenantId) {
+      return NextResponse.json({ error: "Restaurant context not found" }, { status: 400 });
+    }
+
+    const { order_id, status, notes, role } = body;
+    if (!order_id) {
+      return NextResponse.json({ error: "order_id is required" }, { status: 400 });
+    }
+
+    const validStatuses = ["placed", "accepted", "preparing", "ready", "served", "closed", "cancelled"];
+    if (!status || !validStatuses.includes(status)) {
+      return NextResponse.json({ error: `Invalid status: ${status}` }, { status: 400 });
+    }
+
+    // Verify order exists and belongs to this tenant and restaurant
+    const { data: order, error: orderErr } = await db
+      .from("restaurant_orders")
+      .select("id, status, tenant_id, restaurant_id, table_id, table_session_id")
+      .eq("id", order_id)
+      .eq("tenant_id", tenantId)
+      .eq("restaurant_id", restaurantId)
+      .maybeSingle();
+
+    if (orderErr || !order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    const now = new Date().toISOString();
+    const { data: updatedOrder, error: updateErr } = await db
+      .from("restaurant_orders")
+      .update({ status, updated_at: now })
+      .eq("id", order_id)
+      .eq("tenant_id", tenantId)
+      .eq("restaurant_id", restaurantId)
+      .select("id, status, notes, total_amount, updated_at")
+      .single();
+
+    if (updateErr) {
+      return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    }
+
+    // Record audit event
+    await db.from("restaurant_order_events").insert({
+      tenant_id: tenantId,
+      order_id: order_id,
+      from_status: order.status,
+      to_status: status,
+      actor_role: (typeof role === "string" && role) ? role : "kitchen",
+      notes: notes || `Order transitioned from ${order.status} to ${status} via KDS/Dashboard`,
+    });
+
+    return NextResponse.json({ success: true, order: updatedOrder });
   } catch (err: unknown) {
     if (err instanceof RestaurantContextError) {
       return NextResponse.json({ error: err.message }, { status: err.status });

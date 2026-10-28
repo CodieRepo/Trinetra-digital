@@ -1,3 +1,4 @@
+import { verifyAuthenticatedCrmUser } from "@/lib/auth/crm-auth";
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "../../../../lib/supabase/admin";
 import { createLeadSchema, createNoteSchema, createTaskSchema } from "../../../../lib/validation/schemas";
@@ -11,6 +12,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const auth = await verifyAuthenticatedCrmUser(request);
+  if (!auth.isAuthorized) {
+    return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: auth.statusCode || 401 });
+  }
+  const tenant_id = auth.tenantId!;
   const { searchParams } = new URL(request.url);
   const leadId = searchParams.get("leadId") || searchParams.get("id");
   const search = searchParams.get("search") || searchParams.get("query") || "";
@@ -28,6 +34,7 @@ export async function GET(request: Request) {
       .from("leads")
       .select("*")
       .eq("id", leadId)
+      .eq("tenant_id", tenant_id)
       .maybeSingle();
 
     if (!dbLead) {
@@ -53,6 +60,7 @@ export async function GET(request: Request) {
   let query = db
     .from("leads")
     .select("*", { count: "exact" })
+    .eq("tenant_id", tenant_id)
     .order("last_message_at", { ascending: false });
 
   if (status) {
@@ -86,6 +94,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const auth = await verifyAuthenticatedCrmUser(request);
+  if (!auth.isAuthorized) {
+    return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: auth.statusCode || 401 });
+  }
+  const tenant_id = auth.tenantId!;
   const db = getSupabaseAdmin();
   const body = await request.json();
   const action = body.action || "create";
@@ -97,6 +110,7 @@ export async function POST(request: Request) {
         const { data: newLead, error } = await db
           .from("leads")
           .insert({
+            tenant_id,
             phone: validated.phone.replace(/\D/g, "").slice(-10),
             name: validated.name || "New Lead",
             service_interest: validated.service_interest || null,
@@ -131,6 +145,7 @@ export async function POST(request: Request) {
             updated_at: new Date().toISOString(),
           })
           .eq("id", leadId)
+          .eq("tenant_id", tenant_id)
           .select("*")
           .maybeSingle();
 

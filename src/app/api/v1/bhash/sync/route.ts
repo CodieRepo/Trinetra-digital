@@ -127,10 +127,17 @@ async function fetchAndParseBhashLeads(db: any, tenantId: string) {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const secret = url.searchParams.get("secret");
-  const cron = url.searchParams.get("cron");
 
-  const expectedSecret = process.env.SCRAPER_SECRET || "trinetra-scraper-secret-2026";
-  const isTriggerRequest = secret === expectedSecret || cron === "true";
+  const expectedSecret = process.env.SCRAPER_SECRET;
+  if (!expectedSecret) {
+    return NextResponse.json({ error: "Server misconfiguration: SCRAPER_SECRET is required" }, { status: 500 });
+  }
+  const authHeader = request.headers.get("authorization");
+  const isAuthorized = (secret && secret === expectedSecret) || authHeader === `Bearer ${expectedSecret}`;
+  if (!isAuthorized) {
+    return NextResponse.json({ error: "Unauthorized: Invalid or missing sync secret" }, { status: 401 });
+  }
+  const isTriggerRequest = true;
 
   const tenantId = "00000000-0000-0000-0000-000000000001";
   const db = getSupabaseAdmin();
@@ -243,9 +250,14 @@ export async function POST(request: Request) {
   }
 
   const { secret, leads } = body;
-  const expectedSecret = process.env.SCRAPER_SECRET || "trinetra-scraper-secret-2026";
-  if (secret && secret !== expectedSecret) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const expectedSecret = process.env.SCRAPER_SECRET;
+  if (!expectedSecret) {
+    return NextResponse.json({ error: "Server misconfiguration: SCRAPER_SECRET is required" }, { status: 500 });
+  }
+  const authHeader = request.headers.get("authorization");
+  const isAuthorized = (secret && secret === expectedSecret) || authHeader === `Bearer ${expectedSecret}`;
+  if (!isAuthorized) {
+    return NextResponse.json({ error: "Unauthorized: Invalid or missing sync secret" }, { status: 401 });
   }
 
   const tenantId = "00000000-0000-0000-0000-000000000001";

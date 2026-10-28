@@ -1,14 +1,20 @@
-/**
- * Trinetra Restaurant OS — Demo Seeder API Route
- * POST /api/restaurant-os/provisioning/demo
- * Programmatically seeds the demo restaurant via ProvisioningService.
- */
-
 import { NextResponse } from 'next/server';
 import { ProvisioningService } from '@/lib/services/provisioningService';
+import { verifySuperAdminAccess } from '@/lib/auth/admin-guard';
 
-export async function POST() {
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+export async function POST(request: Request) {
   try {
+    const authResult = await verifySuperAdminAccess(request);
+    if (!authResult.isAuthorized) {
+      return NextResponse.json(
+        { success: false, error: authResult.error || "Unauthorized access" },
+        { status: authResult.statusCode || 401 }
+      );
+    }
+
     const result = await ProvisioningService.seedDemoRestaurant();
 
     return NextResponse.json({ success: true, data: result }, { status: 200 });

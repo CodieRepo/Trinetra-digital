@@ -1,15 +1,20 @@
-/**
- * Trinetra Restaurant OS — Provisioning API Route
- * POST /api/restaurant-os/provisioning
- * Thin route handler: validates request body, invokes ProvisioningService, returns typed JSON.
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { ProvisioningService } from '@/lib/services/provisioningService';
 import { ProvisionRestaurantInput } from '@/types/restaurant-os/provisioning';
+import { verifySuperAdminAccess } from '@/lib/auth/admin-guard';
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
+    const authResult = await verifySuperAdminAccess(req);
+    if (!authResult.isAuthorized) {
+      return NextResponse.json(
+        { success: false, error: authResult.error || "Unauthorized access" },
+        { status: authResult.statusCode || 401 }
+      );
+    }
     const body = (await req.json()) as ProvisionRestaurantInput;
 
     if (!body.restaurantName || typeof body.restaurantName !== 'string') {

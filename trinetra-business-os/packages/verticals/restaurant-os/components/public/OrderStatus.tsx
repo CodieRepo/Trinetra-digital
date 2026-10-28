@@ -97,6 +97,10 @@ function getSessionKey(tableToken: string) {
   return `akuafi:restaurant:table:${tableToken}:session`;
 }
 
+function getPaymentPendingKey(tableToken: string, sessionId: string) {
+  return `trinetra:restaurant:table:${tableToken}:session:${sessionId}:payment_pending`;
+}
+
 function formatCurrency(amount: number, currency = "INR") {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -138,6 +142,13 @@ export default function RestaurantOrderStatusClient({
   // Request bill state
   const [requestingBill, setRequestingBill] = useState(false);
   const [billRequestedSuccess, setBillRequestedSuccess] = useState(false);
+
+  // Intermediate payment verification state (UTR submitted, awaiting cashier confirmation)
+  const [paymentPendingInfo, setPaymentPendingInfo] = useState<{
+    method?: string;
+    utr?: string;
+    timestamp?: string;
+  } | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -213,15 +224,32 @@ export default function RestaurantOrderStatusClient({
             if (sessRes.ok && mounted) {
               const sess = await sessRes.json();
               if (sess.session && Array.isArray(sess.orders)) {
+                const currentStatus = sess.session.payment_status || "unpaid";
                 setSessionContext({
                   sessionId: sess.session.id,
-                  paymentStatus: sess.session.payment_status || "unpaid",
+                  paymentStatus: currentStatus,
                   sessionTotal: Number(
                     sess.session.session_total ?? sess.session_total ?? 0,
                   ),
                   orders: sess.orders,
                   bill: sess.bill || null,
                 });
+
+                // If backend confirmed payment, clear any pending verification hint
+                if (currentStatus === "paid") {
+                  if (typeof window !== "undefined") {
+                    window.sessionStorage.removeItem(getPaymentPendingKey(tableToken, sess.session.id));
+                  }
+                  setPaymentPendingInfo(null);
+                } else if (typeof window !== "undefined") {
+                  // Restore pending verification state if user submitted UTR in current session
+                  const pendingRaw = window.sessionStorage.getItem(getPaymentPendingKey(tableToken, sess.session.id));
+                  if (pendingRaw) {
+                    try {
+                      setPaymentPendingInfo(JSON.parse(pendingRaw));
+                    } catch {}
+                  }
+                }
               } else {
                 setSessionContext(null);
               }
@@ -654,6 +682,14 @@ export default function RestaurantOrderStatusClient({
                 <span className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-800 bg-emerald-100 border border-emerald-200/80 px-3 py-1 rounded-full">
                   <CheckCircle2 size={14} className="text-emerald-700" /> Bill Settled ✓
                 </span>
+              ) : paymentPendingInfo ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-black text-amber-950 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-600" />
+                  </span>
+                  Awaiting Cashier Confirmation
+                </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 text-xs font-black text-amber-950 bg-amber-100 border border-amber-200/80 px-3 py-1 rounded-full">
                   <Clock size={14} className="text-amber-700" /> Payment Pending
@@ -662,7 +698,40 @@ export default function RestaurantOrderStatusClient({
             </div>
 
             {/* Action Buttons */}
-            {sessionContext.paymentStatus !== "paid" ? (
+            {sessionContext.paymentStatus === "paid" ? (
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(true)}
+                className="w-full min-h-[48px] rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs font-black uppercase tracking-wider hover:bg-emerald-100 transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                <QrCode size={16} />
+                <span>View Payment Confirmation & Receipt</span>
+              </button>
+            ) : paymentPendingInfo ? (
+              <div className="pt-2">
+                <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-4 text-center space-y-2">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-black text-amber-900 uppercase tracking-wide">
+                    <Clock size={14} className="text-amber-700" />
+                    <span>Payment Submitted — Verification in Progress</span>
+                  </div>
+                  {paymentPendingInfo.utr && (
+                    <p className="text-xs font-mono text-amber-800 font-semibold">
+                      Ref / UTR: {paymentPendingInfo.utr}
+                    </p>
+                  )}
+                  <p className="text-[11px] text-stone-600 font-medium max-w-sm mx-auto">
+                    The counter terminal has been notified. This screen will update to &quot;Bill Settled&quot; automatically once the cashier confirms.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowPaymentModal(true)}
+                    className="mt-2 min-h-[38px] px-4 rounded-xl border border-stone-300 bg-white hover:bg-stone-50 text-stone-900 text-xs font-bold transition cursor-pointer active:scale-95 shadow-xs"
+                  >
+                    View UPI QR Again
+                  </button>
+                </div>
+              </div>
+            ) : (
               <div className="grid gap-3 sm:grid-cols-2 pt-2">
                 <button
                   type="button"
@@ -689,15 +758,6 @@ export default function RestaurantOrderStatusClient({
                   <span>Pay Bill Online (UPI / QR) →</span>
                 </button>
               </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowPaymentModal(true)}
-                className="w-full min-h-[48px] rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs font-black uppercase tracking-wider hover:bg-emerald-100 transition cursor-pointer flex items-center justify-center gap-2"
-              >
-                <QrCode size={16} />
-                <span>View Payment Confirmation & Receipt</span>
-              </button>
             )}
           </div>
         )}
@@ -722,7 +782,7 @@ export default function RestaurantOrderStatusClient({
           sessionId={sessionContext.sessionId}
           onClose={() => setShowPaymentModal(false)}
           onPaymentSubmitted={async (method, utr, tipAmount) => {
-            await fetch(`/api/r/${tableToken}/session/pay`, {
+            const res = await fetch(`/api/r/${tableToken}/session/pay`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -733,6 +793,20 @@ export default function RestaurantOrderStatusClient({
                 amount: sessionContext.bill?.grand_total ?? sessionContext.sessionTotal,
               }),
             });
+            if (res.ok) {
+              const info = {
+                method,
+                utr: utr || undefined,
+                timestamp: new Date().toISOString(),
+              };
+              if (typeof window !== "undefined") {
+                window.sessionStorage.setItem(
+                  getPaymentPendingKey(tableToken, sessionContext.sessionId),
+                  JSON.stringify(info),
+                );
+              }
+              setPaymentPendingInfo(info);
+            }
           }}
         />
       )}

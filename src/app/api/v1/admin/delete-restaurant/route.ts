@@ -1,34 +1,17 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { createClient as createServerClient } from "@/lib/supabase/server";
+import { verifySuperAdminAccess } from "@/lib/auth/admin-guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function verifyAdminAccess(request: Request): Promise<boolean> {
-  const adminKey = request.headers.get("x-admin-key") || "";
-  const authHeader = request.headers.get("authorization") || "";
-  const bearerToken = authHeader.replace(/^Bearer\s+/i, "").trim();
-
-  if (process.env.ADMIN_ONBOARDING_KEY && (adminKey === process.env.ADMIN_ONBOARDING_KEY || bearerToken === process.env.ADMIN_ONBOARDING_KEY)) {
-    return true;
-  }
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY && (adminKey === process.env.SUPABASE_SERVICE_ROLE_KEY || bearerToken === process.env.SUPABASE_SERVICE_ROLE_KEY)) {
-    return true;
-  }
-  try {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) return true;
-  } catch (e) {}
-
-  return false;
-}
-
 export async function POST(request: Request) {
-  const authorized = await verifyAdminAccess(request);
-  if (!authorized) {
-    return NextResponse.json({ success: false, error: "Unauthorized access" }, { status: 401 });
+  const authResult = await verifySuperAdminAccess(request);
+  if (!authResult.isAuthorized) {
+    return NextResponse.json(
+      { success: false, error: authResult.error || "Unauthorized access" },
+      { status: authResult.statusCode || 401 }
+    );
   }
 
   const db = getSupabaseAdmin();

@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { resolveRestaurantContext, RestaurantContextError } from "../../context";
+import {
+  calculateBillBreakdown,
+  resolveRestaurantTaxConfig,
+} from "@/lib/services/billing-calculator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,18 +21,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "session_id and action required" }, { status: 400 });
     }
 
-    // 1. Resolve User and Role for Audit
+    // 1. Resolve User and Role for Audit (supports both Supabase Auth & Staff Terminal JWT)
     let userId: string | null = null;
+    let authUserId: string | null = null;
+    let role: string = "owner";
 
     const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.substring(7).trim();
       try {
-        const { data: { user: tokenUser } } = await db.auth.getUser(token);
-        if (tokenUser) {
-          userId = tokenUser.id;
+        const { verifyStaffJwt } = await import("@/lib/crypto/auth-tokens");
+        const jwtPayload = verifyStaffJwt(token);
+        if (jwtPayload?.staff_id) {
+          userId = jwtPayload.staff_id;
+          role = jwtPayload.role;
         }
       } catch {}
+
+      if (!userId) {
+        try {
+          const { data: { user: tokenUser } } = await db.auth.getUser(token);
+          if (tokenUser) {
+            userId = tokenUser.id;
+            authUserId = tokenUser.id;
+          }
+        } catch {}
+      }
     }
 
     if (!userId) {
@@ -37,6 +55,7 @@ export async function POST(request: Request) {
         const { data: { user: cookieUser } } = await supabase.auth.getUser();
         if (cookieUser) {
           userId = cookieUser.id;
+          authUserId = cookieUser.id;
         }
       } catch {}
     }
@@ -45,26 +64,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Authentication credentials required for billing actions." }, { status: 401 });
     }
 
-    // Lookup user role — fail closed if no valid role found, but default to owner for verified restaurant admin
-    let role: string = "owner";
-    const { data: roleData } = await db
-      .from("users_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("tenant_id", tenantId)
-      .maybeSingle();
-
-    if (roleData?.role) {
-      role = roleData.role;
-    } else {
-      const { data: profile } = await db
-        .from("profiles")
+    // Lookup user role if not already determined from signed staff JWT
+    if (role === "owner") {
+      const { data: roleData } = await db
+        .from("users_roles")
         .select("role")
-        .eq("id", userId)
+        .eq("user_id", userId)
+        .eq("tenant_id", tenantId)
         .maybeSingle();
 
-      if (profile?.role) {
-        role = profile.role === "super_admin" || profile.role === "client_admin" ? "owner" : profile.role;
+      if (roleData?.role) {
+        role = roleData.role;
+      } else {
+        const { data: profile } = await db
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (profile?.role) {
+          role = profile.role === "super_admin" || profile.role === "client_admin" ? "owner" : profile.role;
+        }
       }
     }
 
@@ -83,12 +103,10 @@ export async function POST(request: Request) {
       const subtotal = (orders || []).reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
 
       // 3. Role-Based Discount Validation
-      let discountAmount = 0;
       const type = discount_type || "none";
       const value = Number(discount_value) || 0;
 
       if (type === "percentage") {
-        discountAmount = (subtotal * value) / 100;
         if (role === "waiter" && value > 5) {
           return NextResponse.json({ error: "Waiters are restricted to a maximum discount of 5%." }, { status: 403 });
         }
@@ -96,44 +114,51 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: "Managers are restricted to a maximum discount of 20%." }, { status: 403 });
         }
       } else if (type === "flat") {
-        discountAmount = value;
         if (role === "waiter" && value > 0) {
           return NextResponse.json({ error: "Waiters are not authorized to apply flat discounts." }, { status: 403 });
         }
-        if (role === "manager" && discountAmount > (subtotal * 0.20)) {
+        if (role === "manager" && value > (subtotal * 0.20)) {
           return NextResponse.json({ error: "Managers are restricted to a maximum discount of 20% of subtotal." }, { status: 403 });
         }
       }
 
-      // 4. Billing Math calculations
-      const parsedTaxRate = tax_rate !== undefined && tax_rate !== null && !isNaN(Number(tax_rate)) ? Number(tax_rate) : 5;
-      const parsedServiceRate = service_charge_rate !== undefined && service_charge_rate !== null && !isNaN(Number(service_charge_rate)) ? Number(service_charge_rate) : 0;
-      
-      const afterDiscount = Math.max(0, subtotal - discountAmount);
-      const taxAmount = Number(((afterDiscount * parsedTaxRate) / 100).toFixed(2));
-      const serviceCharge = Number(((afterDiscount * parsedServiceRate) / 100).toFixed(2));
-      const totalBeforeRoundOff = afterDiscount + taxAmount + serviceCharge;
-      const grandTotal = Math.round(totalBeforeRoundOff);
-      const roundOff = Number((grandTotal - totalBeforeRoundOff).toFixed(2));
+      // 4. Resolve tax config if not explicitly provided in request
+      const configuredTax = await resolveRestaurantTaxConfig(restaurantId, tenantId);
+      const effectiveTaxRate = tax_rate !== undefined && tax_rate !== null && !isNaN(Number(tax_rate))
+        ? Number(tax_rate)
+        : configuredTax.taxRate;
+      const effectiveServiceRate = service_charge_rate !== undefined && service_charge_rate !== null && !isNaN(Number(service_charge_rate))
+        ? Number(service_charge_rate)
+        : configuredTax.serviceChargeRate;
+
+      // 5. Unified billing calculation
+      const billMath = calculateBillBreakdown({
+        subtotal,
+        discountType: type,
+        discountValue: value,
+        discountReason: discount_reason,
+        taxRate: effectiveTaxRate,
+        serviceChargeRate: effectiveServiceRate,
+      });
 
       const finalPaymentMethod = payment_method || "cash";
       const finalTipAmount = Number(tip_amount) || 0;
 
-      // 5. Insert Bill Record (upsert style on session unique key)
+      // 6. Insert Bill Record (upsert style on session unique key)
       const billPayload: any = {
         tenant_id: tenantId,
         restaurant_id: restaurantId,
         session_id,
-        subtotal,
-        discount_type: type,
-        discount_value: value,
-        discount_amount: discountAmount,
-        discount_reason: discount_reason || null,
-        tax_amount: taxAmount,
-        service_charge: serviceCharge,
-        round_off: roundOff,
-        grand_total: grandTotal,
-        created_by: userId
+        subtotal: billMath.subtotal,
+        discount_type: billMath.discountType,
+        discount_value: billMath.discountValue,
+        discount_amount: billMath.discountAmount,
+        discount_reason: billMath.discountReason,
+        tax_amount: billMath.taxAmount,
+        service_charge: billMath.serviceCharge,
+        round_off: billMath.roundOff,
+        grand_total: billMath.grandTotal,
+        created_by: authUserId || null,
       };
 
       // Try inserting with payment_method and tip_amount
@@ -157,20 +182,20 @@ export async function POST(request: Request) {
       }
 
       // 6. Log Audit Trail if discount applied
-      if (discountAmount > 0) {
+      if (billMath.discountAmount > 0 && authUserId) {
         const { error: auditErr } = await db
           .from("restaurant_discount_audit")
           .insert({
             tenant_id: tenantId,
             restaurant_id: restaurantId,
             session_id,
-            actor_id: userId,
+            actor_id: authUserId,
             actor_role: role,
-            before_amount: subtotal,
-            after_amount: afterDiscount,
-            discount_type: type,
-            discount_value: value,
-            discount_amount: discountAmount,
+            before_amount: billMath.subtotal,
+            after_amount: billMath.grandTotal,
+            discount_type: billMath.discountType,
+            discount_value: billMath.discountValue,
+            discount_amount: billMath.discountAmount,
             reason: discount_reason || "None specified"
           });
 
@@ -191,6 +216,26 @@ export async function POST(request: Request) {
     }
 
     if (action === "undo_paid") {
+      if (role === "waiter") {
+        return NextResponse.json({ error: "Only managers or owners are authorized to reopen or void settled bills." }, { status: 403 });
+      }
+
+      // Record audit before reversing
+      try {
+        await db
+          .from("restaurant_discount_audit")
+          .insert({
+            tenant_id: tenantId,
+            restaurant_id: restaurantId,
+            session_id,
+            actor_id: userId,
+            actor_role: role,
+            reason: "Payment reversed / session reopened by authorized staff"
+          });
+      } catch (auditErr) {
+        console.warn("[PaymentApi] Void audit trail insert notice:", auditErr);
+      }
+
       // Delete associated bill record to clear accounting reports
       await db
         .from("restaurant_bills")

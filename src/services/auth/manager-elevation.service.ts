@@ -31,14 +31,14 @@ export class ManagerElevationService {
 
     // 2. Fetch Terminal Context to ensure device token or active terminal
     const terminal = await this.authRepo.getTerminalById(validatedInput.terminal_id);
-    if (!terminal || terminal.status !== 'Active') {
+    if (!terminal || terminal.status !== 'Active' || !terminal.device_token_hash) {
       throw new Error(AuthErrorCode.TERMINAL_NOT_ACTIVE);
     }
 
-    // 3. Verify Manager PIN via Repository RPC (uses mock device token hash for PIN lookup)
+    // 3. Verify Manager PIN via Repository RPC using the validated terminal's active device token hash
     const result = await this.authRepo.verifyStaffPin({
       restaurant_id: validatedInput.restaurant_id,
-      device_token_hash: 'ELEVATION_MOCK_HASH', // Uses terminal lookup or active branch staff check
+      device_token_hash: terminal.device_token_hash,
       pin: validatedInput.manager_pin,
     });
 

@@ -54,11 +54,12 @@ export async function POST(
     let sessionQuery = supabase
       .from("restaurant_table_sessions")
       .select("id, tenant_id, restaurant_id, payment_status, status")
-      .eq("table_id", table.id)
-      .eq("session_token", session_token);
+      .eq("table_id", table.id);
 
     if (table_session_id) {
       sessionQuery = sessionQuery.eq("id", table_session_id);
+    } else {
+      sessionQuery = sessionQuery.eq("session_token", session_token);
     }
 
     const { data: session } = await sessionQuery
@@ -69,27 +70,41 @@ export async function POST(
     let activeSession = session;
 
     if (!activeSession || activeSession.status === "closed") {
-      // Create new session if no active session found
-      const { data: newSession, error: createSessionErr } = await supabase
+      // First check if an active session already exists on this table
+      const { data: existingActive } = await supabase
         .from("restaurant_table_sessions")
-        .insert({
-          tenant_id: table.tenant_id,
-          restaurant_id: table.restaurant_id,
-          table_id: table.id,
-          session_token: session_token,
-          status: "active",
-          payment_status: "unpaid",
-        })
         .select("id, tenant_id, restaurant_id, payment_status, status")
-        .single();
+        .eq("table_id", table.id)
+        .eq("status", "active")
+        .order("opened_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (createSessionErr || !newSession) {
-        return NextResponse.json(
-          { error: createSessionErr?.message || "Failed to locate or create table session" },
-          { status: 400 }
-        );
+      if (existingActive) {
+        activeSession = existingActive;
+      } else {
+        // Create new session if no active session found
+        const { data: newSession, error: createSessionErr } = await supabase
+          .from("restaurant_table_sessions")
+          .insert({
+            tenant_id: table.tenant_id,
+            restaurant_id: table.restaurant_id,
+            table_id: table.id,
+            session_token: session_token,
+            status: "active",
+            payment_status: "unpaid",
+          })
+          .select("id, tenant_id, restaurant_id, payment_status, status")
+          .single();
+
+        if (createSessionErr || !newSession) {
+          return NextResponse.json(
+            { error: createSessionErr?.message || "Failed to locate or create table session" },
+            { status: 400 }
+          );
+        }
+        activeSession = newSession;
       }
-      activeSession = newSession;
     }
 
     if (activeSession.payment_status === "paid") {
@@ -224,6 +239,7 @@ export async function POST(
       table_session_id: activeSession.id,
     });
   } catch (err: any) {
+    console.error("[FULL_QR_ORDER_ERROR]:", err?.stack || err);
     return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });
   }
 }

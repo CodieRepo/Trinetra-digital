@@ -6,10 +6,9 @@ import RestaurantProfileSettings from "./RestaurantProfileSettings";
 import ThermalReceiptModal, { ReceiptData } from "./ThermalReceiptModal";
 import { FloorTablesWorkspace } from "@/components/restaurant-os/tables/FloorTablesWorkspace";
 import { StaffManagementWorkspace } from "@/components/restaurant-os/staff/StaffManagementWorkspace";
+import { PosRegisterWorkspace } from "@/components/restaurant-os/pos/PosRegisterWorkspace";
 import {
-  Download,
   Loader2,
-  Plus,
   Trash2,
   UtensilsCrossed,
   Users,
@@ -21,6 +20,10 @@ import {
   Search,
   History,
   Building2,
+  Clock,
+  Flame,
+  CheckCheck,
+  XCircle,
 } from "lucide-react";
 
 type DashboardOrder = {
@@ -141,6 +144,11 @@ function timeAgo(isoString: string) {
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   return `${hrs}h ${mins % 60}m ago`;
+}
+
+function getDwellMinutes(isoString: string): number {
+  const diff = Date.now() - new Date(isoString).getTime();
+  return Math.max(0, Math.floor(diff / 60000));
 }
 
 const SESSION_STATUS_BADGE: Record<string, string> = {
@@ -264,7 +272,6 @@ export default function RestaurantDashboard({
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tableNumber, setTableNumber] = useState("");
   const [categoryName, setCategoryName] = useState("");
   const [itemForm, setItemForm] = useState({
     category_id: "",
@@ -277,7 +284,8 @@ export default function RestaurantDashboard({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // --- Tab navigation & Search state ---
-  const [activeTab, setActiveTab] = useState<"live" | "tables" | "menu" | "staff" | "payment" | "history">("live");
+  const [activeTab, setActiveTab] = useState<"live" | "pos" | "tables" | "menu" | "staff" | "payment" | "history">("live");
+  const [posTableId, setPosTableId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "placed" | "preparing" | "ready">("all");
   const [historySessions, setHistorySessions] = useState<any[]>([]);
@@ -459,23 +467,21 @@ export default function RestaurantDashboard({
     };
   }, [orders]);
 
-  async function createTable(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function updateOrderStatus(orderId: string, nextStatus: string, notes?: string) {
     try {
-      setBusyKey("table:create");
-      const response = await fetch("/api/client/restaurant/tables", {
-        method: "POST",
+      setBusyKey(`order-status:${orderId}`);
+      const response = await fetch("/api/client/restaurant/orders", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ table_number: tableNumber }),
+        body: JSON.stringify({ order_id: orderId, status: nextStatus, notes }),
       });
       await readJson(response);
-      setTableNumber("");
       await loadAll(false);
     } catch (submitError) {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "Failed to create table.",
+          : "Failed to update order status.",
       );
     } finally {
       setBusyKey(null);
@@ -853,6 +859,11 @@ export default function RestaurantDashboard({
                 icon: <UtensilsCrossed className="h-4 w-4 text-amber-600" />,
               },
               {
+                id: "pos" as const,
+                label: "POS Register",
+                icon: <CreditCard className="h-4 w-4 text-emerald-600" />,
+              },
+              {
                 id: "tables" as const,
                 label: "Floor & Tables",
                 icon: <LayoutGrid className="h-4 w-4 text-slate-600" />,
@@ -956,43 +967,163 @@ export default function RestaurantDashboard({
           return (
             <>
             <section className="grid gap-4 xl:grid-cols-3">
-              {displayOrders.map((order) => (
-            <article
-              key={order.id}
-              className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs text-slate-800 hover:border-amber-300/80 transition-all"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Table
-                  </p>
-                  <h2 className="mt-0.5 text-xl font-black text-slate-900 font-mono">
-                    {order.table?.table_number ?? "Unknown"}
-                  </h2>
-                </div>
-                <span className={`rounded-md border px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider ${SESSION_STATUS_BADGE[order.status] || "bg-amber-50 text-amber-800 border-amber-200"}`}>
-                  {order.status}
-                </span>
-              </div>
-              <div className="mt-3 space-y-2">
-                {order.items.slice(0, 4).map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between text-xs text-slate-700 font-medium"
+              {displayOrders.map((order) => {
+                const dwell = getDwellMinutes(order.created_at);
+                const isUrgent = dwell > 20;
+                const isWarning = dwell > 10 && !isUrgent;
+
+                return (
+                  <article
+                    key={order.id}
+                    className={`rounded-xl border bg-white p-4 shadow-xs text-slate-800 transition-all flex flex-col justify-between ${
+                      isUrgent
+                        ? "border-rose-300 ring-1 ring-rose-300/60"
+                        : isWarning
+                        ? "border-amber-300/90"
+                        : "border-slate-200/90 hover:border-amber-300/80"
+                    }`}
                   >
-                    <span>{item.name}</span>
-                    <span className="font-mono font-bold text-slate-900">x{item.quantity}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
-                <span>{new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                <span className="font-bold text-slate-900 font-mono text-sm">
-                  {formatCurrency(order.total_amount, currency)}
-                </span>
-              </div>
-            </article>
-          ))}
+                    <div>
+                      {/* Top Header: Table + Dwell Badge + Status */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                            Table
+                          </p>
+                          <h2 className="mt-0.5 text-xl font-black text-slate-900 font-mono">
+                            {order.table?.table_number ?? "Unknown"}
+                          </h2>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className={`rounded-md border px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider ${SESSION_STATUS_BADGE[order.status] || "bg-amber-50 text-amber-800 border-amber-200"}`}>
+                            {order.status}
+                          </span>
+                          {/* Live Dwell Timer indicator */}
+                          {isUrgent ? (
+                            <span className="flex items-center gap-1 text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded animate-pulse">
+                              <Flame size={12} className="text-rose-600" />
+                              {dwell}m ago (Urgent)
+                            </span>
+                          ) : isWarning ? (
+                            <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                              <Clock size={12} className="text-amber-600" />
+                              {dwell}m ago
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-medium">
+                              <Clock size={12} className="text-emerald-600" />
+                              {dwell}m ago
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Item list with quantity & kitchen notes */}
+                      <div className="mt-3 space-y-2 border-t border-slate-100 pt-2.5">
+                        {order.items.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex flex-col text-xs text-slate-700 font-medium"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-800 font-semibold">{item.name}</span>
+                              <span className="font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">x{item.quantity}</span>
+                            </div>
+                            {item.notes && (
+                              <span className="text-[11px] text-amber-700 bg-amber-50/70 border border-amber-200/50 rounded px-1.5 py-0.5 mt-0.5 inline-block">
+                                Note: {item.notes}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Overall Order Kitchen Note */}
+                      {order.notes && (
+                        <div className="mt-2.5 rounded-lg border border-amber-200 bg-amber-50/60 p-2 text-xs text-amber-900 font-medium">
+                          <span className="font-bold text-amber-950">Kitchen Note:</span> {order.notes}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      {/* Order Time and Total */}
+                      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
+                        <span>{new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="font-bold text-slate-900 font-mono text-sm">
+                          {formatCurrency(order.total_amount, currency)}
+                        </span>
+                      </div>
+
+                      {/* 1-Click Operational KDS Action Buttons */}
+                      <div className="mt-3 flex items-center gap-2 pt-2 border-t border-slate-100">
+                        {order.status === "placed" && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={busyKey === `order-status:${order.id}`}
+                              onClick={() => updateOrderStatus(order.id, "preparing")}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 text-xs font-bold transition-all shadow-xs active:scale-[0.98] disabled:opacity-50"
+                            >
+                              {busyKey === `order-status:${order.id}` ? <Loader2 size={13} className="animate-spin" /> : <Flame size={13} />}
+                              Start Preparing
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busyKey === `order-status:${order.id}`}
+                              onClick={() => {
+                                if (confirm(`Cancel order for Table ${order.table?.table_number ?? ""}`)) {
+                                  updateOrderStatus(order.id, "cancelled", "Cancelled by kitchen staff");
+                                }
+                              }}
+                              className="inline-flex items-center justify-center rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 px-2.5 py-2 text-xs font-semibold text-slate-500 transition-all disabled:opacity-50"
+                              title="Cancel Order"
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          </>
+                        )}
+
+                        {order.status === "accepted" && (
+                          <button
+                            type="button"
+                            disabled={busyKey === `order-status:${order.id}`}
+                            onClick={() => updateOrderStatus(order.id, "preparing")}
+                            className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 text-xs font-bold transition-all shadow-xs active:scale-[0.98] disabled:opacity-50"
+                          >
+                            {busyKey === `order-status:${order.id}` ? <Loader2 size={13} className="animate-spin" /> : <Flame size={13} />}
+                            Start Preparing
+                          </button>
+                        )}
+
+                        {order.status === "preparing" && (
+                          <button
+                            type="button"
+                            disabled={busyKey === `order-status:${order.id}`}
+                            onClick={() => updateOrderStatus(order.id, "ready")}
+                            className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 text-xs font-bold transition-all shadow-xs active:scale-[0.98] disabled:opacity-50"
+                          >
+                            {busyKey === `order-status:${order.id}` ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                            Mark Ready (Kitchen Done)
+                          </button>
+                        )}
+
+                        {order.status === "ready" && (
+                          <button
+                            type="button"
+                            disabled={busyKey === `order-status:${order.id}`}
+                            onClick={() => updateOrderStatus(order.id, "served")}
+                            className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 text-xs font-bold transition-all shadow-xs active:scale-[0.98] disabled:opacity-50"
+                          >
+                            {busyKey === `order-status:${order.id}` ? <Loader2 size={13} className="animate-spin" /> : <CheckCheck size={13} />}
+                            Mark Served to Guest
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
           {!loading && !orders.length ? (
             <div className="col-span-full rounded-2xl border border-dashed border-amber-200 bg-gradient-to-b from-[#FFFDF9] to-white px-6 py-12 text-center shadow-xs">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 border border-amber-200">
@@ -1403,6 +1534,68 @@ export default function RestaurantDashboard({
         );
         })()}
 
+        {/* ═══════════ POS BILLING & ORDER REGISTER ═══════════ */}
+        {activeTab === "pos" && (
+          <PosRegisterWorkspace
+            tables={tables}
+            categories={categories}
+            menuItems={items}
+            currency={currency}
+            taxRate={taxRate}
+            taxLabel={taxLabel}
+            initialTableId={posTableId}
+            onPunchOrder={async ({ tableId, items, notes }) => {
+              try {
+                const res = await fetch("/api/client/restaurant/orders", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ table_id: tableId, items, notes }),
+                });
+                const data = await readJson<{ error?: string; order?: any }>(res);
+                if (!res.ok) {
+                  return { success: false, error: data.error || "Failed to create order" };
+                }
+                setToastMessage(`Order #${data.order?.id?.slice(0, 6) || ""} punched to Kitchen!`);
+                void loadAll(false);
+                return { success: true, orderId: data.order?.id };
+              } catch (err: any) {
+                return { success: false, error: err?.message || "Network error" };
+              }
+            }}
+            onPunchAndSettle={async ({ tableId, items, notes, paymentMethod }) => {
+              try {
+                const res = await fetch("/api/client/restaurant/orders", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ table_id: tableId, items, notes }),
+                });
+                const data = await readJson<{ error?: string; order?: any; session_id?: string }>(res);
+                if (!res.ok || !data.session_id) {
+                  return { success: false, error: data.error || "Failed to create order" };
+                }
+                const payRes = await fetch("/api/client/restaurant/sessions/payment", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    session_id: data.session_id,
+                    action: "mark_paid",
+                    payment_method: paymentMethod,
+                  }),
+                });
+                const payData = await readJson<{ error?: string; success?: boolean }>(payRes);
+                if (!payRes.ok) {
+                  return { success: false, error: payData.error || "Order created, but payment failed." };
+                }
+                setToastMessage(`Order #${data.order?.id?.slice(0, 6)} settled & marked Paid (${paymentMethod.toUpperCase()})!`);
+                void loadAll(false);
+                return { success: true, orderId: data.order?.id };
+              } catch (err: any) {
+                return { success: false, error: err?.message || "Network error" };
+              }
+            }}
+          />
+        )}
+
         {/* ═══════════ FLOOR & TABLES WORKSPACE ═══════════ */}
         {activeTab === "tables" && (
           <FloorTablesWorkspace
@@ -1441,6 +1634,56 @@ export default function RestaurantDashboard({
             onRefresh={() => void loadAll(false)}
             onSelectTableSession={(_session) => {
               setActiveTab("live");
+            }}
+            onTakeOrder={(table) => {
+              setPosTableId(table.id);
+              setActiveTab("pos");
+            }}
+            onStartSession={async (tableId: string, customerName?: string, customerPhone?: string) => {
+              try {
+                setBusyKey(`session:start:${tableId}`);
+                const res = await fetch("/api/client/restaurant/sessions", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ table_id: tableId, customer_name: customerName, customer_phone: customerPhone }),
+                });
+                const json = await readJson<{ success?: boolean; error?: string; message?: string }>(res);
+                if (!res.ok) {
+                  setError(json.error || "Failed to start session.");
+                  return false;
+                }
+                setToastMessage(json.message || "Dining session started!");
+                void loadAll(false);
+                return true;
+              } catch (err: any) {
+                setError(err?.message || "Failed to start session.");
+                return false;
+              } finally {
+                setBusyKey(null);
+              }
+            }}
+            onTransferSession={async (sessionId: string, targetTableId: string) => {
+              try {
+                setBusyKey(`session:transfer:${sessionId}`);
+                const res = await fetch("/api/client/restaurant/sessions", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ session_id: sessionId, target_table_id: targetTableId }),
+                });
+                const json = await readJson<{ success?: boolean; error?: string; message?: string }>(res);
+                if (!res.ok) {
+                  setError(json.error || "Failed to transfer table.");
+                  return false;
+                }
+                setToastMessage(json.message || "Table transferred successfully!");
+                void loadAll(false);
+                return true;
+              } catch (err: any) {
+                setError(err?.message || "Failed to transfer table.");
+                return false;
+              } finally {
+                setBusyKey(null);
+              }
             }}
             isExportingQrs={busyKey === "tables:qrs"}
           />
@@ -1602,85 +1845,10 @@ export default function RestaurantDashboard({
           </section>
         )}
 
-        {/* ═══════════ MENU TAB — tables + categories + items ═══════════ */}
+        {/* ═══════════ MENU TAB — categories + items workspace ═══════════ */}
         {activeTab === "menu" && (
-        <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
-                  Floor Layout
-                </p>
-                <h2 className="mt-0.5 text-lg font-bold text-slate-900 tracking-tight">
-                  Dining Tables & QRs
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => void generateQrs()}
-                disabled={busyKey === "tables:qrs" || !tables.length}
-                className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
-              >
-                {busyKey === "tables:qrs" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                Export QRs
-              </button>
-            </div>
-
-            <form onSubmit={createTable} className="mt-4 flex gap-2">
-              <input
-                type="text"
-                value={tableNumber}
-                onChange={(e) => setTableNumber(e.target.value)}
-                placeholder="Table No. (e.g. T-12)"
-                required
-                className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500 shadow-xs"
-              />
-              <button
-                type="submit"
-                disabled={busyKey === "table:create"}
-                className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer flex items-center gap-1 shadow-xs"
-              >
-                {busyKey === "table:create" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-                Add Table
-              </button>
-            </form>
-
-            <div className="mt-4 space-y-2">
-              {[...tables]
-                .sort((a, b) => {
-                  const numA = parseInt(a.table_number.replace(/\D/g, ""), 10);
-                  const numB = parseInt(b.table_number.replace(/\D/g, ""), 10);
-                  if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-                  return a.table_number.localeCompare(b.table_number);
-                })
-                .map((table) => (
-                  <div
-                    key={table.id}
-                    className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/50 px-3.5 py-2.5 text-xs"
-                  >
-                    <div>
-                      <p className="font-bold text-slate-900 font-mono">
-                        {table.table_number}
-                      </p>
-                      <p className="mt-0.5 text-[10px] text-slate-400 font-mono">
-                        Token: {table.table_token.slice(0, 8)}...
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void deleteTable(table.id)}
-                      disabled={busyKey === `table:${table.id}`}
-                      className="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors border-0 cursor-pointer"
-                      title="Delete Table"
-                    >
-                      {busyKey === `table:${table.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                    </button>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
+        <section className="w-full">
+          <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
                 Menu Management

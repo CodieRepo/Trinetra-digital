@@ -18,8 +18,8 @@ export async function GET(
     const sessionToken = searchParams.get("session_token");
     const tableSessionId = searchParams.get("table_session_id");
 
-    if (!sessionToken) {
-      return NextResponse.json({ error: "session_token is required" }, { status: 400 });
+    if (!sessionToken && !tableSessionId) {
+      return NextResponse.json({ error: "session_token or table_session_id is required" }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();
@@ -35,21 +35,47 @@ export async function GET(
       return NextResponse.json({ error: "Table not found or inactive" }, { status: 404 });
     }
 
-    // Search active session
-    let sessionQuery = supabase
-      .from("restaurant_table_sessions")
-      .select("id, status, customer_name, customer_phone, payment_status, opened_at")
-      .eq("table_id", table.id)
-      .eq("session_token", sessionToken);
+    // 1. Search session by explicit session ID or session token
+    let session: any = null;
 
     if (tableSessionId) {
-      sessionQuery = sessionQuery.eq("id", tableSessionId);
+      const { data: sessById } = await supabase
+        .from("restaurant_table_sessions")
+        .select("id, status, customer_name, customer_phone, payment_status, opened_at")
+        .eq("id", tableSessionId)
+        .eq("table_id", table.id)
+        .maybeSingle();
+      session = sessById;
     }
 
-    const { data: session } = await sessionQuery
-      .order("opened_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    if (!session && sessionToken) {
+      const { data: sessByToken } = await supabase
+        .from("restaurant_table_sessions")
+        .select("id, status, customer_name, customer_phone, payment_status, opened_at")
+        .eq("table_id", table.id)
+        .eq("session_token", sessionToken)
+        .order("opened_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      session = sessByToken;
+    }
+
+    // 2. Multi-diner fallback: if the diner doesn't have a matching session token yet,
+    // connect to the current active session on this table if one exists!
+    if (!session || session.status === "closed") {
+      const { data: activeTableSession } = await supabase
+        .from("restaurant_table_sessions")
+        .select("id, status, customer_name, customer_phone, payment_status, opened_at")
+        .eq("table_id", table.id)
+        .eq("status", "active")
+        .order("opened_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (activeTableSession) {
+        session = activeTableSession;
+      }
+    }
 
     if (!session) {
       return NextResponse.json({ session: null, orders: [] });

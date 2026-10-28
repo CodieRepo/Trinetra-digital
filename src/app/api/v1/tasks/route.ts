@@ -1,3 +1,4 @@
+import { verifyAuthenticatedCrmUser } from "@/lib/auth/crm-auth";
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "../../../../lib/supabase/admin";
 
@@ -5,9 +6,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const auth = await verifyAuthenticatedCrmUser(request);
+  if (!auth.isAuthorized) {
+    return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: auth.statusCode || 401 });
+  }
   const { searchParams } = new URL(request.url);
   const leadId = searchParams.get("leadId");
-  const tenant_id = searchParams.get("tenant_id") || "00000000-0000-0000-0000-000000000001";
+  const tenant_id = auth.tenantId!;
 
   const db = getSupabaseAdmin();
   let query = db
@@ -30,6 +35,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const auth = await verifyAuthenticatedCrmUser(request);
+  if (!auth.isAuthorized) {
+    return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: auth.statusCode || 401 });
+  }
   const db = getSupabaseAdmin();
   const body = await request.json();
   const { action = "complete", taskId, status = "completed" } = body;

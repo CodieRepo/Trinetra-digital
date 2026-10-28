@@ -184,8 +184,14 @@ export async function resolveCallerIdentity(
     }
   }
 
-  // Default authenticated CRM / restaurant admin to owner
-  const role = normalizeRole(rawRole) || "owner";
+  const normalized = normalizeRole(rawRole);
+  if (!normalized) {
+    throw new RestaurantContextError(
+      "Forbidden: You do not have an assigned role for this restaurant.",
+      403
+    );
+  }
+  const role = normalized;
 
   return {
     userId,

@@ -1,6 +1,7 @@
 "use client";
 
-import { Printer, X } from "lucide-react";
+import { useState } from "react";
+import { Printer, X, Users } from "lucide-react";
 
 export type ReceiptData = {
   restaurantName: string;
@@ -54,6 +55,7 @@ export default function ThermalReceiptModal({
   receipt: ReceiptData;
   onClose: () => void;
 }) {
+  const [splitCount, setSplitCount] = useState<number>(1);
   function handlePrint() {
     const receiptElem = document.getElementById("thermal-receipt-container");
     if (!receiptElem) {
@@ -204,6 +206,30 @@ export default function ThermalReceiptModal({
           </div>
         </div>
 
+        {/* Split Bill Controls (1-click equal splitting) */}
+        <div className="no-print bg-slate-800/90 border-b border-white/10 px-5 py-2.5 flex items-center justify-between text-xs text-slate-300">
+          <div className="flex items-center gap-1.5 font-semibold text-slate-200">
+            <Users size={14} className="text-amber-400" />
+            <span>Split Bill:</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5, 6].map((num) => (
+              <button
+                key={num}
+                type="button"
+                onClick={() => setSplitCount(num)}
+                className={`px-2 py-0.5 rounded-md text-[11px] font-bold font-mono transition-all ${
+                  splitCount === num
+                    ? "bg-amber-400 text-slate-950 shadow-xs"
+                    : "bg-white/5 text-slate-300 hover:bg-white/15"
+                }`}
+              >
+                {num === 1 ? "Full" : `${num}x`}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Receipt Printable Area (80mm Width format) */}
         <div className="max-h-[75vh] overflow-y-auto p-4 bg-slate-950 flex justify-center">
           <div
@@ -321,6 +347,24 @@ export default function ThermalReceiptModal({
                 <span>{formatCurrency(receipt.bill.grandTotal)}</span>
               </div>
             </div>
+
+            {/* Split Bill Section on Receipt */}
+            {splitCount > 1 && (
+              <div className="my-2 border-y border-dashed border-slate-300 py-1.5 text-center bg-slate-50">
+                <p className="font-extrabold text-black uppercase text-[10px]">
+                  EQUAL SPLIT ({splitCount} DINERS)
+                </p>
+                <div className="flex justify-between font-bold text-[11px] text-slate-900 mt-1 px-1">
+                  <span>AMOUNT PER DINER:</span>
+                  <span className="font-mono">{formatCurrency(Math.floor(receipt.bill.grandTotal / splitCount))}</span>
+                </div>
+                {receipt.bill.grandTotal % splitCount !== 0 && (
+                  <p className="text-[8.5px] text-slate-500 italic mt-0.5">
+                    (Final diner pays +₹{receipt.bill.grandTotal % splitCount} remainder)
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Payment Method & Status */}
             <div className="text-center my-2 bg-slate-100 p-2 rounded border border-slate-300 text-[10px]">

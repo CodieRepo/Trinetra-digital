@@ -45,7 +45,7 @@ function getJwtSecret(): string {
   }
 
   if (process.env.NODE_ENV === 'production') {
-    console.warn('[SECURITY WARNING] JWT_SECRET is not explicitly set in production environment variables. Using derived server key.');
+    throw new Error('[FATAL] JWT_SECRET or STAFF_JWT_SECRET environment variable is required in production.');
   }
   return 'trinetra-pos-terminal-fallback-secret-key-2026-secure';
 }

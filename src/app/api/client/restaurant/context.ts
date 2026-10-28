@@ -125,11 +125,8 @@ export async function resolveRestaurantContext(request: Request, bodyData?: any)
       profile?.role === "super_admin" ||
       profile?.role === "client_admin" ||
       roleRows?.some((r) => r.role === "super_admin" || r.role === "client_admin") ||
-      authUser?.email === "admin@trinetra.com" ||
-      authUser?.email === "trinetra@123.com" ||
       authUser?.user_metadata?.role === "super_admin" ||
-      authUser?.user_metadata?.role === "client_admin" ||
-      (!roleRows?.length && !profile?.tenant_id)
+      authUser?.user_metadata?.role === "client_admin"
     ) {
       isSuperAdmin = true;
     }

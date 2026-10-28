@@ -1,208 +1,257 @@
 import { getSupabaseAdmin } from "../lib/supabase/admin";
 import { IngestedPayload } from "./providers/providerInterfaces";
 import { Lead } from "../types/crm";
-import { aiService } from "./ai/aiService";
 import { auditService } from "./auditService";
 import { eventBus } from "./events/domainEventBus";
+import { normalizePhoneNumber } from "../utils/bhashHelper";
 
 export class LeadIngestionService {
-  async processInboundMessage(payload: IngestedPayload): Promise<{ lead: Lead; isNewLead: boolean }> {
+  async processInboundMessage(payload: IngestedPayload): Promise<{ lead: Lead; isNewLead: boolean; messageId?: string }> {
     const db = getSupabaseAdmin();
-    const cleanPhone = payload.phone.replace(/\D/g, "");
-    const formattedPhone = cleanPhone.length > 10 ? cleanPhone.slice(-10) : cleanPhone;
-    const tenantId = payload.tenant_id || "00000000-0000-0000-0000-000000000001";
-
-    // 0. Check if this exact message has already been ingested in messages or bhash_conversations
-    if (payload.meta_message_id) {
-      const { data: existingMsg } = await db
-        .from("messages")
-        .select("id, lead_id")
-        .eq("fingerprint", payload.meta_message_id)
-        .maybeSingle();
-
-      if (existingMsg) {
-        const { data: existingLead } = await db
-          .from("leads")
-          .select("*")
-          .eq("id", existingMsg.lead_id)
-          .maybeSingle();
-        if (existingLead) {
-          return { lead: existingLead as Lead, isNewLead: false };
-        }
-      }
-
-      // Check fallback legacy table
-      const { data: legacyMsg } = await db
-        .from("bhash_conversations")
-        .select("id, lead_id")
-        .eq("meta_message_id", payload.meta_message_id)
-        .maybeSingle();
-
-      if (legacyMsg) {
-        const { data: legacyLead } = await db
-          .from("leads")
-          .select("*")
-          .eq("id", legacyMsg.lead_id)
-          .maybeSingle();
-        if (legacyLead) {
-          return { lead: legacyLead as Lead, isNewLead: false };
-        }
-      }
+    const formattedPhone = normalizePhoneNumber(payload.phone);
+    if (!formattedPhone || formattedPhone.length < 10) {
+      throw new Error(`Invalid phone number '${payload.phone}': must have at least 10 valid digits`);
     }
 
-    let lead: Lead | null = null;
-    let isNewLead = false;
+    const tenantId = payload.tenant_id;
+    if (!tenantId) {
+      throw new Error("Tenant ID is required for deterministic lead ingestion");
+    }
 
-    // 1. Fetch or Create Lead
-    const { data: existingLead } = await db
-      .from("leads")
-      .select("*")
-      .eq("phone", formattedPhone)
-      .maybeSingle();
+    const messageBody = payload.message || `Navigated to node ${payload.flow_node || ""}`.trim() || "Incoming Message";
+    const timestampStr = payload.timestamp || new Date().toISOString();
+    const internalEventId = payload.rawPayload?.internal_event_id || null;
 
-    if (!existingLead) {
-      isNewLead = true;
+    // Compensatory Rollback Tracking to guarantee transactional integrity
+    let newlyCreatedLeadId: string | null = null;
+    let newlyCreatedContactId: string | null = null;
+    let newlyCreatedConvId: string | null = null;
+    let newlyCreatedMsgId: string | null = null;
+    let newlyCreatedTimelineId: string | null = null;
 
-      const coreLeadPayload = {
-        tenant_id: tenantId,
-        phone: formattedPhone,
-        name: payload.name || `WhatsApp Lead (${formattedPhone.slice(-4)})`,
-        last_message: payload.message || "Incoming Message",
-        last_message_at: new Date().toISOString(),
-        status: "new",
-        source: "WhatsApp",
-      };
+    try {
+      // 1. Fetch or Create Lead (STRICTLY SCOPED TO TENANT_ID + PHONE)
+      let lead: Lead | null = null;
+      let isNewLead = false;
 
-      const { data: newLead, error: createErr } = await db
+      const { data: existingLead, error: leadQueryErr } = await db
         .from("leads")
-        .insert(coreLeadPayload)
         .select("*")
+        .eq("phone", formattedPhone)
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+
+      if (leadQueryErr) {
+        throw new Error(`Database error querying lead: ${leadQueryErr.message}`);
+      }
+
+      if (!existingLead) {
+        isNewLead = true;
+
+        const coreLeadPayload = {
+          tenant_id: tenantId,
+          phone: formattedPhone,
+          name: payload.name || `WhatsApp Lead (${formattedPhone.slice(-4)})`,
+          last_message: messageBody,
+          last_message_at: timestampStr,
+          status: "new",
+          source: "WhatsApp",
+        };
+
+        const { data: newLead, error: createErr } = await db
+          .from("leads")
+          .insert(coreLeadPayload)
+          .select("*")
+          .single();
+
+        if (createErr || !newLead) {
+          // Secondary safety check: in case of concurrent insert race condition for this tenant
+          const { data: racedLead } = await db
+            .from("leads")
+            .select("*")
+            .eq("phone", formattedPhone)
+            .eq("tenant_id", tenantId)
+            .maybeSingle();
+
+          if (racedLead) {
+            lead = racedLead as Lead;
+            isNewLead = false;
+          } else {
+            throw new Error(`Failed creating lead: ${createErr?.message}`);
+          }
+        } else {
+          lead = newLead as Lead;
+          newlyCreatedLeadId = lead.id;
+
+          // Log System Audit
+          try {
+            await auditService.logAction({
+              entity_type: "lead",
+              entity_id: lead.id,
+              actor: "System (Webhook)",
+              action: "create_lead",
+              new_value: { phone: formattedPhone, name: lead.name, tenant_id: tenantId },
+            });
+          } catch (e) {}
+
+          eventBus.publish("LEAD_CREATED", { lead });
+        }
+      } else {
+        lead = existingLead as Lead;
+
+        // Update existing lead (SCOPED TO TENANT_ID)
+        const { data: updatedLead, error: updateErr } = await db
+          .from("leads")
+          .update({
+            last_message: messageBody,
+            last_message_at: timestampStr,
+            status: lead.status,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", lead.id)
+          .eq("tenant_id", tenantId)
+          .select("*")
+          .maybeSingle();
+
+        if (updateErr) {
+          throw new Error(`Failed updating lead: ${updateErr.message}`);
+        }
+
+        if (updatedLead) {
+          lead = updatedLead as Lead;
+        }
+      }
+
+      // 2. Find or Create Contact (Required by conversations table foreign key constraint)
+      let contactId: string | null = null;
+      const { data: existingContact } = await db
+        .from("contacts")
+        .select("id")
+        .eq("phone", formattedPhone)
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+
+      if (existingContact) {
+        contactId = existingContact.id;
+      } else {
+        const { data: newContact, error: cntErr } = await db
+          .from("contacts")
+          .insert({
+            tenant_id: tenantId,
+            name: payload.name || `WhatsApp Contact (${formattedPhone.slice(-4)})`,
+            phone: formattedPhone,
+            status: "new",
+          })
+          .select("id")
+          .single();
+
+        if (cntErr || !newContact) {
+          throw new Error(`Failed creating contact: ${cntErr?.message}`);
+        }
+        contactId = newContact.id;
+        newlyCreatedContactId = contactId;
+      }
+
+      // 3. Find or Create Conversation in canonical conversations table
+      let conversationId: string | null = null;
+      const { data: existingConv } = await db
+        .from("conversations")
+        .select("id")
+        .eq("tenant_id", tenantId)
+        .eq("contact_id", contactId)
+        .maybeSingle();
+
+      if (existingConv) {
+        conversationId = existingConv.id;
+        await db
+          .from("conversations")
+          .update({
+            last_message_at: timestampStr,
+            lead_id: lead.id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", conversationId)
+          .eq("tenant_id", tenantId);
+      } else {
+        const { data: newConv, error: convErr } = await db
+          .from("conversations")
+          .insert({
+            tenant_id: tenantId,
+            contact_id: contactId,
+            lead_id: lead.id,
+            status: "active",
+            last_message_at: timestampStr,
+          })
+          .select("id")
+          .single();
+
+        if (convErr || !newConv) {
+          throw new Error(`Failed creating conversation: ${convErr?.message}`);
+        }
+        conversationId = newConv.id;
+        newlyCreatedConvId = conversationId;
+      }
+
+      // 4. Save Message to CANONICAL messages table
+      // Inbound message status uses verified schema default 'queued' without inventing delivery/read semantics.
+      // External message ID is explicitly null as Bhash does not provide inbound provider message IDs.
+      const { data: savedMsg, error: msgErr } = await db
+        .from("messages")
+        .insert({
+          tenant_id: tenantId,
+          conversation_id: conversationId,
+          lead_id: lead.id,
+          direction: "inbound",
+          body: messageBody,
+          status: "queued",
+          meta_message_id: null,
+          created_at: timestampStr,
+        })
+        .select("id")
         .single();
 
-      if (createErr || !newLead) {
-        throw new Error(`Failed creating lead: ${createErr?.message}`);
+      if (msgErr || !savedMsg) {
+        throw new Error(`Failed inserting canonical message: ${msgErr?.message}`);
       }
+      newlyCreatedMsgId = savedMsg.id;
 
-      lead = newLead as Lead;
-
-      // Log Lead Created Timeline event
-      try {
-        await db.from("timeline_events").insert({
+      // 5. Log Message Received Timeline Event
+      const { data: timelineEvt, error: timelineErr } = await db
+        .from("timeline_events")
+        .insert({
           tenant_id: tenantId,
           lead_id: lead.id,
-          event_type: "lead_created",
-          title: "Lead Created",
-          description: `Lead first engaged via WhatsApp`,
-        });
-      } catch (e) {}
-
-      // Log System Audit
-      try {
-        await auditService.logAction({
-          entity_type: "lead",
-          entity_id: lead.id,
-          actor: "System (Webhook)",
-          action: "create_lead",
-          new_value: { phone: formattedPhone, name: lead.name },
-        });
-      } catch (e) {}
-
-      eventBus.publish("LEAD_CREATED", { lead });
-    } else {
-      lead = existingLead as Lead;
-
-      // Update existing lead
-      const { data: updatedLead } = await db
-        .from("leads")
-        .update({
-          last_message: payload.message || lead.last_message,
-          last_message_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          event_type: "message_received",
+          title: "Incoming Message",
+          description: messageBody,
+          metadata: {
+            internal_event_id: internalEventId,
+            node: payload.flow_node || null,
+          },
         })
-        .eq("id", lead.id)
-        .select("*")
-        .maybeSingle();
+        .select("id")
+        .single();
 
-      if (updatedLead) {
-        lead = updatedLead as Lead;
+      if (timelineErr) {
+        console.warn("Notice: Timeline event insert skipped:", timelineErr.message);
+      } else if (timelineEvt) {
+        newlyCreatedTimelineId = timelineEvt.id;
       }
-    }
 
-    // 2. Save Message to bhash_conversations and messages
-    const messageBody = payload.message || `Navigated to node ${payload.flow_node}`;
-    const timestampStr = payload.timestamp || new Date().toISOString();
+      // Broadcast WebSocket & Redux Ingestion events to dashboard
+      eventBus.publish("MESSAGE_RECEIVED", { lead, message: messageBody });
 
-    const { error: bhashConvErr } = await db
-      .from("bhash_conversations")
-      .insert({
-        lead_id: lead.id,
-        direction: "inbound",
-        message: messageBody,
-        flow_node: payload.flow_node || null,
-        button_clicked: payload.button_clicked || null,
-        meta_message_id: payload.meta_message_id || null,
-        timestamp: timestampStr,
-      })
-      .select("id")
-      .maybeSingle();
+      // 6. Precomputed ML Handling (Synchronous if already attached in payload)
+      const hasPrecomputedML = payload.rawPayload && payload.rawPayload.ml_intent;
+      if (hasPrecomputedML) {
+        const mlResult = {
+          summary: payload.rawPayload.ml_summary,
+          score: Number(payload.rawPayload.ml_score) || 50,
+          intent: payload.rawPayload.ml_intent,
+          leadTemperature: payload.rawPayload.ml_temperature || "warm",
+          suggestedAction: payload.rawPayload.ml_suggested_action,
+        };
 
-    if (bhashConvErr) {
-      console.warn("bhash_conversations insert notice:", bhashConvErr.message);
-    }
-
-    try {
-      await db.from("messages").insert({
-        tenant_id: tenantId,
-        lead_id: lead.id,
-        direction: "inbound",
-        body: messageBody,
-        provider_message_id: payload.meta_message_id || null,
-        fingerprint: payload.meta_message_id || null,
-        created_at: timestampStr,
-        source: payload.rawPayload?.source || "WEBHOOK",
-        provider: payload.rawPayload?.provider || "bhash_api",
-        status: "delivered"
-      });
-    } catch (e) {
-      console.error("Failed inserting messages record:", e);
-    }
-
-    // 3. Log Message Received Timeline Event
-    try {
-      await db.from("timeline_events").insert({
-        tenant_id: tenantId,
-        lead_id: lead.id,
-        event_type: "message_received",
-        title: "Incoming Message",
-        description: messageBody,
-        metadata: { node: payload.flow_node },
-      });
-    } catch (e) {}
-
-    // Broadcast WebSocket & Redux Ingestion events to dashboard
-    eventBus.publish("MESSAGE_RECEIVED", { lead, message: messageBody });
-
-    // 4. ASYNCHRONOUS NON-BLOCKING AI ANALYSIS
-    const targetLeadId = lead.id;
-    const incomingText = messageBody;
-
-    const hasPrecomputedML = payload.rawPayload && payload.rawPayload.ml_intent;
-
-    if (hasPrecomputedML) {
-      const mlResult = {
-        summary: payload.rawPayload.ml_summary,
-        score: Number(payload.rawPayload.ml_score) || 50,
-        intent: payload.rawPayload.ml_intent,
-        leadTemperature: payload.rawPayload.ml_temperature || "warm",
-        suggestedAction: payload.rawPayload.ml_suggested_action,
-        appointmentIntent: !!payload.rawPayload.ml_metadata?.appointmentIntent,
-        quotationIntent: !!payload.rawPayload.ml_metadata?.quotationIntent,
-        humanHandoff: !!payload.rawPayload.ml_metadata?.humanHandoff,
-        serviceInquiry: !!payload.rawPayload.ml_metadata?.serviceInquiry,
-        followUpRequired: !!payload.rawPayload.ml_metadata?.followUpRequired,
-      };
-
-      (async () => {
         try {
           await db
             .from("leads")
@@ -212,55 +261,49 @@ export class LeadIngestionService {
               ai_intent: mlResult.intent,
               lead_temperature: mlResult.leadTemperature,
               ai_suggested_action: mlResult.suggestedAction,
-              ai_intelligence: {
-                appointmentIntent: mlResult.appointmentIntent,
-                quotationIntent: mlResult.quotationIntent,
-                humanHandoff: mlResult.humanHandoff,
-                serviceInquiry: mlResult.serviceInquiry,
-                followUpRequired: mlResult.followUpRequired
-              },
               updated_at: new Date().toISOString(),
             })
-            .eq("id", targetLeadId);
-          eventBus.publish("AI_ANALYSIS_UPDATED", { lead_id: targetLeadId, aiResult: mlResult });
-        } catch (e) {
-          console.error("Failed to save precomputed ML data:", e);
+            .eq("id", lead.id)
+            .eq("tenant_id", tenantId);
+        } catch (mlErr) {
+          console.error("Failed saving precomputed ML data:", mlErr);
         }
-      })();
-    } else {
-      setTimeout(async () => {
+      }
+
+      return { lead, isNewLead, messageId: savedMsg.id };
+    } catch (atomicErr) {
+      // COMPENSATORY ROLLBACK: If any core step failed, clean up any newly created records in reverse order
+      // to guarantee zero orphaned records in the database.
+      console.error("Atomic CRM Persistence Failure. Executing compensatory rollback:", atomicErr);
+
+      if (newlyCreatedTimelineId) {
         try {
-          const aiResult = await aiService.analyzeLead(tenantId, "", incomingText);
+          await db.from("timeline_events").delete().eq("id", newlyCreatedTimelineId);
+        } catch {}
+      }
+      if (newlyCreatedMsgId) {
+        try {
+          await db.from("messages").delete().eq("id", newlyCreatedMsgId);
+        } catch {}
+      }
+      if (newlyCreatedConvId) {
+        try {
+          await db.from("conversations").delete().eq("id", newlyCreatedConvId);
+        } catch {}
+      }
+      if (newlyCreatedContactId) {
+        try {
+          await db.from("contacts").delete().eq("id", newlyCreatedContactId);
+        } catch {}
+      }
+      if (newlyCreatedLeadId) {
+        try {
+          await db.from("leads").delete().eq("id", newlyCreatedLeadId);
+        } catch {}
+      }
 
-          try {
-            await db
-              .from("leads")
-              .update({
-                ai_summary: aiResult.summary,
-                score: aiResult.score,
-                ai_intent: aiResult.intent,
-                lead_temperature: aiResult.leadTemperature,
-                ai_suggested_action: aiResult.suggestedAction,
-                ai_intelligence: {
-                  appointmentIntent: aiResult.appointmentIntent,
-                  quotationIntent: aiResult.quotationIntent,
-                  humanHandoff: aiResult.humanHandoff,
-                  serviceInquiry: aiResult.serviceInquiry,
-                  followUpRequired: aiResult.followUpRequired
-                },
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", targetLeadId);
-          } catch (e) {}
-
-          eventBus.publish("AI_ANALYSIS_UPDATED", { lead_id: targetLeadId, aiResult });
-        } catch (aiErr) {
-          console.error("Async AI Background Error:", aiErr);
-        }
-      }, 0);
+      throw atomicErr;
     }
-
-    return { lead, isNewLead };
   }
 }
 

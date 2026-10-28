@@ -34,7 +34,7 @@ async function main() {
       r.rolname AS owner_name
     FROM pg_class c
     JOIN pg_roles r ON r.oid = c.relowner
-    WHERE c.relname IN ('restaurant_tables', 'restaurant_floors', 'restaurants', 'tenants', 'menu_items');
+    WHERE c.relname IN ('leads', 'restaurant_tables', 'restaurant_floors', 'restaurants', 'tenants', 'menu_items');
   `);
   console.log(res.rows);
 

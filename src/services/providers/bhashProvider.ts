@@ -152,22 +152,20 @@ export class BhashSMSProvider implements MessagingProvider {
     if (!payload || !payload.mobile) return null;
 
     const phoneStr = String(payload.mobile).trim();
-    let cleanedPhone = phoneStr.replace(/\D/g, "");
-    
-    // Normalize 91 prefix for Indian mobile numbers
-    if (cleanedPhone.startsWith("91") && cleanedPhone.length === 12) {
-      cleanedPhone = cleanedPhone.substring(2);
-    }
+    const cleanedPhone = phoneStr.replace(/\D/g, "");
+    const normalizedPhone = cleanedPhone.length > 10 && cleanedPhone.startsWith("91") 
+      ? cleanedPhone.slice(-10) 
+      : (cleanedPhone.length === 11 && cleanedPhone.startsWith("0") ? cleanedPhone.slice(1) : cleanedPhone.slice(-10));
 
-    if (cleanedPhone.length < 10) return null;
+    if (normalizedPhone.length < 10) return null;
 
-    const meta_message_id = payload.meta_message_id || `bhash-msg-${cleanedPhone}-${Date.now()}`;
+    const meta_message_id = payload.meta_message_id || null;
     const timestamp = payload.timestamp || new Date().toISOString();
 
     return {
-      tenant_id: payload.tenant_id || "00000000-0000-0000-0000-000000000001",
-      phone: cleanedPhone,
-      name: payload.name || `WhatsApp Lead (${cleanedPhone.slice(-4)})`,
+      tenant_id: payload.tenant_id,
+      phone: normalizedPhone,
+      name: payload.name || `WhatsApp Lead (${normalizedPhone.slice(-4)})`,
       message: payload.message || "",
       meta_message_id,
       timestamp,

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { authenticateStaffRequest } from "@/lib/auth/staff-api-auth";
+import {
+  calculateBillBreakdown,
+  resolveRestaurantTaxConfig,
+} from "@/lib/services/billing-calculator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,18 +54,10 @@ export async function POST(request: Request) {
     const validOrders = (orders || []).filter((o) => o.status !== "cancelled");
     const subtotal = validOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
 
-    // Calculate discount_amount
+    // Enforce role-based discount permissions
     const type = discount_type || "none";
     const value = Number(discount_value) || 0;
-    let discountAmount = 0;
 
-    if (type === "percentage") {
-      discountAmount = (subtotal * value) / 100;
-    } else if (type === "flat") {
-      discountAmount = value;
-    }
-
-    // Enforce role-based discount permissions
     if (staff.role === "kitchen") {
       return NextResponse.json({ error: "Forbidden: Kitchen staff cannot process payment" }, { status: 403 });
     }
@@ -82,8 +78,18 @@ export async function POST(request: Request) {
       }
     }
 
-    discountAmount = Math.min(subtotal, Math.max(0, discountAmount));
-    const grandTotal = Math.max(0, subtotal - discountAmount);
+    // Resolve restaurant tax settings (e.g. 5% GST, service charge)
+    const taxConfig = await resolveRestaurantTaxConfig(staff.restaurant_id, staff.tenant_id);
+
+    // Unified deterministic billing breakdown
+    const billMath = calculateBillBreakdown({
+      subtotal,
+      discountType: type,
+      discountValue: value,
+      discountReason: discount_reason,
+      taxRate: taxConfig.taxRate,
+      serviceChargeRate: taxConfig.serviceChargeRate,
+    });
 
     const finalMethod = payment_method || "cash";
     const finalTip = Number(tip_amount) || 0;
@@ -92,12 +98,15 @@ export async function POST(request: Request) {
       tenant_id: session.tenant_id || staff.tenant_id,
       restaurant_id: session.restaurant_id || staff.restaurant_id,
       session_id: session.id,
-      subtotal: subtotal,
-      discount_type: type,
-      discount_value: value,
-      discount_amount: discountAmount,
-      discount_reason: discount_reason || null,
-      grand_total: grandTotal,
+      subtotal: billMath.subtotal,
+      discount_type: billMath.discountType,
+      discount_value: billMath.discountValue,
+      discount_amount: billMath.discountAmount,
+      discount_reason: billMath.discountReason,
+      tax_amount: billMath.taxAmount,
+      service_charge: billMath.serviceCharge,
+      round_off: billMath.roundOff,
+      grand_total: billMath.grandTotal,
     };
 
     // Inserts/upserts restaurant_bills record
@@ -114,7 +123,7 @@ export async function POST(request: Request) {
     }
 
     // If discount applied (>0), insert audit row in restaurant_discount_audit
-    if (discountAmount > 0) {
+    if (billMath.discountAmount > 0) {
       const { error: auditErr } = await db
         .from("restaurant_discount_audit")
         .insert({
@@ -123,11 +132,11 @@ export async function POST(request: Request) {
           session_id: session.id,
           actor_id: staff.staff_id,
           actor_role: staff.role,
-          before_amount: subtotal,
-          after_amount: grandTotal,
-          discount_type: type === "flat" ? "flat" : "percentage",
-          discount_value: value,
-          discount_amount: discountAmount,
+          before_amount: billMath.subtotal,
+          after_amount: billMath.grandTotal,
+          discount_type: billMath.discountType,
+          discount_value: billMath.discountValue,
+          discount_amount: billMath.discountAmount,
           reason: discount_reason || "Staff discount",
         });
 
@@ -153,7 +162,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      grand_total: grandTotal,
+      grand_total: billMath.grandTotal,
       payment_status: "paid",
     });
   } catch (err: unknown) {

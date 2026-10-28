@@ -56,24 +56,45 @@ export async function POST(
       return NextResponse.json({ error: "Table not found or inactive" }, { status: 404 });
     }
 
-    // Search active session
-    let existingQuery = supabase
-      .from("restaurant_table_sessions")
-      .select("id")
-      .eq("table_id", table.id)
-      .eq("session_token", session_token)
-      .eq("status", "active");
+    // 1. Search existing session by explicit ID or session token
+    let targetSessionId: string | null = null;
 
     if (table_session_id) {
-      existingQuery = existingQuery.eq("id", table_session_id);
+      const { data: sById } = await supabase
+        .from("restaurant_table_sessions")
+        .select("id")
+        .eq("id", table_session_id)
+        .eq("table_id", table.id)
+        .eq("status", "active")
+        .maybeSingle();
+      if (sById) targetSessionId = sById.id;
     }
 
-    const { data: existingSession } = await existingQuery
-      .order("opened_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    if (!targetSessionId) {
+      const { data: sByToken } = await supabase
+        .from("restaurant_table_sessions")
+        .select("id")
+        .eq("table_id", table.id)
+        .eq("session_token", session_token)
+        .eq("status", "active")
+        .order("opened_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (sByToken) targetSessionId = sByToken.id;
+    }
 
-    let targetSessionId = existingSession?.id;
+    // 2. Check if table has ANY active session currently
+    if (!targetSessionId) {
+      const { data: sTableActive } = await supabase
+        .from("restaurant_table_sessions")
+        .select("id")
+        .eq("table_id", table.id)
+        .eq("status", "active")
+        .order("opened_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (sTableActive) targetSessionId = sTableActive.id;
+    }
 
     if (targetSessionId) {
       const { error: updateErr } = await supabase

@@ -56,7 +56,8 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: "Payment confirmation notification sent to cashier successfully!",
+      payment_pending_verification: true,
+      message: "Payment notification received! Awaiting cashier confirmation.",
       details: {
         table_number: table.table_number,
         amount,
@@ -64,6 +65,7 @@ export async function POST(
         paymentMethod,
         utrNumber,
         noteText,
+        submitted_at: new Date().toISOString(),
       },
     });
   } catch (err: any) {

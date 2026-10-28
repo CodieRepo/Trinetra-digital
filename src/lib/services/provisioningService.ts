@@ -333,12 +333,17 @@ export class ProvisioningService {
       .from('restaurant_settings')
       .select('*')
       .eq('restaurant_id', restaurantId)
-      .single();
+      .maybeSingle();
+
+    const totalGst =
+      data?.cgst_pct !== undefined && data?.sgst_pct !== undefined
+        ? Number(data.cgst_pct) + Number(data.sgst_pct)
+        : (data?.default_gst_rate ?? 5);
 
     return {
-      taxInclusive: data?.tax_inclusive ?? false,
-      defaultGstRate: data?.default_gst_rate ?? 5,
-      serviceChargePercentage: data?.service_charge_percentage ?? 0,
+      taxInclusive: data?.is_tax_inclusive ?? (data?.tax_inclusive ?? false),
+      defaultGstRate: totalGst,
+      serviceChargePercentage: Number(data?.service_charge_pct ?? (data?.service_charge_percentage ?? 0)),
       serviceChargeTaxable: true,
     };
   }
@@ -348,14 +353,30 @@ export class ProvisioningService {
     settings: { taxInclusive?: boolean; defaultGstRate?: number; serviceChargePercentage?: number }
   ) {
     const supabase = this.getAdminClient();
+
+    // Resolve tenant_id for the restaurant
+    const { data: rest } = await supabase
+      .from('restaurants')
+      .select('tenant_id')
+      .eq('id', restaurantId)
+      .maybeSingle();
+
+    const gstRate = settings.defaultGstRate !== undefined ? Number(settings.defaultGstRate) : undefined;
+    const halfGst = gstRate !== undefined ? Number((gstRate / 2).toFixed(2)) : undefined;
+
     const payload: any = {
       restaurant_id: restaurantId,
       updated_at: new Date().toISOString(),
     };
-    if (settings.taxInclusive !== undefined) payload.tax_inclusive = settings.taxInclusive;
-    if (settings.defaultGstRate !== undefined) payload.default_gst_rate = settings.defaultGstRate;
-    if (settings.serviceChargePercentage !== undefined)
-      payload.service_charge_percentage = settings.serviceChargePercentage;
+    if (rest?.tenant_id) payload.tenant_id = rest.tenant_id;
+    if (settings.taxInclusive !== undefined) payload.is_tax_inclusive = settings.taxInclusive;
+    if (halfGst !== undefined) {
+      payload.cgst_pct = halfGst;
+      payload.sgst_pct = halfGst;
+    }
+    if (settings.serviceChargePercentage !== undefined) {
+      payload.service_charge_pct = Number(settings.serviceChargePercentage);
+    }
 
     const { data, error } = await supabase
       .from('restaurant_settings')
@@ -364,6 +385,15 @@ export class ProvisioningService {
       .single();
 
     if (error) throw new Error(error.message);
+
+    // Also update tax_rate on restaurants table for consistency
+    if (gstRate !== undefined) {
+      await supabase
+        .from('restaurants')
+        .update({ tax_rate: gstRate })
+        .eq('id', restaurantId);
+    }
+
     return data;
   }
 

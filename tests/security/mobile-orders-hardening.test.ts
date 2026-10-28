@@ -35,9 +35,9 @@ describe('Milestone 2.3 — Mobile Orders UI & Concurrency Hardening Tests', () 
   });
 
   it('3. Concurrency & Stale Transitions: Backend RPC rejects out-of-order transition', () => {
-    // Staff A tries to transition order from 'placed' to 'preparing', bypassing 'accepted'
-    const isTransitionAllowed = canStaffTransitionOrder('kitchen', 'placed', 'preparing');
-    expect(isTransitionAllowed).toBe(false); // Invalid transition sequence blocked
+    // Attempting to move backward from 'ready' to 'preparing' must be rejected
+    const isTransitionAllowed = canStaffTransitionOrder('kitchen', 'ready', 'preparing');
+    expect(isTransitionAllowed).toBe(false); // Invalid reverse transition sequence blocked
   });
 
   it('4. Status Machine Audit: Verifies valid & invalid transitions for all 7 states', () => {

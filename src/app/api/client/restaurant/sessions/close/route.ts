@@ -9,7 +9,12 @@ export async function POST(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
-    const { tenantId } = await resolveRestaurantContext(request, body);
+    const { tenantId, isAuthenticated } = await resolveRestaurantContext(request, body);
+
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { session_id, force } = body;
 
     if (!session_id) {

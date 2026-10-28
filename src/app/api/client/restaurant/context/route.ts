@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { resolveRestaurantContext, RestaurantContextError } from "../context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,77 +15,47 @@ export async function GET(request: Request) {
     const token = authHeader.substring(7).trim();
     const db = getSupabaseAdmin();
 
-    // 1. Verify user session via Supabase Auth
+    // 1. Resolve and verify tenant and restaurant context (blocks IDOR parameter spoofing)
+    const context = await resolveRestaurantContext(request);
+    if (!context.isAuthenticated || !context.tenantId) {
+      return NextResponse.json({ error: "Unauthorized: Invalid or expired session token" }, { status: 401 });
+    }
+
+    // 2. Fetch authenticated user details
     const { data: { user }, error: userError } = await db.auth.getUser(token);
     if (userError || !user) {
       return NextResponse.json({ error: "Unauthorized: Invalid or expired session token" }, { status: 401 });
     }
 
-    const url = new URL(request.url);
-    const queryTenantId = url.searchParams.get("tenant_id");
-    const queryRestaurantId = url.searchParams.get("restaurant_id");
+    // 3. Resolve user role for the verified tenant
+    let role = "owner";
+    const [roleRows, profileRow] = await Promise.all([
+      db.from("users_roles").select("role").eq("user_id", user.id).eq("tenant_id", context.tenantId).maybeSingle(),
+      db.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+    ]);
 
-    let tenantId: string | null = queryTenantId || null;
-    let role: string = "owner";
-
-    if (!tenantId) {
-      // 2. Fetch role and tenant_id from users_roles
-      const { data: roleRows } = await db
-        .from("users_roles")
-        .select("tenant_id, role")
-        .eq("user_id", user.id)
-        .limit(1);
-
-      if (roleRows && roleRows.length > 0) {
-        tenantId = roleRows[0].tenant_id;
-        role = roleRows[0].role;
-      } else {
-        // Fallback check legacy profiles
-        const { data: profileRows } = await db
-          .from("profiles")
-          .select("tenant_id, role")
-          .eq("id", user.id)
-          .limit(1);
-
-        if (profileRows && profileRows.length > 0) {
-          tenantId = profileRows[0].tenant_id;
-          role = profileRows[0].role === "client_admin" ? "admin" : (profileRows[0].role || "owner");
-        }
-      }
+    if (roleRows.data?.role) {
+      role = roleRows.data.role;
+    } else if (profileRow.data?.role) {
+      role = profileRow.data.role === "client_admin" ? "admin" : (profileRow.data.role || "owner");
     }
 
-    if (!tenantId && queryRestaurantId) {
-      const { data: rRow } = await db
-        .from("restaurants")
-        .select("tenant_id")
-        .eq("id", queryRestaurantId)
-        .maybeSingle();
-      if (rRow?.tenant_id) {
-        tenantId = rRow.tenant_id;
-      }
-    }
-
-    if (!tenantId) {
-      return NextResponse.json({ error: "Account is not mapped to any Restaurant Organization." }, { status: 404 });
-    }
-
-    // 3. Fetch restaurant details
+    // 4. Fetch restaurant details
     let query = db.from("restaurants").select("*");
-    if (queryRestaurantId) {
-      query = query.eq("id", queryRestaurantId.trim());
+    if (context.restaurantId) {
+      query = query.eq("id", context.restaurantId);
     } else {
-      query = query.eq("tenant_id", tenantId.trim());
+      query = query.eq("tenant_id", context.tenantId);
     }
 
     const { data: restaurants, error: restErr } = await query.limit(1);
     const restaurant = restaurants && restaurants.length > 0 ? restaurants[0] : null;
 
     if (restErr || !restaurant) {
-      console.error("[Context API] Restaurant fetch failed for tenant:", tenantId, "Err:", restErr);
       return NextResponse.json({
         error: "No active Restaurant Profile found for your Organization.",
         details: restErr?.message || "No row matched tenant_id",
-        tenant_id: tenantId
+        tenant_id: context.tenantId
       }, { status: 404 });
     }
 
@@ -93,11 +64,14 @@ export async function GET(request: Request) {
       user_id: user.id,
       email: user.email,
       name: user.user_metadata?.name || user.email,
-      tenant_id: restaurant.tenant_id || tenantId,
+      tenant_id: restaurant.tenant_id || context.tenantId,
       role: role,
       restaurant: restaurant,
     });
   } catch (err: unknown) {
+    if (err instanceof RestaurantContextError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const message = err instanceof Error ? err.message : "Internal Server Error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

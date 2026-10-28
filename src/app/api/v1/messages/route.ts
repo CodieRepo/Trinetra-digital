@@ -1,3 +1,4 @@
+import { verifyAuthenticatedCrmUser } from "@/lib/auth/crm-auth";
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "../../../../lib/supabase/admin";
 import { bhashProvider } from "../../../../services/providers/bhashProvider";
@@ -8,12 +9,16 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const auth = await verifyAuthenticatedCrmUser(request);
+  if (!auth.isAuthorized) {
+    return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: auth.statusCode || 401 });
+  }
   const db = getSupabaseAdmin();
   const body = await request.json();
 
   try {
     const validated = sendMessageSchema.parse(body);
-    const tenant_id = body.tenant_id || "00000000-0000-0000-0000-000000000001";
+    const tenant_id = auth.tenantId!;
 
     let phone = validated.phone;
     if (!phone) {

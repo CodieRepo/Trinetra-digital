@@ -65,18 +65,18 @@ describe('Milestone 2.2 — Mobile POS & Orders Dashboard UI Integration Tests',
       session_type: SessionType.Staff,
     }).token;
 
-    // Kitchen attempts invalid transition (e.g. marking ready order as served)
+    // Kitchen attempts invalid transition (e.g. closing a served order)
     const invalidTransitionReq = new Request(`http://localhost:3000/api/staff/orders/order_101/status`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${kitchenJwt}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'served' }),
+      body: JSON.stringify({ status: 'closed' }),
     });
 
     const { context } = await authenticateStaffRequest(invalidTransitionReq);
     expect(context?.role).toBe('kitchen');
 
-    // Server-side check blocks kitchen from marking served
-    const isAllowedByServer = canStaffTransitionOrder(context?.role as any, 'ready', 'served');
+    // Server-side check blocks kitchen from closing an order
+    const isAllowedByServer = canStaffTransitionOrder(context?.role as any, 'served', 'closed');
     expect(isAllowedByServer).toBe(false); // Triggers 403 and client rollback
   });
 

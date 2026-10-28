@@ -79,22 +79,12 @@ export class ConversationRepository {
       direction: msg.direction,
       message: msg.message,
       timestamp: timestampStr,
+      created_at: timestampStr,
     };
   }
 
   async getMessagesByLeadId(leadId: string, limit = 100): Promise<ConversationMessage[]> {
-    const { data: bhashMsgs } = await this.db
-      .from("bhash_conversations")
-      .select("*")
-      .eq("lead_id", leadId)
-      .order("timestamp", { ascending: true })
-      .limit(limit);
-
-    if (bhashMsgs && bhashMsgs.length > 0) {
-      return bhashMsgs as ConversationMessage[];
-    }
-
-    // Fallback query to messages table
+    // 1. Primary Query: Canonical messages table
     const { data: msgs } = await this.db
       .from("messages")
       .select("*")
@@ -108,12 +98,25 @@ export class ConversationRepository {
         lead_id: m.lead_id,
         direction: m.direction,
         message: m.body,
+        body: m.body,
         flow_node: null,
         button_clicked: null,
-        meta_message_id: m.provider_message_id,
+        meta_message_id: m.meta_message_id,
         timestamp: m.created_at,
         created_at: m.created_at,
       }));
+    }
+
+    // 2. Fallback Query: Legacy prototype bhash_conversations table
+    const { data: bhashMsgs } = await this.db
+      .from("bhash_conversations")
+      .select("*")
+      .eq("lead_id", leadId)
+      .order("timestamp", { ascending: true })
+      .limit(limit);
+
+    if (bhashMsgs && bhashMsgs.length > 0) {
+      return bhashMsgs as ConversationMessage[];
     }
 
     return [];

@@ -45,6 +45,7 @@ export interface TerminalEntity {
   restaurant_id: string;
   terminal_name: string;
   terminal_type: string;
+  device_token_hash?: string;
   status: string;
   app_version: string;
   paired_at: string;
