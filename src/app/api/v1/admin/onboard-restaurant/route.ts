@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     });
 
     if (authError && authError.message?.toLowerCase().includes("already")) {
-      const { data: usersData } = await db.auth.admin.listUsers();
+      const { data: usersData } = await db.auth.admin.listUsers({ perPage: 1000 });
       const existing = usersData?.users?.find(
         (u) => u.email?.toLowerCase() === email.toLowerCase()
       );
