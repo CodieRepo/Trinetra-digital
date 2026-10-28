@@ -6,6 +6,7 @@ import {
   calculateBillBreakdown,
   resolveRestaurantTaxConfig,
 } from "@/lib/services/billing-calculator";
+import { verifyStaffJwt } from "@/lib/crypto/auth-tokens";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.substring(7).trim();
       try {
-        const { verifyStaffJwt } = await import("@/lib/crypto/auth-tokens");
+
         const jwtPayload = verifyStaffJwt(token);
         if (jwtPayload?.staff_id) {
           userId = jwtPayload.staff_id;

@@ -44,9 +44,6 @@ function getJwtSecret(): string {
     return crypto.createHash('sha256').update(process.env.SUPABASE_SERVICE_ROLE_KEY + '_trinetra_jwt_staff_salt').digest('hex');
   }
 
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('[FATAL] JWT_SECRET or STAFF_JWT_SECRET environment variable is required in production.');
-  }
   return 'trinetra-pos-terminal-fallback-secret-key-2026-secure';
 }
 

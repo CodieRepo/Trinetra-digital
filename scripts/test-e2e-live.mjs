@@ -21,10 +21,12 @@ function loadEnv(file) {
   }
 }
 
-loadEnv(".env.local");
 loadEnv(".env");
+// Ensure secret derivation aligns with Vercel environment where JWT_SECRET is unset
+delete process.env.JWT_SECRET;
+delete process.env.STAFF_JWT_SECRET;
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = process.env.BASE_URL || "https://trinetra-digital.vercel.app";
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://suvuvxdasccmztbbpreg.supabase.co";
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 

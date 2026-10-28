@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { verifyStaffJwt } from "@/lib/crypto/auth-tokens";
 
 /**
  * Custom error class for restaurant context resolution failures.
@@ -43,7 +44,7 @@ export async function resolveRestaurantContext(request: Request, bodyData?: any)
     
     // Check if Bearer token is a signed Staff JWT
     try {
-      const { verifyStaffJwt } = await import("@/lib/crypto/auth-tokens");
+
       const jwtPayload = verifyStaffJwt(token);
       if (jwtPayload) {
         const { data: staffRecord } = await db
