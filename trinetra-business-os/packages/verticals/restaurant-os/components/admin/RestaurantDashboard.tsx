@@ -286,7 +286,15 @@ export default function RestaurantDashboard({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // --- Tab navigation & Search state ---
-  const [activeTab, setActiveTab] = useState<"live" | "pos" | "tables" | "menu" | "inventory" | "staff" | "payment" | "history">("live");
+  const [activeTab, setActiveTab] = useState<"live" | "pos" | "tables" | "menu" | "inventory" | "staff" | "payment" | "history">(() => {
+    if (typeof window !== "undefined") {
+      const urlTab = new URLSearchParams(window.location.search).get("tab");
+      if (urlTab && ["live", "pos", "tables", "menu", "inventory", "staff", "payment", "history"].includes(urlTab)) {
+        return urlTab as any;
+      }
+    }
+    return "live";
+  });
   const [posTableId, setPosTableId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "placed" | "preparing" | "ready">("all");
