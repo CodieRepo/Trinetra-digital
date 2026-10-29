@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { resolveRestaurantContext, RestaurantContextError } from "../context";
 import crypto from "crypto";
+import { deductInventoryForOrder } from "@/lib/services/inventory-deduction";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -270,6 +271,22 @@ export async function POST(request: Request) {
     }));
 
     await db.from("restaurant_order_items").insert(finalItemsToInsert);
+
+    // Milestone 11: Auto-deduct raw inventory items based on configured Recipe BOM
+    try {
+      await deductInventoryForOrder({
+        tenantId,
+        restaurantId,
+        orderId: order.id,
+        items: finalItemsToInsert.map((i) => ({
+          menu_item_id: i.menu_item_id,
+          quantity: i.quantity,
+          name: i.name,
+        })),
+      });
+    } catch (deductErr) {
+      console.error("[INVENTORY_DEDUCTION_ERROR] Failed to auto-deduct:", deductErr);
+    }
 
     await db.from("restaurant_order_events").insert({
       tenant_id: tenantId,

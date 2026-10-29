@@ -7,8 +7,10 @@ import ThermalReceiptModal, { ReceiptData } from "./ThermalReceiptModal";
 import { FloorTablesWorkspace } from "@/components/restaurant-os/tables/FloorTablesWorkspace";
 import { StaffManagementWorkspace } from "@/components/restaurant-os/staff/StaffManagementWorkspace";
 import { PosRegisterWorkspace } from "@/components/restaurant-os/pos/PosRegisterWorkspace";
+import { InventoryManagementWorkspace } from "@/components/restaurant-os/inventory/InventoryManagementWorkspace";
 import {
   Loader2,
+  Boxes,
   Trash2,
   UtensilsCrossed,
   Users,
@@ -284,7 +286,7 @@ export default function RestaurantDashboard({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // --- Tab navigation & Search state ---
-  const [activeTab, setActiveTab] = useState<"live" | "pos" | "tables" | "menu" | "staff" | "payment" | "history">("live");
+  const [activeTab, setActiveTab] = useState<"live" | "pos" | "tables" | "menu" | "inventory" | "staff" | "payment" | "history">("live");
   const [posTableId, setPosTableId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "placed" | "preparing" | "ready">("all");
@@ -872,6 +874,11 @@ export default function RestaurantDashboard({
                 id: "menu" as const,
                 label: "Menu Catalog",
                 icon: <ChefHat className="h-4 w-4 text-slate-600" />,
+              },
+              {
+                id: "inventory" as const,
+                label: "Inventory & BOM",
+                icon: <Boxes className="h-4 w-4 text-slate-600" />,
               },
               {
                 id: "history" as const,
@@ -2046,6 +2053,16 @@ export default function RestaurantDashboard({
             </div>
           </div>
         </section>
+        )}
+
+        {/* ═══════════ INVENTORY & RECIPES (BOM) TAB — Milestone 11 ═══════════ */}
+        {activeTab === "inventory" && (
+          <InventoryManagementWorkspace
+            restaurantId={restaurantId}
+            tenantId={tenantId}
+            currency={currency}
+            userRole={userRole}
+          />
         )}
 
         {/* ═══════════ STAFF TAB — All 7 canonical roles & PIN admin ═══════════ */}
