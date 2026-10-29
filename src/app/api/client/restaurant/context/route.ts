@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { resolveRestaurantContext, RestaurantContextError } from "../context";
+import { getPlanConfig } from "@/lib/plans/features";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,14 +62,27 @@ export async function GET(request: Request) {
       }, { status: 404 });
     }
 
+    // 5. Fetch Tenant Plan & Feature Capabilities
+    const targetTenantId = restaurant.tenant_id || context.tenantId;
+    const { data: tenant } = await db
+      .from("tenants")
+      .select("id, name, plan, status")
+      .eq("id", targetTenantId)
+      .maybeSingle();
+
+    const planTier = tenant?.plan || "starter";
+    const planConfig = getPlanConfig(planTier);
+
     return NextResponse.json({
       success: true,
       user_id: user.id,
       email: user.email,
       name: user.user_metadata?.name || user.email,
-      tenant_id: restaurant.tenant_id || context.tenantId,
+      tenant_id: targetTenantId,
       role: role,
       restaurant: restaurant,
+      plan: planTier,
+      plan_config: planConfig,
     });
   } catch (err: unknown) {
     if (err instanceof RestaurantContextError) {

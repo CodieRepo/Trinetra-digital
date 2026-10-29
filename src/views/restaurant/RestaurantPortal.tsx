@@ -22,6 +22,7 @@ export default function RestaurantPortal() {
   const [restaurant, setRestaurant] = useState<{ id: string; name: string; currency: string; tax_rate?: number; tax_label?: string; address?: string } | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [planTier, setPlanTier] = useState<string>("pro");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const resolveRestaurantContext = async (activeSession: any) => {
@@ -73,6 +74,7 @@ export default function RestaurantPortal() {
       setTenantId(data.tenant_id || queryTenantId || null);
       setUserRole(data.role || "admin");
       setRestaurant(data.restaurant || null);
+      setPlanTier(data.plan || "pro");
       setAuthError(null);
     } catch (err: any) {
       setAuthError(err?.message || "Failed to load restaurant profile.");
@@ -344,6 +346,15 @@ export default function RestaurantPortal() {
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Live
+                </span>
+                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
+                  planTier === "enterprise"
+                    ? "bg-amber-100 text-amber-900 border-amber-300 font-black"
+                    : planTier === "starter"
+                    ? "bg-emerald-100 text-emerald-900 border-emerald-300 font-black"
+                    : "bg-indigo-100 text-indigo-900 border-indigo-300 font-black"
+                }`}>
+                  {planTier === "enterprise" ? "👑 Enterprise" : planTier === "starter" ? "🌱 Starter" : "🚀 Pro Plan"}
                 </span>
               </div>
               <p className="text-xs text-slate-500 truncate mt-0.5">Real-time table orders, kitchen queue & settlement</p>

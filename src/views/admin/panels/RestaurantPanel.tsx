@@ -309,7 +309,13 @@ export default function RestaurantPanel() {
                       <div className="text-[10px] text-slate-400 font-medium mt-0.5">{r.tenantName} ({r.address || "No Address"})</div>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="px-2 py-0.5 rounded text-[9px] font-black bg-indigo-950/60 text-indigo-400 border border-indigo-800/40 uppercase">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-black border uppercase ${
+                        r.plan === "enterprise"
+                          ? "bg-amber-950/60 text-amber-400 border-amber-800/40"
+                          : r.plan === "starter"
+                          ? "bg-emerald-950/60 text-emerald-400 border-emerald-800/40"
+                          : "bg-indigo-950/60 text-indigo-400 border-indigo-800/40"
+                      }`}>
                         {r.plan}
                       </span>
                     </td>
@@ -449,11 +455,57 @@ export default function RestaurantPanel() {
                     onChange={handleInputChange}
                     className="w-full h-9 px-2 bg-white/5 border border-white/10 rounded-xl text-slate-300 focus:outline-none focus:border-violet-500"
                   >
-                    <option value="starter" className="bg-[#0c0c0e]">Starter Plan (₹1,999/mo)</option>
-                    <option value="pro" className="bg-[#0c0c0e]">Pro Plan (₹2,999/mo)</option>
-                    <option value="enterprise" className="bg-[#0c0c0e]">Enterprise Plan (₹8,999/mo)</option>
+                    <option value="starter" className="bg-[#0c0c0e]">Starter Plan (₹1,999/mo) — QR + Mobile POS</option>
+                    <option value="pro" className="bg-[#0c0c0e]">Pro Plan (₹2,999/mo) — Full POS + Kitchen KDS</option>
+                    <option value="enterprise" className="bg-[#0c0c0e]">Enterprise Plan (₹8,999/mo) — Full Inventory + CRM</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Plan Pitch & Included Capabilities Summary Box */}
+              <div className={`p-3.5 rounded-2xl border transition-all ${
+                formData.plan === "enterprise"
+                  ? "bg-amber-950/20 border-amber-500/30 text-amber-200"
+                  : formData.plan === "starter"
+                  ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-200"
+                  : "bg-indigo-950/20 border-indigo-500/30 text-indigo-200"
+              }`}>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="font-black text-[11px] uppercase tracking-wide">
+                    {formData.plan === "enterprise" ? "👑 Enterprise Tier — ₹8,999/mo" : formData.plan === "starter" ? "🌱 Starter Tier — ₹1,999/mo" : "🚀 Pro / Growth Tier — ₹2,999/mo"}
+                  </span>
+                  <span className="text-[9px] font-mono font-bold bg-white/10 px-2 py-0.5 rounded-full">
+                    {formData.plan === "enterprise" ? "Resto-Bars & Multi-Branch" : formData.plan === "starter" ? "Cafes & QSR" : "Casual & Fine Dining"}
+                  </span>
+                </div>
+                <ul className="text-[10px] space-y-1 text-slate-300 font-medium list-disc list-inside">
+                  {formData.plan === "starter" && (
+                    <>
+                      <li>Digital Contactless QR Menu & Mobile Waiter POS</li>
+                      <li>Up to 10 Dining Tables & 1 Single Floor Layout</li>
+                      <li>Cash/UPI Instant Billing with Thermal Printing</li>
+                      <li>Role PIN protection for up to 3 staff members</li>
+                    </>
+                  )}
+                  {(formData.plan === "pro" || formData.plan === "growth") && (
+                    <>
+                      <li><strong>Everything in Starter Plan</strong></li>
+                      <li>Paperless Kitchen Display System (KDS) Realtime Screen</li>
+                      <li>Unlimited Dining Tables across Multi-Floor Layouts</li>
+                      <li>Split Billing, Table Transfers & Flexible Role Discounts</li>
+                      <li>Day-End (Z-Report) Revenue and Payment Settling Summary</li>
+                    </>
+                  )}
+                  {formData.plan === "enterprise" && (
+                    <>
+                      <li><strong>Everything in Pro / Growth Plan</strong></li>
+                      <li>Raw Material Inventory Tracking & Wastage Alerts</li>
+                      <li>Recipe (BOM) Auto-Deductions on Order Punching</li>
+                      <li>WhatsApp Digital Invoicing via Trinetra Core CRM</li>
+                      <li>Dedicated SLA & 24/7 Priority Support Account Manager</li>
+                    </>
+                  )}
+                </ul>
               </div>
 
               <div>
