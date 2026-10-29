@@ -167,13 +167,25 @@ export async function POST(request: Request) {
       console.warn("[Onboarding] Users_roles insert note:", roleErr?.message);
     }
 
-    // 6. Seed Default Menu Categories
-    console.log("[Onboarding] Seeding menu categories...");
-    await db.from("menu_categories").insert([
+    // 6. Seed Default Menu Categories & Items
+    console.log("[Onboarding] Seeding menu categories and items...");
+    const { data: seededCategories } = await db.from("menu_categories").insert([
       { tenant_id: tenantId, restaurant_id: restaurantId, name: "Starters", display_order: 1 },
       { tenant_id: tenantId, restaurant_id: restaurantId, name: "Main Course", display_order: 2 },
       { tenant_id: tenantId, restaurant_id: restaurantId, name: "Beverages", display_order: 3 },
-    ]);
+    ]).select("id, name");
+
+    if (seededCategories && seededCategories.length > 0) {
+      const starterCatId = seededCategories.find((c) => c.name === "Starters")?.id || seededCategories[0].id;
+      const mainCatId = seededCategories.find((c) => c.name === "Main Course")?.id || seededCategories[1]?.id || starterCatId;
+      const bevCatId = seededCategories.find((c) => c.name === "Beverages")?.id || seededCategories[2]?.id || starterCatId;
+
+      await db.from("menu_items").insert([
+        { tenant_id: tenantId, restaurant_id: restaurantId, category_id: starterCatId, name: "Paneer Tikka", price: 280, is_available: true, is_veg: true, display_order: 1 },
+        { tenant_id: tenantId, restaurant_id: restaurantId, category_id: mainCatId, name: "Butter Naan", price: 60, is_available: true, is_veg: true, display_order: 2 },
+        { tenant_id: tenantId, restaurant_id: restaurantId, category_id: bevCatId, name: "Fresh Lime Soda", price: 90, is_available: true, is_veg: true, display_order: 3 },
+      ]);
+    }
     // 7. Seed Default Tables
     console.log("[Onboarding] Seeding tables...");
     await db.from("restaurant_tables").insert([
