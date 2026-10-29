@@ -28,7 +28,10 @@ export default function RestaurantPortal() {
   const resolveRestaurantContext = async (activeSession: any) => {
     try {
       setLoading(true);
-      const token = activeSession?.access_token;
+      let token = activeSession?.access_token;
+      if (!token && typeof window !== "undefined") {
+        token = new URLSearchParams(window.location.search).get("token");
+      }
       if (!token) {
         setLoading(false);
         return;
@@ -94,7 +97,14 @@ export default function RestaurantPortal() {
       if (currentSession) {
         resolveRestaurantContext(currentSession);
       } else {
-        setLoading(false);
+        const urlToken = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("token") : null;
+        if (urlToken) {
+          const tokenSession = { access_token: urlToken, user: { email: "authenticated-session" } };
+          setSession(tokenSession);
+          resolveRestaurantContext(tokenSession);
+        } else {
+          setLoading(false);
+        }
       }
     }).catch(() => {
       if (mounted) setLoading(false);
