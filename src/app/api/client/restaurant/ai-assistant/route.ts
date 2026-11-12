@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   const [restRes, ordersRes, tablesRes, inventoryRes] = await Promise.all([
     db
       .from("restaurants")
-      .select("name")
+      .select("name, currency")
       .eq("id", context.restaurantId)
       .eq("tenant_id", context.tenantId)
       .maybeSingle(),
@@ -61,9 +61,13 @@ export async function POST(request: Request) {
   ]);
 
   const restaurantName = restRes.data?.name || "this restaurant";
+  const currency = String(restRes.data?.currency || "INR").toUpperCase();
+  const currencySymbol = currency === "INR" ? "₹" : currency === "USD" ? "$" : `${currency} `;
 
   const orders = ordersRes.data || [];
-  const activeOrders = orders.filter((o) => !["completed", "cancelled", "paid"].includes(o.status || "")).length;
+  const activeOrders = orders.filter((o) =>
+    ["placed", "accepted", "preparing", "ready"].includes(o.status || "")
+  ).length;
   const todayRevenue = orders
     .filter((o) => o.status !== "cancelled")
     .reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
@@ -78,9 +82,12 @@ export async function POST(request: Request) {
 
   const snapshot = {
     restaurantName,
+    currency,
+    currencySymbol,
     todayOrdersCount: orders.length,
     activeOrders,
     todayRevenue,
+    todayRevenueFormatted: `${currencySymbol}${todayRevenue.toFixed(0)}`,
     totalTables: tables.length,
     occupiedTables,
     lowStockCount: lowStockItems.length,
@@ -97,7 +104,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const fallbackReply = `Today: ${snapshot.todayOrdersCount} orders (${snapshot.activeOrders} active), revenue ₹${snapshot.todayRevenue.toFixed(0)}, ${snapshot.occupiedTables}/${snapshot.totalTables} tables occupied, and ${snapshot.lowStockCount} low-stock items${lowStockItems.length ? ` (${lowStockItems.slice(0, 3).join(", ")})` : ""}.`;
+  const fallbackReply = `Today: ${snapshot.todayOrdersCount} orders (${snapshot.activeOrders} active), revenue ${snapshot.todayRevenueFormatted}, ${snapshot.occupiedTables}/${snapshot.totalTables} tables occupied, and ${snapshot.lowStockCount} low-stock items${lowStockItems.length ? ` (${lowStockItems.slice(0, 3).join(", ")})` : ""}.`;
   return NextResponse.json({
     success: true,
     reply: fallbackReply,

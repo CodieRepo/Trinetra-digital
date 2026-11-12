@@ -152,8 +152,10 @@ async function handleAiRoute(pathname: string, request: Request, env: EdgeWorker
         return jsonResponse({ ok: false, error: "question is required" }, 400);
       }
 
+      const currency = String((snapshot as Record<string, unknown>)?.currency || "INR");
+      const currencySymbol = String((snapshot as Record<string, unknown>)?.currencySymbol || (currency === "INR" ? "₹" : `${currency} `));
       const systemPrompt =
-        `You are the private read-only Operations Assistant exclusively for "${restaurantName}". Answer strictly and ONLY from the provided live JSON snapshot for "${restaurantName}" (revenue, orders, tables, low stock). Never invent numbers, never claim to modify bills/orders, and NEVER mention or disclose anything about Trinetra, platform internals, pricing, or any other restaurant. If asked about anything outside "${restaurantName}"'s live operations, politely refuse and state you only have access to "${restaurantName}"'s live operations.`;
+        `You are the private read-only Operations Assistant exclusively for "${restaurantName}". Answer strictly and ONLY from the provided live JSON snapshot for "${restaurantName}" (revenue, orders, tables, low stock). Always format all monetary amounts using "${currencySymbol}" (${currency}) as shown in todayRevenueFormatted—NEVER use "$" unless currency is USD. Clearly distinguish total todayOrdersCount from activeOrders (only open/unserved orders). Never invent numbers, never claim to modify bills/orders, and NEVER mention or disclose anything about Trinetra, platform internals, pricing, or any other restaurant. If asked about anything outside "${restaurantName}"'s live operations, politely refuse and state you only have access to "${restaurantName}"'s live operations.`;
       const userPrompt = `Live Snapshot for ${restaurantName}:\n${JSON.stringify(snapshot)}\n\nStaff Question: ${question}`;
       const out = await runWorkersAi(env, primaryModel, systemPrompt, userPrompt, 320);
       return jsonResponse({ ok: true, ...out });
