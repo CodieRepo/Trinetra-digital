@@ -518,7 +518,7 @@ export function InventoryManagementWorkspace({
         <div
           className={`p-4 rounded-xl flex items-center justify-between text-sm font-semibold transition-all shadow-xs ${
             statusMessage.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+              ? "bg-[#0F6E6E]/10 text-[#0F6E6E] border border-[#0F6E6E]/25"
               : "bg-rose-50 text-rose-800 border border-rose-200"
           }`}
         >
@@ -532,7 +532,7 @@ export function InventoryManagementWorkspace({
           </div>
           <button
             onClick={() => setStatusMessage(null)}
-            className="text-slate-400 hover:text-slate-600 p-1"
+            className="text-slate-400 hover:text-[#7E5A68] p-1"
           >
             <X className="h-4 w-4" />
           </button>
@@ -542,11 +542,11 @@ export function InventoryManagementWorkspace({
       {/* KPI Overview Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Raw Items */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white rounded-2xl p-5 border border-[#E8D8D2] shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Raw Ingredients</p>
-            <h3 className="text-2xl font-black text-slate-900 mt-1">{summary.totalItems} Items</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Tracked in Kitchen Store</p>
+            <p className="text-xs font-bold text-[#7E5A68] uppercase tracking-wider">Raw Ingredients</p>
+            <h3 className="text-2xl font-black text-[#2A1622] mt-1">{summary.totalItems} Items</h3>
+            <p className="text-xs text-[#7E5A68] mt-0.5">Tracked in Kitchen Store</p>
           </div>
           <div className="h-12 w-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
             <Boxes className="h-6 w-6" />
@@ -557,44 +557,44 @@ export function InventoryManagementWorkspace({
         <div className={`rounded-2xl p-5 border shadow-xs flex items-center justify-between transition-all ${
           summary.lowStockCount > 0
             ? "bg-rose-50/70 border-rose-200 text-rose-900"
-            : "bg-white border-slate-200/80 text-slate-900"
+            : "bg-white border-[#E8D8D2] text-[#2A1622]"
         }`}>
           <div>
-            <p className={`text-xs font-bold uppercase tracking-wider ${summary.lowStockCount > 0 ? "text-rose-600" : "text-slate-500"}`}>
+            <p className={`text-xs font-bold uppercase tracking-wider ${summary.lowStockCount > 0 ? "text-rose-600" : "text-[#7E5A68]"}`}>
               Low Stock Alerts
             </p>
-            <h3 className={`text-2xl font-black mt-1 ${summary.lowStockCount > 0 ? "text-rose-700" : "text-slate-900"}`}>
+            <h3 className={`text-2xl font-black mt-1 ${summary.lowStockCount > 0 ? "text-rose-700" : "text-[#2A1622]"}`}>
               {summary.lowStockCount} Items
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">Below re-order threshold</p>
+            <p className="text-xs text-[#7E5A68] mt-0.5">Below re-order threshold</p>
           </div>
           <div className={`h-12 w-12 rounded-xl border flex items-center justify-center ${
             summary.lowStockCount > 0
               ? "bg-rose-100 border-rose-300 text-rose-600 animate-pulse"
-              : "bg-emerald-50 border-emerald-200 text-emerald-700"
+              : "bg-[#0F6E6E]/10 border-[#0F6E6E]/25 text-[#0F6E6E]"
           }`}>
             <AlertTriangle className="h-6 w-6" />
           </div>
         </div>
 
         {/* Total Stock Valuation */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white rounded-2xl p-5 border border-[#E8D8D2] shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Stock Value</p>
-            <h3 className="text-2xl font-black text-slate-900 mt-1">{formatCurrency(summary.totalInventoryValuation)}</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Asset cost in inventory</p>
+            <p className="text-xs font-bold text-[#7E5A68] uppercase tracking-wider">Total Stock Value</p>
+            <h3 className="text-2xl font-black text-[#2A1622] mt-1">{formatCurrency(summary.totalInventoryValuation)}</h3>
+            <p className="text-xs text-[#7E5A68] mt-0.5">Asset cost in inventory</p>
           </div>
-          <div className="h-12 w-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+          <div className="h-12 w-12 rounded-xl bg-[#0F6E6E]/10 border border-[#0F6E6E]/25 flex items-center justify-center text-[#0F6E6E]">
             <DollarSign className="h-6 w-6" />
           </div>
         </div>
 
         {/* Recipes & BOM */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white rounded-2xl p-5 border border-[#E8D8D2] shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Recipes (BOM)</p>
-            <h3 className="text-2xl font-black text-slate-900 mt-1">{recipeGroups.length} Dishes</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Auto-deducted on order</p>
+            <p className="text-xs font-bold text-[#7E5A68] uppercase tracking-wider">Active Recipes (BOM)</p>
+            <h3 className="text-2xl font-black text-[#2A1622] mt-1">{recipeGroups.length} Dishes</h3>
+            <p className="text-xs text-[#7E5A68] mt-0.5">Auto-deducted on order</p>
           </div>
           <div className="h-12 w-12 rounded-xl bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-700">
             <UtensilsCrossed className="h-6 w-6" />
@@ -603,14 +603,14 @@ export function InventoryManagementWorkspace({
       </div>
 
       {/* Sub-tabs bar & Quick Actions */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-[#E8D8D2] shadow-xs">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           <button
             onClick={() => setActiveTab("items")}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "items"
-                ? "bg-amber-500 text-white shadow-xs"
-                : "text-slate-600 hover:bg-slate-100"
+                ? "bg-[#B85D19] text-white shadow-xs"
+                : "text-[#7E5A68] hover:bg-slate-100"
             }`}
           >
             <Boxes className="h-4 w-4" />
@@ -624,8 +624,8 @@ export function InventoryManagementWorkspace({
             onClick={() => setActiveTab("recipes")}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "recipes"
-                ? "bg-amber-500 text-white shadow-xs"
-                : "text-slate-600 hover:bg-slate-100"
+                ? "bg-[#B85D19] text-white shadow-xs"
+                : "text-[#7E5A68] hover:bg-slate-100"
             }`}
           >
             <Layers className="h-4 w-4" />
@@ -639,8 +639,8 @@ export function InventoryManagementWorkspace({
             onClick={() => setActiveTab("ledger")}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "ledger"
-                ? "bg-amber-500 text-white shadow-xs"
-                : "text-slate-600 hover:bg-slate-100"
+                ? "bg-[#B85D19] text-white shadow-xs"
+                : "text-[#7E5A68] hover:bg-slate-100"
             }`}
           >
             <Scale className="h-4 w-4" />
@@ -669,7 +669,7 @@ export function InventoryManagementWorkspace({
                 });
                 setIsAddItemOpen(true);
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold shadow-xs cursor-pointer transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2A1622] text-white hover:bg-[#3A1E2F] text-xs font-bold shadow-xs cursor-pointer transition-all"
             >
               <Plus className="h-4 w-4 text-amber-400" />
               Add Raw Item
@@ -679,7 +679,7 @@ export function InventoryManagementWorkspace({
           {activeTab === "recipes" && (
             <button
               onClick={() => openRecipeEditor()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold shadow-xs cursor-pointer transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2A1622] text-white hover:bg-[#3A1E2F] text-xs font-bold shadow-xs cursor-pointer transition-all"
             >
               <Plus className="h-4 w-4 text-amber-400" />
               Configure Dish Recipe
@@ -693,7 +693,7 @@ export function InventoryManagementWorkspace({
               loadRecipesAndMenu();
             }}
             title="Refresh inventory"
-            className="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 cursor-pointer"
+            className="p-2 rounded-xl border border-[#E8D8D2] text-[#7E5A68] hover:bg-slate-100 cursor-pointer"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-amber-500" : ""}`} />
           </button>
@@ -704,7 +704,7 @@ export function InventoryManagementWorkspace({
       {activeTab === "items" && (
         <div className="space-y-4">
           {/* Filters Bar */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-[#E8D8D2] shadow-xs">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
@@ -712,12 +712,12 @@ export function InventoryManagementWorkspace({
                 placeholder="Search raw ingredient by name, SKU, or supplier..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                className="w-full pl-10 pr-4 py-2 rounded-xl border border-[#E8D8D2] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-[#B85D19] transition-all"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7E5A68]"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -728,7 +728,7 @@ export function InventoryManagementWorkspace({
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                className="px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-[#B85D19]"
               >
                 <option value="all">All Categories</option>
                 <option value="dairy">Dairy & Cheese</option>
@@ -747,7 +747,7 @@ export function InventoryManagementWorkspace({
                 className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                   onlyLowStock
                     ? "bg-rose-50 text-rose-700 border-rose-300 ring-2 ring-rose-200"
-                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                    : "bg-white text-[#7E5A68] border-[#E8D8D2] hover:bg-[#FAF2EE]"
                 }`}
               >
                 <AlertTriangle className="h-3.5 w-3.5 text-rose-600" />
@@ -757,11 +757,11 @@ export function InventoryManagementWorkspace({
           </div>
 
           {/* Table */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-[#E8D8D2] shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <tr className="bg-[#FAF2EE]/70 border-b border-[#E8D8D2] text-[11px] font-bold text-[#7E5A68] uppercase tracking-wider">
                     <th className="py-3 px-4">Raw Ingredient Name</th>
                     <th className="py-3 px-3">Category</th>
                     <th className="py-3 px-3">Current Stock</th>
@@ -777,7 +777,7 @@ export function InventoryManagementWorkspace({
                     <tr>
                       <td colSpan={8} className="py-12 text-center text-slate-400">
                         <Boxes className="h-10 w-10 mx-auto text-slate-300 mb-2 stroke-1" />
-                        <p className="font-semibold text-slate-600">No raw inventory items found</p>
+                        <p className="font-semibold text-[#7E5A68]">No raw inventory items found</p>
                         <p className="text-[11px] text-slate-400 mt-1">
                           Click &quot;Add Raw Item&quot; to begin tracking kitchen stock and linking recipes.
                         </p>
@@ -785,9 +785,9 @@ export function InventoryManagementWorkspace({
                     </tr>
                   ) : (
                     filteredItems.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                      <tr key={item.id} className="hover:bg-[#FAF2EE]/70 transition-colors">
                         <td className="py-3 px-4">
-                          <div className="font-bold text-slate-900">{item.name}</div>
+                          <div className="font-bold text-[#2A1622]">{item.name}</div>
                           <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
                             {item.sku && <span>SKU: {item.sku}</span>}
                             {item.supplier_name && <span>• Vendor: {item.supplier_name}</span>}
@@ -799,18 +799,18 @@ export function InventoryManagementWorkspace({
                           </span>
                         </td>
                         <td className="py-3 px-3">
-                          <span className="font-black text-slate-900 text-sm">
+                          <span className="font-black text-[#2A1622] text-sm">
                             {item.current_stock.toFixed(2)}
                           </span>{" "}
-                          <span className="text-[11px] font-medium text-slate-500">{item.unit}</span>
+                          <span className="text-[11px] font-medium text-[#7E5A68]">{item.unit}</span>
                         </td>
-                        <td className="py-3 px-3 text-slate-500 font-medium">
+                        <td className="py-3 px-3 text-[#7E5A68] font-medium">
                           {item.min_stock_alert} {item.unit}
                         </td>
                         <td className="py-3 px-3 font-semibold text-slate-700">
                           {formatCurrency(item.cost_per_unit)} / {item.unit}
                         </td>
-                        <td className="py-3 px-3 font-bold text-slate-900">
+                        <td className="py-3 px-3 font-bold text-[#2A1622]">
                           {formatCurrency(item.total_valuation)}
                         </td>
                         <td className="py-3 px-3">
@@ -820,7 +820,7 @@ export function InventoryManagementWorkspace({
                               LOW STOCK
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-[#0F6E6E] border border-emerald-300">
                               <CheckCircle2 className="h-3 w-3" />
                               OPTIMAL
                             </span>
@@ -835,7 +835,7 @@ export function InventoryManagementWorkspace({
                                 setIsStockInOpen(true);
                               }}
                               title="Purchase Stock In"
-                              className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1"
+                              className="px-2.5 py-1 rounded-lg bg-[#0F6E6E]/10 text-[#0F6E6E] hover:bg-emerald-100 border border-[#0F6E6E]/25 text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1"
                             >
                               <ArrowUpRight className="h-3 w-3" />
                               Stock In
@@ -868,7 +868,7 @@ export function InventoryManagementWorkspace({
                                 setIsAddItemOpen(true);
                               }}
                               title="Edit Item Details"
-                              className="p-1 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+                              className="p-1 rounded-lg text-[#7E5A68] hover:text-[#2A1622] hover:bg-slate-100 cursor-pointer"
                             >
                               <Edit3 className="h-3.5 w-3.5" />
                             </button>
@@ -902,7 +902,7 @@ export function InventoryManagementWorkspace({
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {recipeGroups.length === 0 ? (
-              <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-slate-200/80 p-8">
+              <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-[#E8D8D2] p-8">
                 <UtensilsCrossed className="h-10 w-10 mx-auto text-slate-300 mb-2 stroke-1" />
                 <h4 className="font-bold text-slate-700 text-base">No Recipe Mappings Configured</h4>
                 <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
@@ -910,7 +910,7 @@ export function InventoryManagementWorkspace({
                 </p>
                 <button
                   onClick={() => openRecipeEditor()}
-                  className="mt-4 px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-xs"
+                  className="mt-4 px-4 py-2 rounded-xl bg-[#2A1622] text-white hover:bg-[#3A1E2F] text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-xs"
                 >
                   <Plus className="h-4 w-4 text-amber-400" />
                   Map First Recipe
@@ -925,14 +925,14 @@ export function InventoryManagementWorkspace({
                 return (
                   <div
                     key={group.menu_item_id}
-                    className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 flex flex-col justify-between hover:border-amber-300 transition-all"
+                    className="bg-white rounded-2xl border border-[#E8D8D2] shadow-xs p-5 flex flex-col justify-between hover:border-amber-300 transition-all"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <h4 className="font-bold text-slate-900 text-sm">{group.menu_item_name}</h4>
-                          <p className="text-[11px] text-slate-500 mt-0.5">
-                            Selling Price: <span className="font-bold text-slate-800">{formatCurrency(group.menu_item_price)}</span>
+                          <h4 className="font-bold text-[#2A1622] text-sm">{group.menu_item_name}</h4>
+                          <p className="text-[11px] text-[#7E5A68] mt-0.5">
+                            Selling Price: <span className="font-bold text-[#2A1622]">{formatCurrency(group.menu_item_price)}</span>
                           </p>
                         </div>
                         <button
@@ -945,10 +945,10 @@ export function InventoryManagementWorkspace({
                       </div>
 
                       {/* Margin & COGS Bar */}
-                      <div className="mt-4 p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                      <div className="mt-4 p-2.5 rounded-xl bg-[#FAF2EE] border border-slate-100 flex items-center justify-between text-xs">
                         <div>
                           <span className="text-[10px] uppercase font-bold text-slate-400 block">Est. COGS</span>
-                          <span className="font-black text-slate-800">{formatCurrency(group.estimated_cogs)}</span>
+                          <span className="font-black text-[#2A1622]">{formatCurrency(group.estimated_cogs)}</span>
                         </div>
                         <div className="text-right">
                           <span className="text-[10px] uppercase font-bold text-slate-400 block">Gross Margin</span>
@@ -966,10 +966,10 @@ export function InventoryManagementWorkspace({
                         {group.ingredients.map((ing) => (
                           <div
                             key={ing.id}
-                            className="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-slate-50/50"
+                            className="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-[#FAF2EE]/70"
                           >
                             <span className="text-slate-700 font-medium">{ing.inventory_item_name}</span>
-                            <span className="font-mono text-[11px] text-slate-600 font-bold">
+                            <span className="font-mono text-[11px] text-[#7E5A68] font-bold">
                               {ing.quantity_consumed} {ing.unit}
                             </span>
                           </div>
@@ -998,17 +998,17 @@ export function InventoryManagementWorkspace({
 
       {/* TAB 3: STOCK MOVEMENTS LEDGER */}
       {activeTab === "ledger" && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="bg-white rounded-2xl border border-[#E8D8D2] shadow-xs overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h4 className="font-bold text-slate-900 text-sm">Stock Movement Audit Trail</h4>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <h4 className="font-bold text-[#2A1622] text-sm">Stock Movement Audit Trail</h4>
+              <p className="text-xs text-[#7E5A68] mt-0.5">
                 Every purchase, order consumption, wastage, and adjustment logged chronologically.
               </p>
             </div>
             <button
               onClick={() => loadMovements()}
-              className="text-xs font-bold text-slate-600 hover:text-slate-900 inline-flex items-center gap-1 cursor-pointer"
+              className="text-xs font-bold text-[#7E5A68] hover:text-[#2A1622] inline-flex items-center gap-1 cursor-pointer"
             >
               <RotateCcw className="h-3 w-3" /> Refresh Logs
             </button>
@@ -1017,7 +1017,7 @@ export function InventoryManagementWorkspace({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <tr className="bg-[#FAF2EE]/70 border-b border-[#E8D8D2] text-[11px] font-bold text-[#7E5A68] uppercase tracking-wider">
                   <th className="py-3 px-4">Timestamp</th>
                   <th className="py-3 px-3">Raw Material</th>
                   <th className="py-3 px-3">Movement Type</th>
@@ -1032,7 +1032,7 @@ export function InventoryManagementWorkspace({
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-slate-400">
                       <Scale className="h-8 w-8 mx-auto text-slate-300 mb-2 stroke-1" />
-                      <p className="font-semibold text-slate-600">No stock movements recorded yet</p>
+                      <p className="font-semibold text-[#7E5A68]">No stock movements recorded yet</p>
                     </td>
                   </tr>
                 ) : (
@@ -1042,17 +1042,17 @@ export function InventoryManagementWorkspace({
                     const itemUnit = mov.restaurant_inventory_items?.unit || "";
 
                     return (
-                      <tr key={mov.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="py-3 px-4 text-slate-500 text-[11px] font-mono">
+                      <tr key={mov.id} className="hover:bg-[#FAF2EE]/70 transition-colors">
+                        <td className="py-3 px-4 text-[#7E5A68] text-[11px] font-mono">
                           {new Date(mov.created_at).toLocaleString("en-IN", {
                             dateStyle: "short",
                             timeStyle: "short",
                           })}
                         </td>
-                        <td className="py-3 px-3 font-bold text-slate-900">{itemName}</td>
+                        <td className="py-3 px-3 font-bold text-[#2A1622]">{itemName}</td>
                         <td className="py-3 px-3">
                           {mov.movement_type === "purchase_in" && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-100 text-emerald-800">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-100 text-[#0F6E6E]">
                               <ArrowUpRight className="h-3 w-3" /> PURCHASE IN
                             </span>
                           )}
@@ -1067,7 +1067,7 @@ export function InventoryManagementWorkspace({
                             </span>
                           )}
                           {mov.movement_type === "manual_adjustment" && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 text-slate-800">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 text-[#2A1622]">
                               <RotateCcw className="h-3 w-3" /> MANUAL ADJUST
                             </span>
                           )}
@@ -1077,11 +1077,11 @@ export function InventoryManagementWorkspace({
                             {isPositive ? `+${mov.quantity}` : `${mov.quantity}`} {itemUnit}
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-slate-600 font-mono text-[11px]">
-                          {mov.previous_stock} → <span className="font-bold text-slate-900">{mov.new_stock}</span> {itemUnit}
+                        <td className="py-3 px-3 text-[#7E5A68] font-mono text-[11px]">
+                          {mov.previous_stock} → <span className="font-bold text-[#2A1622]">{mov.new_stock}</span> {itemUnit}
                         </td>
                         <td className="py-3 px-3 text-slate-700 font-medium">{mov.actor_name}</td>
-                        <td className="py-3 px-4 text-slate-500 text-[11px]">{mov.notes || "—"}</td>
+                        <td className="py-3 px-4 text-[#7E5A68] text-[11px]">{mov.notes || "—"}</td>
                       </tr>
                     );
                   })
@@ -1097,12 +1097,12 @@ export function InventoryManagementWorkspace({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900 text-base">
+              <h3 className="font-bold text-[#2A1622] text-base">
                 {itemForm.id ? "Edit Raw Material" : "Add New Raw Material"}
               </h3>
               <button
                 onClick={() => setIsAddItemOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-slate-400 hover:text-[#7E5A68] p-1"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1119,7 +1119,7 @@ export function InventoryManagementWorkspace({
                   placeholder="e.g. Amul Fresh Paneer, Fresh Tomatoes"
                   value={itemForm.name}
                   onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
@@ -1131,7 +1131,7 @@ export function InventoryManagementWorkspace({
                   <select
                     value={itemForm.category}
                     onChange={(e) => setItemForm({ ...itemForm, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                   >
                     <option value="dairy">Dairy & Cheese</option>
                     <option value="produce">Fresh Produce / Veg</option>
@@ -1152,7 +1152,7 @@ export function InventoryManagementWorkspace({
                   <select
                     value={itemForm.unit}
                     onChange={(e) => setItemForm({ ...itemForm, unit: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                   >
                     <option value="kg">Kilogram (kg)</option>
                     <option value="g">Gram (g)</option>
@@ -1175,7 +1175,7 @@ export function InventoryManagementWorkspace({
                     min="0"
                     value={itemForm.current_stock}
                     onChange={(e) => setItemForm({ ...itemForm, current_stock: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
 
@@ -1189,7 +1189,7 @@ export function InventoryManagementWorkspace({
                     min="0"
                     value={itemForm.min_stock_alert}
                     onChange={(e) => setItemForm({ ...itemForm, min_stock_alert: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
 
@@ -1203,7 +1203,7 @@ export function InventoryManagementWorkspace({
                     min="0"
                     value={itemForm.cost_per_unit}
                     onChange={(e) => setItemForm({ ...itemForm, cost_per_unit: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
               </div>
@@ -1218,7 +1218,7 @@ export function InventoryManagementWorkspace({
                     placeholder="e.g. RAW-PAN-01"
                     value={itemForm.sku}
                     onChange={(e) => setItemForm({ ...itemForm, sku: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
 
@@ -1231,7 +1231,7 @@ export function InventoryManagementWorkspace({
                     placeholder="e.g. Metro Wholesale"
                     value={itemForm.supplier_name}
                     onChange={(e) => setItemForm({ ...itemForm, supplier_name: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
               </div>
@@ -1240,14 +1240,14 @@ export function InventoryManagementWorkspace({
                 <button
                   type="button"
                   onClick={() => setIsAddItemOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#E8D8D2] text-[#7E5A68] text-xs font-bold hover:bg-[#FAF2EE] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-5 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-[#2A1622] text-white hover:bg-[#3A1E2F] text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50"
                 >
                   {actionLoading ? "Saving..." : itemForm.id ? "Update Raw Item" : "Create Raw Item"}
                 </button>
@@ -1263,23 +1263,23 @@ export function InventoryManagementWorkspace({
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Purchase Stock In</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Item: <span className="font-bold text-slate-800">{selectedItemForAction.name}</span>
+                <h3 className="font-bold text-[#2A1622] text-base">Purchase Stock In</h3>
+                <p className="text-xs text-[#7E5A68] mt-0.5">
+                  Item: <span className="font-bold text-[#2A1622]">{selectedItemForAction.name}</span>
                 </p>
               </div>
               <button
                 onClick={() => setIsStockInOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-slate-400 hover:text-[#7E5A68] p-1"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleStockIn} className="mt-4 space-y-4">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-500">Current Stock Level:</span>
-                <span className="font-bold text-slate-900 font-mono">
+              <div className="p-3 rounded-xl bg-[#FAF2EE] border border-slate-100 flex items-center justify-between text-xs">
+                <span className="text-[#7E5A68]">Current Stock Level:</span>
+                <span className="font-bold text-[#2A1622] font-mono">
                   {selectedItemForAction.current_stock} {selectedItemForAction.unit}
                 </span>
               </div>
@@ -1296,7 +1296,7 @@ export function InventoryManagementWorkspace({
                   placeholder={`e.g. 5 ${selectedItemForAction.unit}`}
                   value={stockInForm.quantity}
                   onChange={(e) => setStockInForm({ ...stockInForm, quantity: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
@@ -1309,7 +1309,7 @@ export function InventoryManagementWorkspace({
                   placeholder="e.g. Invoice #4812 from Local Dairy"
                   value={stockInForm.notes}
                   onChange={(e) => setStockInForm({ ...stockInForm, notes: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
@@ -1317,7 +1317,7 @@ export function InventoryManagementWorkspace({
                 <button
                   type="button"
                   onClick={() => setIsStockInOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#E8D8D2] text-[#7E5A68] text-xs font-bold hover:bg-[#FAF2EE] cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1340,23 +1340,23 @@ export function InventoryManagementWorkspace({
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Log Wastage / Spoilage</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Item: <span className="font-bold text-slate-800">{selectedItemForAction.name}</span>
+                <h3 className="font-bold text-[#2A1622] text-base">Log Wastage / Spoilage</h3>
+                <p className="text-xs text-[#7E5A68] mt-0.5">
+                  Item: <span className="font-bold text-[#2A1622]">{selectedItemForAction.name}</span>
                 </p>
               </div>
               <button
                 onClick={() => setIsWastageOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-slate-400 hover:text-[#7E5A68] p-1"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleWastage} className="mt-4 space-y-4">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-500">Available Stock:</span>
-                <span className="font-bold text-slate-900 font-mono">
+              <div className="p-3 rounded-xl bg-[#FAF2EE] border border-slate-100 flex items-center justify-between text-xs">
+                <span className="text-[#7E5A68]">Available Stock:</span>
+                <span className="font-bold text-[#2A1622] font-mono">
                   {selectedItemForAction.current_stock} {selectedItemForAction.unit}
                 </span>
               </div>
@@ -1368,7 +1368,7 @@ export function InventoryManagementWorkspace({
                 <select
                   value={wastageForm.reason}
                   onChange={(e) => setWastageForm({ ...wastageForm, reason: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
                   <option value="spoilage">Expired / Spoiled</option>
                   <option value="burnt">Burnt during cooking</option>
@@ -1391,7 +1391,7 @@ export function InventoryManagementWorkspace({
                   placeholder={`e.g. 0.500 ${selectedItemForAction.unit}`}
                   value={wastageForm.quantity}
                   onChange={(e) => setWastageForm({ ...wastageForm, quantity: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
@@ -1404,7 +1404,7 @@ export function InventoryManagementWorkspace({
                   placeholder="e.g. Freezer power outage incident"
                   value={wastageForm.notes}
                   onChange={(e) => setWastageForm({ ...wastageForm, notes: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
@@ -1412,7 +1412,7 @@ export function InventoryManagementWorkspace({
                 <button
                   type="button"
                   onClick={() => setIsWastageOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#E8D8D2] text-[#7E5A68] text-xs font-bold hover:bg-[#FAF2EE] cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1435,14 +1435,14 @@ export function InventoryManagementWorkspace({
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Configure Recipe (BOM)</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h3 className="font-bold text-[#2A1622] text-base">Configure Recipe (BOM)</h3>
+                <p className="text-xs text-[#7E5A68] mt-0.5">
                   Specify raw ingredients consumed whenever this dish is ordered.
                 </p>
               </div>
               <button
                 onClick={() => setIsRecipeModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-slate-400 hover:text-[#7E5A68] p-1"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1456,7 +1456,7 @@ export function InventoryManagementWorkspace({
                 <select
                   value={recipeForm.menu_item_id}
                   onChange={(e) => setRecipeForm({ ...recipeForm, menu_item_id: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 rounded-xl border border-[#E8D8D2] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
                   <option value="" disabled>Select a dish from menu...</option>
                   {menuItems.map((dish) => (
@@ -1468,10 +1468,10 @@ export function InventoryManagementWorkspace({
               </div>
 
               {/* Real-time COGS Preview Banner */}
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+              <div className="p-3 rounded-2xl bg-[#FAF2EE] border border-[#E8D8D2] flex items-center justify-between text-xs">
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase font-bold">Selling Price</span>
-                  <p className="font-black text-slate-900">{formatCurrency(selectedDishPrice)}</p>
+                  <p className="font-black text-[#2A1622]">{formatCurrency(selectedDishPrice)}</p>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase font-bold">Calculated COGS</span>
@@ -1508,13 +1508,13 @@ export function InventoryManagementWorkspace({
                   recipeForm.ingredients.map((ing, idx) => (
                     <div
                       key={idx}
-                      className="p-3 rounded-xl bg-slate-50/70 border border-slate-200/80 grid grid-cols-12 gap-2 items-center"
+                      className="p-3 rounded-xl bg-[#FAF2EE]/70 border border-[#E8D8D2] grid grid-cols-12 gap-2 items-center"
                     >
                       <div className="col-span-5">
                         <select
                           value={ing.inventory_item_id}
                           onChange={(e) => updateIngredientField(idx, "inventory_item_id", e.target.value)}
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium bg-white"
+                          className="w-full px-2.5 py-1.5 rounded-lg border border-[#E8D8D2] text-xs font-medium bg-white"
                         >
                           <option value="" disabled>Select raw material...</option>
                           {items.map((raw) => (
@@ -1534,11 +1534,11 @@ export function InventoryManagementWorkspace({
                           placeholder="Qty"
                           value={ing.quantity_consumed}
                           onChange={(e) => updateIngredientField(idx, "quantity_consumed", e.target.value)}
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold bg-white"
+                          className="w-full px-2.5 py-1.5 rounded-lg border border-[#E8D8D2] text-xs font-semibold bg-white"
                         />
                       </div>
 
-                      <div className="col-span-3 text-[11px] font-mono text-slate-500 font-bold truncate">
+                      <div className="col-span-3 text-[11px] font-mono text-[#7E5A68] font-bold truncate">
                         {ing.unit}
                       </div>
 
@@ -1560,14 +1560,14 @@ export function InventoryManagementWorkspace({
                 <button
                   type="button"
                   onClick={() => setIsRecipeModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#E8D8D2] text-[#7E5A68] text-xs font-bold hover:bg-[#FAF2EE] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-5 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-[#2A1622] text-white hover:bg-[#3A1E2F] text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50"
                 >
                   {actionLoading ? "Saving..." : "Save Recipe BOM"}
                 </button>

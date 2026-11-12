@@ -80,14 +80,14 @@ export default function SessionSummaryBar({
         <div className="mx-auto max-w-lg pointer-events-auto">
           {/* Expanded Drawer */}
           {expanded && (
-            <div className="mb-3 overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-2xl p-5 animate-in slide-in-from-bottom-4 duration-200">
+            <div className="mb-3 overflow-hidden rounded-3xl border border-[#E8D8D2] bg-white shadow-2xl p-5 animate-in slide-in-from-bottom-4 duration-200">
               <div className="flex items-center justify-between border-b border-stone-100 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#B85D19] opacity-75" />
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-600" />
                   </span>
-                  <h3 className="text-sm font-black uppercase tracking-tight text-stone-900">
+                  <h3 className="text-sm font-black uppercase tracking-tight text-[#2A1622]">
                     Table Dining Session
                   </h3>
                 </div>
@@ -101,25 +101,25 @@ export default function SessionSummaryBar({
                 {orders.map((ord, idx) => (
                   <div
                     key={ord.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-stone-200/90 bg-stone-50/60 p-3"
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-[#E8D8D2] bg-[#FAF2EE]/70 p-3"
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black uppercase text-stone-900">
+                        <span className="text-xs font-black uppercase text-[#2A1622]">
                           Order #{idx + 1}
                         </span>
                         <span className="rounded-full bg-amber-100 text-amber-950 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide">
                           {STATUS_LABEL[ord.status] ?? ord.status}
                         </span>
                       </div>
-                      <p className="text-[11px] text-stone-500 mt-0.5">
+                      <p className="text-[11px] text-[#7E5A68] mt-0.5">
                         {ord.items.reduce((s, it) => s + it.quantity, 0)} items · {formatCurrency(ord.total_amount, currency)}
                       </p>
                     </div>
 
                     <Link
                       to={`/r/${tableToken}/order/${ord.id}`}
-                      className="min-h-[36px] px-3 rounded-xl bg-stone-900 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1 hover:bg-stone-800 transition"
+                      className="min-h-[36px] px-3 rounded-xl bg-[#2A1622] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1 hover:bg-[#3A1E2F] transition"
                     >
                       <span>Track</span>
                       <ChevronRight size={13} />
@@ -129,10 +129,10 @@ export default function SessionSummaryBar({
               </div>
 
               <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-stone-500">
+                <span className="text-xs font-black uppercase tracking-wider text-[#7E5A68]">
                   Session Subtotal
                 </span>
-                <span className="text-xl font-black text-stone-900">
+                <span className="text-xl font-black text-[#2A1622]">
                   {formatCurrency(sessionTotal, currency)}
                 </span>
               </div>
@@ -140,7 +140,7 @@ export default function SessionSummaryBar({
           )}
 
           {/* Sticky Bar Button */}
-          <div className="flex items-center gap-2 rounded-2xl border border-stone-200 bg-white p-2.5 shadow-xl">
+          <div className="flex items-center gap-2 rounded-2xl border border-[#E8D8D2] bg-white p-2.5 shadow-xl">
             <button
               type="button"
               onClick={() => setExpanded(!expanded)}
@@ -154,13 +154,13 @@ export default function SessionSummaryBar({
                   <p className="text-[11px] font-black uppercase tracking-wider text-amber-800">
                     Session: {latestStatus}
                   </p>
-                  <p className="text-sm font-black text-stone-900">
+                  <p className="text-sm font-black text-[#2A1622]">
                     {orderCount} {orderCount === 1 ? "Order" : "Orders"} · {formatCurrency(sessionTotal, currency)}
                   </p>
                 </div>
               </div>
 
-              <div className="h-8 w-8 rounded-xl bg-stone-100 flex items-center justify-center text-stone-600">
+              <div className="h-8 w-8 rounded-xl bg-stone-100 flex items-center justify-center text-[#7E5A68]">
                 {expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
               </div>
             </button>
@@ -168,7 +168,7 @@ export default function SessionSummaryBar({
             {trackOrderId && (
               <Link
                 to={`/r/${tableToken}/order/${trackOrderId}`}
-                className="min-h-[44px] px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition cursor-pointer shrink-0 shadow-xs"
+                className="min-h-[44px] px-4 rounded-xl bg-[#2A1622] hover:bg-[#3A1E2F] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition cursor-pointer shrink-0 shadow-xs"
               >
                 <span>Live Tracker</span>
                 <ChevronRight size={14} />

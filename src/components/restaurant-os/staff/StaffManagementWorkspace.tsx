@@ -220,7 +220,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
       case "manager":
         return "bg-amber-50 border-amber-200 text-amber-800";
       case "cashier":
-        return "bg-emerald-50 border-emerald-200 text-emerald-800";
+        return "bg-[#0F6E6E]/10 border-[#0F6E6E]/25 text-[#0F6E6E]";
       case "waiter":
         return "bg-blue-50 border-blue-200 text-blue-800";
       case "kitchen":
@@ -230,7 +230,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
       case "accountant":
         return "bg-teal-50 border-teal-200 text-teal-800";
       default:
-        return "bg-slate-50 border-slate-200 text-slate-700";
+        return "bg-[#FAF2EE] border-[#E8D8D2] text-slate-700";
     }
   };
 
@@ -241,7 +241,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
         <div
           className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs font-semibold animate-in fade-in slide-in-from-bottom-3 ${
             toastType === "success"
-              ? "bg-slate-900 text-white border-slate-800"
+              ? "bg-[#2A1622] text-white border-slate-800"
               : "bg-rose-600 text-white border-rose-700"
           }`}
         >
@@ -255,7 +255,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
       )}
 
       {/* Header Bar */}
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+      <section className="rounded-2xl border border-[#E8D8D2] bg-white p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-700 flex items-center justify-center shrink-0">
@@ -263,14 +263,14 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                <h2 className="text-base font-bold text-[#2A1622] tracking-tight">
                   Team Members & Role Access
                 </h2>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-[#E8D8D2]">
                   {staffList.length} Total
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#7E5A68] mt-0.5">
                 Manage all 7 operational roles, terminal PIN credentials, and service access
               </p>
             </div>
@@ -281,7 +281,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
               type="button"
               onClick={fetchStaff}
               disabled={loading}
-              className="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+              className="p-2.5 rounded-xl border border-[#E8D8D2] bg-white hover:bg-[#FAF2EE] text-[#7E5A68] hover:text-[#2A1622] transition-colors shadow-xs cursor-pointer disabled:opacity-50"
               title="Refresh Roster"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -289,7 +289,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
             <button
               type="button"
               onClick={handleCreateStaff}
-              className="h-10 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-xs flex items-center gap-2 cursor-pointer"
+              className="h-10 px-4 rounded-xl bg-[#2A1622] hover:bg-[#3A1E2F] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-xs flex items-center gap-2 cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
               <span>Add Staff Member</span>
@@ -306,10 +306,10 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
         )}
 
         {/* Roster Table */}
-        <div className="mt-6 border border-slate-200/90 rounded-xl overflow-hidden bg-white shadow-xs">
+        <div className="mt-6 border border-[#E8D8D2] rounded-xl overflow-hidden bg-white shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 uppercase tracking-wider font-bold text-[11px]">
+              <thead className="bg-[#FAF2EE]/70 border-b border-[#E8D8D2] text-[#7E5A68] uppercase tracking-wider font-bold text-[11px]">
                 <tr>
                   <th className="py-3.5 px-5">Staff Member</th>
                   <th className="py-3.5 px-5">Operational Role</th>
@@ -348,14 +348,14 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
                       <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-600 flex items-center justify-center mx-auto mb-3">
                         <Users className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-bold text-slate-800">No Team Members Added Yet</p>
-                      <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                      <p className="text-sm font-bold text-[#2A1622]">No Team Members Added Yet</p>
+                      <p className="text-xs text-[#7E5A68] mt-1 max-w-sm mx-auto">
                         Add your waiters, kitchen staff, cashiers, and managers to enable POS, KDS, and table operations.
                       </p>
                       <button
                         type="button"
                         onClick={handleCreateStaff}
-                        className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-all shadow-xs cursor-pointer"
+                        className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2A1622] hover:bg-[#3A1E2F] text-white font-semibold text-xs transition-all shadow-xs cursor-pointer"
                       >
                         <UserPlus className="w-3.5 h-3.5" />
                         <span>Add First Member</span>
@@ -367,15 +367,15 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
                   staffList.map((member) => (
                     <tr
                       key={member.id}
-                      className={`hover:bg-slate-50/60 transition-colors ${
-                        !member.is_active ? "bg-slate-50/40 opacity-75" : ""
+                      className={`hover:bg-[#FAF2EE]/70 transition-colors ${
+                        !member.is_active ? "bg-[#FAF2EE]/70 opacity-75" : ""
                       }`}
                     >
                       <td className="py-3.5 px-5">
-                        <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                        <div className="font-bold text-[#2A1622] text-sm flex items-center gap-2">
                           <span>{member.name}</span>
                           {!member.is_active && (
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-[#7E5A68]">
                               Inactive
                             </span>
                           )}
@@ -398,7 +398,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
                         <span
                           className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
                             member.is_active
-                              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                              ? "bg-[#0F6E6E]/10 text-[#0F6E6E] border-[#0F6E6E]/25"
                               : "bg-rose-50 text-rose-800 border-rose-200"
                           }`}
                         >
@@ -412,7 +412,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
                       </td>
                       <td className="py-3.5 px-5">
                         {member.has_pin ? (
-                          <span className="text-emerald-700 font-semibold flex items-center gap-1 text-[11px]">
+                          <span className="text-[#0F6E6E] font-semibold flex items-center gap-1 text-[11px]">
                             <KeyRound className="w-3.5 h-3.5 text-emerald-600" /> Configured
                           </span>
                         ) : (
@@ -425,7 +425,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
                         <button
                           type="button"
                           onClick={() => handleOpenResetPin(member)}
-                          className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-700 transition-colors cursor-pointer shadow-xs"
+                          className="p-2 rounded-lg border border-[#E8D8D2] bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-700 transition-colors cursor-pointer shadow-xs"
                           title={member.has_pin ? "Reset PIN" : "Set Initial PIN"}
                         >
                           <KeyRound className="w-3.5 h-3.5" />
@@ -433,7 +433,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
                         <button
                           type="button"
                           onClick={() => handleEditStaff(member)}
-                          className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer shadow-xs"
+                          className="p-2 rounded-lg border border-[#E8D8D2] bg-white hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer shadow-xs"
                           title="Edit Staff Member"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -441,7 +441,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
                         <button
                           type="button"
                           onClick={() => handleCopyOpsLink(member)}
-                          className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition-colors cursor-pointer shadow-xs"
+                          className="p-2 rounded-lg border border-[#E8D8D2] bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition-colors cursor-pointer shadow-xs"
                           title="Copy Operations Link"
                         >
                           <Copy className="w-3.5 h-3.5" />
@@ -450,7 +450,7 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
                           type="button"
                           disabled={busyStaffId === member.id}
                           onClick={() => handleDeleteStaff(member)}
-                          className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-500 hover:text-rose-600 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                          className="p-2 rounded-lg border border-[#E8D8D2] bg-white hover:bg-rose-50 hover:border-rose-200 text-[#7E5A68] hover:text-rose-600 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
                           title="Delete Staff Member"
                         >
                           {busyStaffId === member.id ? (
@@ -499,13 +499,13 @@ export const StaffManagementWorkspace: React.FC<StaffManagementWorkspaceProps> =
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">Delete Staff Member</h3>
-                <p className="text-xs text-slate-500">This action cannot be undone</p>
+                <h3 className="text-base font-bold text-[#2A1622]">Delete Staff Member</h3>
+                <p className="text-xs text-[#7E5A68]">This action cannot be undone</p>
               </div>
             </div>
 
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Are you sure you want to permanently delete <strong className="text-slate-900">{staffToDelete.name}</strong> ({staffToDelete.role})? Their security PIN and operations terminal link will be permanently revoked immediately.
+            <p className="text-sm text-[#7E5A68] leading-relaxed">
+              Are you sure you want to permanently delete <strong className="text-[#2A1622]">{staffToDelete.name}</strong> ({staffToDelete.role})? Their security PIN and operations terminal link will be permanently revoked immediately.
             </p>
 
             <div className="flex items-center justify-end gap-2.5 pt-2">

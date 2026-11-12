@@ -84,8 +84,8 @@ export function RestroAiAssistantDrawer({
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white border-l border-slate-200 shadow-2xl flex flex-col">
-      <div className="px-4 py-3.5 border-b border-slate-200 bg-slate-900 text-white flex items-center justify-between">
+    <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white border-l border-[#E8D8D2] shadow-2xl flex flex-col">
+      <div className="px-4 py-3.5 border-b border-[#E8D8D2] bg-[#2A1622] text-white flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-amber-400" />
           <div>
@@ -96,35 +96,35 @@ export function RestroAiAssistantDrawer({
         <button
           type="button"
           onClick={onClose}
-          className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer"
+          className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#3A1E2F] cursor-pointer"
           aria-label="Close AI assistant"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAF2EE]">
         {messages.map((m) => (
           <div
             key={m.id}
             className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${
               m.role === "user"
-                ? "ml-auto bg-slate-900 text-white"
-                : "mr-auto bg-white text-slate-800 border border-slate-200 shadow-xs"
+                ? "ml-auto bg-[#2A1622] text-white"
+                : "mr-auto bg-white text-[#2A1622] border border-[#E8D8D2] shadow-xs"
             }`}
           >
             {m.text}
           </div>
         ))}
         {loading && (
-          <div className="mr-auto bg-white border border-slate-200 rounded-2xl px-3.5 py-2 text-xs text-slate-500 flex items-center gap-2">
+          <div className="mr-auto bg-white border border-[#E8D8D2] rounded-2xl px-3.5 py-2 text-xs text-[#7E5A68] flex items-center gap-2">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             Checking live restaurant snapshot...
           </div>
         )}
       </div>
 
-      <div className="p-3 border-t border-slate-200 bg-white space-y-2.5">
+      <div className="p-3 border-t border-[#E8D8D2] bg-white space-y-2.5">
         <div className="flex flex-wrap gap-1.5">
           {QUICK_PROMPTS.map((chip) => (
             <button
@@ -151,12 +151,12 @@ export function RestroAiAssistantDrawer({
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Ask about sales, active orders, low stock..."
-            className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:border-slate-900"
+            className="flex-1 px-3 py-2 text-xs rounded-xl border border-[#DFC9C1] focus:outline-none focus:border-slate-900"
           />
           <button
             type="submit"
             disabled={loading || !question.trim()}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-[#2A1622] text-white text-xs font-semibold hover:bg-[#3A1E2F] disabled:opacity-50 flex items-center gap-1 cursor-pointer"
           >
             <Send className="w-3.5 h-3.5" />
           </button>

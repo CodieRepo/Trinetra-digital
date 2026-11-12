@@ -193,7 +193,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
       return {
         key: 'available',
         label: 'Available',
-        badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        badgeClass: 'bg-[#0F6E6E]/10 text-[#0F6E6E] border-[#0F6E6E]/25',
         dotClass: 'bg-emerald-500',
       };
     }
@@ -218,7 +218,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
       key: 'billing',
       label: 'Occupied · Bill Pending',
       badgeClass: 'bg-amber-50 text-amber-900 border-amber-200',
-      dotClass: 'bg-amber-500',
+      dotClass: 'bg-[#B85D19]',
     };
   };
 
@@ -247,21 +247,21 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-150">
       {/* ── Floor & Table Header Banner ─────────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs text-slate-800">
+      <div className="rounded-2xl border border-[#E8D8D2] bg-white p-5 shadow-xs text-[#2A1622]">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold uppercase tracking-wider">
                 <Layers className="h-3.5 w-3.5" /> Dining Layout
               </span>
-              <span className="text-xs font-semibold text-slate-500">
+              <span className="text-xs font-semibold text-[#7E5A68]">
                 {tables.length} Total Tables · {activeSessionMap.size} Active Sessions
               </span>
             </div>
-            <h1 className="mt-1.5 text-xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="mt-1.5 text-xl font-extrabold text-[#2A1622] tracking-tight">
               Floor & Table Management
             </h1>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#7E5A68]">
               Manage dining tables, track real-time occupancy, print QR ordering stickers, and launch table orders.
             </p>
           </div>
@@ -270,9 +270,9 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
             <button
               type="button"
               onClick={onRefresh}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E8D8D2] bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-[#FAF2EE] transition cursor-pointer shadow-2xs"
             >
-              <RefreshCw className="h-3.5 w-3.5 text-slate-500" />
+              <RefreshCw className="h-3.5 w-3.5 text-[#7E5A68]" />
               Refresh
             </button>
             <button
@@ -288,7 +288,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAddFloorOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#E8D8D2] bg-white px-3.5 py-2 text-xs font-bold text-[#2A1622] hover:bg-[#FAF2EE] transition cursor-pointer shadow-2xs"
               >
                 <Plus className="h-3.5 w-3.5 text-amber-600" />
                 Add Floor
@@ -297,7 +297,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#2A1622] px-4 py-2 text-xs font-bold text-white hover:bg-[#3A1E2F] transition cursor-pointer shadow-xs"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Table
@@ -318,8 +318,8 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                     onClick={() => setSelectedSection(sec.id)}
                     className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
                       selectedSection === sec.id
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                        ? 'bg-[#2A1622] text-white shadow-xs'
+                        : 'bg-slate-100 text-[#7E5A68] hover:bg-slate-200/80'
                     }`}
                   >
                     <span>{sec.label}</span>
@@ -360,11 +360,11 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search table or guest..."
-                className="w-full rounded-lg border border-slate-200 bg-slate-50/70 pl-8 pr-3 py-1.5 text-xs text-slate-900 outline-none focus:border-amber-500 focus:bg-white transition"
+                className="w-full rounded-lg border border-[#E8D8D2] bg-[#FAF2EE]/70 pl-8 pr-3 py-1.5 text-xs text-[#2A1622] outline-none focus:border-[#B85D19] focus:bg-white transition"
               />
             </div>
 
-            <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50/70 p-1 text-xs">
+            <div className="flex items-center gap-1 rounded-lg border border-[#E8D8D2] bg-[#FAF2EE]/70 p-1 text-xs">
               {(
                 [
                   { id: 'all', label: 'All' },
@@ -379,8 +379,8 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                   onClick={() => setStatusFilter(st.id)}
                   className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition cursor-pointer ${
                     statusFilter === st.id
-                      ? 'bg-white text-slate-900 shadow-2xs font-black'
-                      : 'text-slate-500 hover:text-slate-900'
+                      ? 'bg-white text-[#2A1622] shadow-2xs font-black'
+                      : 'text-[#7E5A68] hover:text-[#2A1622]'
                   }`}
                 >
                   {st.label}
@@ -401,17 +401,17 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
             return (
               <div
                 key={table.id}
-                className="group relative rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs hover:border-amber-300 hover:shadow-md transition-all flex flex-col justify-between"
+                className="group relative rounded-2xl border border-[#E8D8D2] bg-white p-4 shadow-xs hover:border-amber-300 hover:shadow-md transition-all flex flex-col justify-between"
               >
                 <div>
                   {/* Top Bar: Table Number + State Badge */}
                   <div className="flex items-start justify-between gap-2 pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white font-mono font-black text-sm shadow-xs">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2A1622] text-white font-mono font-black text-sm shadow-xs">
                         {table.table_number}
                       </div>
                       <div>
-                        <h3 className="text-sm font-bold text-slate-900 font-mono">
+                        <h3 className="text-sm font-bold text-[#2A1622] font-mono">
                           Table {table.table_number}
                         </h3>
                         {floors.length > 0 && onAssignTableFloor ? (
@@ -428,7 +428,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                                 setAssigningTableId(null);
                               }
                             }}
-                            className="mt-0.5 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 outline-none focus:border-amber-500 cursor-pointer disabled:opacity-50"
+                            className="mt-0.5 rounded-md border border-[#E8D8D2] bg-[#FAF2EE] px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 outline-none focus:border-[#B85D19] cursor-pointer disabled:opacity-50"
                           >
                             <option value="">Unassigned</option>
                             {floors.map((f) => (
@@ -462,7 +462,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                     <div className="mt-3.5 space-y-2 rounded-xl bg-gradient-to-b from-slate-50/90 to-amber-50/20 p-3 border border-slate-100">
                       {session.customer_name && (
                         <div className="flex items-center justify-between text-xs text-slate-700">
-                          <span className="flex items-center gap-1.5 text-slate-500 font-medium truncate">
+                          <span className="flex items-center gap-1.5 text-[#7E5A68] font-medium truncate">
                             <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                             {session.customer_name}
                           </span>
@@ -474,8 +474,8 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-200/50">
-                        <span className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                      <div className="flex items-center justify-between text-xs pt-1 border-t border-[#E8D8D2]">
+                        <span className="flex items-center gap-1 text-[11px] text-[#7E5A68] font-medium">
                           <Clock className="h-3.5 w-3.5 text-slate-400" />
                           {getElapsedTime(session.opened_at)}
                         </span>
@@ -484,11 +484,11 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/50">
+                      <div className="flex items-center justify-between pt-1 border-t border-[#E8D8D2]">
                         <span className="text-[11px] uppercase tracking-wider font-bold text-slate-400">
                           Total Bill
                         </span>
-                        <span className="text-sm font-black font-mono text-slate-900">
+                        <span className="text-sm font-black font-mono text-[#2A1622]">
                           {formatPrice(session.session_total)}
                         </span>
                       </div>
@@ -496,12 +496,12 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                   ) : (
                     <div
                       onClick={() => onStartSession && setStartSessionTable(table)}
-                      className={`my-5 flex flex-col items-center justify-center text-center py-2 rounded-xl border border-dashed border-emerald-100 bg-emerald-50/30 transition ${
-                        onStartSession ? 'hover:bg-emerald-50/60 hover:border-emerald-300 cursor-pointer' : ''
+                      className={`my-5 flex flex-col items-center justify-center text-center py-2 rounded-xl border border-dashed border-emerald-100 bg-[#0F6E6E]/10/30 transition ${
+                        onStartSession ? 'hover:bg-[#0F6E6E]/10/60 hover:border-emerald-300 cursor-pointer' : ''
                       }`}
                       title={onStartSession ? 'Click to seat guests' : undefined}
                     >
-                      <div className="h-8 w-8 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mb-1.5">
+                      <div className="h-8 w-8 rounded-full bg-[#0F6E6E]/10 border border-emerald-100 flex items-center justify-center text-emerald-600 mb-1.5">
                         <CheckCircle2 className="h-4 w-4" />
                       </div>
                       <p className="text-xs font-bold text-slate-700">Ready for Seating</p>
@@ -520,7 +520,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                     <button
                       type="button"
                       onClick={() => setQrModalTable(table)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer shadow-2xs"
+                      className="inline-flex items-center gap-1 rounded-lg border border-[#E8D8D2] bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#FAF2EE] hover:text-[#2A1622] transition cursor-pointer shadow-2xs"
                       title="Show QR Code"
                     >
                       <QrCode className="h-3.5 w-3.5 text-amber-700" />
@@ -553,7 +553,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                         <button
                           type="button"
                           onClick={() => setTransferSession(session)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+                          className="inline-flex items-center gap-1 rounded-lg border border-[#E8D8D2] bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#FAF2EE] transition cursor-pointer shadow-2xs"
                           title="Transfer party to another table"
                         >
                           <ArrowRightLeft className="h-3.5 w-3.5 text-indigo-600" />
@@ -564,7 +564,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                         <button
                           type="button"
                           onClick={() => onSelectTableSession(session)}
-                          className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition cursor-pointer shadow-xs"
+                          className="inline-flex items-center gap-1 rounded-lg bg-[#2A1622] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#3A1E2F] transition cursor-pointer shadow-xs"
                         >
                           <span>Session</span>
                           <ChevronRight className="h-3.5 w-3.5" />
@@ -577,10 +577,10 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                         <button
                           type="button"
                           onClick={() => setStartSessionTable(table)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer shadow-2xs"
+                          className="inline-flex items-center gap-1 rounded-lg border border-[#E8D8D2] bg-white hover:bg-[#FAF2EE] px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer shadow-2xs"
                           title="Seat guests on table"
                         >
-                          <Users className="h-3.5 w-3.5 text-slate-600" />
+                          <Users className="h-3.5 w-3.5 text-[#7E5A68]" />
                           <span className="hidden sm:inline">Seat</span>
                         </button>
                       )}
@@ -588,7 +588,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                         <button
                           type="button"
                           onClick={() => onTakeOrder(table)}
-                          className="inline-flex items-center gap-1 rounded-lg bg-amber-500 hover:bg-amber-600 px-3 py-1.5 text-xs font-bold text-white transition cursor-pointer shadow-xs"
+                          className="inline-flex items-center gap-1 rounded-lg bg-[#B85D19] hover:bg-[#9E4E14] px-3 py-1.5 text-xs font-bold text-white transition cursor-pointer shadow-xs"
                           title="Punch order for this table"
                         >
                           <UtensilsCrossed className="h-3.5 w-3.5" />
@@ -608,10 +608,10 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 border border-amber-200">
             <LayoutGrid className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-bold text-slate-900">
+          <h3 className="text-base font-bold text-[#2A1622]">
             {searchQuery ? 'No Matching Tables Found' : 'No Dining Tables Configured Yet'}
           </h3>
-          <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+          <p className="mt-1 text-xs text-[#7E5A68] max-w-sm mx-auto">
             {searchQuery
               ? `No tables match "${searchQuery}". Clear your search query to view all tables.`
               : 'Add your first dining table to configure table numbers, guest QR ordering stickers, and POS seating.'}
@@ -621,7 +621,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                className="rounded-xl border border-[#E8D8D2] bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-[#FAF2EE] cursor-pointer"
               >
                 Clear Search
               </button>
@@ -629,7 +629,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#2A1622] px-4 py-2 text-xs font-bold text-white hover:bg-[#3A1E2F] shadow-xs cursor-pointer"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Add Your First Table
@@ -657,7 +657,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
       />
 
       {isAddFloorOpen && onAddFloor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2A1622]/50 backdrop-blur-xs p-4">
           <form
             onSubmit={async (e) => {
               e.preventDefault();
@@ -674,11 +674,11 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                 setIsAddingFloor(false);
               }
             }}
-            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl border border-slate-200 space-y-4"
+            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl border border-[#E8D8D2] space-y-4"
           >
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">Add Dining Floor / Section</h3>
-              <p className="text-xs text-slate-500 mt-0.5">e.g. Ground Floor, Rooftop, AC Hall, Garden</p>
+              <h3 className="text-base font-extrabold text-[#2A1622]">Add Dining Floor / Section</h3>
+              <p className="text-xs text-[#7E5A68] mt-0.5">e.g. Ground Floor, Rooftop, AC Hall, Garden</p>
             </div>
             <input
               type="text"
@@ -687,7 +687,7 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
               value={newFloorName}
               onChange={(e) => setNewFloorName(e.target.value)}
               placeholder="Enter floor name..."
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-amber-500 focus:bg-white"
+              className="w-full rounded-xl border border-[#E8D8D2] bg-[#FAF2EE] px-3.5 py-2.5 text-sm text-[#2A1622] outline-none focus:border-[#B85D19] focus:bg-white"
             />
             <div className="flex justify-end gap-2">
               <button
@@ -696,14 +696,14 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                   setIsAddFloorOpen(false);
                   setNewFloorName('');
                 }}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                className="rounded-xl border border-[#E8D8D2] px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-[#FAF2EE] cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isAddingFloor || !newFloorName.trim()}
-                className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+                className="rounded-xl bg-[#2A1622] px-4 py-2 text-xs font-bold text-white hover:bg-[#3A1E2F] disabled:opacity-50 cursor-pointer"
               >
                 {isAddingFloor ? 'Creating...' : 'Create Floor'}
               </button>

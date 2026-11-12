@@ -50,29 +50,29 @@ export const TransferTableModal: React.FC<TransferTableModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-[#2A1622]/60 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden text-slate-800 animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-[#E8D8D2] overflow-hidden text-[#2A1622] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-[#FAF2EE]/70 px-6 py-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs">
               <ArrowRightLeft className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Transfer Table</h3>
-              <p className="text-xs text-slate-500">
-                Move active party from Table <span className="font-mono font-bold text-slate-800">{currentTableNumber}</span>
+              <h3 className="text-sm font-bold text-[#2A1622]">Transfer Table</h3>
+              <p className="text-xs text-[#7E5A68]">
+                Move active party from Table <span className="font-mono font-bold text-[#2A1622]">{currentTableNumber}</span>
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#7E5A68] transition"
           >
             <X className="h-4 w-4" />
           </button>
@@ -87,20 +87,20 @@ export const TransferTableModal: React.FC<TransferTableModalProps> = ({
           )}
 
           {/* Current Session Info */}
-          <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-3.5 space-y-1">
+          <div className="rounded-xl border border-[#E8D8D2] bg-[#FAF2EE] p-3.5 space-y-1">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">Guest:</span>
-              <span className="font-semibold text-slate-800">{session.customer_name || 'Walk-in Guest'}</span>
+              <span className="text-[#7E5A68] font-medium">Guest:</span>
+              <span className="font-semibold text-[#2A1622]">{session.customer_name || 'Walk-in Guest'}</span>
             </div>
             {session.customer_phone && (
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500 font-medium">Phone:</span>
+                <span className="text-[#7E5A68] font-medium">Phone:</span>
                 <span className="font-mono text-slate-700">{session.customer_phone}</span>
               </div>
             )}
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">Active Orders:</span>
-              <span className="font-mono font-bold text-slate-900">{session.order_count} orders</span>
+              <span className="text-[#7E5A68] font-medium">Active Orders:</span>
+              <span className="font-mono font-bold text-[#2A1622]">{session.order_count} orders</span>
             </div>
           </div>
 
@@ -112,7 +112,7 @@ export const TransferTableModal: React.FC<TransferTableModalProps> = ({
               <select
                 value={selectedTargetTableId}
                 onChange={(e) => setSelectedTargetTableId(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-800 bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-[#E8D8D2] px-3.5 py-2.5 text-xs text-[#2A1622] bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               >
                 <option value="">-- Choose an available table --</option>
                 {availableTables.map((t) => (
@@ -134,12 +134,12 @@ export const TransferTableModal: React.FC<TransferTableModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 bg-slate-50 px-6 py-3.5">
+        <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 bg-[#FAF2EE] px-6 py-3.5">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+            className="rounded-xl border border-[#E8D8D2] bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-[#FAF2EE] transition cursor-pointer"
           >
             Cancel
           </button>

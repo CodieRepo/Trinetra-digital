@@ -62,7 +62,7 @@ export const AddTableModal: React.FC<AddTableModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-      <div className="relative w-full max-w-md rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xl text-slate-800 animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative w-full max-w-md rounded-2xl border border-[#E8D8D2] bg-white p-6 shadow-2xl text-[#2A1622] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
@@ -70,8 +70,8 @@ export const AddTableModal: React.FC<AddTableModalProps> = ({
               <LayoutGrid className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Add Dining Table</h3>
-              <p className="text-xs text-slate-500 font-medium">Configure a new dining station</p>
+              <h3 className="text-base font-bold text-[#2A1622]">Add Dining Table</h3>
+              <p className="text-xs text-[#7E5A68] font-medium">Configure a new dining station</p>
             </div>
           </div>
           <button
@@ -106,9 +106,9 @@ export const AddTableModal: React.FC<AddTableModalProps> = ({
               placeholder="e.g. T-6, PD-3, TR-4, Bar-1"
               required
               autoFocus
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 shadow-xs"
+              className="w-full rounded-xl border border-[#E8D8D2] bg-white px-3.5 py-2.5 text-sm font-medium text-[#2A1622] placeholder:text-slate-400 outline-none focus:border-[#B85D19] focus:ring-2 focus:ring-amber-500/10 shadow-xs"
             />
-            <p className="mt-1.5 text-[11px] text-slate-500">
+            <p className="mt-1.5 text-[11px] text-[#7E5A68]">
               A unique identifier for waitstaff and digital QR guest ordering.
             </p>
           </div>
@@ -117,13 +117,13 @@ export const AddTableModal: React.FC<AddTableModalProps> = ({
           {floors.length > 0 && (
             <div>
               <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                <Layers className="h-3.5 w-3.5 text-slate-500" />
+                <Layers className="h-3.5 w-3.5 text-[#7E5A68]" />
                 Floor / Section
               </label>
               <select
                 value={selectedFloorId || ''}
                 onChange={(e) => setSelectedFloorId(e.target.value || null)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 shadow-xs cursor-pointer"
+                className="w-full rounded-xl border border-[#E8D8D2] bg-white px-3.5 py-2.5 text-sm font-medium text-[#2A1622] outline-none focus:border-[#B85D19] focus:ring-2 focus:ring-amber-500/10 shadow-xs cursor-pointer"
               >
                 <option value="">— No Floor (Unassigned) —</option>
                 {floors.map((floor) => (
@@ -132,7 +132,7 @@ export const AddTableModal: React.FC<AddTableModalProps> = ({
                   </option>
                 ))}
               </select>
-              <p className="mt-1.5 text-[11px] text-slate-500">
+              <p className="mt-1.5 text-[11px] text-[#7E5A68]">
                 Assign this table to a dining floor or section.
               </p>
             </div>
@@ -140,7 +140,7 @@ export const AddTableModal: React.FC<AddTableModalProps> = ({
 
           {/* Preset quick suggestions */}
           <div>
-            <span className="block text-[11px] font-semibold text-slate-500 mb-1.5">Quick Suggestions:</span>
+            <span className="block text-[11px] font-semibold text-[#7E5A68] mb-1.5">Quick Suggestions:</span>
             <div className="flex flex-wrap gap-1.5">
               {['T-5', 'T-6', 'PD-3', 'TR-3', 'VIP-2', 'Bar-1']
                 .filter((p) => !existingTableNumbers.includes(p))
@@ -150,7 +150,7 @@ export const AddTableModal: React.FC<AddTableModalProps> = ({
                     key={preset}
                     type="button"
                     onClick={() => setTableNumber(preset)}
-                    className="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 text-xs font-mono font-medium text-slate-700 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-900 transition cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg border border-[#E8D8D2] bg-[#FAF2EE] text-xs font-mono font-medium text-slate-700 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-900 transition cursor-pointer"
                   >
                     +{preset}
                   </button>
@@ -163,14 +163,14 @@ export const AddTableModal: React.FC<AddTableModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+              className="rounded-xl border border-[#E8D8D2] bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-[#FAF2EE] transition cursor-pointer shadow-2xs"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !tableNumber.trim()}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition shadow-xs disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#2A1622] px-4 py-2 text-xs font-bold text-white hover:bg-[#3A1E2F] transition shadow-xs disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
                 <>

@@ -50,22 +50,22 @@ export const StartSessionModal: React.FC<StartSessionModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-[#2A1622]/60 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden text-slate-800 animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-[#E8D8D2] overflow-hidden text-[#2A1622] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-[#FAF2EE]/70 px-6 py-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#B85D19] text-white shadow-xs">
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Seat Guests / Start Session</h3>
-              <p className="text-xs text-slate-500">
-                Table <span className="font-mono font-bold text-slate-800">{table.table_number}</span>
+              <h3 className="text-sm font-bold text-[#2A1622]">Seat Guests / Start Session</h3>
+              <p className="text-xs text-[#7E5A68]">
+                Table <span className="font-mono font-bold text-[#2A1622]">{table.table_number}</span>
                 {table.floor_name ? ` • ${table.floor_name}` : ''}
               </p>
             </div>
@@ -73,7 +73,7 @@ export const StartSessionModal: React.FC<StartSessionModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#7E5A68] transition"
           >
             <X className="h-4 w-4" />
           </button>
@@ -109,11 +109,11 @@ export const StartSessionModal: React.FC<StartSessionModalProps> = ({
           </div>
 
           <div className="relative flex py-1 items-center">
-            <div className="flex-grow border-t border-slate-200"></div>
+            <div className="flex-grow border-t border-[#E8D8D2]"></div>
             <span className="flex-shrink mx-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
               Or Record Guest Info
             </span>
-            <div className="flex-grow border-t border-slate-200"></div>
+            <div className="flex-grow border-t border-[#E8D8D2]"></div>
           </div>
 
           <div className="space-y-3">
@@ -128,7 +128,7 @@ export const StartSessionModal: React.FC<StartSessionModalProps> = ({
                   placeholder="e.g. Rajesh Kumar"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 pl-9 pr-3.5 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  className="w-full rounded-xl border border-[#E8D8D2] pl-9 pr-3.5 py-2 text-xs text-[#2A1622] placeholder:text-slate-400 focus:border-[#B85D19] focus:outline-none focus:ring-1 focus:ring-amber-500"
                 />
               </div>
             </div>
@@ -144,7 +144,7 @@ export const StartSessionModal: React.FC<StartSessionModalProps> = ({
                   placeholder="e.g. 9876543210"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 pl-9 pr-3.5 py-2 text-xs text-slate-800 font-mono placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  className="w-full rounded-xl border border-[#E8D8D2] pl-9 pr-3.5 py-2 text-xs text-[#2A1622] font-mono placeholder:text-slate-400 focus:border-[#B85D19] focus:outline-none focus:ring-1 focus:ring-amber-500"
                 />
               </div>
             </div>
@@ -152,12 +152,12 @@ export const StartSessionModal: React.FC<StartSessionModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 bg-slate-50 px-6 py-3.5">
+        <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 bg-[#FAF2EE] px-6 py-3.5">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+            className="rounded-xl border border-[#E8D8D2] bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-[#FAF2EE] transition cursor-pointer"
           >
             Cancel
           </button>
@@ -165,7 +165,7 @@ export const StartSessionModal: React.FC<StartSessionModalProps> = ({
             type="button"
             disabled={isSubmitting}
             onClick={() => handleStart(false)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 shadow-xs transition cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#2A1622] px-4 py-2 text-xs font-bold text-white hover:bg-[#3A1E2F] shadow-xs transition cursor-pointer disabled:opacity-50"
           >
             {isSubmitting ? (
               <>

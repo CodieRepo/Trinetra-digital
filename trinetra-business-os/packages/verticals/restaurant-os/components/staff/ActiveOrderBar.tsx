@@ -101,7 +101,7 @@ export default function ActiveOrderBar({
                       <p className="font-medium text-white">{item.name}</p>
                       <p className="text-slate-400">Qty {item.quantity}</p>
                       {item.notes ? (
-                        <p className="mt-0.5 text-xs text-slate-500">
+                        <p className="mt-0.5 text-xs text-[#7E5A68]">
                           {item.notes}
                         </p>
                       ) : null}
@@ -122,7 +122,7 @@ export default function ActiveOrderBar({
               {/* Total + Track Order */}
               <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#7E5A68]">
                     Total
                   </p>
                   <p className="mt-1 text-xl font-semibold text-white">
@@ -160,15 +160,15 @@ export default function ActiveOrderBar({
             </span>
             <span>
               <span className="font-medium text-white">Active order</span>
-              <span className="mx-1.5 text-stone-500">·</span>
+              <span className="mx-1.5 text-[#7E5A68]">·</span>
               <span>
                 {itemCount} {itemCount === 1 ? "item" : "items"}
               </span>
-              <span className="mx-1.5 text-stone-500">·</span>
+              <span className="mx-1.5 text-[#7E5A68]">·</span>
               <span className="text-amber-200">
                 {formatCurrency(total, currency)}
               </span>
-              <span className="mx-1.5 hidden text-stone-500 sm:inline">·</span>
+              <span className="mx-1.5 hidden text-[#7E5A68] sm:inline">·</span>
               <span className="hidden text-emerald-200 sm:inline">{label}</span>
             </span>
           </div>

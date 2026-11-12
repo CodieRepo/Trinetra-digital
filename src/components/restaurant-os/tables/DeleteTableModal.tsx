@@ -34,7 +34,7 @@ export const DeleteTableModal: React.FC<DeleteTableModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-      <div className="relative w-full max-w-md rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xl text-slate-800 animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative w-full max-w-md rounded-2xl border border-[#E8D8D2] bg-white p-6 shadow-2xl text-[#2A1622] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
@@ -42,8 +42,8 @@ export const DeleteTableModal: React.FC<DeleteTableModalProps> = ({
               <AlertTriangle className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Remove Table {tableNumber}</h3>
-              <p className="text-xs text-slate-500 font-medium">Permanent table deletion</p>
+              <h3 className="text-base font-bold text-[#2A1622]">Remove Table {tableNumber}</h3>
+              <p className="text-xs text-[#7E5A68] font-medium">Permanent table deletion</p>
             </div>
           </div>
           <button
@@ -57,8 +57,8 @@ export const DeleteTableModal: React.FC<DeleteTableModalProps> = ({
 
         {/* Warning Content */}
         <div className="my-5 space-y-3">
-          <p className="text-xs leading-relaxed text-slate-600">
-            Are you sure you want to delete <span className="font-bold text-slate-900 font-mono">Table {tableNumber}</span>? This action will permanently remove this dining station from your restaurant.
+          <p className="text-xs leading-relaxed text-[#7E5A68]">
+            Are you sure you want to delete <span className="font-bold text-[#2A1622] font-mono">Table {tableNumber}</span>? This action will permanently remove this dining station from your restaurant.
           </p>
 
           {hasActiveSession && (
@@ -68,7 +68,7 @@ export const DeleteTableModal: React.FC<DeleteTableModalProps> = ({
             </div>
           )}
 
-          <div className="rounded-xl border border-slate-200/70 bg-slate-50 p-3 text-[11px] text-slate-500">
+          <div className="rounded-xl border border-[#E8D8D2] bg-[#FAF2EE] p-3 text-[11px] text-[#7E5A68]">
             QR codes and digital stickers configured for Table {tableNumber} will become immediately inactive.
           </div>
         </div>
@@ -79,7 +79,7 @@ export const DeleteTableModal: React.FC<DeleteTableModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+            className="rounded-xl border border-[#E8D8D2] bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-[#FAF2EE] transition cursor-pointer shadow-2xs"
           >
             Cancel
           </button>

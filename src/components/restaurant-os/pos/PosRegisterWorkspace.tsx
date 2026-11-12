@@ -295,7 +295,7 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
       {/* ── Left Column: Menu Catalog & Quick Picker ────────────────────── */}
       <div className="flex-1 w-full space-y-4">
         {/* Top Control Bar: Search & Category Chips */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-3">
+        <div className="rounded-2xl border border-[#E8D8D2] bg-white p-4 shadow-xs space-y-3">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             {/* Search Input */}
             <div className="relative flex-1">
@@ -306,13 +306,13 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
                 placeholder="Search menu items... (press '/' to focus)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-9 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 transition"
+                className="w-full rounded-xl border border-[#E8D8D2] bg-[#FAF2EE]/70 pl-10 pr-9 py-2 text-xs text-[#2A1622] placeholder:text-slate-400 focus:border-[#B85D19] focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 transition"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#7E5A68] p-0.5"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -325,8 +325,8 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
               onClick={() => setVegOnly(!vegOnly)}
               className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition cursor-pointer border ${
                 vegOnly
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  ? 'bg-[#0F6E6E]/10 text-[#0F6E6E] border-emerald-300 shadow-2xs'
+                  : 'bg-white text-[#7E5A68] border-[#E8D8D2] hover:bg-[#FAF2EE]'
               }`}
             >
               <Leaf className={`h-3.5 w-3.5 ${vegOnly ? 'text-emerald-600' : 'text-slate-400'}`} />
@@ -341,8 +341,8 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
               onClick={() => setSelectedCategory('all')}
               className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition shrink-0 cursor-pointer ${
                 selectedCategory === 'all'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                  ? 'bg-[#2A1622] text-white shadow-xs'
+                  : 'bg-slate-100 text-[#7E5A68] hover:bg-slate-200/80'
               }`}
             >
               <span>All Items</span>
@@ -364,8 +364,8 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition shrink-0 cursor-pointer ${
                     selectedCategory === cat.id
-                      ? 'bg-slate-900 text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                      ? 'bg-[#2A1622] text-white shadow-xs'
+                      : 'bg-slate-100 text-[#7E5A68] hover:bg-slate-200/80'
                   }`}
                 >
                   <span>{cat.name}</span>
@@ -394,7 +394,7 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
                   className={`group relative rounded-2xl border p-4 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between ${
                     inCart
                       ? 'border-amber-400 bg-amber-50/30'
-                      : 'border-slate-200/90 bg-white hover:border-amber-300'
+                      : 'border-[#E8D8D2] bg-white hover:border-amber-300'
                   }`}
                 >
                   <div>
@@ -403,7 +403,7 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
                         <span
                           className={`flex h-4 w-4 items-center justify-center rounded border ${
                             item.is_veg
-                              ? 'border-emerald-500 bg-emerald-50 text-emerald-600'
+                              ? 'border-emerald-500 bg-[#0F6E6E]/10 text-emerald-600'
                               : 'border-rose-500 bg-rose-50 text-rose-600'
                           }`}
                           title={item.is_veg ? 'Pure Vegetarian' : 'Non-Vegetarian'}
@@ -414,7 +414,7 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
                             }`}
                           />
                         </span>
-                        <h4 className="text-xs font-bold text-slate-900 line-clamp-1 group-hover:text-amber-800 transition">
+                        <h4 className="text-xs font-bold text-[#2A1622] line-clamp-1 group-hover:text-amber-800 transition">
                           {item.name}
                         </h4>
                       </div>
@@ -434,7 +434,7 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
                   </div>
 
                   <div className="mt-3 flex items-center justify-between pt-2 border-t border-slate-100">
-                    <span className="text-xs font-black font-mono text-slate-900">
+                    <span className="text-xs font-black font-mono text-[#2A1622]">
                       {formatPrice(item.price)}
                     </span>
                     <button
@@ -443,7 +443,7 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
                         e.stopPropagation();
                         addToCart(item);
                       }}
-                      className="inline-flex items-center gap-1 rounded-lg bg-slate-100 hover:bg-amber-500 hover:text-white px-2 py-1 text-[11px] font-bold text-slate-700 transition cursor-pointer shadow-2xs"
+                      className="inline-flex items-center gap-1 rounded-lg bg-slate-100 hover:bg-[#B85D19] hover:text-white px-2 py-1 text-[11px] font-bold text-slate-700 transition cursor-pointer shadow-2xs"
                     >
                       <Plus className="h-3 w-3" />
                       <span>Add</span>
@@ -454,7 +454,7 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
             })}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
+          <div className="rounded-2xl border border-dashed border-[#E8D8D2] bg-white p-12 text-center">
             <UtensilsCrossed className="mx-auto h-8 w-8 text-slate-300" />
             <h3 className="mt-2 text-sm font-bold text-slate-700">No Matching Dishes Found</h3>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -466,15 +466,15 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
 
       {/* ── Right Column: Active Order Ticket / Billing Cart ─────────────── */}
       <div className="w-full lg:w-[380px] shrink-0 sticky top-4 space-y-4">
-        <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden flex flex-col max-h-[calc(100vh-120px)]">
+        <div className="rounded-2xl border border-[#E8D8D2] bg-white shadow-xs overflow-hidden flex flex-col max-h-[calc(100vh-120px)]">
           {/* Ticket Header & Table Selector */}
-          <div className="border-b border-slate-100 bg-slate-50/80 p-4 space-y-2.5">
+          <div className="border-b border-slate-100 bg-[#FAF2EE]/70 p-4 space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-900 text-white font-mono text-xs font-bold">
+                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#2A1622] text-white font-mono text-xs font-bold">
                   <Hash className="h-3.5 w-3.5" />
                 </span>
-                <h3 className="text-sm font-extrabold text-slate-900">Order Ticket {selectedTable ? `• Table ${selectedTable.table_number}` : ""}</h3>
+                <h3 className="text-sm font-extrabold text-[#2A1622]">Order Ticket {selectedTable ? `• Table ${selectedTable.table_number}` : ""}</h3>
               </div>
               {cart.length > 0 && (
                 <button
@@ -489,14 +489,14 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
 
             {/* Table Dropdown */}
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#7E5A68] mb-1">
                 Dining Table <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <select
                   value={selectedTableId}
                   onChange={(e) => setSelectedTableId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-800 focus:border-amber-500 focus:outline-none shadow-2xs appearance-none pr-8 cursor-pointer"
+                  className="w-full rounded-xl border border-[#E8D8D2] bg-white px-3 py-2 text-xs font-bold text-[#2A1622] focus:border-[#B85D19] focus:outline-none shadow-2xs appearance-none pr-8 cursor-pointer"
                 >
                   {tables.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -517,7 +517,7 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
             </div>
           )}
           {successMessage && (
-            <div className="mx-4 mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800 flex items-start gap-1.5">
+            <div className="mx-4 mt-3 rounded-xl border border-[#0F6E6E]/25 bg-[#0F6E6E]/10 p-2.5 text-xs text-[#0F6E6E] flex items-start gap-1.5">
               <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
               <span>{successMessage}</span>
             </div>
@@ -529,16 +529,16 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
               cart.map((c) => (
                 <div
                   key={c.item.id}
-                  className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 space-y-2 text-xs"
+                  className="rounded-xl border border-slate-100 bg-[#FAF2EE]/70 p-3 space-y-2 text-xs"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h5 className="font-bold text-slate-900 leading-snug">{c.item.name}</h5>
-                      <p className="text-[11px] text-slate-500 font-mono">
+                      <h5 className="font-bold text-[#2A1622] leading-snug">{c.item.name}</h5>
+                      <p className="text-[11px] text-[#7E5A68] font-mono">
                         {formatPrice(c.item.price)} each
                       </p>
                     </div>
-                    <span className="font-mono font-black text-slate-900">
+                    <span className="font-mono font-black text-[#2A1622]">
                       {formatPrice(c.item.price * c.quantity)}
                     </span>
                   </div>
@@ -550,26 +550,26 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
                       placeholder="Special note (e.g. less spice)"
                       value={c.notes || ''}
                       onChange={(e) => updateItemNotes(c.item.id, e.target.value)}
-                      className="w-36 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
+                      className="w-36 rounded-lg border border-[#E8D8D2] bg-white px-2 py-1 text-[11px] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#B85D19]"
                     />
 
                     {/* Quantity Controls */}
-                    <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 shadow-2xs">
+                    <div className="flex items-center gap-1 bg-white border border-[#E8D8D2] rounded-lg p-0.5 shadow-2xs">
                       <button
                         type="button"
                         onClick={() => updateQuantity(c.item.id, -1)}
-                        className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+                        className="rounded p-1 text-[#7E5A68] hover:bg-slate-100 hover:text-[#2A1622] cursor-pointer"
                         title="Reduce quantity"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
-                      <span className="w-6 text-center font-mono font-bold text-slate-900 text-xs">
+                      <span className="w-6 text-center font-mono font-bold text-[#2A1622] text-xs">
                         {c.quantity}
                       </span>
                       <button
                         type="button"
                         onClick={() => updateQuantity(c.item.id, 1)}
-                        className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+                        className="rounded p-1 text-[#7E5A68] hover:bg-slate-100 hover:text-[#2A1622] cursor-pointer"
                         title="Increase quantity"
                       >
                         <Plus className="h-3 w-3" />
@@ -589,7 +589,7 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
             ) : (
               <div className="py-10 text-center">
                 <UtensilsCrossed className="mx-auto h-8 w-8 text-slate-300" />
-                <p className="mt-2 text-xs font-bold text-slate-600">Ticket is Empty</p>
+                <p className="mt-2 text-xs font-bold text-[#7E5A68]">Ticket is Empty</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   Tap any menu item on the left to add it to this dining ticket.
                 </p>
@@ -598,27 +598,27 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
           </div>
 
           {/* Ticket Footer: Notes, Financials, Primary Action Buttons */}
-          <div className="border-t border-slate-100 bg-slate-50/90 p-4 space-y-3">
+          <div className="border-t border-slate-100 bg-[#FAF2EE]/70 p-4 space-y-3">
             {/* General Order Notes */}
             <input
               type="text"
               placeholder="Order remarks (e.g. rush order, serve starters first)..."
               value={orderNotes}
               onChange={(e) => setOrderNotes(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
+              className="w-full rounded-xl border border-[#E8D8D2] bg-white px-3 py-1.5 text-xs text-[#2A1622] placeholder:text-slate-400 focus:outline-none focus:border-[#B85D19]"
             />
 
             {/* Bill Summary */}
-            <div className="space-y-1 text-xs text-slate-600">
+            <div className="space-y-1 text-xs text-[#7E5A68]">
               <div className="flex justify-between">
                 <span>Subtotal ({cart.reduce((n, c) => n + c.quantity, 0)} items):</span>
-                <span className="font-mono font-semibold text-slate-800">{formatPrice(subtotal)}</span>
+                <span className="font-mono font-semibold text-[#2A1622]">{formatPrice(subtotal)}</span>
               </div>
-              <div className="flex justify-between text-[11px] text-slate-500">
+              <div className="flex justify-between text-[11px] text-[#7E5A68]">
                 <span>Taxes ({taxRate}% {taxLabel}):</span>
                 <span className="font-mono">{formatPrice(taxAmount)}</span>
               </div>
-              <div className="flex justify-between border-t border-slate-200 pt-1.5 text-sm font-black text-slate-900">
+              <div className="flex justify-between border-t border-[#E8D8D2] pt-1.5 text-sm font-black text-[#2A1622]">
                 <span>Grand Total:</span>
                 <span className="font-mono text-amber-800">{formatPrice(grandTotal)}</span>
               </div>
@@ -634,8 +634,8 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
                     onClick={() => setPaymentMethod(m)}
                     className={`rounded-lg py-1 px-2 text-[10px] font-bold uppercase transition border cursor-pointer ${
                       paymentMethod === m
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        ? 'bg-[#2A1622] text-white border-slate-900 shadow-2xs'
+                        : 'bg-white text-[#7E5A68] border-[#E8D8D2] hover:bg-[#FAF2EE]'
                     }`}
                   >
                     {m === 'cash' && '💵 '}
@@ -670,7 +670,7 @@ export const PosRegisterWorkspace: React.FC<PosRegisterWorkspaceProps> = ({
                   type="button"
                   disabled={cart.length === 0 || isSubmitting}
                   onClick={handleQuickSettle}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition cursor-pointer disabled:opacity-50"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#2A1622] hover:bg-[#3A1E2F] px-4 py-2.5 text-xs font-bold text-white shadow-xs transition cursor-pointer disabled:opacity-50"
                 >
                   <Printer className="h-3.5 w-3.5 text-amber-400" />
                   <span>Settle & Print Receipt</span>

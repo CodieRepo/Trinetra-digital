@@ -319,9 +319,9 @@ export default function RestaurantOrderStatusClient({
   // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex flex-col items-center justify-center gap-4 px-6">
+      <div className="min-h-screen bg-[#faf8f5] text-[#2A1622] flex flex-col items-center justify-center gap-4 px-6">
         <div className="h-10 w-10 rounded-full border-3 border-amber-500 border-t-transparent animate-spin" />
-        <p className="text-xs font-black uppercase tracking-widest text-stone-500">
+        <p className="text-xs font-black uppercase tracking-widest text-[#7E5A68]">
           Tracking your order...
         </p>
       </div>
@@ -331,17 +331,17 @@ export default function RestaurantOrderStatusClient({
   // Error State
   if (error || !payload) {
     return (
-      <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex flex-col items-center justify-center px-6 text-center">
+      <div className="min-h-screen bg-[#faf8f5] text-[#2A1622] flex flex-col items-center justify-center px-6 text-center">
         <div className="h-16 w-16 rounded-3xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
           <AlertCircle size={32} />
         </div>
-        <h2 className="text-xl font-black text-stone-900">Order Unavailable</h2>
-        <p className="mt-1.5 text-sm text-stone-600 max-w-sm">
+        <h2 className="text-xl font-black text-[#2A1622]">Order Unavailable</h2>
+        <p className="mt-1.5 text-sm text-[#7E5A68] max-w-sm">
           {error || "We couldn't load this order."}
         </p>
         <Link
           to={`/r/${tableToken}?browse=1`}
-          className="mt-5 min-h-[48px] px-6 py-2.5 rounded-2xl bg-stone-900 text-white text-xs font-black uppercase tracking-wider transition cursor-pointer active:scale-95 shadow-sm inline-flex items-center gap-2"
+          className="mt-5 min-h-[48px] px-6 py-2.5 rounded-2xl bg-[#2A1622] text-white text-xs font-black uppercase tracking-wider transition cursor-pointer active:scale-95 shadow-sm inline-flex items-center gap-2"
         >
           <span>Return to Menu</span>
           <ChevronRight size={14} />
@@ -359,12 +359,12 @@ export default function RestaurantOrderStatusClient({
   const isCancelled = payload.order.status === "cancelled";
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-stone-900 font-sans antialiased pb-28">
+    <div className="min-h-screen bg-[#faf8f5] text-[#2A1622] font-sans antialiased pb-28">
       {/* ── 1. Restaurant Header ── */}
-      <header className="sticky top-0 z-30 border-b border-stone-200/90 bg-white/95 backdrop-blur-md px-4 py-3 shadow-xs">
+      <header className="sticky top-0 z-30 border-b border-[#E8D8D2] bg-white/95 backdrop-blur-md px-4 py-3 shadow-xs">
         <div className="mx-auto max-w-4xl flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-base sm:text-lg font-black uppercase tracking-tight text-stone-900 truncate">
+            <h1 className="text-base sm:text-lg font-black uppercase tracking-tight text-[#2A1622] truncate">
               {restaurantName}
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
@@ -376,7 +376,7 @@ export default function RestaurantOrderStatusClient({
 
           <Link
             to={`/r/${tableToken}?browse=1`}
-            className="min-h-[42px] px-4 py-1.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+            className="min-h-[42px] px-4 py-1.5 rounded-2xl bg-[#2A1622] hover:bg-[#3A1E2F] text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
           >
             <Plus size={14} />
             <span>Order More</span>
@@ -386,25 +386,25 @@ export default function RestaurantOrderStatusClient({
 
       <main className="mx-auto max-w-4xl px-4 pt-5 space-y-6">
         {/* ── 2. Live Status Hero Card ── */}
-        <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 shadow-xs relative overflow-hidden">
+        <div className="rounded-3xl border border-[#E8D8D2] bg-white p-5 sm:p-6 shadow-xs relative overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <p className="text-[11px] font-black uppercase tracking-widest text-amber-800 flex items-center gap-2">
                 <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B85D19] opacity-75" />
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-600" />
                 </span>
                 Live Order Progress
               </p>
-              <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-1">
+              <h2 className="text-2xl sm:text-3xl font-black text-[#2A1622] tracking-tight mt-1">
                 {currentLabel}
               </h2>
-              <p className="text-xs sm:text-sm text-stone-500 font-medium mt-1">
+              <p className="text-xs sm:text-sm text-[#7E5A68] font-medium mt-1">
                 Order #{payload.order.id.slice(0, 8)} · Dispatched {new Date(payload.order.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </p>
             </div>
 
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-xs font-black text-stone-800 shrink-0 self-start sm:self-auto">
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-[#E8D8D2] bg-[#FAF2EE] px-4 py-2.5 text-xs font-black text-[#2A1622] shrink-0 self-start sm:self-auto">
               <Clock size={16} className="text-amber-700" />
               <span>Table #{tableNum}</span>
             </div>
@@ -428,10 +428,10 @@ export default function RestaurantOrderStatusClient({
                       <div
                         className={`h-9 w-9 sm:h-10 sm:w-10 rounded-2xl flex items-center justify-center text-xs font-black transition-all ${
                           isCurrent
-                            ? "bg-amber-500 text-stone-950 shadow-md ring-4 ring-amber-100"
+                            ? "bg-[#B85D19] text-white shadow-md ring-4 ring-amber-100"
                             : isReached
-                              ? "bg-stone-900 text-white shadow-xs"
-                              : "bg-stone-100 text-stone-400 border border-stone-200/80"
+                              ? "bg-[#2A1622] text-white shadow-xs"
+                              : "bg-stone-100 text-stone-400 border border-[#E8D8D2]"
                         }`}
                       >
                         {isReached && !isCurrent ? (
@@ -443,7 +443,7 @@ export default function RestaurantOrderStatusClient({
                       <p
                         className={`mt-2 text-[10px] sm:text-xs font-black uppercase tracking-tight leading-tight ${
                           isCurrent
-                            ? "text-stone-900 font-extrabold"
+                            ? "text-[#2A1622] font-extrabold"
                             : isReached
                               ? "text-stone-700"
                               : "text-stone-400"
@@ -460,17 +460,17 @@ export default function RestaurantOrderStatusClient({
         </div>
 
         {/* ── 3. Current Order Details Card ── */}
-        <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 shadow-xs">
+        <div className="rounded-3xl border border-[#E8D8D2] bg-white p-5 sm:p-6 shadow-xs">
           <div className="flex items-center justify-between border-b border-stone-100 pb-3">
             <div>
-              <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-stone-900">
+              <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-[#2A1622]">
                 Ticket Details
               </h3>
-              <p className="text-xs text-stone-500 font-medium">
+              <p className="text-xs text-[#7E5A68] font-medium">
                 Order ID #{payload.order.id.slice(0, 8)}
               </p>
             </div>
-            <span className="text-base sm:text-lg font-black text-stone-900">
+            <span className="text-base sm:text-lg font-black text-[#2A1622]">
               {formatCurrency(Number(payload.order.total_amount))}
             </span>
           </div>
@@ -479,24 +479,24 @@ export default function RestaurantOrderStatusClient({
             {(payload.items || []).map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between gap-3 rounded-2xl border border-stone-100 bg-stone-50/70 p-3.5"
+                className="flex items-center justify-between gap-3 rounded-2xl border border-stone-100 bg-[#FAF2EE]/70 p-3.5"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-lg bg-stone-200/80 text-stone-900 font-black text-xs">
+                    <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-lg bg-stone-200/80 text-[#2A1622] font-black text-xs">
                       {item.quantity} ×
                     </span>
-                    <p className="font-black text-stone-900 text-sm sm:text-base uppercase tracking-tight truncate">
+                    <p className="font-black text-[#2A1622] text-sm sm:text-base uppercase tracking-tight truncate">
                       {item.name}
                     </p>
                   </div>
                   {item.notes && (
-                    <p className="text-xs text-stone-500 font-medium mt-1 pl-1">
+                    <p className="text-xs text-[#7E5A68] font-medium mt-1 pl-1">
                       Note: {item.notes}
                     </p>
                   )}
                 </div>
-                <span className="font-black text-stone-900 text-sm sm:text-base shrink-0">
+                <span className="font-black text-[#2A1622] text-sm sm:text-base shrink-0">
                   {formatCurrency(Number(item.price) * item.quantity)}
                 </span>
               </div>
@@ -515,13 +515,13 @@ export default function RestaurantOrderStatusClient({
 
         {/* ── 4. Multi-Order Session Overview ── */}
         {sessionContext && sessionContext.orders.length > 0 && (
-          <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="rounded-3xl border border-[#E8D8D2] bg-white p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div>
-                <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-stone-900">
+                <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-[#2A1622]">
                   All Orders in This Session
                 </h3>
-                <p className="text-xs text-stone-500 font-medium">
+                <p className="text-xs text-[#7E5A68] font-medium">
                   {sessionContext.orders.length} {sessionContext.orders.length === 1 ? "ticket" : "tickets"} placed during this table session
                 </p>
               </div>
@@ -529,7 +529,7 @@ export default function RestaurantOrderStatusClient({
                 <span className="text-xs uppercase tracking-wider text-stone-400 font-bold block">
                   Session Total
                 </span>
-                <span className="text-base sm:text-lg font-black text-stone-900">
+                <span className="text-base sm:text-lg font-black text-[#2A1622]">
                   {formatCurrency(sessionContext.sessionTotal)}
                 </span>
               </div>
@@ -544,12 +544,12 @@ export default function RestaurantOrderStatusClient({
                     className={`rounded-2xl border p-4 transition ${
                       isThisOrder
                         ? "border-amber-400 bg-amber-50/40 ring-2 ring-amber-200/50"
-                        : "border-stone-200 bg-stone-50/60"
+                        : "border-[#E8D8D2] bg-[#FAF2EE]/70"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-black uppercase tracking-tight text-stone-900">
+                        <span className="text-sm font-black uppercase tracking-tight text-[#2A1622]">
                           Order #{idx + 1}
                         </span>
                         <span className="text-xs text-stone-400 font-mono">
@@ -558,7 +558,7 @@ export default function RestaurantOrderStatusClient({
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide ${
                             ord.status === "served" || ord.status === "closed"
-                              ? "bg-emerald-100 text-emerald-900 border border-emerald-200"
+                              ? "bg-emerald-100 text-emerald-900 border border-[#0F6E6E]/25"
                               : ord.status === "cancelled"
                                 ? "bg-rose-100 text-rose-900 border border-rose-200"
                                 : "bg-amber-100 text-amber-950 border border-amber-200"
@@ -569,13 +569,13 @@ export default function RestaurantOrderStatusClient({
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-black text-stone-900">
+                        <span className="text-sm font-black text-[#2A1622]">
                           {formatCurrency(Number(ord.total_amount))}
                         </span>
                         {!isThisOrder && (
                           <Link
                             to={`/r/${tableToken}/order/${ord.id}`}
-                            className="min-h-[36px] px-3 rounded-xl bg-white border border-stone-200 hover:bg-stone-100 text-stone-800 text-xs font-black uppercase tracking-wider transition cursor-pointer flex items-center gap-1"
+                            className="min-h-[36px] px-3 rounded-xl bg-white border border-[#E8D8D2] hover:bg-stone-100 text-[#2A1622] text-xs font-black uppercase tracking-wider transition cursor-pointer flex items-center gap-1"
                           >
                             <span>View</span>
                             <ChevronRight size={13} />
@@ -588,12 +588,12 @@ export default function RestaurantOrderStatusClient({
                       {(ord.items || []).map((it) => (
                         <div
                           key={it.id}
-                          className="flex items-center justify-between rounded-xl bg-white border border-stone-200/80 px-3 py-1.5 text-xs"
+                          className="flex items-center justify-between rounded-xl bg-white border border-[#E8D8D2] px-3 py-1.5 text-xs"
                         >
-                          <span className="font-semibold text-stone-800 truncate">
+                          <span className="font-semibold text-[#2A1622] truncate">
                             {it.name} <span className="text-stone-400">×{it.quantity}</span>
                           </span>
-                          <span className="font-black text-stone-900 shrink-0">
+                          <span className="font-black text-[#2A1622] shrink-0">
                             {formatCurrency(Number(it.price) * it.quantity)}
                           </span>
                         </div>
@@ -608,16 +608,16 @@ export default function RestaurantOrderStatusClient({
 
         {/* ── 5. Hospitality Bill Receipt & Settlement Card ── */}
         {sessionContext && (
-          <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="rounded-3xl border border-[#E8D8D2] bg-white p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-3 border-b border-stone-100 pb-4">
               <div className="h-10 w-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-black">
                 <Receipt size={20} />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-stone-900">
+                <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-[#2A1622]">
                   {sessionContext.bill ? "Official Tax Invoice" : "Table Bill Summary"}
                 </h3>
-                <p className="text-xs text-stone-500 font-medium">
+                <p className="text-xs text-[#7E5A68] font-medium">
                   {sessionContext.bill
                     ? "Official tax invoice generated by restaurant"
                     : "Total bill calculated across all live session orders"}
@@ -626,15 +626,15 @@ export default function RestaurantOrderStatusClient({
             </div>
 
             <div className="space-y-2.5 text-xs sm:text-sm">
-              <div className="flex items-center justify-between text-stone-600 font-semibold">
+              <div className="flex items-center justify-between text-[#7E5A68] font-semibold">
                 <span>Subtotal ({sessionContext.orders.length} {sessionContext.orders.length === 1 ? "order" : "orders"})</span>
-                <span className="font-black text-stone-900">
+                <span className="font-black text-[#2A1622]">
                   {formatCurrency(sessionContext.bill?.subtotal ?? sessionContext.sessionTotal)}
                 </span>
               </div>
 
               {sessionContext.bill && sessionContext.bill.discount_amount > 0 && (
-                <div className="flex items-center justify-between text-emerald-700 font-semibold">
+                <div className="flex items-center justify-between text-[#0F6E6E] font-semibold">
                   <span>
                     Discount ({sessionContext.bill.discount_type === "percentage" ? `${sessionContext.bill.discount_value}%` : "Flat"})
                     {sessionContext.bill.discount_reason ? ` - ${sessionContext.bill.discount_reason}` : ""}
@@ -646,41 +646,41 @@ export default function RestaurantOrderStatusClient({
               )}
 
               {sessionContext.bill && sessionContext.bill.tax_amount > 0 && (
-                <div className="flex items-center justify-between text-stone-600 font-semibold">
+                <div className="flex items-center justify-between text-[#7E5A68] font-semibold">
                   <span>Taxes & GST</span>
-                  <span className="font-black text-stone-900">
+                  <span className="font-black text-[#2A1622]">
                     +{formatCurrency(sessionContext.bill.tax_amount)}
                   </span>
                 </div>
               )}
 
               {sessionContext.bill && sessionContext.bill.service_charge > 0 && (
-                <div className="flex items-center justify-between text-stone-600 font-semibold">
+                <div className="flex items-center justify-between text-[#7E5A68] font-semibold">
                   <span>Service Charge</span>
-                  <span className="font-black text-stone-900">
+                  <span className="font-black text-[#2A1622]">
                     +{formatCurrency(sessionContext.bill.service_charge)}
                   </span>
                 </div>
               )}
 
-              <div className="border-t border-stone-200 pt-3 mt-3 flex items-center justify-between">
+              <div className="border-t border-[#E8D8D2] pt-3 mt-3 flex items-center justify-between">
                 <span className="text-sm font-black uppercase tracking-wider text-stone-700">
                   {sessionContext.bill ? "Grand Total" : "Total Payable"}
                 </span>
-                <span className="text-2xl font-black text-stone-900 tracking-tight">
+                <span className="text-2xl font-black text-[#2A1622] tracking-tight">
                   {formatCurrency(sessionContext.bill?.grand_total ?? sessionContext.sessionTotal)}
                 </span>
               </div>
             </div>
 
             {/* Payment Status Badge */}
-            <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3.5 flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-stone-500">
+            <div className="rounded-2xl border border-[#E8D8D2] bg-[#FAF2EE] p-3.5 flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider text-[#7E5A68]">
                 Payment Status
               </span>
               {sessionContext.paymentStatus === "paid" ? (
-                <span className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-800 bg-emerald-100 border border-emerald-200/80 px-3 py-1 rounded-full">
-                  <CheckCircle2 size={14} className="text-emerald-700" /> Bill Settled ✓
+                <span className="inline-flex items-center gap-1.5 text-xs font-black text-[#0F6E6E] bg-emerald-100 border border-[#0F6E6E]/25/80 px-3 py-1 rounded-full">
+                  <CheckCircle2 size={14} className="text-[#0F6E6E]" /> Bill Settled ✓
                 </span>
               ) : paymentPendingInfo ? (
                 <span className="inline-flex items-center gap-1.5 text-xs font-black text-amber-950 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full">
@@ -702,7 +702,7 @@ export default function RestaurantOrderStatusClient({
               <button
                 type="button"
                 onClick={() => setShowPaymentModal(true)}
-                className="w-full min-h-[48px] rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs font-black uppercase tracking-wider hover:bg-emerald-100 transition cursor-pointer flex items-center justify-center gap-2"
+                className="w-full min-h-[48px] rounded-2xl border border-[#0F6E6E]/25 bg-[#0F6E6E]/10 text-emerald-900 text-xs font-black uppercase tracking-wider hover:bg-emerald-100 transition cursor-pointer flex items-center justify-center gap-2"
               >
                 <QrCode size={16} />
                 <span>View Payment Confirmation & Receipt</span>
@@ -719,13 +719,13 @@ export default function RestaurantOrderStatusClient({
                       Ref / UTR: {paymentPendingInfo.utr}
                     </p>
                   )}
-                  <p className="text-[11px] text-stone-600 font-medium max-w-sm mx-auto">
+                  <p className="text-[11px] text-[#7E5A68] font-medium max-w-sm mx-auto">
                     The counter terminal has been notified. This screen will update to &quot;Bill Settled&quot; automatically once the cashier confirms.
                   </p>
                   <button
                     type="button"
                     onClick={() => setShowPaymentModal(true)}
-                    className="mt-2 min-h-[38px] px-4 rounded-xl border border-stone-300 bg-white hover:bg-stone-50 text-stone-900 text-xs font-bold transition cursor-pointer active:scale-95 shadow-xs"
+                    className="mt-2 min-h-[38px] px-4 rounded-xl border border-[#DFC9C1] bg-white hover:bg-[#FAF2EE] text-[#2A1622] text-xs font-bold transition cursor-pointer active:scale-95 shadow-xs"
                   >
                     View UPI QR Again
                   </button>
@@ -737,7 +737,7 @@ export default function RestaurantOrderStatusClient({
                   type="button"
                   disabled={requestingBill || billRequestedSuccess}
                   onClick={handleRequestBill}
-                  className="min-h-[52px] rounded-2xl border border-stone-300 bg-white hover:bg-stone-50 text-stone-900 text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-xs active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="min-h-[52px] rounded-2xl border border-[#DFC9C1] bg-white hover:bg-[#FAF2EE] text-[#2A1622] text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-xs active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   <Receipt size={16} className="text-amber-700" />
                   <span>
@@ -752,7 +752,7 @@ export default function RestaurantOrderStatusClient({
                 <button
                   type="button"
                   onClick={() => setShowPaymentModal(true)}
-                  className="min-h-[52px] rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-xs active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="min-h-[52px] rounded-2xl bg-[#B85D19] hover:bg-[#9E4E14] text-white text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-xs active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   <QrCode size={16} />
                   <span>Pay Bill Online (UPI / QR) →</span>

@@ -181,7 +181,7 @@ export default function ThermalReceiptModal({
         }
       `}</style>
 
-      <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-slate-900 shadow-2xl text-slate-900">
+      <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-[#2A1622] shadow-2xl text-[#2A1622]">
         {/* Controls Header (Hidden on print) */}
         <div className="no-print flex items-center justify-between border-b border-white/10 bg-slate-800/80 px-5 py-3.5 text-white">
           <div className="flex items-center gap-2">
@@ -237,29 +237,29 @@ export default function ThermalReceiptModal({
             className="w-[80mm] rounded-xl bg-white p-4 shadow-lg text-slate-950 font-mono text-[11px] leading-tight"
           >
             {/* Header */}
-            <div className="text-center border-b border-dashed border-slate-300 pb-3">
+            <div className="text-center border-b border-dashed border-[#DFC9C1] pb-3">
               <h2 className="text-base font-extrabold uppercase tracking-wider text-black">
                 {receipt.restaurantName}
               </h2>
               {receipt.restaurantAddress && (
-                <p className="mt-1 text-[10px] text-slate-600 leading-tight">
+                <p className="mt-1 text-[10px] text-[#7E5A68] leading-tight">
                   {receipt.restaurantAddress}
                 </p>
               )}
               {receipt.businessGstin && (
-                <p className="mt-1 text-[10px] font-bold text-slate-800">
+                <p className="mt-1 text-[10px] font-bold text-[#2A1622]">
                   GSTIN: {receipt.businessGstin}
                 </p>
               )}
               {receipt.receiptHeaderNote && (
-                <p className="mt-1 text-[9px] italic text-slate-500">
+                <p className="mt-1 text-[9px] italic text-[#7E5A68]">
                   {receipt.receiptHeaderNote}
                 </p>
               )}
             </div>
 
             {/* Invoice Meta */}
-            <div className="my-2 border-b border-dashed border-slate-300 pb-2 space-y-0.5 text-[10px]">
+            <div className="my-2 border-b border-dashed border-[#DFC9C1] pb-2 space-y-0.5 text-[10px]">
               <div className="flex justify-between">
                 <span className="font-bold">INVOICE NO:</span>
                 <span>INV-{receipt.sessionId.slice(0, 8).toUpperCase()}</span>
@@ -274,15 +274,15 @@ export default function ThermalReceiptModal({
                   <span>{receipt.customerName}</span>
                 </div>
               )}
-              <div className="flex justify-between text-[9px] text-slate-600">
+              <div className="flex justify-between text-[9px] text-[#7E5A68]">
                 <span>DATE/TIME:</span>
                 <span>{new Date(receipt.paidAt || Date.now()).toLocaleString()}</span>
               </div>
             </div>
 
             {/* Items Table */}
-            <div className="border-b border-dashed border-slate-300 pb-2">
-              <div className="flex font-bold border-b border-slate-200 pb-1 mb-1 text-[10px]">
+            <div className="border-b border-dashed border-[#DFC9C1] pb-2">
+              <div className="flex font-bold border-b border-[#E8D8D2] pb-1 mb-1 text-[10px]">
                 <span className="w-1/2">ITEM</span>
                 <span className="w-1/6 text-center">QTY</span>
                 <span className="w-1/3 text-right">AMOUNT</span>
@@ -300,14 +300,14 @@ export default function ThermalReceiptModal({
             </div>
 
             {/* Financial Summary */}
-            <div className="my-2 border-b border-dashed border-slate-300 pb-2 space-y-1 text-[10.5px]">
+            <div className="my-2 border-b border-dashed border-[#DFC9C1] pb-2 space-y-1 text-[10.5px]">
               <div className="flex justify-between">
                 <span>SUBTOTAL:</span>
                 <span>{formatCurrency(receipt.bill.subtotal)}</span>
               </div>
 
               {receipt.bill.discountAmount > 0 && (
-                <div className="flex justify-between text-emerald-700 font-semibold">
+                <div className="flex justify-between text-[#0F6E6E] font-semibold">
                   <span>
                     DISCOUNT ({receipt.bill.discountType === "percentage" ? `${receipt.bill.discountValue}%` : "FLAT"}):
                   </span>
@@ -336,7 +336,7 @@ export default function ThermalReceiptModal({
               )}
 
               {receipt.bill.roundOff !== 0 && (
-                <div className="flex justify-between text-[9.5px] text-slate-500">
+                <div className="flex justify-between text-[9.5px] text-[#7E5A68]">
                   <span>ROUND OFF:</span>
                   <span>{receipt.bill.roundOff > 0 ? `+${receipt.bill.roundOff}` : receipt.bill.roundOff}</span>
                 </div>
@@ -350,16 +350,16 @@ export default function ThermalReceiptModal({
 
             {/* Split Bill Section on Receipt */}
             {splitCount > 1 && (
-              <div className="my-2 border-y border-dashed border-slate-300 py-1.5 text-center bg-slate-50">
+              <div className="my-2 border-y border-dashed border-[#DFC9C1] py-1.5 text-center bg-[#FAF2EE]">
                 <p className="font-extrabold text-black uppercase text-[10px]">
                   EQUAL SPLIT ({splitCount} DINERS)
                 </p>
-                <div className="flex justify-between font-bold text-[11px] text-slate-900 mt-1 px-1">
+                <div className="flex justify-between font-bold text-[11px] text-[#2A1622] mt-1 px-1">
                   <span>AMOUNT PER DINER:</span>
                   <span className="font-mono">{formatCurrency(Math.floor(receipt.bill.grandTotal / splitCount))}</span>
                 </div>
                 {receipt.bill.grandTotal % splitCount !== 0 && (
-                  <p className="text-[8.5px] text-slate-500 italic mt-0.5">
+                  <p className="text-[8.5px] text-[#7E5A68] italic mt-0.5">
                     (Final diner pays +₹{receipt.bill.grandTotal % splitCount} remainder)
                   </p>
                 )}
@@ -367,15 +367,15 @@ export default function ThermalReceiptModal({
             )}
 
             {/* Payment Method & Status */}
-            <div className="text-center my-2 bg-slate-100 p-2 rounded border border-slate-300 text-[10px]">
-              <p className="font-extrabold uppercase text-slate-900">
+            <div className="text-center my-2 bg-slate-100 p-2 rounded border border-[#DFC9C1] text-[10px]">
+              <p className="font-extrabold uppercase text-[#2A1622]">
                 PAYMENT MODE: {receipt.bill.paymentMethod || "CASH"}
               </p>
-              <p className="text-[9px] text-slate-600">PAID & SETTLED · TAX INVOICE</p>
+              <p className="text-[9px] text-[#7E5A68]">PAID & SETTLED · TAX INVOICE</p>
             </div>
 
             {/* Footer */}
-            <div className="text-center pt-2 text-[9px] text-slate-500">
+            <div className="text-center pt-2 text-[9px] text-[#7E5A68]">
               <p>{receipt.receiptFooterNote || "Thank you for dining with us!"}</p>
               <p className="mt-1 font-bold text-slate-700">POWERED BY TRINETRA RESTAURANT OS</p>
             </div>

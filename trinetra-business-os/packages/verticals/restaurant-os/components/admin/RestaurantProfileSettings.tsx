@@ -67,7 +67,7 @@ const BRAND_THEMES: Array<{
     id: "amber",
     name: "Warm Hospitality",
     palette: "Amber & Terracotta",
-    previewBg: "bg-amber-500",
+    previewBg: "bg-[#B85D19]",
     accentClass: "text-amber-600",
     borderClass: "border-amber-500",
     badgeClass: "bg-amber-50 text-amber-900 border-amber-200",
@@ -79,7 +79,7 @@ const BRAND_THEMES: Array<{
     previewBg: "bg-emerald-600",
     accentClass: "text-emerald-600",
     borderClass: "border-emerald-600",
-    badgeClass: "bg-emerald-50 text-emerald-900 border-emerald-200",
+    badgeClass: "bg-[#0F6E6E]/10 text-emerald-900 border-[#0F6E6E]/25",
   },
   {
     id: "cobalt",
@@ -332,7 +332,7 @@ export default function RestaurantProfileSettings({
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-200/90 bg-white p-12 text-center text-slate-500 shadow-xs">
+      <div className="rounded-xl border border-[#E8D8D2] bg-white p-12 text-center text-[#7E5A68] shadow-xs">
         <RefreshCw className="mx-auto h-6 w-6 animate-spin text-amber-500 mb-2" />
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
           Loading Restaurant Profile & Configuration...
@@ -346,19 +346,19 @@ export default function RestaurantProfileSettings({
   return (
     <div className="space-y-6 font-sans">
       {/* Settings Navigation Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/90 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E8D8D2] pb-4">
         <div>
-          <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+          <h2 className="text-lg font-extrabold text-[#2A1622] flex items-center gap-2">
             <Building2 className="h-5 w-5 text-amber-600" />
             Restaurant Profile & Operational Settings
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#7E5A68] mt-0.5">
             Manage canonical restaurant identity, branding theme, contact info, operating hours, taxes, and thermal receipts.
           </p>
         </div>
 
         {/* Section Pill Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/90 shadow-xs text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-[#E8D8D2] shadow-xs text-xs">
           {[
             { id: "profile" as const, label: "Profile & Identity", icon: <ChefHat size={14} /> },
             { id: "contact" as const, label: "Contact & Location", icon: <MapPin size={14} /> },
@@ -373,7 +373,7 @@ export default function RestaurantProfileSettings({
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
                 activeSection === sec.id
                   ? "bg-white text-amber-950 shadow-xs border border-amber-200"
-                  : "text-slate-600 hover:text-slate-900"
+                  : "text-[#7E5A68] hover:text-[#2A1622]"
               }`}
             >
               {sec.icon}
@@ -388,7 +388,7 @@ export default function RestaurantProfileSettings({
         <div
           className={`flex items-center justify-between gap-2.5 rounded-xl border p-3.5 text-xs font-bold shadow-xs ${
             statusMessage.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+              ? "border-[#0F6E6E]/25 bg-[#0F6E6E]/10 text-emerald-900"
               : "border-rose-200 bg-rose-50 text-rose-900"
           }`}
         >
@@ -418,11 +418,11 @@ export default function RestaurantProfileSettings({
             <div className="rounded-xl border border-amber-200/90 bg-gradient-to-b from-[#FFFDF9] to-white p-5 shadow-xs">
               <div className="flex items-start justify-between gap-4 border-b border-amber-100 pb-3 mb-4">
                 <div>
-                  <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                  <h3 className="text-sm font-extrabold text-[#2A1622] flex items-center gap-2">
                     <ChefHat size={16} className="text-amber-600" />
                     Canonical Restaurant Name & Identity
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-[#7E5A68] mt-0.5">
                     This name defines your primary brand identity and appears across all staff portals, tickets, and customer bills.
                   </p>
                 </div>
@@ -442,9 +442,9 @@ export default function RestaurantProfileSettings({
                     value={restaurantName}
                     onChange={(e) => setRestaurantName(e.target.value)}
                     placeholder="e.g. Sachin Cafe, Spice Garden Fine Dining"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none shadow-xs"
+                    className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-sm font-bold text-[#2A1622] placeholder:text-slate-400 focus:border-[#B85D19] focus:ring-2 focus:ring-amber-500/20 focus:outline-none shadow-xs"
                   />
-                  <p className="mt-1 text-[11px] text-slate-500">
+                  <p className="mt-1 text-[11px] text-[#7E5A68]">
                     Saved directly to the canonical <code className="bg-slate-100 px-1 py-0.5 rounded text-[10px] font-mono">restaurants.name</code> database record.
                   </p>
                 </div>
@@ -456,7 +456,7 @@ export default function RestaurantProfileSettings({
                   <select
                     value={restaurantType}
                     onChange={(e) => setRestaurantType(e.target.value as RestaurantType)}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-amber-500 focus:outline-none shadow-xs cursor-pointer"
+                    className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs font-semibold text-[#2A1622] focus:border-[#B85D19] focus:outline-none shadow-xs cursor-pointer"
                   >
                     {RESTAURANT_TYPES.map((t) => (
                       <option key={t.value} value={t.value}>
@@ -473,7 +473,7 @@ export default function RestaurantProfileSettings({
                   <select
                     value={cuisineType}
                     onChange={(e) => setCuisineType(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-amber-500 focus:outline-none shadow-xs cursor-pointer"
+                    className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs font-semibold text-[#2A1622] focus:border-[#B85D19] focus:outline-none shadow-xs cursor-pointer"
                   >
                     {CUISINE_OPTIONS.map((c) => (
                       <option key={c} value={c}>
@@ -486,8 +486,8 @@ export default function RestaurantProfileSettings({
             </div>
 
             {/* Brand Theme & Logo Card */}
-            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs">
-              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+            <div className="rounded-xl border border-[#E8D8D2] bg-white p-5 shadow-xs">
+              <h3 className="text-sm font-extrabold text-[#2A1622] flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
                 <Palette size={16} className="text-indigo-600" />
                 Hospitality Brand Theme & Logo
               </h3>
@@ -509,13 +509,13 @@ export default function RestaurantProfileSettings({
                           className={`flex items-center gap-2.5 p-3 rounded-xl border text-left transition cursor-pointer ${
                             isSelected
                               ? `${theme.borderClass} bg-amber-50/40 ring-2 ring-amber-500/20 shadow-xs`
-                              : "border-slate-200 bg-white hover:bg-slate-50"
+                              : "border-[#E8D8D2] bg-white hover:bg-[#FAF2EE]"
                           }`}
                         >
                           <div className={`h-6 w-6 rounded-lg ${theme.previewBg} shrink-0 shadow-xs`} />
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-slate-900 truncate">{theme.name}</p>
-                            <p className="text-[10px] text-slate-500 truncate">{theme.palette}</p>
+                            <p className="text-xs font-bold text-[#2A1622] truncate">{theme.name}</p>
+                            <p className="text-[10px] text-[#7E5A68] truncate">{theme.palette}</p>
                           </div>
                         </button>
                       );
@@ -534,13 +534,13 @@ export default function RestaurantProfileSettings({
                       value={logoUrl}
                       onChange={(e) => setLogoUrl(e.target.value)}
                       placeholder="https://example.com/logo.png"
-                      className="flex-1 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none shadow-xs"
+                      className="flex-1 rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] placeholder:text-slate-400 focus:border-[#B85D19] focus:outline-none shadow-xs"
                     />
                     {logoUrl && (
                       <button
                         type="button"
                         onClick={() => setLogoUrl("")}
-                        className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-600 cursor-pointer"
+                        className="px-3 py-2 rounded-lg border border-[#E8D8D2] bg-[#FAF2EE] hover:bg-slate-100 text-xs font-semibold text-[#7E5A68] cursor-pointer"
                       >
                         Clear
                       </button>
@@ -552,8 +552,8 @@ export default function RestaurantProfileSettings({
 
                   {/* Live Logo Preview Box */}
                   {logoUrl && (
-                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-                      <div className="h-12 w-12 rounded-lg border border-slate-200 bg-white p-1 overflow-hidden shrink-0 shadow-xs flex items-center justify-center">
+                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-[#E8D8D2] bg-[#FAF2EE]/70 p-3">
+                      <div className="h-12 w-12 rounded-lg border border-[#E8D8D2] bg-white p-1 overflow-hidden shrink-0 shadow-xs flex items-center justify-center">
                         <img
                           src={logoUrl}
                           alt="Logo Preview"
@@ -564,8 +564,8 @@ export default function RestaurantProfileSettings({
                         />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-slate-900">Live Logo Preview</p>
-                        <p className="text-[10px] text-slate-500">Renders on the top navigation bar and receipts.</p>
+                        <p className="text-xs font-bold text-[#2A1622]">Live Logo Preview</p>
+                        <p className="text-[10px] text-[#7E5A68]">Renders on the top navigation bar and receipts.</p>
                       </div>
                     </div>
                   )}
@@ -577,7 +577,7 @@ export default function RestaurantProfileSettings({
                     Restaurant Operating Status
                   </label>
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs flex items-center gap-1.5">
+                    <span className="px-3 py-1.5 rounded-lg bg-[#0F6E6E]/10 text-[#0F6E6E] border border-[#0F6E6E]/25 font-bold text-xs flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                       {status}
                     </span>
@@ -593,8 +593,8 @@ export default function RestaurantProfileSettings({
 
         {/* ══════════════ SECTION 2: CONTACT & LOCATION ══════════════ */}
         {activeSection === "contact" && (
-          <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
-            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+          <div className="rounded-xl border border-[#E8D8D2] bg-white p-5 shadow-xs space-y-4">
+            <h3 className="text-sm font-extrabold text-[#2A1622] flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
               <MapPin size={16} className="text-rose-600" />
               Contact & Location Details
             </h3>
@@ -609,7 +609,7 @@ export default function RestaurantProfileSettings({
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="e.g. Shop 12, High Street Food Plaza, Indiranagar, Bengaluru - 560038"
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none shadow-xs"
+                  className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] placeholder:text-slate-400 focus:border-[#B85D19] focus:outline-none shadow-xs"
                 />
                 <p className="mt-1 text-[11px] text-slate-400">Printed on formal 80mm thermal tax receipts.</p>
               </div>
@@ -625,7 +625,7 @@ export default function RestaurantProfileSettings({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+91 98765 43210"
-                    className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none shadow-xs"
+                    className="w-full rounded-lg border border-[#DFC9C1] bg-white pl-9 pr-3.5 py-2.5 text-xs text-[#2A1622] placeholder:text-slate-400 focus:border-[#B85D19] focus:outline-none shadow-xs"
                   />
                 </div>
               </div>
@@ -641,7 +641,7 @@ export default function RestaurantProfileSettings({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="contact@restaurant.com"
-                    className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none shadow-xs"
+                    className="w-full rounded-lg border border-[#DFC9C1] bg-white pl-9 pr-3.5 py-2.5 text-xs text-[#2A1622] placeholder:text-slate-400 focus:border-[#B85D19] focus:outline-none shadow-xs"
                   />
                 </div>
               </div>
@@ -655,7 +655,7 @@ export default function RestaurantProfileSettings({
                   value={fssaiLicense}
                   onChange={(e) => setFssaiLicense(e.target.value)}
                   placeholder="e.g. 10019043000001"
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-mono placeholder:text-slate-400 focus:border-amber-500 focus:outline-none shadow-xs"
+                  className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] font-mono placeholder:text-slate-400 focus:border-[#B85D19] focus:outline-none shadow-xs"
                 />
               </div>
 
@@ -666,7 +666,7 @@ export default function RestaurantProfileSettings({
                 <select
                   value={timezone}
                   onChange={(e) => setTimezone(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-amber-500 focus:outline-none shadow-xs cursor-pointer"
+                  className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs font-semibold text-[#2A1622] focus:border-[#B85D19] focus:outline-none shadow-xs cursor-pointer"
                 >
                   <option value="Asia/Kolkata">Asia/Kolkata (IST — UTC+5:30)</option>
                   <option value="Asia/Dubai">Asia/Dubai (GST — UTC+4:00)</option>
@@ -681,8 +681,8 @@ export default function RestaurantProfileSettings({
 
         {/* ══════════════ SECTION 3: OPERATING HOURS & PREFIXES ══════════════ */}
         {activeSection === "hours" && (
-          <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
-            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+          <div className="rounded-xl border border-[#E8D8D2] bg-white p-5 shadow-xs space-y-4">
+            <h3 className="text-sm font-extrabold text-[#2A1622] flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
               <Clock size={16} className="text-amber-600" />
               Daily Operating Schedule & Ticket Prefixes
             </h3>
@@ -697,7 +697,7 @@ export default function RestaurantProfileSettings({
                   step="1"
                   value={openingTime}
                   onChange={(e) => setOpeningTime(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-mono focus:border-amber-500 focus:outline-none shadow-xs"
+                  className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] font-mono focus:border-[#B85D19] focus:outline-none shadow-xs"
                 />
               </div>
 
@@ -710,7 +710,7 @@ export default function RestaurantProfileSettings({
                   step="1"
                   value={closingTime}
                   onChange={(e) => setClosingTime(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-mono focus:border-amber-500 focus:outline-none shadow-xs"
+                  className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] font-mono focus:border-[#B85D19] focus:outline-none shadow-xs"
                 />
               </div>
 
@@ -723,7 +723,7 @@ export default function RestaurantProfileSettings({
                   value={orderPrefix}
                   onChange={(e) => setOrderPrefix(e.target.value)}
                   placeholder="e.g. ORD-"
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 uppercase font-mono placeholder:text-slate-400 focus:border-amber-500 focus:outline-none shadow-xs"
+                  className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] uppercase font-mono placeholder:text-slate-400 focus:border-[#B85D19] focus:outline-none shadow-xs"
                 />
               </div>
 
@@ -736,7 +736,7 @@ export default function RestaurantProfileSettings({
                   value={billPrefix}
                   onChange={(e) => setBillPrefix(e.target.value)}
                   placeholder="e.g. BILL- / INV-"
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 uppercase font-mono placeholder:text-slate-400 focus:border-amber-500 focus:outline-none shadow-xs"
+                  className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] uppercase font-mono placeholder:text-slate-400 focus:border-[#B85D19] focus:outline-none shadow-xs"
                 />
               </div>
             </div>
@@ -747,8 +747,8 @@ export default function RestaurantProfileSettings({
         {activeSection === "payments" && (
           <div className="space-y-5">
             {/* Custom UPI & Soundbox QR */}
-            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs">
-              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+            <div className="rounded-xl border border-[#E8D8D2] bg-white p-5 shadow-xs">
+              <h3 className="text-sm font-extrabold text-[#2A1622] flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
                 <QrCode size={16} className="text-amber-600" />
                 Restaurant Business UPI & Soundbox QR Code
               </h3>
@@ -763,7 +763,7 @@ export default function RestaurantProfileSettings({
                     value={upiId}
                     onChange={(e) => setUpiId(e.target.value)}
                     placeholder="e.g. auracafe@upi or 9876543210@ybl"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none shadow-xs font-mono"
+                    className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] placeholder:text-slate-400 focus:border-[#B85D19] focus:outline-none shadow-xs font-mono"
                   />
                   <p className="mt-1 text-[11px] text-slate-400">
                     Customers & staff scanning payment QR will see this UPI ID.
@@ -779,7 +779,7 @@ export default function RestaurantProfileSettings({
                     value={upiQrUrl}
                     onChange={(e) => setUpiQrUrl(e.target.value)}
                     placeholder="https://example.com/soundbox-qr.png"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none shadow-xs"
+                    className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] placeholder:text-slate-400 focus:border-[#B85D19] focus:outline-none shadow-xs"
                   />
                   <p className="mt-1 text-[11px] text-slate-400">
                     Upload your PhonePe / GPay / Paytm Soundbox QR image URL.
@@ -810,8 +810,8 @@ export default function RestaurantProfileSettings({
             </div>
 
             {/* GSTIN & Tax Configuration */}
-            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs">
-              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+            <div className="rounded-xl border border-[#E8D8D2] bg-white p-5 shadow-xs">
+              <h3 className="text-sm font-extrabold text-[#2A1622] flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
                 <Percent size={16} className="text-indigo-600" />
                 GST Registration & Tax Invoicing
               </h3>
@@ -826,7 +826,7 @@ export default function RestaurantProfileSettings({
                     value={gstin}
                     onChange={(e) => setGstin(e.target.value)}
                     placeholder="e.g. 29AAAAA0000A1Z5"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 uppercase font-mono placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none shadow-xs"
+                    className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] uppercase font-mono placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none shadow-xs"
                   />
                 </div>
 
@@ -841,7 +841,7 @@ export default function RestaurantProfileSettings({
                     max="28"
                     value={taxRate}
                     onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-mono focus:border-indigo-500 focus:outline-none shadow-xs"
+                    className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] font-mono focus:border-indigo-500 focus:outline-none shadow-xs"
                   />
                 </div>
 
@@ -856,15 +856,15 @@ export default function RestaurantProfileSettings({
                     max="15"
                     value={serviceCharge}
                     onChange={(e) => setServiceCharge(parseFloat(e.target.value) || 0)}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-mono focus:border-indigo-500 focus:outline-none shadow-xs"
+                    className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] font-mono focus:border-indigo-500 focus:outline-none shadow-xs"
                   />
                 </div>
               </div>
             </div>
 
             {/* Thermal Receipt Notes */}
-            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs">
-              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+            <div className="rounded-xl border border-[#E8D8D2] bg-white p-5 shadow-xs">
+              <h3 className="text-sm font-extrabold text-[#2A1622] flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
                 <Receipt size={16} className="text-emerald-600" />
                 80mm Thermal Receipt Header & Footer Notes
               </h3>
@@ -879,7 +879,7 @@ export default function RestaurantProfileSettings({
                     value={receiptHeader}
                     onChange={(e) => setReceiptHeader(e.target.value)}
                     placeholder="e.g. Welcome to Sachin Cafe! Pure Veg Multi-Cuisine"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none shadow-xs"
+                    className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none shadow-xs"
                   />
                 </div>
 
@@ -892,7 +892,7 @@ export default function RestaurantProfileSettings({
                     value={receiptFooter}
                     onChange={(e) => setReceiptFooter(e.target.value)}
                     placeholder="e.g. Thank you for dining with us! Visit again soon."
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none shadow-xs"
+                    className="w-full rounded-lg border border-[#DFC9C1] bg-white px-3.5 py-2.5 text-xs text-[#2A1622] placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none shadow-xs"
                   />
                 </div>
               </div>
@@ -904,12 +904,12 @@ export default function RestaurantProfileSettings({
         {activeSection === "preview" && (
           <div className="grid gap-5 md:grid-cols-2">
             {/* Live Header & Shell Preview */}
-            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
-              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
+            <div className="rounded-xl border border-[#E8D8D2] bg-white p-5 shadow-xs space-y-3">
+              <h3 className="text-sm font-extrabold text-[#2A1622] flex items-center gap-2 border-b border-slate-100 pb-2">
                 <Eye size={16} className="text-amber-600" />
                 Restaurant OS Terminal Header Preview
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#7E5A68]">
                 This is how the application header and staff terminal render with your canonical settings:
               </p>
 
@@ -917,7 +917,7 @@ export default function RestaurantProfileSettings({
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     {logoUrl ? (
-                      <div className="h-10 w-10 rounded-xl border border-slate-200 bg-white p-1 overflow-hidden shrink-0 shadow-xs flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-xl border border-[#E8D8D2] bg-white p-1 overflow-hidden shrink-0 shadow-xs flex items-center justify-center">
                         <img src={logoUrl} alt="Logo" className="h-full w-full object-contain" />
                       </div>
                     ) : (
@@ -927,18 +927,18 @@ export default function RestaurantProfileSettings({
                     )}
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="text-base font-black text-slate-900">{restaurantName || "Your Restaurant Name"}</h4>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                        <h4 className="text-base font-black text-[#2A1622]">{restaurantName || "Your Restaurant Name"}</h4>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#0F6E6E]/10 text-[#0F6E6E] border border-[#0F6E6E]/25 flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                           Live
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
+                      <p className="text-[11px] text-[#7E5A68] mt-0.5">
                         {cuisineType.replace(/([A-Z])/g, " $1").trim()} · {restaurantType}
                       </p>
                     </div>
                   </div>
-                  <span className="text-[10px] text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded shadow-xs">
+                  <span className="text-[10px] text-slate-400 bg-white border border-[#E8D8D2] px-2 py-0.5 rounded shadow-xs">
                     Powered by Trinetra
                   </span>
                 </div>
@@ -946,28 +946,28 @@ export default function RestaurantProfileSettings({
             </div>
 
             {/* 80mm Thermal Receipt Header Preview */}
-            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
-              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
+            <div className="rounded-xl border border-[#E8D8D2] bg-white p-5 shadow-xs space-y-3">
+              <h3 className="text-sm font-extrabold text-[#2A1622] flex items-center gap-2 border-b border-slate-100 pb-2">
                 <Receipt size={16} className="text-emerald-600" />
                 80mm Thermal Tax Receipt Preview
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#7E5A68]">
                 Printed output rendered on the ESC/POS thermal printer:
               </p>
 
-              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 font-mono text-center text-slate-800 text-xs max-w-sm mx-auto shadow-xs">
-                <p className="font-black text-sm uppercase text-slate-900 tracking-wider">
+              <div className="rounded-xl border border-dashed border-[#DFC9C1] bg-[#FAF2EE] p-4 font-mono text-center text-[#2A1622] text-xs max-w-sm mx-auto shadow-xs">
+                <p className="font-black text-sm uppercase text-[#2A1622] tracking-wider">
                   {restaurantName || "RESTAURANT NAME"}
                 </p>
-                {address && <p className="text-[10px] text-slate-600 mt-0.5">{address}</p>}
-                {phone && <p className="text-[10px] text-slate-600">TEL: {phone}</p>}
-                {gstin && <p className="text-[10px] text-slate-600">GSTIN: {gstin}</p>}
+                {address && <p className="text-[10px] text-[#7E5A68] mt-0.5">{address}</p>}
+                {phone && <p className="text-[10px] text-[#7E5A68]">TEL: {phone}</p>}
+                {gstin && <p className="text-[10px] text-[#7E5A68]">GSTIN: {gstin}</p>}
                 {receiptHeader && (
-                  <p className="text-[10px] italic text-slate-600 my-1 border-t border-b border-dashed border-slate-300 py-1">
+                  <p className="text-[10px] italic text-[#7E5A68] my-1 border-t border-b border-dashed border-[#DFC9C1] py-1">
                     "{receiptHeader}"
                   </p>
                 )}
-                <div className="my-2 border-t border-b border-slate-300 py-1 text-[10px] flex justify-between text-slate-500">
+                <div className="my-2 border-t border-b border-[#DFC9C1] py-1 text-[10px] flex justify-between text-[#7E5A68]">
                   <span>TABLE: T-04</span>
                   <span>{billPrefix}0042</span>
                 </div>
@@ -976,12 +976,12 @@ export default function RestaurantProfileSettings({
                     <span>1x Special Thali</span>
                     <span>{currency === "INR" ? "₹" : `${currency} `}280.00</span>
                   </div>
-                  <div className="flex justify-between font-bold text-slate-900 border-t border-slate-200 pt-1">
+                  <div className="flex justify-between font-bold text-[#2A1622] border-t border-[#E8D8D2] pt-1">
                     <span>GST ({taxRate}%):</span>
                     <span>{currency === "INR" ? "₹" : `${currency} `}{(280 * (taxRate / 100)).toFixed(2)}</span>
                   </div>
                 </div>
-                <div className="border-t border-dashed border-slate-300 pt-2 mt-2 text-[10px] text-slate-500">
+                <div className="border-t border-dashed border-[#DFC9C1] pt-2 mt-2 text-[10px] text-[#7E5A68]">
                   <p>{receiptFooter || "Thank you for dining with us!"}</p>
                 </div>
               </div>
@@ -990,17 +990,17 @@ export default function RestaurantProfileSettings({
         )}
 
         {/* Global Sticky / Floating Save Changes Button */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-200/90">
-          <div className="text-xs text-slate-500">
+        <div className="flex items-center justify-between pt-4 border-t border-[#E8D8D2]">
+          <div className="text-xs text-[#7E5A68]">
             {restaurantName ? (
-              <span>Configuring identity for: <strong className="text-slate-900">{restaurantName}</strong></span>
+              <span>Configuring identity for: <strong className="text-[#2A1622]">{restaurantName}</strong></span>
             ) : null}
           </div>
 
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 px-6 py-3 text-xs font-bold text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-2 rounded-xl bg-[#2A1622] hover:bg-[#3A1E2F] px-6 py-3 text-xs font-bold text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer"
           >
             {saving ? (
               <>

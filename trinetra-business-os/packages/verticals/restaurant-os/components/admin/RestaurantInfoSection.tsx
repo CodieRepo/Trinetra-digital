@@ -400,8 +400,8 @@ export default function RestaurantInfoSection({
       )}
 
       {actionMessage && (
-        <AdminCard className="p-4 border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10">
-          <p className="text-sm text-emerald-700 dark:text-emerald-300">
+        <AdminCard className="p-4 border border-[#0F6E6E]/25 dark:border-emerald-800 bg-[#0F6E6E]/10/50 dark:bg-emerald-900/10">
+          <p className="text-sm text-[#0F6E6E] dark:text-emerald-300">
             {actionMessage}
           </p>
         </AdminCard>
@@ -422,7 +422,7 @@ export default function RestaurantInfoSection({
           <div
             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
               isProvisioned
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                ? "bg-emerald-100 text-[#0F6E6E] dark:bg-emerald-900/30 dark:text-emerald-300"
                 : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
             }`}
           >

@@ -115,21 +115,21 @@ export default function CustomerPaymentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-stone-200 bg-white p-6 text-stone-900 shadow-2xl max-h-[92vh] overflow-y-auto relative">
+      <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-[#E8D8D2] bg-white p-6 text-[#2A1622] shadow-2xl max-h-[92vh] overflow-y-auto relative">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 border-b border-stone-100 pb-4">
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-200/80 px-2.5 py-0.5 text-[11px] font-black text-amber-950 uppercase tracking-wide">
               Table #{tableNumber || "Direct"} • Payment
             </span>
-            <h3 className="mt-1 text-xl font-black uppercase tracking-tight text-stone-900">
+            <h3 className="mt-1 text-xl font-black uppercase tracking-tight text-[#2A1622]">
               {restaurantName}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="h-9 w-9 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition cursor-pointer"
+            className="h-9 w-9 rounded-xl bg-stone-100 hover:bg-stone-200 text-[#7E5A68] flex items-center justify-center transition cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -141,16 +141,16 @@ export default function CustomerPaymentModal({
             <p className="text-xs font-black uppercase tracking-wider text-amber-800">
               Total Payable
             </p>
-            <p className="text-2xl font-black text-stone-900 tracking-tight mt-0.5">
+            <p className="text-2xl font-black text-[#2A1622] tracking-tight mt-0.5">
               {formattedTotalPayable}
             </p>
           </div>
           <div className="text-right">
-            <span className="text-[11px] font-bold text-stone-500 block">
+            <span className="text-[11px] font-bold text-[#7E5A68] block">
               Bill: {formattedBillAmount}
             </span>
             {tipAmount > 0 && (
-              <span className="text-[11px] font-black text-emerald-700 block">
+              <span className="text-[11px] font-black text-[#0F6E6E] block">
                 + ₹{tipAmount} Tip
               </span>
             )}
@@ -159,19 +159,19 @@ export default function CustomerPaymentModal({
 
         {submittedSuccess ? (
           <div className="mt-6 py-6 text-center space-y-3 animate-in zoom-in-95">
-            <div className="h-16 w-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+            <div className="h-16 w-16 rounded-full bg-emerald-100 text-[#0F6E6E] flex items-center justify-center mx-auto">
               <CheckCircle2 size={36} />
             </div>
-            <h4 className="text-xl font-black text-stone-900 uppercase tracking-tight">
+            <h4 className="text-xl font-black text-[#2A1622] uppercase tracking-tight">
               Payment Notified!
             </h4>
-            <p className="text-xs text-stone-600 max-w-sm mx-auto font-medium">
+            <p className="text-xs text-[#7E5A68] max-w-sm mx-auto font-medium">
               We have notified the cashier of your {selectedMethod.toUpperCase()} payment for Table #{tableNumber}. Thank you for dining with us!
             </p>
             <button
               type="button"
               onClick={onClose}
-              className="mt-4 min-h-[48px] w-full rounded-2xl bg-stone-900 text-white text-xs font-black uppercase tracking-wider transition hover:bg-stone-800 cursor-pointer shadow-xs"
+              className="mt-4 min-h-[48px] w-full rounded-2xl bg-[#2A1622] text-white text-xs font-black uppercase tracking-wider transition hover:bg-[#3A1E2F] cursor-pointer shadow-xs"
             >
               Back to Order Tracker
             </button>
@@ -180,7 +180,7 @@ export default function CustomerPaymentModal({
           <div className="mt-5 space-y-5">
             {/* Payment Method Selector */}
             <div>
-              <label className="block text-[11px] font-black uppercase tracking-wider text-stone-600 mb-2">
+              <label className="block text-[11px] font-black uppercase tracking-wider text-[#7E5A68] mb-2">
                 Select Payment Mode
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -197,8 +197,8 @@ export default function CustomerPaymentModal({
                       onClick={() => setSelectedMethod(m.id)}
                       className={`min-h-[50px] rounded-2xl border p-2.5 flex flex-col items-center justify-center gap-1 text-xs font-black uppercase tracking-wider transition cursor-pointer active:scale-95 ${
                         selectedMethod === m.id
-                          ? "bg-stone-900 text-white border-stone-900 shadow-xs"
-                          : "bg-white text-stone-700 border-stone-200 hover:bg-stone-50"
+                          ? "bg-[#2A1622] text-white border-stone-900 shadow-xs"
+                          : "bg-white text-stone-700 border-[#E8D8D2] hover:bg-[#FAF2EE]"
                       }`}
                     >
                       <Icon size={16} />
@@ -211,10 +211,10 @@ export default function CustomerPaymentModal({
 
             {/* Mode 1: Scan UPI QR */}
             {selectedMethod === "upi_qr" && (
-              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-center space-y-3">
+              <div className="rounded-2xl border border-[#E8D8D2] bg-[#FAF2EE] p-4 text-center space-y-3">
                 {generatedQrUrl ? (
                   <>
-                    <div className="bg-white p-3 rounded-2xl border border-stone-200 inline-block shadow-xs">
+                    <div className="bg-white p-3 rounded-2xl border border-[#E8D8D2] inline-block shadow-xs">
                       <img
                         src={generatedQrUrl}
                         alt="UPI QR Code"
@@ -223,18 +223,18 @@ export default function CustomerPaymentModal({
                     </div>
 
                     <div>
-                      <p className="text-xs font-black text-stone-900">
+                      <p className="text-xs font-black text-[#2A1622]">
                         Scan with any UPI App (GPay, PhonePe, Paytm)
                       </p>
                       {cleanUpiId && (
-                        <div className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700">
+                        <div className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white border border-[#E8D8D2] px-3 py-1.5 text-xs font-semibold text-stone-700">
                           <span className="font-mono text-[11px]">{cleanUpiId}</span>
                           <button
                             type="button"
                             onClick={handleCopyUpi}
                             className="text-amber-800 font-bold hover:underline flex items-center gap-1 cursor-pointer"
                           >
-                            {copied ? <Check size={13} className="text-emerald-700" /> : <Copy size={13} />}
+                            {copied ? <Check size={13} className="text-[#0F6E6E]" /> : <Copy size={13} />}
                             <span>{copied ? "Copied!" : "Copy"}</span>
                           </button>
                         </div>
@@ -242,7 +242,7 @@ export default function CustomerPaymentModal({
                     </div>
                   </>
                 ) : (
-                  <p className="text-xs text-stone-600 font-medium py-4">
+                  <p className="text-xs text-[#7E5A68] font-medium py-4">
                     Online UPI QR is not configured by the restaurant yet. Please pay Cash at Table or ask staff for the counter QR.
                   </p>
                 )}
@@ -251,22 +251,22 @@ export default function CustomerPaymentModal({
 
             {/* Mode 2: Launch UPI App */}
             {selectedMethod === "upi_app" && (
-              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-center space-y-3">
+              <div className="rounded-2xl border border-[#E8D8D2] bg-[#FAF2EE] p-4 text-center space-y-3">
                 {upiIntentString ? (
                   <>
-                    <p className="text-xs text-stone-600 font-medium">
+                    <p className="text-xs text-[#7E5A68] font-medium">
                       Tap below to open your preferred UPI payment app directly on your device:
                     </p>
                     <a
                       href={upiIntentString}
-                      className="min-h-[52px] w-full rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition active:scale-95"
+                      className="min-h-[52px] w-full rounded-2xl bg-[#B85D19] hover:bg-[#9E4E14] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition active:scale-95"
                     >
                       <Smartphone size={16} />
                       <span>Open UPI Payment App ({formattedTotalPayable})</span>
                     </a>
                   </>
                 ) : (
-                  <p className="text-xs text-stone-600 font-medium py-4">
+                  <p className="text-xs text-[#7E5A68] font-medium py-4">
                     UPI ID is not configured by the restaurant yet. Please pay Cash at Table or ask staff for the counter QR.
                   </p>
                 )}
@@ -275,10 +275,10 @@ export default function CustomerPaymentModal({
 
             {/* Mode 3: Pay by Cash */}
             {selectedMethod === "cash" && (
-              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-center space-y-2">
+              <div className="rounded-2xl border border-[#E8D8D2] bg-[#FAF2EE] p-4 text-center space-y-2">
                 <Banknote size={32} className="mx-auto text-amber-700" />
-                <p className="text-sm font-black text-stone-900">Pay Cash at Table</p>
-                <p className="text-xs text-stone-600 font-medium">
+                <p className="text-sm font-black text-[#2A1622]">Pay Cash at Table</p>
+                <p className="text-xs text-[#7E5A68] font-medium">
                   Please keep exact cash ({formattedTotalPayable}) ready for your server.
                 </p>
               </div>
@@ -287,7 +287,7 @@ export default function CustomerPaymentModal({
             {/* Tip Selector */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-black uppercase tracking-wider text-stone-600 flex items-center gap-1">
+                <label className="text-[11px] font-black uppercase tracking-wider text-[#7E5A68] flex items-center gap-1">
                   <Heart size={13} className="text-rose-500" />
                   Add Staff Tip (Optional)
                 </label>
@@ -295,7 +295,7 @@ export default function CustomerPaymentModal({
                   <button
                     type="button"
                     onClick={() => handleSelectTip(0)}
-                    className="text-[10px] font-bold text-stone-500 hover:underline cursor-pointer"
+                    className="text-[10px] font-bold text-[#7E5A68] hover:underline cursor-pointer"
                   >
                     Remove
                   </button>
@@ -310,8 +310,8 @@ export default function CustomerPaymentModal({
                     onClick={() => handleSelectTip(preset)}
                     className={`min-h-[44px] px-3.5 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer border shrink-0 active:scale-95 ${
                       tipAmount === preset && !isCustomTip
-                        ? "bg-amber-500 text-stone-950 border-amber-500 shadow-xs"
-                        : "bg-white text-stone-700 border-stone-200 hover:bg-stone-50"
+                        ? "bg-[#B85D19] text-white border-amber-500 shadow-xs"
+                        : "bg-white text-stone-700 border-[#E8D8D2] hover:bg-[#FAF2EE]"
                     }`}
                   >
                     {preset === 0 ? "No Tip" : `+ ₹${preset}`}
@@ -322,8 +322,8 @@ export default function CustomerPaymentModal({
                   onClick={() => setIsCustomTip(true)}
                   className={`min-h-[44px] px-3.5 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer border shrink-0 active:scale-95 ${
                     isCustomTip
-                      ? "bg-amber-500 text-stone-950 border-amber-500 shadow-xs"
-                      : "bg-white text-stone-700 border-stone-200 hover:bg-stone-50"
+                      ? "bg-[#B85D19] text-white border-amber-500 shadow-xs"
+                      : "bg-white text-stone-700 border-[#E8D8D2] hover:bg-[#FAF2EE]"
                   }`}
                 >
                   Custom
@@ -336,7 +336,7 @@ export default function CustomerPaymentModal({
                   placeholder="Enter tip amount in ₹"
                   value={customTip}
                   onChange={(e) => handleCustomTipChange(e.target.value)}
-                  className="mt-2 w-full min-h-[44px] rounded-xl border border-stone-200 bg-white px-3 text-xs font-semibold text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:outline-none"
+                  className="mt-2 w-full min-h-[44px] rounded-xl border border-[#E8D8D2] bg-white px-3 text-xs font-semibold text-[#2A1622] placeholder:text-stone-400 focus:border-[#B85D19] focus:outline-none"
                 />
               )}
             </div>
@@ -344,7 +344,7 @@ export default function CustomerPaymentModal({
             {/* Optional UTR Number Input */}
             {selectedMethod !== "cash" && (
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider text-stone-600 mb-1">
+                <label className="block text-[11px] font-black uppercase tracking-wider text-[#7E5A68] mb-1">
                   UTR / Transaction ID (Optional)
                 </label>
                 <input
@@ -352,7 +352,7 @@ export default function CustomerPaymentModal({
                   placeholder="e.g. 324156789012"
                   value={utrNumber}
                   onChange={(e) => setUtrNumber(e.target.value)}
-                  className="w-full min-h-[44px] rounded-xl border border-stone-200 bg-white px-3 text-xs font-semibold text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:outline-none"
+                  className="w-full min-h-[44px] rounded-xl border border-[#E8D8D2] bg-white px-3 text-xs font-semibold text-[#2A1622] placeholder:text-stone-400 focus:border-[#B85D19] focus:outline-none"
                 />
               </div>
             )}
@@ -363,7 +363,7 @@ export default function CustomerPaymentModal({
                 type="button"
                 disabled={submitting}
                 onClick={handleNotifyPayment}
-                className="w-full min-h-[52px] rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-black text-xs uppercase tracking-wider transition cursor-pointer disabled:opacity-50 active:scale-95 shadow-xs flex items-center justify-center gap-2"
+                className="w-full min-h-[52px] rounded-2xl bg-[#2A1622] hover:bg-[#3A1E2F] text-white font-black text-xs uppercase tracking-wider transition cursor-pointer disabled:opacity-50 active:scale-95 shadow-xs flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
