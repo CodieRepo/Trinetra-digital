@@ -744,25 +744,43 @@ export default function StaffOrdersPanel({
     <div className="space-y-6">
       
       {/* Top Operational Summary Card */}
-      <div className="rounded-3xl border border-stone-200/90 bg-white p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+      <div
+        className={`rounded-3xl border p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-5 ${
+          role === "kitchen"
+            ? "border-zinc-800 bg-[#141820] text-zinc-100"
+            : "border-stone-200/90 bg-white text-stone-900"
+        }`}
+      >
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             {restaurantName && (
-              <span className="text-xs font-black uppercase tracking-wider text-stone-900 bg-stone-100 border border-stone-200 px-2.5 py-0.5 rounded-full">
+              <span
+                className={`text-xs font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                  role === "kitchen"
+                    ? "text-zinc-200 bg-zinc-800 border-zinc-700"
+                    : "text-stone-900 bg-stone-100 border-stone-200"
+                }`}
+              >
                 {restaurantName}
               </span>
             )}
-            <span className="text-xs font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
-              {role === "kitchen" ? "Kitchen Station" : "Waiter Operations"}
+            <span
+              className={`text-xs font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                role === "kitchen"
+                  ? "text-amber-300 bg-amber-400/15 border-amber-400/30"
+                  : "text-amber-800 bg-amber-50 border-amber-200"
+              }`}
+            >
+              {role === "kitchen" ? "Kitchen KDS" : "Waiter Operations"}
             </span>
-            <span className="text-xs font-semibold text-stone-500">
+            <span className={`text-xs font-semibold ${role === "kitchen" ? "text-zinc-400" : "text-stone-500"}`}>
               {payload?.staff?.name ? `Staff: ${payload.staff.name}` : "Verified Staff Session"}
             </span>
           </div>
-          <h2 className="mt-2 text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+          <h2 className={`mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight ${role === "kitchen" ? "text-white" : "text-stone-900"}`}>
             {role === "kitchen" ? "Kitchen Dispatch Board" : "Dining Tables & Floors"}
           </h2>
-          <p className="mt-1 text-xs sm:text-sm text-stone-600 font-medium">
+          <p className={`mt-1 text-xs sm:text-sm font-medium ${role === "kitchen" ? "text-zinc-400" : "text-stone-600"}`}>
             {role === "kitchen"
               ? "Real-time kitchen orders stream and preparation lifecycle."
               : "Select a dining floor and tap any table to begin tableside ordering."}
@@ -770,19 +788,32 @@ export default function StaffOrdersPanel({
         </div>
 
         {/* Quick Operational Metrics */}
-        {role === "waiter" && (
+        {role === "kitchen" ? (
+          <div className="grid grid-cols-2 gap-3 shrink-0">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 px-4 py-3 text-center">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Active Tickets</p>
+              <p className="text-xl font-extrabold text-amber-300 mt-0.5 tabular-nums">{payload?.orders?.length || 0}</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-center">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Ready</p>
+              <p className="text-xl font-extrabold text-emerald-200 mt-0.5 tabular-nums">
+                {payload?.orders?.filter((o) => o.status === "ready").length || 0}
+              </p>
+            </div>
+          </div>
+        ) : (
           <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
             <div className="rounded-2xl border border-stone-200/80 bg-stone-50/80 px-3.5 py-2.5 text-center">
               <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Total Tables</p>
-              <p className="text-lg sm:text-xl font-black text-stone-900 mt-0.5">{tables.length}</p>
+              <p className="text-lg sm:text-xl font-extrabold text-stone-900 mt-0.5 tabular-nums">{tables.length}</p>
             </div>
             <div className="rounded-2xl border border-amber-200/80 bg-amber-50/80 px-3.5 py-2.5 text-center">
               <p className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Occupied</p>
-              <p className="text-lg sm:text-xl font-black text-amber-900 mt-0.5">{sessionsPayload?.sessions?.length || 0}</p>
+              <p className="text-lg sm:text-xl font-extrabold text-amber-900 mt-0.5 tabular-nums">{sessionsPayload?.sessions?.length || 0}</p>
             </div>
             <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/80 px-3.5 py-2.5 text-center">
               <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Live Orders</p>
-              <p className="text-lg sm:text-xl font-black text-emerald-900 mt-0.5">{payload?.orders?.length || 0}</p>
+              <p className="text-lg sm:text-xl font-extrabold text-emerald-900 mt-0.5 tabular-nums">{payload?.orders?.length || 0}</p>
             </div>
           </div>
         )}
@@ -796,14 +827,14 @@ export default function StaffOrdersPanel({
             onClick={() => setActiveTab("tables")}
             className={`min-h-[46px] rounded-2xl px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-extrabold transition cursor-pointer flex items-center gap-2 ${
               activeTab === "tables"
-                ? "bg-amber-500 text-stone-950 shadow-sm border border-amber-400"
+                ? "bg-stone-900 text-amber-300 shadow-sm border border-stone-900"
                 : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 hover:text-stone-900"
             }`}
           >
             <Layers size={16} />
             <span>Floors & Tables</span>
             <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-              activeTab === "tables" ? "bg-amber-600/30 text-stone-950" : "bg-stone-100 text-stone-600"
+              activeTab === "tables" ? "bg-amber-400 text-stone-950" : "bg-stone-100 text-stone-600"
             }`}>
               {tables.length}
             </span>
@@ -814,7 +845,7 @@ export default function StaffOrdersPanel({
             onClick={() => setActiveTab("orders")}
             className={`min-h-[46px] rounded-2xl px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-extrabold transition cursor-pointer flex items-center gap-2 ${
               activeTab === "orders"
-                ? "bg-amber-500 text-stone-950 shadow-sm border border-amber-400"
+                ? "bg-stone-900 text-amber-300 shadow-sm border border-stone-900"
                 : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 hover:text-stone-900"
             }`}
           >
@@ -822,7 +853,7 @@ export default function StaffOrdersPanel({
             <span>Live Orders</span>
             {payload?.orders && payload.orders.length > 0 && (
               <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                activeTab === "orders" ? "bg-amber-600/30 text-stone-950" : "bg-amber-100 text-amber-900"
+                activeTab === "orders" ? "bg-amber-400 text-stone-950" : "bg-amber-100 text-amber-900"
               }`}>
                 {payload.orders.length}
               </span>
@@ -834,7 +865,7 @@ export default function StaffOrdersPanel({
             onClick={() => setActiveTab("sessions")}
             className={`min-h-[46px] rounded-2xl px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-extrabold transition cursor-pointer flex items-center gap-2 ${
               activeTab === "sessions"
-                ? "bg-amber-500 text-stone-950 shadow-sm border border-amber-400"
+                ? "bg-stone-900 text-amber-300 shadow-sm border border-stone-900"
                 : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 hover:text-stone-900"
             }`}
           >
@@ -842,7 +873,7 @@ export default function StaffOrdersPanel({
             <span>Active Bills & Settlement</span>
             {sessionsPayload?.sessions && sessionsPayload.sessions.length > 0 && (
               <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                activeTab === "sessions" ? "bg-amber-600/30 text-stone-950" : "bg-emerald-100 text-emerald-900"
+                activeTab === "sessions" ? "bg-amber-400 text-stone-950" : "bg-emerald-100 text-emerald-900"
               }`}>
                 {sessionsPayload.sessions.length}
               </span>

@@ -238,35 +238,73 @@ export default function StaffOpsPage() {
     setAuthError(null);
   }, []);
 
+  const isKitchen = role === "kitchen";
+
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-stone-900 font-sans selection:bg-amber-100 selection:text-amber-900 flex flex-col">
+    <div
+      className={`min-h-screen font-sans selection:bg-amber-100 selection:text-amber-900 flex flex-col ${
+        isKitchen ? "bg-[#0B0D10] text-zinc-100" : "bg-[#F6F5F1] text-stone-900"
+      }`}
+    >
       {/* Top Navigation Bar — Restaurant-First Identity */}
-      <header className="border-b border-stone-200/90 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sticky top-0 z-30 shadow-sm">
+      <header
+        className={`border-b backdrop-blur-md px-4 sm:px-6 py-3.5 sticky top-0 z-30 shadow-sm ${
+          isKitchen
+            ? "border-zinc-800 bg-[#101318]/95"
+            : "border-stone-200/90 bg-white/95"
+        }`}
+      >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           
           {/* Restaurant Identity & Operational Mode */}
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-11 w-11 rounded-2xl bg-amber-500 flex items-center justify-center font-black text-stone-950 text-base shadow-sm shrink-0">
-              <UtensilsCrossed size={22} />
+            <div
+              className={`h-11 w-11 rounded-2xl flex items-center justify-center font-black text-base shadow-sm shrink-0 ${
+                isKitchen
+                  ? "bg-gradient-to-br from-amber-400 to-orange-500 text-stone-950"
+                  : "bg-gradient-to-br from-stone-900 to-amber-900 text-amber-300"
+              }`}
+            >
+              <UtensilsCrossed size={20} />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg md:text-xl font-black text-stone-900 tracking-tight truncate uppercase">
-                  {restaurantName || (role === "kitchen" ? "Kitchen Display" : "Waiter Service")}
+                <h1
+                  className={`text-lg md:text-xl font-extrabold tracking-tight truncate capitalize ${
+                    isKitchen ? "text-white" : "text-stone-900"
+                  }`}
+                >
+                  {restaurantName || (isKitchen ? "Kitchen Display" : "Waiter Service")}
                 </h1>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200 shrink-0">
-                  {role === "kitchen" ? "Kitchen Display Station" : "Waiter Board"}
+                <span
+                  className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border shrink-0 ${
+                    isKitchen
+                      ? "bg-amber-400/15 text-amber-300 border-amber-400/30"
+                      : "bg-amber-50 text-amber-900 border-amber-200"
+                  }`}
+                >
+                  {isKitchen ? "Kitchen KDS" : "Waiter Board"}
                 </span>
                 {staffInfo?.name && (
-                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-700 border border-stone-200 shrink-0">
-                    👤 {staffInfo.name} ({staffInfo.role || role})
+                  <span
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 ${
+                      isKitchen
+                        ? "bg-zinc-800 text-zinc-200 border-zinc-700"
+                        : "bg-stone-100 text-stone-700 border-stone-200"
+                    }`}
+                  >
+                    {staffInfo.name} · {staffInfo.role || role}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-stone-500 font-medium truncate mt-0.5">
-                {role === "kitchen" ? "Kitchen Dispatch & Prep Queue" : "Dining Floor & Tableside Ordering"}
-                <span className="mx-1.5 text-stone-300">•</span>
-                <span className="text-[11px] text-stone-400 font-semibold">Powered by Trinetra</span>
+              <p
+                className={`text-xs font-medium truncate mt-0.5 ${
+                  isKitchen ? "text-zinc-400" : "text-stone-500"
+                }`}
+              >
+                {isKitchen ? "Kitchen Dispatch & Prep Queue" : "Dining Floor & Tableside Ordering"}
+                <span className="mx-1.5 opacity-40">•</span>
+                <span className="text-[11px] opacity-75 font-semibold">Trinetra Restaurant OS</span>
               </p>
             </div>
           </div>
@@ -277,16 +315,26 @@ export default function StaffOpsPage() {
               <button
                 type="button"
                 onClick={installApp}
-                className="hidden md:inline-flex text-xs font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 border border-stone-200 px-3.5 py-2 rounded-xl items-center gap-2 cursor-pointer transition active:scale-95"
+                className={`hidden md:inline-flex text-xs font-bold border px-3.5 py-2 rounded-xl items-center gap-2 cursor-pointer transition active:scale-95 ${
+                  isKitchen
+                    ? "text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border-zinc-700"
+                    : "text-stone-700 bg-stone-100 hover:bg-stone-200 border-stone-200"
+                }`}
               >
-                <Smartphone size={14} className="text-amber-600" />
+                <Smartphone size={14} className="text-amber-500" />
                 <span>Install App</span>
               </button>
             )}
 
             <NotificationCenter restaurantId={restaurantId} role={role} />
 
-            <span className="hidden sm:inline-flex text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 rounded-xl items-center gap-1.5">
+            <span
+              className={`hidden sm:inline-flex text-xs font-bold border px-3 py-1.5 rounded-xl items-center gap-1.5 ${
+                isKitchen
+                  ? "text-emerald-300 bg-emerald-500/10 border-emerald-500/25"
+                  : "text-emerald-800 bg-emerald-50 border-emerald-200/80"
+              }`}
+            >
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Live Connected
             </span>
@@ -296,7 +344,11 @@ export default function StaffOpsPage() {
                 type="button"
                 onClick={handleSignOut}
                 title="Lock terminal and sign out"
-                className="min-h-[40px] text-xs font-bold text-stone-600 hover:text-rose-700 bg-stone-100 hover:bg-rose-50 border border-stone-200 hover:border-rose-200 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                className={`min-h-[40px] text-xs font-bold border px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                  isKitchen
+                    ? "text-zinc-200 hover:text-rose-300 bg-zinc-900 hover:bg-rose-500/15 border-zinc-700 hover:border-rose-500/40"
+                    : "text-stone-600 hover:text-rose-700 bg-stone-100 hover:bg-rose-50 border-stone-200 hover:border-rose-200"
+                }`}
               >
                 <LogOut size={14} />
                 <span className="hidden sm:inline">Lock / Switch Staff</span>
@@ -306,7 +358,11 @@ export default function StaffOpsPage() {
                 type="button"
                 onClick={() => navigate("/restaurant")}
                 title="Return to Restaurant Portal"
-                className="min-h-[40px] text-xs font-bold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 border border-stone-200 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                className={`min-h-[40px] text-xs font-bold border px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                  isKitchen
+                    ? "text-zinc-200 hover:text-white bg-zinc-900 hover:bg-zinc-800 border-zinc-700"
+                    : "text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 border-stone-200"
+                }`}
               >
                 <span>Admin Portal</span>
               </button>
@@ -318,17 +374,29 @@ export default function StaffOpsPage() {
       {/* Main Content: Lockscreen vs Active Operations Board */}
       {!token ? (
         <div className="flex-1 flex items-center justify-center p-4 sm:p-6 my-auto">
-          <div className="w-full max-w-sm bg-white rounded-3xl border border-stone-200/90 shadow-xl p-6 sm:p-8 text-center space-y-6">
+          <div
+            className={`w-full max-w-sm rounded-3xl border shadow-2xl p-6 sm:p-8 text-center space-y-6 ${
+              isKitchen
+                ? "bg-[#141820] border-zinc-800 text-zinc-100"
+                : "bg-white border-stone-200/90 text-stone-900"
+            }`}
+          >
             
             {/* Terminal Lock Icon & Branding */}
             <div className="flex flex-col items-center gap-2">
-              <div className="h-16 w-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 shadow-inner">
-                <Lock size={32} />
+              <div
+                className={`h-16 w-16 rounded-2xl border flex items-center justify-center shadow-inner ${
+                  isKitchen
+                    ? "bg-amber-400/10 border-amber-400/25 text-amber-400"
+                    : "bg-amber-500/10 border-amber-500/20 text-amber-600"
+                }`}
+              >
+                <Lock size={30} />
               </div>
-              <h2 className="text-xl font-black text-stone-900 tracking-tight mt-1">
-                {role === "kitchen" ? "Kitchen Terminal Lock" : "Waiter Terminal Lock"}
+              <h2 className={`text-xl font-black tracking-tight mt-1 ${isKitchen ? "text-white" : "text-stone-900"}`}>
+                {isKitchen ? "Kitchen Terminal Lock" : "Waiter Terminal Lock"}
               </h2>
-              <p className="text-xs text-stone-500 font-medium">
+              <p className={`text-xs font-medium ${isKitchen ? "text-zinc-400" : "text-stone-500"}`}>
                 Enter your 4 to 6 digit Staff PIN to unlock operations.
               </p>
             </div>
@@ -342,8 +410,10 @@ export default function StaffOpsPage() {
                     key={idx}
                     className={`h-4 w-4 rounded-full transition-all duration-200 ${
                       isFilled
-                        ? "bg-amber-500 scale-110 shadow-sm shadow-amber-500/50 ring-2 ring-amber-200"
-                        : "bg-stone-200 border border-stone-300"
+                        ? "bg-amber-500 scale-110 shadow-sm shadow-amber-500/50 ring-2 ring-amber-300/40"
+                        : isKitchen
+                          ? "bg-zinc-800 border border-zinc-700"
+                          : "bg-stone-200 border border-stone-300"
                     }`}
                   />
                 );
@@ -366,7 +436,11 @@ export default function StaffOpsPage() {
                   type="button"
                   onClick={() => handleDigitPress(num)}
                   disabled={isAuthenticating}
-                  className="h-14 rounded-2xl bg-stone-50 hover:bg-amber-50 active:bg-amber-100 border border-stone-200/80 hover:border-amber-300 text-xl font-bold text-stone-800 transition active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 select-none shadow-sm"
+                  className={`h-14 rounded-2xl border text-xl font-bold transition active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 select-none shadow-sm ${
+                    isKitchen
+                      ? "bg-zinc-900 hover:bg-zinc-800 active:bg-amber-500/20 border-zinc-800 hover:border-amber-400/50 text-white"
+                      : "bg-stone-50 hover:bg-amber-50 active:bg-amber-100 border-stone-200/80 hover:border-amber-300 text-stone-800"
+                  }`}
                 >
                   {num}
                 </button>
@@ -377,7 +451,11 @@ export default function StaffOpsPage() {
                 type="button"
                 onClick={handleClear}
                 disabled={isAuthenticating || pinInput.length === 0}
-                className="h-14 rounded-2xl bg-stone-100 hover:bg-stone-200 active:bg-stone-300 text-xs font-bold text-stone-600 transition active:scale-95 flex flex-col items-center justify-center cursor-pointer disabled:opacity-40 select-none"
+                className={`h-14 rounded-2xl text-xs font-bold transition active:scale-95 flex flex-col items-center justify-center cursor-pointer disabled:opacity-40 select-none ${
+                  isKitchen
+                    ? "bg-zinc-900/70 hover:bg-zinc-800 text-zinc-400 border border-zinc-800"
+                    : "bg-stone-100 hover:bg-stone-200 active:bg-stone-300 text-stone-600"
+                }`}
               >
                 <RotateCcw size={16} />
                 <span className="text-[10px] mt-0.5">Clear</span>
@@ -388,7 +466,11 @@ export default function StaffOpsPage() {
                 type="button"
                 onClick={() => handleDigitPress("0")}
                 disabled={isAuthenticating}
-                className="h-14 rounded-2xl bg-stone-50 hover:bg-amber-50 active:bg-amber-100 border border-stone-200/80 hover:border-amber-300 text-xl font-bold text-stone-800 transition active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 select-none shadow-sm"
+                className={`h-14 rounded-2xl border text-xl font-bold transition active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 select-none shadow-sm ${
+                  isKitchen
+                    ? "bg-zinc-900 hover:bg-zinc-800 active:bg-amber-500/20 border-zinc-800 hover:border-amber-400/50 text-white"
+                    : "bg-stone-50 hover:bg-amber-50 active:bg-amber-100 border-stone-200/80 hover:border-amber-300 text-stone-800"
+                }`}
               >
                 0
               </button>
@@ -398,7 +480,11 @@ export default function StaffOpsPage() {
                 type="button"
                 onClick={handleBackspace}
                 disabled={isAuthenticating || pinInput.length === 0}
-                className="h-14 rounded-2xl bg-stone-100 hover:bg-stone-200 active:bg-stone-300 text-xs font-bold text-stone-600 transition active:scale-95 flex flex-col items-center justify-center cursor-pointer disabled:opacity-40 select-none"
+                className={`h-14 rounded-2xl text-xs font-bold transition active:scale-95 flex flex-col items-center justify-center cursor-pointer disabled:opacity-40 select-none ${
+                  isKitchen
+                    ? "bg-zinc-900/70 hover:bg-zinc-800 text-zinc-400 border border-zinc-800"
+                    : "bg-stone-100 hover:bg-stone-200 active:bg-stone-300 text-stone-600"
+                }`}
               >
                 <Delete size={18} />
                 <span className="text-[10px] mt-0.5">Delete</span>
