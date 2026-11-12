@@ -7,16 +7,22 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const context = await resolveRestaurantContext(request);
-  if (!context.isAuthenticated || !context.tenantId || !context.restaurantId) {
-    return NextResponse.json({ error: "Unauthorized restaurant session" }, { status: 401 });
-  }
-
-  let body: { question?: string };
+  let body: { question?: string; restaurant_id?: string; tenant_id?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  let context;
+  try {
+    context = await resolveRestaurantContext(request, body);
+  } catch {
+    return NextResponse.json({ error: "Unauthorized restaurant session" }, { status: 401 });
+  }
+
+  if (!context.isAuthenticated || !context.tenantId || !context.restaurantId) {
+    return NextResponse.json({ error: "Unauthorized restaurant session" }, { status: 401 });
   }
 
   const question = String(body.question || "").trim();
@@ -28,22 +34,33 @@ export async function POST(request: Request) {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
-  const [ordersRes, tablesRes, inventoryRes] = await Promise.all([
+  const [restRes, ordersRes, tablesRes, inventoryRes] = await Promise.all([
+    db
+      .from("restaurants")
+      .select("name")
+      .eq("id", context.restaurantId)
+      .eq("tenant_id", context.tenantId)
+      .maybeSingle(),
     db
       .from("restaurant_orders")
       .select("id, status, total_amount, created_at")
+      .eq("tenant_id", context.tenantId)
       .eq("restaurant_id", context.restaurantId)
       .gte("created_at", startOfDay.toISOString()),
     db
       .from("restaurant_tables")
       .select("id, status, table_number")
+      .eq("tenant_id", context.tenantId)
       .eq("restaurant_id", context.restaurantId)
-      .eq("is_active", true),
+      .neq("is_active", false),
     db
       .from("restaurant_inventory_items")
       .select("name, current_stock, min_stock, unit")
+      .eq("tenant_id", context.tenantId)
       .eq("restaurant_id", context.restaurantId),
   ]);
+
+  const restaurantName = restRes.data?.name || "this restaurant";
 
   const orders = ordersRes.data || [];
   const activeOrders = orders.filter((o) => !["completed", "cancelled", "paid"].includes(o.status || "")).length;
@@ -60,6 +77,7 @@ export async function POST(request: Request) {
     .map((item) => `${item.name} (${item.current_stock} ${item.unit || "units"})`);
 
   const snapshot = {
+    restaurantName,
     todayOrdersCount: orders.length,
     activeOrders,
     todayRevenue,
@@ -69,7 +87,7 @@ export async function POST(request: Request) {
     lowStockItems,
   };
 
-  const edgeRes = await callEdgeAiRoute("/ai/restro-copilot", { question, snapshot });
+  const edgeRes = await callEdgeAiRoute("/ai/restro-copilot", { question, snapshot, restaurantName });
   if (edgeRes.ok && edgeRes.reply) {
     return NextResponse.json({
       success: true,

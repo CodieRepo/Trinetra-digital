@@ -424,6 +424,8 @@ export default function RestaurantPortal() {
         open={aiOpsOpen}
         onClose={() => setAiOpsOpen(false)}
         accessToken={session?.access_token || null}
+        restaurantId={restaurant.id}
+        tenantId={tenantId}
         restaurantName={restaurant.name}
       />
     </div>

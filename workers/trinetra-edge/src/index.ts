@@ -147,13 +147,14 @@ async function handleAiRoute(pathname: string, request: Request, env: EdgeWorker
     if (pathname === "/ai/restro-copilot") {
       const question = String(body.question || "").trim();
       const snapshot = body.snapshot ?? {};
+      const restaurantName = String(body.restaurantName || (snapshot as Record<string, unknown>)?.restaurantName || "this restaurant").trim();
       if (!question) {
         return jsonResponse({ ok: false, error: "question is required" }, 400);
       }
 
       const systemPrompt =
-        "You are Trinetra Restaurant OS Operations Assistant (read-only). Answer strictly from the provided live restaurant JSON snapshot (revenue, orders, tables, low stock, menu). Never invent numbers or claim to modify bills or orders. Keep answers actionable and concise.";
-      const userPrompt = `Live Restaurant Snapshot:\n${JSON.stringify(snapshot)}\n\nStaff Question: ${question}`;
+        `You are the private read-only Operations Assistant exclusively for "${restaurantName}". Answer strictly and ONLY from the provided live JSON snapshot for "${restaurantName}" (revenue, orders, tables, low stock). Never invent numbers, never claim to modify bills/orders, and NEVER mention or disclose anything about Trinetra, platform internals, pricing, or any other restaurant. If asked about anything outside "${restaurantName}"'s live operations, politely refuse and state you only have access to "${restaurantName}"'s live operations.`;
+      const userPrompt = `Live Snapshot for ${restaurantName}:\n${JSON.stringify(snapshot)}\n\nStaff Question: ${question}`;
       const out = await runWorkersAi(env, primaryModel, systemPrompt, userPrompt, 320);
       return jsonResponse({ ok: true, ...out });
     }
@@ -171,6 +172,19 @@ async function handleAiRoute(pathname: string, request: Request, env: EdgeWorker
         ? `Context:\n${knowledgeContext}\n\nVisitor Question: ${message}`
         : `Visitor Question: ${message}`;
       const out = await runWorkersAi(env, fastModel, systemPrompt, userPrompt, 280);
+      return jsonResponse({ ok: true, ...out });
+    }
+
+    if (pathname === "/ai/normalize-bhash-history") {
+      const rawText = String(body.rawText || "").trim();
+      if (!rawText) {
+        return jsonResponse({ ok: false, error: "rawText is required" }, 400);
+      }
+
+      const systemPrompt =
+        'You are a strict JSON parser for messy WhatsApp/BhashSMS chat logs. Convert the raw input into a JSON array of objects with exact keys: "phone" (10-digit string), "name" (string), "direction" ("inbound" or "outbound"), "message" (clean text), "timestamp" (ISO string or YYYY-MM-DD HH:mm:ss). Return ONLY valid JSON array, no markdown.';
+      const userPrompt = `Normalize this chat log:\n${rawText.slice(0, 6000)}`;
+      const out = await runWorkersAi(env, fastModel, systemPrompt, userPrompt, 700);
       return jsonResponse({ ok: true, ...out });
     }
 

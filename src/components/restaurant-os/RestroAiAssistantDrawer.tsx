@@ -7,6 +7,8 @@ interface RestroAiAssistantDrawerProps {
   open: boolean;
   onClose: () => void;
   accessToken: string | null;
+  restaurantId?: string | null;
+  tenantId?: string | null;
   restaurantName: string;
 }
 
@@ -26,6 +28,8 @@ export function RestroAiAssistantDrawer({
   open,
   onClose,
   accessToken,
+  restaurantId,
+  tenantId,
   restaurantName,
 }: RestroAiAssistantDrawerProps) {
   const [question, setQuestion] = useState("");
@@ -49,11 +53,16 @@ export function RestroAiAssistantDrawer({
     try {
       const res = await fetch("/api/client/restaurant/ai-assistant", {
         method: "POST",
+        credentials: "include",
         headers: {
           "content-type": "application/json",
           ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
         },
-        body: JSON.stringify({ question: trimmed }),
+        body: JSON.stringify({
+          question: trimmed,
+          ...(restaurantId ? { restaurant_id: restaurantId } : {}),
+          ...(tenantId ? { tenant_id: tenantId } : {}),
+        }),
       });
       const data = await res.json();
       setMessages((prev) => [
