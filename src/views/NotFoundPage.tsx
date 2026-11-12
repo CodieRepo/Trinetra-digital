@@ -5,7 +5,9 @@ import { Home, ArrowRight } from "lucide-react";
 import SEO from "../components/seo/SEO";
 
 export default function NotFoundPage() {
-  useEffect(() => window.scrollTo({ top: 0, behavior: "instant" }), []);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
 
   return (
     <>

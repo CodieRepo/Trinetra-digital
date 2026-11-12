@@ -41,7 +41,9 @@ export default function ContactPage() {
   const [searchParams] = useSearchParams();
   const presetService = searchParams.get("service") || "";
 
-  useEffect(() => window.scrollTo({ top: 0, behavior: "instant" }), []);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
   
   const [submitting, setSubmitting] = useState(false);
   const [succeeded, setSucceeded] = useState(false);

@@ -3,7 +3,9 @@ import { motion } from "framer-motion";
 import SEO from "../components/seo/SEO";
 
 export default function PrivacyPage() {
-  useEffect(() => window.scrollTo({ top: 0, behavior: "instant" }), []);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
 
   return (
     <>

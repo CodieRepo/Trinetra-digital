@@ -31,7 +31,9 @@ export default function ServicePageTemplate({
   schema,
   relatedLinks,
 }: ServicePageProps) {
-  useEffect(() => window.scrollTo({ top: 0, behavior: "instant" }), []);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
 
   const WA_URL = `https://wa.me/918810721068?text=${encodeURIComponent(`Hi, I'm interested in ${title} from Trinetra Digital Solution.`)}`;
 

@@ -13,7 +13,9 @@ const SCHEMA = {
 };
 
 export default function FutureSolutions() {
-  useEffect(() => window.scrollTo({ top: 0, behavior: "instant" }), []);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
 
   const WA_NUMBER = "918810721068";
   const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi, I'm interested in learning more about Trinetra Digital's upcoming software and automation modules.")}`;

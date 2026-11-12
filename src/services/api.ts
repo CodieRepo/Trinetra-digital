@@ -562,6 +562,7 @@ export const apiService = {
         
       if (error) throw error;
       
+      if (!contact) throw new Error("Failed to create contact");
       // Auto-create a conversation entry for this contact if not exists
       try {
         await supabase

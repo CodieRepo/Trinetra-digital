@@ -42,7 +42,9 @@ const SERVICES = [
 ];
 
 export default function GorakhpurPage() {
-  useEffect(() => window.scrollTo({ top: 0, behavior: "instant" }), []);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
 
   return (
     <>

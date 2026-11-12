@@ -15,7 +15,9 @@ const SCHEMA = {
 const UP_CITIES = ["Gorakhpur", "Lucknow", "Varanasi", "Kanpur", "Agra", "Allahabad", "Meerut", "Noida", "Ghaziabad", "Mathura"];
 
 export default function UttarPradeshPage() {
-  useEffect(() => window.scrollTo({ top: 0, behavior: "instant" }), []);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
 
   return (
     <>
