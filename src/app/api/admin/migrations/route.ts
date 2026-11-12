@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { Client } from "pg";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,6 +18,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing DATABASE_URL" }, { status: 500 });
   }
 
+  const { Client } = await import("pg");
   const client = new Client({ connectionString, ssl: { rejectUnauthorized: false } });
   try {
     await client.connect();

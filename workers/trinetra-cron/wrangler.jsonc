@@ -1,0 +1,31 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "trinetra-cron",
+  "account_id": "52ca2c75d5ee0677be20c4d1a1597859",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-12",
+  "workers_dev": false,
+  "observability": {
+    "enabled": true,
+    "issues": {
+      "enabled": true
+    }
+  },
+  "triggers": {
+    "crons": [
+      "*/2 * * * *",
+      "*/10 * * * *"
+    ]
+  },
+  "vars": {
+    "APP_BASE_URL": "https://trinetradigitalsolution.com"
+  },
+  "env": {
+    "staging": {
+      "name": "trinetra-cron-staging",
+      "vars": {
+        "APP_BASE_URL": "https://trinetra-digital-staging.suryavanshisatwik792.workers.dev"
+      }
+    }
+  }
+}

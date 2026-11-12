@@ -1,16 +1,15 @@
-import fs from "fs";
-import path from "path";
+import trainingData from "../../scripts/data/training_data.json";
 
 const STOP_WORDS = new Set([
-  "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your", 
-  "yours", "yourself", "yourselves", "he", "him", "his", "himself", "she", 
-  "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", 
-  "theirs", "themselves", "what", "which", "who", "whom", "this", "that", 
-  "these", "those", "am", "is", "are", "was", "were", "be", "been", "being", 
-  "have", "has", "had", "having", "do", "does", "did", "doing", "a", "an", 
-  "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", 
-  "at", "by", "for", "with", "about", "against", "between", "into", "through", 
-  "during", "before", "after", "above", "below", "to", "from", "up", "down", 
+  "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your",
+  "yours", "yourself", "yourselves", "he", "him", "his", "himself", "she",
+  "her", "hers", "herself", "it", "its", "itself", "they", "them", "their",
+  "theirs", "themselves", "what", "which", "who", "whom", "this", "that",
+  "these", "those", "am", "is", "are", "was", "were", "be", "been", "being",
+  "have", "has", "had", "having", "do", "does", "did", "doing", "a", "an",
+  "the", "and", "but", "if", "or", "because", "as", "until", "while", "of",
+  "at", "by", "for", "with", "about", "against", "between", "into", "through",
+  "during", "before", "after", "above", "below", "to", "from", "up", "down",
   "in", "out", "on", "off", "over", "under", "again", "further", "then", "once",
   "ka", "ki", "ke", "ko", "se", "aur", "hi", "hai", "hu", "tha", "thi", "the"
 ]);
@@ -59,124 +58,97 @@ class PureNLPClassifier {
 
       for (const token of tokens) {
         this.vocabulary.add(token);
-        this.classWordCounts[label] += 1;
         this.wordCountsPerClass[label][token] = (this.wordCountsPerClass[label][token] || 0) + 1;
+        this.classWordCounts[label] += 1;
       }
     }
 
-    for (const [token, count] of Object.entries(docOccurrences)) {
-      this.idf[token] = Math.log((this.docCount + 1) / (count + 1)) + 1.0;
+    for (const token of this.vocabulary) {
+      const df = docOccurrences[token] || 0;
+      this.idf[token] = Math.log((this.docCount + 1) / (df + 1)) + 1.0;
     }
   }
 
-  predict(text: string): { intent: string; probability: number; allProbs: Record<string, number> } {
+  predict(text: string): { intent: string; probability: number } {
     const tokens = cleanAndTokenize(text);
-    if (tokens.length === 0) {
-      return { intent: "GENERAL_INQUIRY", probability: 0.5, allProbs: {} };
-    }
-
-    const hasKnownToken = tokens.some(token => this.vocabulary.has(token));
-    if (!hasKnownToken) {
-      return { intent: "GENERAL_INQUIRY", probability: 0.5, allProbs: {} };
-    }
-
-    const scores: Record<string, number> = {};
-    const totalDocs = Object.values(this.classCounts).reduce((sum, c) => sum + c, 0);
+    const totalDocs = this.docCount;
     const vocabSize = this.vocabulary.size;
 
-    for (const label of Object.keys(this.classCounts)) {
-      const classDocCount = this.classCounts[label];
-      const priorProb = classDocCount / totalDocs;
-      let logProb = Math.log(priorProb);
+    const scores: Record<string, number> = {};
+    let maxScore = -Infinity;
+    let bestClass = "GENERAL_INQUIRY";
 
-      const totalClassWords = this.classWordCounts[label];
+    for (const label of Object.keys(this.classCounts)) {
+      let logProb = Math.log(this.classCounts[label] / totalDocs);
 
       for (const token of tokens) {
-        if (this.vocabulary.has(token)) {
-          const wordFreq = this.wordCountsPerClass[label][token] || 0;
-          const tfIdfWeight = this.idf[token] ?? 1.0;
-          const condProb = (wordFreq + 1) / (totalClassWords + vocabSize);
-          logProb += tfIdfWeight * Math.log(condProb);
-        } else {
-          logProb += Math.log(1 / (totalClassWords + vocabSize));
-        }
+        if (!this.vocabulary.has(token)) continue;
+
+        const wordFreq = this.wordCountsPerClass[label][token] || 0;
+        const tokenWeight = (wordFreq + 1) / (this.classWordCounts[label] + vocabSize);
+        const tfIdfWeight = this.idf[token] || 1.0;
+
+        logProb += Math.log(tokenWeight) * tfIdfWeight;
       }
 
       scores[label] = logProb;
-    }
-
-    const maxLog = Math.max(...Object.values(scores));
-    const expScores: Record<string, number> = {};
-    let sumExp = 0;
-
-    for (const [label, val] of Object.entries(scores)) {
-      const expVal = Math.exp(val - maxLog);
-      expScores[label] = expVal;
-      sumExp += expVal;
-    }
-
-    const probabilities: Record<string, number> = {};
-    let bestLabel = "GENERAL_INQUIRY";
-    let bestProb = 0;
-
-    for (const [label, val] of Object.entries(expScores)) {
-      const prob = val / sumExp;
-      probabilities[label] = prob;
-      if (prob > bestProb) {
-        bestProb = prob;
-        bestLabel = label;
+      if (logProb > maxScore) {
+        maxScore = logProb;
+        bestClass = label;
       }
     }
 
-    return { intent: bestLabel, probability: bestProb, allProbs: probabilities };
-  }
-}
-
-function checkForLoops(history: string[], currentNode: string): { isLooping: boolean; maxRepetition: number } {
-  if (!history || history.length === 0) {
-    return { isLooping: false, maxRepetition: 0 };
-  }
-
-  const combinedNodes = [...history];
-  if (currentNode) {
-    combinedNodes.push(currentNode);
-  }
-
-  const nodeCounts: Record<string, number> = {};
-  for (const node of combinedNodes) {
-    if (node && node !== "6206") {
-      nodeCounts[node] = (nodeCounts[node] || 0) + 1;
+    let sumExp = 0;
+    const probs: Record<string, number> = {};
+    for (const label of Object.keys(scores)) {
+      sumExp += Math.exp(scores[label] - maxScore);
     }
+
+    for (const label of Object.keys(scores)) {
+      probs[label] = Math.exp(scores[label] - maxScore) / sumExp;
+    }
+
+    return {
+      intent: bestClass,
+      probability: probs[bestClass] || 0.5,
+    };
   }
-
-  const counts = Object.values(nodeCounts);
-  const maxRepetition = counts.length > 0 ? Math.max(...counts) : 0;
-  const isLooping = maxRepetition >= 3;
-
-  return { isLooping, maxRepetition };
 }
 
-function calculateScoreAndTemp(intent: string, text: string, flowNode: string, isLooping: boolean): { score: number; temp: string } {
-  let score = 50;
+function checkForLoops(history: string[], currentFlowNode: string): { isLooping: boolean; maxRepetition: number } {
+  const counts: Record<string, number> = {};
+  for (const h of history) {
+    counts[h] = (counts[h] || 0) + 1;
+  }
+  if (currentFlowNode) {
+    counts[currentFlowNode] = (counts[currentFlowNode] || 0) + 1;
+  }
+
+  const maxRep = Math.max(0, ...Object.values(counts));
+  const isLooping = maxRep >= 3;
+  return { isLooping, maxRepetition: maxRep };
+}
+
+function calculateScoreAndTemp(intent: string, text: string, flowNode: string, isLooping: boolean) {
+  let score = 30;
   let temp = "warm";
 
-  const intentScores: Record<string, number> = {
-    "WEBSITE_DEV": 80,
-    "CRM_INQUIRY": 85,
-    "DIGITAL_MARKETING": 75,
-    "GENERAL_INQUIRY": 45,
-    "SPAM": 5
-  };
+  const loweredText = (text || "").toLowerCase();
 
-  score = intentScores[intent] ?? 50;
-
-  const loweredText = text.toLowerCase();
-  const pricingKeywords = ["price", "cost", "budget", "pricing", "how much", "rate", "packages", "charges"];
-  if (pricingKeywords.some(k => loweredText.includes(k))) {
-    score += 15;
+  if (intent === "WEBSITE_DEV" || intent === "CRM_INQUIRY" || intent === "DIGITAL_MARKETING") {
+    score = 65;
+  } else if (intent === "SPAM") {
+    score = 5;
+  } else if (intent === "GENERAL_INQUIRY") {
+    score = 35;
   }
 
-  const urgentKeywords = ["urgent", "immediately", "asap", "quick", "today", "call me", "call"];
+  const commercialKeywords = ["price", "cost", "pricing", "quote", "quotation", "budget", "how much", "rate", "charges", "kitna", "kharcha", "estimate"];
+  if (commercialKeywords.some(k => loweredText.includes(k))) {
+    score += 20;
+  }
+
+  const urgentKeywords = ["urgent", "immediately", "asap", "call me", "meeting", "talk", "today", "contact"];
   if (urgentKeywords.some(k => loweredText.includes(k))) {
     score += 10;
   }
@@ -205,19 +177,9 @@ function calculateScoreAndTemp(intent: string, text: string, flowNode: string, i
 }
 
 export function classifyInboundMessage(message: string, _phone: string, flowNode: string, history: string[] = []) {
-  // Load training dataset if available
-  let samples: Sample[] = [];
-  const datasetPath = path.join(process.cwd(), "scripts", "data", "training_data.json");
-  
-  if (fs.existsSync(datasetPath)) {
-    try {
-      const fileData = fs.readFileSync(datasetPath, "utf8");
-      const parsed = JSON.parse(fileData);
-      samples = parsed.samples || [];
-    } catch (e) {
-      console.warn("⚠️ Failed to load training_data.json:", e);
-    }
-  }
+  let samples: Sample[] = Array.isArray((trainingData as { samples?: Sample[] })?.samples)
+    ? (trainingData as { samples: Sample[] }).samples
+    : [];
 
   if (samples.length === 0) {
     samples = [

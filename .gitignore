@@ -69,3 +69,9 @@ server/data/
 *.zip
 .vercel
 .env.production
+
+# Cloudflare / OpenNext
+.wrangler/
+.open-next/
+.dev.vars
+.dev.vars.*

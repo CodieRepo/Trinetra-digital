@@ -1,0 +1,79 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "trinetra-digital",
+  "account_id": "52ca2c75d5ee0677be20c4d1a1597859",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-12",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "preview_urls": true,
+  "upload_source_maps": true,
+  "placement": {
+    "mode": "smart"
+  },
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true,
+    "issues": {
+      "enabled": true
+    }
+  },
+  "kv_namespaces": [
+    {
+      "binding": "MENU_CACHE"
+    },
+    {
+      "binding": "RATE_LIMIT_KV"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "R2_MEDIA",
+      "bucket_name": "trinetra-media"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://suvuvxdasccmztbbpreg.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1dnV2eGRhc2NjbXp0YmJwcmVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNDk4NDAsImV4cCI6MjA5NjcyNTg0MH0.w1aTrWCTkjvfNv27bQvZ5A2U4isby7Zw6RXl5LX_q1A",
+    "NEXT_PUBLIC_APP_URL": "https://trinetradigitalsolution.com",
+    "NEXT_PUBLIC_MEDIA_CDN_URL": "https://cdn.trinetradigitalsolution.com",
+    "STAFF_JWT_EXPIRY_HOURS": "16"
+  },
+  "env": {
+    "staging": {
+      "name": "trinetra-digital-staging",
+      "workers_dev": true,
+      "kv_namespaces": [
+        {
+          "binding": "MENU_CACHE"
+        },
+        {
+          "binding": "RATE_LIMIT_KV"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "R2_MEDIA",
+          "bucket_name": "trinetra-media-staging"
+        }
+      ],
+      "ai": {
+        "binding": "AI"
+      },
+      "vars": {
+        "NEXT_PUBLIC_SUPABASE_URL": "https://suvuvxdasccmztbbpreg.supabase.co",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1dnV2eGRhc2NjbXp0YmJwcmVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNDk4NDAsImV4cCI6MjA5NjcyNTg0MH0.w1aTrWCTkjvfNv27bQvZ5A2U4isby7Zw6RXl5LX_q1A",
+        "NEXT_PUBLIC_APP_URL": "https://trinetra-digital-staging.suryavanshisatwik792.workers.dev",
+        "STAFF_JWT_EXPIRY_HOURS": "16"
+      }
+    }
+  }
+}

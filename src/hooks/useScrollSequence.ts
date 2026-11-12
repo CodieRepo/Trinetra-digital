@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { CanvasRenderer, CanvasRenderOptions } from '../utils/CanvasRenderer';
+import { getMediaUrl } from '../lib/media';
 
 export interface UseScrollSequenceOptions {
   totalFrames?: number;
@@ -29,8 +30,8 @@ export const useScrollSequence = (
 ): UseScrollSequenceReturn => {
   const {
     totalFrames = 301,
-    framePrefix = '/hero-sequence/frame_',
-    frameExtension = '.png',
+    framePrefix = getMediaUrl('/hero-sequence/frame_'),
+    frameExtension = process.env.NEXT_PUBLIC_MEDIA_CDN_URL ? '.webp' : '.png',
     lazyLoad = true,
     fitMode = 'contain',
   } = options;

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { ScrollTrigger } from '../lib/gsap';
 import { useScrollSequence } from '../hooks/useScrollSequence';
+import { getMediaUrl } from '../lib/media';
 
 interface HeroScrollSequenceProps {
   children?: React.ReactNode;
@@ -47,8 +48,8 @@ export default function HeroScrollSequence({
 
   const { isLoaded, progress, drawFrame } = useScrollSequence(canvasRef, containerRef, {
     totalFrames,
-    framePrefix: '/hero-sequence/frame_',
-    frameExtension: '.png',
+    framePrefix: getMediaUrl('/hero-sequence/frame_'),
+    frameExtension: process.env.NEXT_PUBLIC_MEDIA_CDN_URL ? '.webp' : '.png',
     lazyLoad: true,
     fitMode: 'contain',
   });

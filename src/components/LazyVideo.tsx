@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { getMediaUrl } from "../lib/media";
 
 interface LazyVideoProps {
   src: string;
@@ -109,7 +110,7 @@ export default function LazyVideo({
             display: "block",
           }}
         >
-          <source src={src} type="video/mp4" />
+          <source src={getMediaUrl(src)} type="video/mp4" />
         </video>
       )}
     </div>

@@ -1,4 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { getCloudflareBindings } from "@/lib/cloudflare/bindings";
+import { getCachedMenuPayload, setCachedMenuPayload } from "@/lib/cache/kv-menu-cache";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -25,6 +27,21 @@ export async function GET(
 
     if (tableErr || !table || table.is_active === false) {
       return NextResponse.json({ error: "Table not found or inactive" }, { status: 404 });
+    }
+
+    const cf = await getCloudflareBindings();
+    const cached = await getCachedMenuPayload<Record<string, unknown>>(
+      cf?.MENU_CACHE,
+      table.restaurant_id,
+      tableToken
+    );
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          "x-trinetra-cache": "HIT",
+          "cache-control": "public, s-maxage=30, stale-while-revalidate=60",
+        },
+      });
     }
 
     let floorName: string | null = null;
@@ -88,7 +105,7 @@ export async function GET(
       .eq("is_available", true)
       .order("display_order", { ascending: true });
 
-    return NextResponse.json({
+    const payload = {
       restaurant: {
         id: restaurant.id,
         name: restaurant.name,
@@ -107,6 +124,15 @@ export async function GET(
       menu: {
         categories: categories || [],
         items: items || [],
+      },
+    };
+
+    await setCachedMenuPayload(cf?.MENU_CACHE, table.restaurant_id, tableToken, payload, 60);
+
+    return NextResponse.json(payload, {
+      headers: {
+        "x-trinetra-cache": "MISS",
+        "cache-control": "public, s-maxage=30, stale-while-revalidate=60",
       },
     });
   } catch (err: any) {

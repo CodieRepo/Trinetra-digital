@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { getCloudflareBindings } from "@/lib/cloudflare/bindings";
+import { invalidateRestaurantMenuCache } from "@/lib/cache/kv-menu-cache";
 import {
   resolveRestaurantContext,
   requireStaffRole,
@@ -77,6 +79,8 @@ export async function POST(request: Request) {
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+      const cfCat = await getCloudflareBindings();
+      await invalidateRestaurantMenuCache(cfCat?.MENU_CACHE, restaurantId);
       return NextResponse.json({ success: true, category: data });
     }
 
@@ -156,6 +160,8 @@ export async function POST(request: Request) {
         .single();
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      const cfItem = await getCloudflareBindings();
+      await invalidateRestaurantMenuCache(cfItem?.MENU_CACHE, restaurantId);
       return NextResponse.json({ success: true, item: data });
     }
 
@@ -193,6 +199,8 @@ export async function PATCH(request: Request) {
         .eq("restaurant_id", restaurantId);
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      const cfPatch = await getCloudflareBindings();
+      await invalidateRestaurantMenuCache(cfPatch?.MENU_CACHE, restaurantId);
       return NextResponse.json({ success: true });
     }
 
@@ -221,6 +229,8 @@ export async function DELETE(request: Request) {
       .eq("restaurant_id", restaurantId);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const cfDel = await getCloudflareBindings();
+    await invalidateRestaurantMenuCache(cfDel?.MENU_CACHE, restaurantId);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     if (err instanceof RestaurantContextError) {

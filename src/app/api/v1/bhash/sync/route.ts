@@ -3,42 +3,10 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { leadIngestionService } from "@/services/leadIngestionService";
 import { classifyInboundMessage } from "@/services/leadClassifierService";
 import { generateFingerprint } from "@/utils/bhashHelper";
-import https from "https";
+import { postForm } from "@/lib/bhash/postForm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function postForm(urlStr: string, formData: any, cookieStr = "", refererUrl = ""): Promise<any> {
-  return new Promise((resolve) => {
-    const url = new URL(urlStr);
-    const postData = new URLSearchParams(formData).toString();
-
-    const options = {
-      hostname: url.hostname,
-      port: 443,
-      path: url.pathname + url.search,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Content-Length": Buffer.byteLength(postData),
-        "Cookie": cookieStr,
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Referer": refererUrl || "https://digifast.site/dltstatus/bwa/Pages/login.php",
-      },
-    };
-
-    const req = https.request(options, (res) => {
-      let data = "";
-      const cookies = res.headers["set-cookie"];
-      res.on("data", (chunk) => data += chunk);
-      res.on("end", () => resolve({ statusCode: res.statusCode, headers: res.headers, cookies, body: data }));
-    });
-
-    req.on("error", (e) => resolve({ error: e.message }));
-    req.write(postData);
-    req.end();
-  });
-}
 
 function formatDate(date: Date): string {
   const yyyy = date.getFullYear();
