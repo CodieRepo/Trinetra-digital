@@ -177,6 +177,8 @@ async function readJson<T>(response: Response): Promise<T> {
   return data as T;
 }
 
+export type RestaurantDashboardTab = "live" | "pos" | "tables" | "menu" | "inventory" | "staff" | "payment" | "history";
+
 export default function RestaurantDashboard({
   restaurantId,
   restaurantName,
@@ -185,6 +187,8 @@ export default function RestaurantDashboard({
   userRole = "waiter",
   taxRate = 5.0,
   taxLabel = "GST",
+  activeTab: controlledActiveTab,
+  onTabChange,
   onRestaurantUpdated,
 }: {
   restaurantId: string;
@@ -194,6 +198,8 @@ export default function RestaurantDashboard({
   userRole?: string;
   taxRate?: number;
   taxLabel?: string;
+  activeTab?: RestaurantDashboardTab;
+  onTabChange?: (tab: RestaurantDashboardTab) => void;
   onRestaurantUpdated?: (updated: { name?: string; address?: string }) => void;
 }) {
   const [currentRestaurantName, setCurrentRestaurantName] = useState(restaurantName || "");
@@ -286,15 +292,20 @@ export default function RestaurantDashboard({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // --- Tab navigation & Search state ---
-  const [activeTab, setActiveTab] = useState<"live" | "pos" | "tables" | "menu" | "inventory" | "staff" | "payment" | "history">(() => {
+  const [internalActiveTab, setInternalActiveTab] = useState<RestaurantDashboardTab>(() => {
     if (typeof window !== "undefined") {
       const urlTab = new URLSearchParams(window.location.search).get("tab");
       if (urlTab && ["live", "pos", "tables", "menu", "inventory", "staff", "payment", "history"].includes(urlTab)) {
-        return urlTab as any;
+        return urlTab as RestaurantDashboardTab;
       }
     }
     return "live";
   });
+  const activeTab = controlledActiveTab ?? internalActiveTab;
+  const setActiveTab = useCallback((tab: RestaurantDashboardTab) => {
+    setInternalActiveTab(tab);
+    onTabChange?.(tab);
+  }, [onTabChange]);
   const [posTableId, setPosTableId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "placed" | "preparing" | "ready">("all");
@@ -864,8 +875,8 @@ export default function RestaurantDashboard({
           </div>
         </div>
 
-        {/* Tab navigation */}
-        <nav className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#E8D8D2] bg-[#FFFBF9] p-1.5 shadow-xs my-4">
+        {/* Tab navigation (mobile/tablet quick bar; desktop uses sidebar) */}
+        <nav className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#E8D8D2] bg-[#FFFBF9] p-1.5 shadow-xs my-4 ${controlledActiveTab ? "lg:hidden" : ""}`}>
           <div className="flex flex-wrap items-center gap-1">
             {[
               {

@@ -3,11 +3,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { 
-  LogOut, Utensils, ChefHat, LayoutDashboard, AlertCircle, Menu, X, ArrowLeft, Smartphone, Sparkles 
+  LogOut, Utensils, UtensilsCrossed, ChefHat, LayoutGrid, CreditCard, Boxes, History, Users, Building2, AlertCircle, Menu, X, ArrowLeft, ArrowUpRight, Smartphone, Sparkles, Monitor
 } from "lucide-react";
 import { RestroAiAssistantDrawer } from "@/components/restaurant-os/RestroAiAssistantDrawer";
 import { useDynamicManifest } from "@/hooks/useDynamicManifest";
-import RestaurantDashboard from "../../../trinetra-business-os/packages/verticals/restaurant-os/components/admin/RestaurantDashboard";
+import RestaurantDashboard, { type RestaurantDashboardTab } from "../../../trinetra-business-os/packages/verticals/restaurant-os/components/admin/RestaurantDashboard";
 
 export default function RestaurantPortal() {
   const { canInstall, isInstalled, installApp } = useDynamicManifest();
@@ -26,6 +26,15 @@ export default function RestaurantPortal() {
   const [planTier, setPlanTier] = useState<string>("pro");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [aiOpsOpen, setAiOpsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<RestaurantDashboardTab>(() => {
+    if (typeof window !== "undefined") {
+      const urlTab = new URLSearchParams(window.location.search).get("tab");
+      if (urlTab && ["live", "pos", "tables", "menu", "inventory", "staff", "payment", "history"].includes(urlTab)) {
+        return urlTab as RestaurantDashboardTab;
+      }
+    }
+    return "live";
+  });
 
   const resolveRestaurantContext = async (activeSession: any) => {
     try {
@@ -273,19 +282,107 @@ export default function RestaurantPortal() {
           </div>
         </div>
 
-        {/* Navigation Controls info */}
-        <nav className="p-3 lg:p-4 space-y-1.5">
-          {[
-            { label: "Operations Cockpit", active: true, icon: <LayoutDashboard size={15} className="text-amber-400" /> }
-          ].map(item => (
-            <div
-              key={item.label}
-              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/10 text-white border border-white/10 shadow-xs cursor-default"
-            >
-              {item.icon}
-              {item.label}
+        {/* Operations & Management Navigation */}
+        <nav className="p-3 lg:p-3.5 space-y-5">
+          <div>
+            <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-[#B297A3]">
+              Operations
+            </p>
+            <div className="space-y-1">
+              {[
+                { id: "live" as const, label: "Live Operations", icon: <UtensilsCrossed size={15} /> },
+                { id: "pos" as const, label: "POS Register", icon: <CreditCard size={15} /> },
+                { id: "tables" as const, label: "Floor & Tables", icon: <LayoutGrid size={15} /> },
+                { id: "menu" as const, label: "Menu Catalog", icon: <ChefHat size={15} /> },
+                { id: "inventory" as const, label: "Inventory & BOM", icon: <Boxes size={15} /> },
+              ].map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-[#B85D19] text-[#FAF2EE] shadow-sm"
+                        : "text-[#D4BFC7] hover:bg-white/10 hover:text-[#FAF2EE]"
+                    }`}
+                  >
+                    <span className={isActive ? "text-[#FAF2EE]" : "text-[#C8B2BC]"}>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
             </div>
-          ))}
+          </div>
+
+          <div>
+            <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-[#B297A3]">
+              Management
+            </p>
+            <div className="space-y-1">
+              {[
+                { id: "history" as const, label: "History & Records", icon: <History size={15} /> },
+                { id: "staff" as const, label: "Staff Access", icon: <Users size={15} /> },
+                { id: "payment" as const, label: "Profile & Settings", icon: <Building2 size={15} /> },
+              ].map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-[#B85D19] text-[#FAF2EE] shadow-sm"
+                        : "text-[#D4BFC7] hover:bg-white/10 hover:text-[#FAF2EE]"
+                    }`}
+                  >
+                    <span className={isActive ? "text-[#FAF2EE]" : "text-[#C8B2BC]"}>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-[#B297A3]">
+              Quick Terminals
+            </p>
+            <div className="space-y-1">
+              <a
+                href={`/kitchen?restaurant_id=${encodeURIComponent(restaurant.id)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-[#D4BFC7] hover:bg-white/10 hover:text-[#FAF2EE] transition-all"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Monitor size={14} className="text-[#5EEAD4]" />
+                  Kitchen Display (KDS)
+                </span>
+                <ArrowUpRight size={13} className="opacity-60" />
+              </a>
+              <a
+                href={`/waiter?restaurant_id=${encodeURIComponent(restaurant.id)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-[#D4BFC7] hover:bg-white/10 hover:text-[#FAF2EE] transition-all"
+              >
+                <span className="flex items-center gap-2.5">
+                  <UtensilsCrossed size={14} className="text-[#E07A2E]" />
+                  Waiter Board
+                </span>
+                <ArrowUpRight size={13} className="opacity-60" />
+              </a>
+            </div>
+          </div>
         </nav>
       </div>
 
@@ -404,6 +501,8 @@ export default function RestaurantPortal() {
           userRole={userRole || "waiter"}
           taxRate={restaurant.tax_rate ?? 5.0}
           taxLabel={restaurant.tax_label ?? "GST"}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
           onRestaurantUpdated={(updated) => {
             setRestaurant((prev) =>
               prev
