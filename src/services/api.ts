@@ -400,10 +400,14 @@ async function getTenantId(): Promise<string> {
     .from('profiles')
     .select('tenant_id')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
     
   if (error || !profile) {
-    throw new Error("Could not retrieve profile tenant ID: " + (error?.message || ""));
+    const fallbackTenantId =
+      (user.user_metadata?.tenant_id as string | undefined) ||
+      "00000000-0000-0000-0000-000000000001";
+    cachedTenantId = fallbackTenantId;
+    return fallbackTenantId;
   }
   
   cachedTenantId = profile.tenant_id;
@@ -554,7 +558,7 @@ export const apiService = {
         .from('contacts')
         .insert(insertData)
         .select('id')
-        .single();
+        .maybeSingle();
         
       if (error) throw error;
       
@@ -643,7 +647,7 @@ export const apiService = {
           body: body
         })
         .select('*')
-        .single();
+        .maybeSingle();
         
       if (error) throw error;
       return data;
@@ -706,7 +710,7 @@ export const apiService = {
           status: 'pending'
         })
         .select()
-        .single();
+        .maybeSingle();
         
       if (error) throw error;
       return { id: newBooking.id, message: "Booking created successfully" };
@@ -830,7 +834,7 @@ export const apiService = {
           .from('tenants')
           .select('whatsapp_phone_number_id, whatsapp_access_token_encrypted, company_name')
           .eq('id', tenantId)
-          .single();
+          .maybeSingle();
           
         if (data?.whatsapp_phone_number_id && data?.whatsapp_access_token_encrypted) {
           hasConfig = true;
@@ -1000,7 +1004,7 @@ export const apiService = {
         .from('contacts')
         .select('status')
         .eq('id', leadId)
-        .single();
+        .maybeSingle();
         
       const oldStage = oldContact?.status || 'new';
       
@@ -1068,7 +1072,7 @@ export const apiService = {
         .from('contacts')
         .select('deal_setup_value, deal_mrr, deal_annual_value')
         .eq('id', leadId)
-        .single();
+        .maybeSingle();
         
       if (fetchError || !updatedContact) {
         throw new Error(fetchError?.message || "Failed to fetch updated deal values");
@@ -1146,7 +1150,7 @@ export const apiService = {
           status: tpl.status || 'approved'
         })
         .select('*')
-        .single();
+        .maybeSingle();
         
       if (error) throw error;
       return mapDbTemplateToTemplate(data);

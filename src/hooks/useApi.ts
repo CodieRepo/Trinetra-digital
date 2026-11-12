@@ -297,7 +297,7 @@ export function useDashboard() {
           .from("profiles")
           .select("tenant_id")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
           
         if (profile?.tenant_id) {
           setTenantId(profile.tenant_id);
