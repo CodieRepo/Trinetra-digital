@@ -24,8 +24,8 @@ export const TableQrModal: React.FC<TableQrModalProps> = ({
 
   if (!isOpen || !table) return null;
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://trinetra-digital.vercel.app';
-  const qrUrl = `${origin}/api/r/${table.table_token}`;
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://trinetradigitalsolution.com';
+  const qrUrl = `${origin}/r/${table.table_token}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrUrl)}&margin=10`;
 
   const handleCopy = () => {
