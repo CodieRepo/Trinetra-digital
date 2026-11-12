@@ -414,7 +414,7 @@ export const apiService = {
   // Authentication
   auth: {
     login: async (username: string, password: string) => {
-      return request<{ token: string; user: { id: string; username: string; role: string } }>(
+      return request<{ token: string; refresh_token?: string; user: { id: string; username: string; role: string } }>(
         "/auth/login",
         {
           method: "POST",

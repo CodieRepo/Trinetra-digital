@@ -32,6 +32,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
           token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
           user: {
             id: data.user.id,
             username: profile?.username || username,

@@ -82,6 +82,13 @@ export function useDashboard() {
     setLoginLoading(true);
     try {
       const response = await apiService.auth.login(username, password);
+      if (response.token && response.refresh_token) {
+        const supabase = createClient();
+        await supabase.auth.setSession({
+          access_token: response.token,
+          refresh_token: response.refresh_token,
+        });
+      }
       localStorage.setItem("trinetra_jwt", response.token);
       setToken(response.token);
       return true;
@@ -102,6 +109,34 @@ export function useDashboard() {
     setSelectedLeadId(null);
     setLeadDetail(null);
   }, []);
+
+  // Keep Supabase browser session & trinetra_jwt synchronized; auto-clear expired tokens
+  useEffect(() => {
+    let active = true;
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active) return;
+      if (session?.access_token) {
+        localStorage.setItem("trinetra_jwt", session.access_token);
+        setToken(session.access_token);
+        return;
+      }
+      const stored = localStorage.getItem("trinetra_jwt");
+      if (stored) {
+        try {
+          const payload = JSON.parse(atob(stored.split(".")[1] || ""));
+          if (!payload?.exp || payload.exp * 1000 <= Date.now()) {
+            logout();
+          }
+        } catch {
+          logout();
+        }
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [logout]);
 
   // Fetch Global Command metrics
   const fetchGlobalMetrics = useCallback(async () => {

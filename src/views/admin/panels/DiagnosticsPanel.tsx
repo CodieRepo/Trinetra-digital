@@ -97,10 +97,13 @@ export default function DiagnosticsPanel() {
     setSendResult(null);
 
     try {
+      const jwt = typeof window !== "undefined" ? localStorage.getItem("trinetra_jwt") : null;
       const res = await fetch("/api/whatsapp/send", {
         method: "POST",
+        credentials: "include",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
         },
         body: JSON.stringify({
           to: toPhone,

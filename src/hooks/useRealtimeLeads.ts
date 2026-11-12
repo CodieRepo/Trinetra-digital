@@ -7,7 +7,12 @@ export function useRealtimeLeads() {
 
   const fetchLeads = async () => {
     try {
-      const res = await fetch("/api/v1/leads");
+      const jwt = typeof window !== "undefined" ? localStorage.getItem("trinetra_jwt") : null;
+      const res = await fetch("/api/v1/leads", {
+        credentials: "include",
+        headers: jwt ? { Authorization: `Bearer ${jwt}` } : {},
+      });
+      if (res.status === 401) return;
       const data = await res.json();
       if (data.success && Array.isArray(data.leads)) {
         setLeads(data.leads);
