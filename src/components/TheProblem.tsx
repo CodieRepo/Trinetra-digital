@@ -52,10 +52,10 @@ export default function TheProblem() {
         
         {/* Layer A (Before - Manual Ops / Chaos) */}
         <div className="absolute inset-0 w-full h-full bg-[#0a0909] flex items-center">
-          <div className="max-w-[1280px] mx-auto w-full px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-12 items-center">
             
             {/* Left Content (Chaos Text) */}
-            <div className="lg:col-span-6 text-left space-y-6">
+            <div className="lg:col-span-6 text-left space-y-3 sm:space-y-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-950/20 border border-red-900/30 rounded-full text-red-400 font-mono text-[10px] uppercase tracking-wider">
                 <AlertCircle size={10} /> The Friction of Manual Ops
               </div>
@@ -81,7 +81,7 @@ export default function TheProblem() {
 
             {/* Right Content (Chaos Mock Interface) */}
             <div className="lg:col-span-6 flex justify-center">
-              <div className="w-full max-w-[420px] bg-red-950/5 border border-red-950/20 rounded-2xl p-5 space-y-4 opacity-75 grayscale-[20%]">
+              <div className="w-full max-w-[420px] bg-red-950/5 border border-red-950/20 rounded-2xl p-3.5 sm:p-5 space-y-2.5 sm:space-y-4 opacity-75 grayscale-[20%]">
                 <div className="flex justify-between items-center pb-3 border-b border-red-950/30">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
@@ -122,10 +122,10 @@ export default function TheProblem() {
           className="absolute inset-0 w-full h-full bg-[#070606] flex items-center z-10"
           style={{ clipPath: "inset(0 100% 0 0)" }}
         >
-          <div className="max-w-[1280px] mx-auto w-full px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-12 items-center">
             
             {/* Left Content (Solution Text) */}
-            <div className="lg:col-span-6 text-left space-y-6">
+            <div className="lg:col-span-6 text-left space-y-3 sm:space-y-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-950/20 border border-emerald-900/30 rounded-full text-emerald-400 font-mono text-[10px] uppercase tracking-wider">
                 <CheckCircle size={10} /> The Efficiency of Trinetra OS
               </div>
@@ -151,7 +151,7 @@ export default function TheProblem() {
 
             {/* Right Content (Automated Mock Interface) */}
             <div className="lg:col-span-6 flex justify-center">
-              <div className="w-full max-w-[420px] bg-[#111010] border border-border rounded-2xl p-5 space-y-4 shadow-[0_0_40px_rgba(194,109,92,0.06)]">
+              <div className="w-full max-w-[420px] bg-[#111010] border border-border rounded-2xl p-3.5 sm:p-5 space-y-2.5 sm:space-y-4 shadow-[0_0_40px_rgba(194,109,92,0.06)]">
                 <div className="flex justify-between items-center pb-3 border-b border-border">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />

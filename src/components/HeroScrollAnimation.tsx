@@ -26,13 +26,13 @@ export default function HeroScrollAnimation() {
   return (
     <div
       ref={containerRef}
-      className="relative w-full max-w-[500px] aspect-square flex flex-col items-center justify-center pointer-events-auto select-none py-4"
+      className="relative w-full max-w-[340px] sm:max-w-[460px] lg:max-w-[500px] aspect-square flex flex-col items-center justify-center pointer-events-auto select-none py-6 sm:py-4 mx-auto"
     >
       {/* Ambient Cyber Gold Radial Glow */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(194,109,92,0.22)_0%,transparent_70%)] blur-3xl rounded-full pointer-events-none" />
 
       {/* Mode Selector Pill Navigation */}
-      <div className="absolute -top-3 z-30 flex items-center gap-1 bg-[#141212]/90 border border-white/10 p-1 rounded-full backdrop-blur-xl shadow-xl">
+      <div className="relative sm:absolute sm:-top-3 z-30 flex flex-wrap justify-center items-center gap-1 bg-[#141212]/90 border border-white/10 p-1 rounded-2xl sm:rounded-full backdrop-blur-xl shadow-xl max-w-full">
         {[
           { id: "all", label: "All Systems", icon: <Zap size={11} /> },
           { id: "crm", label: "AI CRM", icon: <Database size={11} /> },
@@ -43,7 +43,7 @@ export default function HeroScrollAnimation() {
             key={mod.id}
             type="button"
             onClick={() => setActiveModule(mod.id as any)}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-mono font-bold transition-all cursor-pointer ${
               activeModule === mod.id
                 ? "bg-accent text-stone-950 shadow-md shadow-accent/20"
                 : "text-ink-3 hover:text-ink-1 hover:bg-white/5"
@@ -56,7 +56,7 @@ export default function HeroScrollAnimation() {
       </div>
 
       {/* Central Interactive 2D Vector Eye */}
-      <motion.div style={{ scale }} className="relative z-10 w-full flex items-center justify-center mt-4">
+      <motion.div style={{ scale }} className="relative z-10 w-full flex items-center justify-center mt-2 sm:mt-4">
         <Hero2DTrinetra />
       </motion.div>
 
@@ -118,7 +118,7 @@ export default function HeroScrollAnimation() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="absolute top-20 z-20 flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-teal-500/30 bg-[#0f1917]/95 backdrop-blur-2xl shadow-2xl shadow-black/80 min-w-[280px]"
+            className="absolute top-20 z-20 flex items-center gap-3 px-3.5 sm:px-4 py-3 sm:py-3.5 rounded-2xl border border-teal-500/30 bg-[#0f1917]/95 backdrop-blur-2xl shadow-2xl shadow-black/80 w-[calc(100%-1.5rem)] max-w-[300px] sm:w-auto sm:min-w-[280px]"
           >
             <div className="h-10 w-10 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0">
               <Utensils size={18} />
@@ -142,7 +142,7 @@ export default function HeroScrollAnimation() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 30 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-4 px-4 py-3 rounded-2xl border border-white/10 bg-[#111010]/95 backdrop-blur-2xl shadow-2xl shadow-black/80 min-w-[290px]"
+            className="relative sm:absolute sm:-bottom-3 sm:left-1/2 sm:-translate-x-1/2 mt-2 sm:mt-0 z-20 flex items-center gap-3 sm:gap-4 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-2xl border border-white/10 bg-[#111010]/95 backdrop-blur-2xl shadow-2xl shadow-black/80 w-full max-w-[310px] sm:w-auto sm:min-w-[290px]"
           >
             <div className="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
               <TrendingUp size={16} />

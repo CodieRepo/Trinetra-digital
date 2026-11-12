@@ -251,12 +251,12 @@ export default function Home() {
       />
 
       {/* ── PAGE WRAPPER ── */}
-      <div className="min-h-screen bg-base text-ink-1 relative font-sans pb-mobile-safe">
+      <div className="min-h-screen bg-base text-ink-1 relative font-sans pb-mobile-safe overflow-x-hidden">
 
         {/* ── 1. FAST LIGHTWEIGHT HERO ── */}
         <section
           ref={heroRef}
-          className="relative min-h-[90vh] flex items-center justify-center pt-24 pb-12 overflow-hidden bg-transparent"
+          className="relative min-h-[85vh] lg:min-h-[90vh] flex items-center justify-center pt-22 pb-10 md:pt-28 md:pb-12 overflow-hidden bg-transparent"
         >
           {/* Elegant geometric warm bronze mesh grid background */}
           <div
@@ -269,10 +269,10 @@ export default function Home() {
             }}
           />
 
-          <div className="mx-auto max-w-[1300px] w-full px-6 md:px-12 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center text-left">
+          <div className="mx-auto max-w-[1300px] w-full px-4 sm:px-6 md:px-12 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center text-left">
             
             {/* Left Column: Headline and CTAs */}
-            <div className="lg:col-span-7 flex flex-col items-start gap-8 z-20">
+            <div className="lg:col-span-7 flex flex-col items-start gap-6 sm:gap-8 z-20">
               
               {/* Eyebrow badge */}
               <div className="inline-flex items-center gap-2 px-3 py-1.5 glass-panel rounded-full border border-border">
@@ -289,19 +289,19 @@ export default function Home() {
               <div className="flex flex-col gap-1 overflow-hidden select-none w-full">
                 <h1
                   ref={line1Ref}
-                  className="font-display text-[clamp(26px,4.2vw,44px)] font-light leading-none tracking-tight text-ink-1 uppercase whitespace-nowrap"
+                  className="font-display text-[clamp(22px,5.5vw,44px)] font-light leading-tight sm:leading-none tracking-tight text-ink-1 uppercase sm:whitespace-nowrap"
                 >
                   We engineer foundations
                 </h1>
                 <h2
                   ref={line2Ref}
-                  className="font-editorial text-[clamp(36px,5.8vw,68px)] italic text-accent font-light leading-none tracking-normal whitespace-nowrap overflow-hidden py-1"
+                  className="font-editorial text-[clamp(30px,7.5vw,68px)] italic text-accent font-light leading-tight sm:leading-none tracking-normal sm:whitespace-nowrap overflow-hidden py-1"
                 >
                   <SplitText mode="chars">that lead &amp; scale</SplitText>
                 </h2>
                 <h3
                   ref={line3Ref}
-                  className="font-display text-[clamp(26px,4.2vw,44px)] font-light leading-none tracking-tight text-ink-1 uppercase whitespace-nowrap"
+                  className="font-display text-[clamp(22px,5.5vw,44px)] font-light leading-tight sm:leading-none tracking-tight text-ink-1 uppercase sm:whitespace-nowrap"
                 >
                   your business.
                 </h3>
@@ -395,7 +395,7 @@ export default function Home() {
             {/* Right Column: Interactive Scroll-Based Kinetic Animation */}
             <div 
               ref={sphereContainerRef}
-              className="lg:col-span-5 relative w-full aspect-square hidden lg:flex items-center justify-center"
+              className="lg:col-span-5 relative w-full max-w-[360px] sm:max-w-[460px] lg:max-w-none mx-auto flex items-center justify-center pt-2 lg:pt-0"
             >
               <HeroScrollAnimation />
             </div>
@@ -403,7 +403,7 @@ export default function Home() {
         </section>
 
         {/* ── 2. FEATURED PROJECTS (CREDIBILITY UPFRONT) ── */}
-        <div className="bg-transparent py-24 border-b border-white/5">
+        <div className="bg-transparent py-14 md:py-24 border-b border-white/5">
           <Testimonials />
         </div>
 
@@ -414,7 +414,7 @@ export default function Home() {
         <TheSystem />
 
         {/* ── 5. SERVICES BENTO GRID (4 PILLARS) ── */}
-        <section className="py-24 relative z-10 bg-transparent border-b border-border">
+        <section className="py-14 md:py-24 relative z-10 bg-transparent border-b border-border">
           <div className="max-w-[1280px] mx-auto px-6 md:px-12 space-y-16">
             
             {/* Bento Header */}
@@ -590,7 +590,7 @@ export default function Home() {
         </section>
 
         {/* ── 6. BUSINESS INDUSTRIES WE SERVE ── */}
-        <section className="py-28 relative z-10 bg-transparent border-b border-border">
+        <section className="py-16 md:py-28 relative z-10 bg-transparent border-b border-border">
           <div className="max-w-[1280px] mx-auto px-6 md:px-12 space-y-16">
             <div className="text-center max-w-xl mx-auto space-y-4">
               <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#c26d5c]/10 border border-[#c26d5c]/20 rounded-full text-accent font-mono text-[9px] uppercase tracking-wider">
@@ -688,7 +688,7 @@ export default function Home() {
          </section>
 
         {/* ── 8. DEVELOPMENT PROCESS ── */}
-        <section className="py-28 relative z-10 bg-transparent border-b border-border">
+        <section className="py-16 md:py-28 relative z-10 bg-transparent border-b border-border">
           <div className="max-w-[1280px] mx-auto px-6 md:px-12 space-y-16">
             <div className="text-center max-w-xl mx-auto space-y-4">
               <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#c26d5c]/10 border border-[#c26d5c]/20 rounded-full text-accent font-mono text-[9px] uppercase tracking-wider">
@@ -733,7 +733,7 @@ export default function Home() {
         </div>
 
         {/* ── 10. FAQS SECTION ── */}
-        <section className="py-28 relative z-10 bg-transparent border-b border-border">
+        <section className="py-16 md:py-28 relative z-10 bg-transparent border-b border-border">
           <div className="max-w-[1000px] mx-auto px-6 md:px-12 space-y-16">
             <div className="text-center max-w-xl mx-auto space-y-4">
               <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#c26d5c]/10 border border-[#c26d5c]/20 rounded-full text-accent font-mono text-[9px] uppercase tracking-wider">
