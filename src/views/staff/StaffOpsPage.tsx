@@ -243,15 +243,15 @@ export default function StaffOpsPage() {
   return (
     <div
       className={`min-h-screen font-sans selection:bg-amber-100 selection:text-amber-900 flex flex-col ${
-        isKitchen ? "bg-[#0B0D10] text-zinc-100" : "bg-[#F6F5F1] text-stone-900"
+        isKitchen ? "bg-[#1C1118] text-[#FAF2EE]" : "bg-[#FAF2EE] text-[#2A1622]"
       }`}
     >
       {/* Top Navigation Bar — Restaurant-First Identity */}
       <header
         className={`border-b backdrop-blur-md px-4 sm:px-6 py-3.5 sticky top-0 z-30 shadow-sm ${
           isKitchen
-            ? "border-zinc-800 bg-[#101318]/95"
-            : "border-stone-200/90 bg-white/95"
+            ? "border-[#36202D] bg-[#24151E]/95"
+            : "border-[#E8D8D2] bg-[#FAF2EE]/95"
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
@@ -261,8 +261,8 @@ export default function StaffOpsPage() {
             <div
               className={`h-11 w-11 rounded-2xl flex items-center justify-center font-black text-base shadow-sm shrink-0 ${
                 isKitchen
-                  ? "bg-gradient-to-br from-amber-400 to-orange-500 text-stone-950"
-                  : "bg-gradient-to-br from-stone-900 to-amber-900 text-amber-300"
+                  ? "bg-[#B85D19] text-[#FAF2EE]"
+                  : "bg-[#2A1622] text-[#FAF2EE]"
               }`}
             >
               <UtensilsCrossed size={20} />
@@ -271,7 +271,7 @@ export default function StaffOpsPage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <h1
                   className={`text-lg md:text-xl font-extrabold tracking-tight truncate capitalize ${
-                    isKitchen ? "text-white" : "text-stone-900"
+                    isKitchen ? "font-serif font-normal text-[#FAF2EE]" : "font-serif font-normal text-[#2A1622]"
                   }`}
                 >
                   {restaurantName || (isKitchen ? "Kitchen Display" : "Waiter Service")}
@@ -377,8 +377,8 @@ export default function StaffOpsPage() {
           <div
             className={`w-full max-w-sm rounded-3xl border shadow-2xl p-6 sm:p-8 text-center space-y-6 ${
               isKitchen
-                ? "bg-[#141820] border-zinc-800 text-zinc-100"
-                : "bg-white border-stone-200/90 text-stone-900"
+                ? "bg-[#261821] border-[#3E2634] text-[#FAF2EE]"
+                : "bg-[#FFFBF9] border-[#E8D8D2] text-[#2A1622]"
             }`}
           >
             

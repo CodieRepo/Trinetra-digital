@@ -799,18 +799,18 @@ export default function RestaurantDashboard({
           ].map((metric) => (
             <div
               key={metric.label}
-              className="group relative overflow-hidden rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xs transition-all hover:border-stone-300 hover:shadow-sm"
+              className="group relative overflow-hidden rounded-2xl border border-[#E8D8D2] bg-[#FFFBF9] p-4 shadow-xs transition-all hover:border-stone-300 hover:shadow-sm"
             >
               <div className={`absolute inset-x-0 top-0 h-1 ${metric.accentBar}`} />
               <div className="flex items-center justify-between pt-0.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#7E5A68]">
                   {metric.label}
                 </span>
                 <div className={`p-1.5 rounded-xl ${metric.iconBg}`}>
                   {metric.icon}
                 </div>
               </div>
-              <p className="mt-2.5 text-2xl font-extrabold tracking-tight text-stone-900 tabular-nums">
+              <p className="mt-2.5 text-2xl font-serif font-normal tracking-tight text-[#2A1622] tabular-nums">
                 {metric.value}
               </p>
             </div>
@@ -840,7 +840,7 @@ export default function RestaurantDashboard({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search active orders, table #, customer name, phone, or menu items..."
-              className="w-full h-11 pl-11 pr-14 text-xs bg-white border border-stone-200/90 rounded-2xl text-stone-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 placeholder:text-stone-400 transition-all shadow-xs"
+              className="w-full h-11 pl-11 pr-14 text-xs bg-white border border-[#E8D8D2] bg-[#FFFBF9] rounded-2xl text-[#2A1622] focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 placeholder:text-stone-400 transition-all shadow-xs"
             />
             {searchQuery && (
               <button
@@ -865,7 +865,7 @@ export default function RestaurantDashboard({
         </div>
 
         {/* Tab navigation */}
-        <nav className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-200/90 bg-white p-1.5 shadow-xs my-4">
+        <nav className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#E8D8D2] bg-[#FFFBF9] p-1.5 shadow-xs my-4">
           <div className="flex flex-wrap items-center gap-1">
             {[
               {
@@ -915,8 +915,8 @@ export default function RestaurantDashboard({
                 onClick={() => setActiveTab(tab.id)}
                 className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
                   activeTab === tab.id
-                    ? "bg-stone-900 text-amber-300 shadow-sm"
-                    : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+                    ? "bg-[#2A1622] text-[#FAF2EE] shadow-sm"
+                    : "text-[#7E5A68] hover:bg-[#FAF2EE] hover:text-[#2A1622]"
                 }`}
               >
                 {tab.icon}

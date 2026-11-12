@@ -643,21 +643,21 @@ export default function PublicRestaurantMenu({
   if (!payload) return null;
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-stone-900 font-sans antialiased pb-32">
+    <div className="min-h-screen bg-[#FAF2EE] text-[#2A1622] font-sans antialiased pb-32">
       {/* ── 1. Top Restaurant Header ── */}
-      <header className="sticky top-0 z-30 border-b border-stone-200/80 bg-white/90 backdrop-blur-md px-4 py-2.5 shadow-xs">
+      <header className="sticky top-0 z-30 border-b border-[#E8D8D2] bg-[#FAF2EE]/95 backdrop-blur-md px-4 py-2.5">
         <div className="mx-auto max-w-5xl flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-stone-900 via-stone-800 to-amber-900 text-amber-300 font-black text-sm flex items-center justify-center shadow-xs shrink-0 ring-1 ring-amber-500/20">
+            <div className="h-10 w-10 rounded-2xl bg-[#2A1622] text-[#FAF2EE] font-serif italic font-bold text-base flex items-center justify-center shrink-0">
               {getRestaurantMonogram(payload.restaurant.name)}
             </div>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-stone-900 truncate capitalize">
+              <h1 className="text-base sm:text-lg font-serif font-normal tracking-tight text-[#2A1622] truncate capitalize">
                 {payload.restaurant.name}
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200/90 px-2.5 py-0.5 text-[11px] font-bold text-amber-900">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0F6E6E]/10 border border-[#0F6E6E]/25 px-2.5 py-0.5 text-[11px] font-bold text-[#0F6E6E]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#0F6E6E] animate-pulse" />
                   Table {payload.table.table_number} · {payload.table.floor_name || "Main Dining"}
                 </span>
               </div>
@@ -669,7 +669,7 @@ export default function PublicRestaurantMenu({
               <button
                 type="button"
                 onClick={() => setIsCartDrawerOpen(true)}
-                className="min-h-[42px] px-3.5 py-1.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-amber-300 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer"
+                className="min-h-[42px] px-3.5 py-1.5 rounded-2xl bg-[#B85D19] hover:bg-[#9E4E14] text-white font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
               >
                 <ShoppingBag size={15} />
                 <span>{cartItemsCount}</span>
@@ -681,23 +681,23 @@ export default function PublicRestaurantMenu({
 
       <main className="mx-auto max-w-5xl px-4 pt-4 sm:pt-6 space-y-5">
         {/* ── 2. Signature Editorial Restaurant Hero ── */}
-        <div className="rounded-3xl bg-gradient-to-br from-stone-950 via-stone-900 to-amber-950 text-white p-5 sm:p-7 shadow-lg relative overflow-hidden border border-stone-800">
+        <div className="rounded-3xl bg-[#2A1622] text-[#FAF2EE] p-6 sm:p-8 shadow-md relative overflow-hidden border border-[#3E2233]">
           <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-amber-500/20 blur-3xl" />
           <div className="pointer-events-none absolute -left-10 -bottom-12 h-40 w-40 rounded-full bg-orange-500/10 blur-2xl" />
 
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-amber-300 backdrop-blur-xs">
-                <Sparkles size={13} className="text-amber-400" />
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-[#0F6E6E]/30 border border-[#0F6E6E]/50 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#FAF2EE]">
+                <Sparkles size={13} className="text-[#E07A2E]" />
                 <span>Dine-In Digital Menu</span>
               </div>
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mt-2.5 capitalize leading-tight">
+              <h2 className="text-3xl sm:text-4xl font-serif font-normal tracking-tight text-[#FAF2EE] mt-3 capitalize leading-tight">
                 {payload.restaurant.name}
               </h2>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-300 font-medium">
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#D4BFC7] font-medium">
                 {payload.restaurant.address && (
                   <span className="inline-flex items-center gap-1">
-                    <MapPin size={13} className="text-amber-400 shrink-0" />
+                    <MapPin size={13} className="text-[#E07A2E] shrink-0" />
                     <span className="truncate max-w-[260px] sm:max-w-md">{payload.restaurant.address}</span>
                   </span>
                 )}
@@ -754,14 +754,14 @@ export default function PublicRestaurantMenu({
         </div>
 
         {/* ── 4. Sticky Category Pills Navigation ── */}
-        <div className="sticky top-[61px] z-20 -mx-4 px-4 py-2.5 bg-[#faf8f5]/95 backdrop-blur-md border-y border-stone-200/80">
+        <div className="sticky top-[61px] z-20 -mx-4 px-4 py-2.5 bg-[#FAF2EE]/95 backdrop-blur-md border-y border-[#E8D8D2]">
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
             <button
               type="button"
               onClick={() => setSelectedCategoryId("all")}
               className={`min-h-[44px] px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-wider transition cursor-pointer border shrink-0 active:scale-95 ${
                 selectedCategoryId === "all"
-                  ? "bg-amber-500 text-stone-950 border-amber-500 shadow-xs"
+                  ? "bg-[#2A1622] text-[#FAF2EE] border-[#2A1622] shadow-xs"
                   : "bg-white text-stone-700 border-stone-200 hover:bg-stone-100"
               }`}
             >
@@ -777,7 +777,7 @@ export default function PublicRestaurantMenu({
                   onClick={() => setSelectedCategoryId(cat.id)}
                   className={`min-h-[44px] px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-wider transition cursor-pointer border shrink-0 active:scale-95 ${
                     selectedCategoryId === cat.id
-                      ? "bg-amber-500 text-stone-950 border-amber-500 shadow-xs"
+                      ? "bg-[#2A1622] text-[#FAF2EE] border-[#2A1622] shadow-xs"
                       : "bg-white text-stone-700 border-stone-200 hover:bg-stone-100"
                   }`}
                 >
@@ -813,7 +813,7 @@ export default function PublicRestaurantMenu({
             groupedItems.map((category) => (
               <section key={category.id} className="space-y-3">
                 <div className="flex items-center justify-between border-b border-stone-200/80 pb-2">
-                  <h3 className="text-lg font-black uppercase tracking-tight text-stone-900">
+                  <h3 className="text-xl font-serif italic font-normal tracking-tight text-[#2A1622]">
                     {category.name}
                   </h3>
                   <span className="text-xs font-bold text-stone-500">
@@ -833,11 +833,11 @@ export default function PublicRestaurantMenu({
                           <DishImageFrame item={item} categoryName={category.name} />
 
                           <div className="mt-3 px-0.5">
-                            <h4 className="font-bold text-stone-900 text-base tracking-tight leading-snug line-clamp-1">
+                            <h4 className="font-bold font-serif font-normal text-[#2A1622] text-lg tracking-tight leading-snug line-clamp-1">
                               {item.name}
                             </h4>
                             {item.description ? (
-                              <p className="mt-1 text-xs text-stone-500 line-clamp-2 font-medium leading-relaxed min-h-[2.25rem]">
+                              <p className="mt-1 text-xs text-[#7E5A68] line-clamp-2 font-medium leading-relaxed min-h-[2.25rem]">
                                 {item.description}
                               </p>
                             ) : (
@@ -854,7 +854,7 @@ export default function PublicRestaurantMenu({
                             <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block">
                               Price
                             </span>
-                            <p className="text-lg font-extrabold text-stone-900 tracking-tight leading-none mt-0.5">
+                            <p className="text-lg font-bold text-[#B85D19] tracking-tight leading-none mt-0.5 tabular-nums">
                               {formatCurrency(Number(item.price), payload.restaurant.currency)}
                             </p>
                           </div>
@@ -868,7 +868,7 @@ export default function PublicRestaurantMenu({
                               <button
                                 type="button"
                                 onClick={() => updateQuantity(item.id, 1)}
-                                className="min-h-[42px] min-w-[96px] rounded-2xl bg-stone-900 hover:bg-amber-500 hover:text-stone-950 text-white font-bold text-xs uppercase tracking-wider px-4 py-2 transition cursor-pointer shadow-xs active:scale-95 flex items-center justify-center gap-1.5"
+                                className="min-h-[42px] min-w-[96px] rounded-2xl bg-[#2A1622] hover:bg-[#B85D19] text-[#FAF2EE] font-bold text-xs uppercase tracking-wider px-4 py-2 transition cursor-pointer shadow-xs active:scale-95 flex items-center justify-center gap-1.5"
                               >
                                 <Plus size={14} />
                                 <span>Add</span>
@@ -914,15 +914,15 @@ export default function PublicRestaurantMenu({
 
       {/* ── 7. Floating Sticky Mobile Order Bar ── */}
       {cartItemsCount > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-40 p-4 bg-gradient-to-t from-[#faf8f5] via-[#faf8f5]/90 to-transparent pointer-events-none">
+        <div className="fixed inset-x-0 bottom-0 z-40 p-4 bg-gradient-to-t from-[#FAF2EE] via-[#FAF2EE]/95 to-transparent pointer-events-none">
           <div className="mx-auto max-w-lg pointer-events-auto">
             <button
               type="button"
               onClick={() => setIsCartDrawerOpen(true)}
-              className="w-full min-h-[56px] rounded-2xl bg-stone-900 hover:bg-stone-800 text-white px-5 py-3 shadow-xl flex items-center justify-between gap-3 transition cursor-pointer active:scale-[0.98]"
+              className="w-full min-h-[56px] rounded-2xl bg-[#2A1622] hover:bg-[#3A1E2F] text-[#FAF2EE] px-5 py-3 shadow-xl flex items-center justify-between gap-3 transition cursor-pointer active:scale-[0.98]"
             >
               <div className="flex items-center gap-2.5 text-left">
-                <div className="h-9 w-9 rounded-xl bg-amber-500 text-stone-950 flex items-center justify-center font-black text-sm">
+                <div className="h-9 w-9 rounded-xl bg-[#B85D19] text-white flex items-center justify-center font-bold text-sm">
                   {cartItemsCount}
                 </div>
                 <div>

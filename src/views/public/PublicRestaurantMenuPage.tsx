@@ -5,7 +5,7 @@ export default function PublicRestaurantMenuPage() {
   const { tableToken } = useParams<{ tableToken: string }>();
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-stone-900 font-sans antialiased">
+    <div className="min-h-screen bg-[#FAF2EE] text-[#2A1622] font-sans antialiased">
       <main>
         <PublicMenu tableToken={tableToken || ""} />
       </main>

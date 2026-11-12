@@ -246,12 +246,12 @@ export default function RestaurantPortal() {
   const sidebar = (
     <>
       {/* Mobile close button */}
-      <div className="flex items-center justify-between p-4 lg:hidden border-b border-zinc-800">
-        <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Navigation</span>
+      <div className="flex items-center justify-between p-4 lg:hidden border-b border-[#3E2233]">
+        <span className="text-xs font-bold uppercase tracking-wider text-[#C8B2BC]">Navigation</span>
         <button
           type="button"
           onClick={() => setSidebarOpen(false)}
-          className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
+          className="rounded-lg p-1.5 text-[#C8B2BC] hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
           aria-label="Close menu"
         >
           <X size={16} />
@@ -260,14 +260,14 @@ export default function RestaurantPortal() {
 
       <div className="px-4 lg:px-0">
         {/* Header Branding */}
-        <div className="p-4 lg:p-5 lg:border-b lg:border-zinc-800/90 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-stone-950 flex items-center justify-center font-black text-base shrink-0 shadow-sm">
+        <div className="p-4 lg:p-5 lg:border-b lg:border-[#3E2233]/90 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-[#B85D19] text-[#FAF2EE] flex items-center justify-center font-black text-base shrink-0 shadow-sm">
             {restaurant.name ? restaurant.name[0].toUpperCase() : <ChefHat size={20} />}
           </div>
           <div className="min-w-0">
             <h2 className="font-bold text-sm text-white tracking-tight line-clamp-1 capitalize">{restaurant.name}</h2>
-            <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="flex items-center gap-1.5 text-xs text-[#5EEAD4] font-semibold mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5EEAD4] animate-pulse" />
               Live Operations
             </div>
           </div>
@@ -290,32 +290,32 @@ export default function RestaurantPortal() {
       </div>
 
       {/* Footer Profile & Logout */}
-      <div className="p-4 border-t border-zinc-800/90 bg-zinc-950/40">
-        <div className="flex items-center gap-3 mb-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800">
+      <div className="p-4 border-t border-[#3E2233]/90 bg-[#1D0F18]/70">
+        <div className="flex items-center gap-3 mb-3 p-2.5 rounded-xl bg-[#361C2C] border border-[#3E2233]">
           <div className="h-8 w-8 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 flex items-center justify-center font-bold text-xs uppercase">
             {(userName || "OU").slice(0, 2)}
           </div>
           <div className="min-w-0">
             <p className="text-xs font-semibold text-white truncate">{userName || "Staff User"}</p>
-            <p className="text-[11px] font-medium text-zinc-400 capitalize">{userRole || "Staff"}</p>
+            <p className="text-[11px] font-medium text-[#C8B2BC] capitalize">{userRole || "Staff"}</p>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 h-9 border border-zinc-800 hover:border-rose-500/40 bg-zinc-900 hover:bg-rose-500/10 text-zinc-300 hover:text-rose-300 rounded-xl font-semibold text-xs cursor-pointer transition-all"
+          className="w-full flex items-center justify-center gap-2 h-9 border border-[#3E2233] hover:border-rose-500/40 bg-[#361C2C] hover:bg-rose-500/10 text-zinc-300 hover:text-rose-300 rounded-xl font-semibold text-xs cursor-pointer transition-all"
         >
           <LogOut size={13} />
           Sign Out
         </button>
         <div className="text-center mt-3">
-          <span className="text-[11px] text-zinc-500 font-medium">Trinetra Restaurant OS</span>
+          <span className="text-[11px] text-[#B297A3] font-medium">Trinetra Restaurant OS</span>
         </div>
       </div>
     </>
   );
 
   return (
-    <div className="min-h-screen bg-[#F6F5F1] text-stone-900 flex font-sans">
+    <div className="min-h-screen bg-[#FAF2EE] text-[#2A1622] flex font-sans">
       {/* Mobile overlay backdrop */}
       {sidebarOpen && (
         <div
@@ -326,13 +326,13 @@ export default function RestaurantPortal() {
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 border-r border-zinc-800 bg-[#0F1115] text-zinc-100 flex-col justify-between shrink-0 select-none">
+      <aside className="hidden lg:flex w-64 border-r border-[#3E2233] bg-[#2A1622] text-[#FAF2EE] flex-col justify-between shrink-0 select-none">
         {sidebar}
       </aside>
 
       {/* Mobile Drawer Sidebar */}
       {sidebarOpen && (
-        <aside className="fixed inset-y-0 left-0 z-40 w-72 border-r border-zinc-800 bg-[#0F1115] text-zinc-100 flex-col justify-between shrink-0 select-none shadow-2xl flex">
+        <aside className="fixed inset-y-0 left-0 z-40 w-72 border-r border-[#3E2233] bg-[#2A1622] text-[#FAF2EE] flex-col justify-between shrink-0 select-none shadow-2xl flex">
           {sidebar}
         </aside>
       )}
@@ -340,7 +340,7 @@ export default function RestaurantPortal() {
       {/* Main Operations Window */}
       <main className="flex-1 overflow-y-auto p-4 md:p-6 relative">
         {/* Persistent Top Restaurant Identity Bar */}
-        <div className="mx-auto max-w-7xl flex flex-wrap justify-between items-center gap-4 mb-5 bg-white/95 backdrop-blur-md border border-stone-200/90 rounded-2xl px-5 py-3.5 shadow-xs">
+        <div className="mx-auto max-w-7xl flex flex-wrap justify-between items-center gap-4 mb-5 bg-[#FFFBF9]/95 backdrop-blur-md border border-[#E8D8D2] rounded-2xl px-5 py-3.5 shadow-xs">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
@@ -352,11 +352,11 @@ export default function RestaurantPortal() {
             </button>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-base md:text-xl font-extrabold text-stone-900 tracking-tight truncate capitalize">
+                <h1 className="text-lg md:text-2xl font-serif font-normal text-[#2A1622] tracking-tight truncate capitalize">
                   {restaurant.name}
                 </h1>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/90 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#0F6E6E]/10 text-[#0F6E6E] border border-[#0F6E6E]/25 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#0F6E6E] animate-pulse" />
                   Live
                 </span>
                 <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
@@ -377,7 +377,7 @@ export default function RestaurantPortal() {
               <button
                 type="button"
                 onClick={() => setAiOpsOpen(true)}
-                className="text-xs font-bold text-amber-300 bg-gradient-to-r from-stone-900 to-stone-800 hover:from-stone-800 hover:to-amber-950 border border-stone-800 px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
+                className="text-xs font-bold text-[#FAF2EE] bg-[#B85D19] hover:bg-[#9E4E14] border border-[#B85D19] px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
               >
                 <Sparkles size={13} className="text-amber-400" />
                 AI Ops

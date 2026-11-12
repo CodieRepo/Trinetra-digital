@@ -747,8 +747,8 @@ export default function StaffOrdersPanel({
       <div
         className={`rounded-3xl border p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-5 ${
           role === "kitchen"
-            ? "border-zinc-800 bg-[#141820] text-zinc-100"
-            : "border-stone-200/90 bg-white text-stone-900"
+            ? "border-[#3E2634] bg-[#261821] text-[#FAF2EE]"
+            : "border-[#E8D8D2] bg-[#FFFBF9] text-[#2A1622]"
         }`}
       >
         <div>
@@ -777,7 +777,7 @@ export default function StaffOrdersPanel({
               {payload?.staff?.name ? `Staff: ${payload.staff.name}` : "Verified Staff Session"}
             </span>
           </div>
-          <h2 className={`mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight ${role === "kitchen" ? "text-white" : "text-stone-900"}`}>
+          <h2 className={`mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight ${role === "kitchen" ? "font-serif font-normal text-[#FAF2EE]" : "font-serif font-normal text-[#2A1622]"}`}>
             {role === "kitchen" ? "Kitchen Dispatch Board" : "Dining Tables & Floors"}
           </h2>
           <p className={`mt-1 text-xs sm:text-sm font-medium ${role === "kitchen" ? "text-zinc-400" : "text-stone-600"}`}>
@@ -827,14 +827,14 @@ export default function StaffOrdersPanel({
             onClick={() => setActiveTab("tables")}
             className={`min-h-[46px] rounded-2xl px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-extrabold transition cursor-pointer flex items-center gap-2 ${
               activeTab === "tables"
-                ? "bg-stone-900 text-amber-300 shadow-sm border border-stone-900"
+                ? "bg-[#2A1622] text-[#FAF2EE] shadow-sm border border-[#2A1622]"
                 : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 hover:text-stone-900"
             }`}
           >
             <Layers size={16} />
             <span>Floors & Tables</span>
             <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-              activeTab === "tables" ? "bg-amber-400 text-stone-950" : "bg-stone-100 text-stone-600"
+              activeTab === "tables" ? "bg-[#B85D19] text-white" : "bg-stone-100 text-stone-600"
             }`}>
               {tables.length}
             </span>
@@ -845,7 +845,7 @@ export default function StaffOrdersPanel({
             onClick={() => setActiveTab("orders")}
             className={`min-h-[46px] rounded-2xl px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-extrabold transition cursor-pointer flex items-center gap-2 ${
               activeTab === "orders"
-                ? "bg-stone-900 text-amber-300 shadow-sm border border-stone-900"
+                ? "bg-[#2A1622] text-[#FAF2EE] shadow-sm border border-[#2A1622]"
                 : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 hover:text-stone-900"
             }`}
           >
@@ -853,7 +853,7 @@ export default function StaffOrdersPanel({
             <span>Live Orders</span>
             {payload?.orders && payload.orders.length > 0 && (
               <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                activeTab === "orders" ? "bg-amber-400 text-stone-950" : "bg-amber-100 text-amber-900"
+                activeTab === "orders" ? "bg-[#B85D19] text-white" : "bg-amber-100 text-amber-900"
               }`}>
                 {payload.orders.length}
               </span>
@@ -865,7 +865,7 @@ export default function StaffOrdersPanel({
             onClick={() => setActiveTab("sessions")}
             className={`min-h-[46px] rounded-2xl px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-extrabold transition cursor-pointer flex items-center gap-2 ${
               activeTab === "sessions"
-                ? "bg-stone-900 text-amber-300 shadow-sm border border-stone-900"
+                ? "bg-[#2A1622] text-[#FAF2EE] shadow-sm border border-[#2A1622]"
                 : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 hover:text-stone-900"
             }`}
           >
@@ -873,7 +873,7 @@ export default function StaffOrdersPanel({
             <span>Active Bills & Settlement</span>
             {sessionsPayload?.sessions && sessionsPayload.sessions.length > 0 && (
               <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                activeTab === "sessions" ? "bg-amber-400 text-stone-950" : "bg-emerald-100 text-emerald-900"
+                activeTab === "sessions" ? "bg-[#B85D19] text-white" : "bg-emerald-100 text-emerald-900"
               }`}>
                 {sessionsPayload.sessions.length}
               </span>
@@ -1034,7 +1034,7 @@ export default function StaffOrdersPanel({
                       <button
                         type="button"
                         onClick={() => openTakeOrderForTable(table)}
-                        className="h-12 w-full rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-black uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                        className="h-12 w-full rounded-2xl bg-amber-500 hover:bg-[#B85D19] text-white text-xs font-black uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                       >
                         <Plus size={16} />
                         <span>Take Order</span>
@@ -1913,7 +1913,7 @@ export default function StaffOrdersPanel({
                     type="button"
                     disabled={cart.length === 0 || isSubmittingOrder}
                     onClick={handleSubmitOrder}
-                    className="h-12 w-full rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-black uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-98"
+                    className="h-12 w-full rounded-2xl bg-amber-500 hover:bg-[#B85D19] text-white text-xs font-black uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-98"
                   >
                     {isSubmittingOrder ? (
                       <span>Placing Order...</span>
