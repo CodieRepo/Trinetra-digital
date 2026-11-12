@@ -13,7 +13,7 @@
     "deploy:cf:staging": "opennextjs-cloudflare build && wrangler deploy --env staging",
     "media:optimize": "node scripts/optimize_media_for_r2.mjs",
     "media:upload": "node scripts/upload_r2_media.mjs",
-    "test:unit": "npx --yes tsx --test tests/unit/*.test.ts workers/trinetra-cron/test/*.test.ts"
+    "test:unit": "npx --yes tsx --test tests/unit/*.test.ts workers/trinetra-cron/test/*.test.ts workers/trinetra-edge/test/*.test.ts"
   },
   "dependencies": {
     "@formspree/react": "^3.0.0",

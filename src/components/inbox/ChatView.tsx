@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Lead, ConversationMessage } from "../../types/crm";
 import { BhashTemplateType } from "../../types/bhash";
-import { Send, FileText, Bot, User, Loader2 } from "lucide-react";
+import { Send, FileText, Bot, User, Loader2, Sparkles } from "lucide-react";
 
 interface ChatViewProps {
   lead: Lead | null;
@@ -13,6 +13,37 @@ export const ChatView: React.FC<ChatViewProps> = ({ lead, messages, onSendMessag
   const [inputText, setInputText] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [sending, setSending] = useState(false);
+  const [draftingAi, setDraftingAi] = useState(false);
+
+  const handleAiDraft = async () => {
+    if (!lead || draftingAi) return;
+    const latestInbound = [...messages].reverse().find((m) => m.direction === "inbound");
+    const targetMsg = latestInbound?.body || latestInbound?.message || lead.service_interest || "Inquiry";
+    setDraftingAi(true);
+    try {
+      const res = await fetch("/api/v1/bhash/ai-reply", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          leadName: lead.name,
+          message: targetMsg,
+          history: messages.slice(-5).map((m) => ({
+            direction: m.direction,
+            text: m.body || m.message || "",
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (data?.draft) {
+        setInputText(data.draft);
+      }
+    } catch {
+      // Keep existing input untouched on network failure
+    } finally {
+      setDraftingAi(false);
+    }
+  };
 
   const utilityTemplates: { label: string; value: BhashTemplateType }[] = [
     { label: "Consultation Received", value: "consultation_received" },
@@ -117,6 +148,16 @@ export const ChatView: React.FC<ChatViewProps> = ({ lead, messages, onSendMessag
       <form onSubmit={handleSend} className="p-4 bg-slate-900 border-t border-slate-800 space-y-3">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+          <button
+            type="button"
+            onClick={handleAiDraft}
+            disabled={draftingAi || sending}
+            title="Draft reply with Cloudflare Workers AI"
+            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-amber-300 border border-slate-700 font-medium rounded-lg text-xs transition-colors flex items-center gap-1.5 shrink-0"
+          >
+            {draftingAi ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+            AI Draft
+          </button>
           <select
             value={selectedTemplate}
             onChange={(e) => setSelectedTemplate(e.target.value)}

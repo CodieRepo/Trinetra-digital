@@ -1,18 +1,6 @@
 name: Sync Supabase Migrations & Cron Worker on main
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "supabase/migrations/**"
-      - "workers/trinetra-cron/**"
-      - "tests/unit/**"
-      - "src/lib/cloudflare/**"
-      - "src/lib/cache/**"
-      - "src/services/ai/**"
-      - "wrangler.jsonc"
-      - ".github/workflows/deploy-sync.yml"
   workflow_dispatch:
 
 jobs:

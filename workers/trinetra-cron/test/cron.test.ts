@@ -74,3 +74,37 @@ test("runCronSchedule dispatches */10 bhash sync with Bearer auth header", async
   assert.equal(calls[0].method, "POST");
   assert.equal(calls[0].auth, "Bearer test-scraper-secret");
 });
+
+test("runCronSchedule dispatches 0 */6 maintenance with health check and cleanup mode", async () => {
+  const calls: Array<{ url: string; method?: string; auth?: string | null; body?: string | null }> = [];
+  const mockFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input.toString();
+    const headers = new Headers(init?.headers);
+    calls.push({
+      url,
+      method: init?.method,
+      auth: headers.get("authorization"),
+      body: typeof init?.body === "string" ? init.body : null,
+    });
+    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+  }) as typeof fetch;
+
+  const result = await runCronSchedule(
+    "0 */6 * * *",
+    {
+      APP_BASE_URL: "https://trinetradigitalsolution.com",
+      JOB_SECRET_KEY: "test-job-secret",
+      SCRAPER_SECRET: "test-scraper-secret",
+    },
+    mockFetch
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].url, "https://trinetradigitalsolution.com/api/health");
+  assert.equal(calls[0].method, "GET");
+  assert.equal(calls[1].url, "https://trinetradigitalsolution.com/api/jobs/run");
+  assert.equal(calls[1].method, "POST");
+  assert.equal(calls[1].auth, "Bearer test-job-secret");
+  assert.equal(calls[1].body, JSON.stringify({ mode: "cleanup" }));
+});

@@ -1,0 +1,32 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "trinetra-edge",
+  "account_id": "52ca2c75d5ee0677be20c4d1a1597859",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-12",
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "issues": {
+      "enabled": true
+    }
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "MENU_CACHE",
+      "id": "e81fb00af38846019f4068f42af2e81f"
+    },
+    {
+      "binding": "RATE_LIMIT_KV",
+      "id": "051f1699565c4b7ba836e752c4702512"
+    }
+  ],
+  "vars": {
+    "APP_ORIGIN": "https://trinetradigitalsolution.com",
+    "AI_MODEL_PRIMARY": "@cf/meta/llama-3.2-3b-instruct",
+    "AI_MODEL_FAST": "@cf/meta/llama-3.2-3b-instruct"
+  }
+}

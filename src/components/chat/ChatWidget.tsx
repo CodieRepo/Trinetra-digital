@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Sparkles, Volume2, VolumeX, Settings2, RotateCcw, X, Mic, Send } from 'lucide-react';
 import { useTrinetraBot } from '../../hooks/useTrinetraBot';
 import { LeadCaptureCard } from './LeadCaptureCard';
 import { AppointmentBookingCard } from './AppointmentBookingCard';
@@ -48,90 +49,88 @@ export const ChatWidget: React.FC = () => {
 
   return (
     <>
-      {/* Floating Trigger Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      {/* Floating Trigger Button — positioned cleanly below WhatsAppFloat with zero overlap */}
+      <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[9975]">
         {!isOpen && (
           <button
+            type="button"
             onClick={() => setIsOpen(true)}
-            className="group relative flex items-center space-x-3 px-5 py-3.5 rounded-full bg-slate-900/90 border border-indigo-500/40 text-slate-100 shadow-2xl backdrop-blur-xl hover:scale-105 hover:border-indigo-400 transition-all duration-300"
+            aria-label="Open Trinetra AI Advisor"
+            className="group relative flex items-center gap-3 px-4 py-3 rounded-full bg-[#0F0F12]/95 border border-[#C87A5B]/45 text-stone-100 shadow-[0_12px_32px_rgba(0,0,0,0.45)] backdrop-blur-xl hover:border-[#C87A5B] hover:scale-[1.03] transition-all duration-300 cursor-pointer"
           >
-            {/* Pulsing ring aura */}
-            <span className="absolute -inset-1 rounded-full bg-gradient-to-r from-indigo-500 to-emerald-500 opacity-30 blur-md group-hover:opacity-60 transition duration-500" />
-
-            <div className="relative flex items-center space-x-3">
-              <div className="relative w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-black text-xs text-slate-950 shadow-md">
-                ⚡
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-slate-900 rounded-full" />
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-xs leading-none text-slate-100">Trinetra AI Advisor</p>
-                <p className="text-[10px] text-emerald-400 leading-tight mt-0.5">● 100% Offline AI Ready</p>
-              </div>
+            <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-[#C87A5B] to-[#9E5338] flex items-center justify-center text-white shadow-inner">
+              <Sparkles className="w-4 h-4" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#0F0F12] rounded-full" />
+            </div>
+            <div className="text-left pr-1">
+              <p className="font-semibold text-xs leading-none text-stone-100 tracking-tight">Trinetra AI Advisor</p>
+              <p className="text-[10px] text-[#E09B7E] leading-tight mt-1 font-medium">Instant Growth & POS Guide</p>
             </div>
           </button>
         )}
       </div>
 
-      {/* Main Glassmorphism Chat Drawer */}
+      {/* Main Obsidian + Terracotta Chat Drawer */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-[92vw] sm:w-[420px] h-[600px] max-h-[85vh] bg-slate-950/90 border border-slate-800 rounded-3xl shadow-2xl flex flex-col backdrop-blur-2xl text-slate-100 overflow-hidden animate-slideUp">
+        <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[9995] w-[92vw] sm:w-[410px] h-[580px] max-h-[82vh] bg-[#0B0B0D]/95 border border-white/10 rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.65)] flex flex-col backdrop-blur-2xl text-stone-100 overflow-hidden animate-slideUp">
           {/* Header */}
-          <div className="px-5 py-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="relative w-9 h-9 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-black text-sm text-white shadow-md">
+          <div className="px-5 py-3.5 bg-[#121216] border-b border-white/10 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative w-9 h-9 rounded-2xl bg-gradient-to-br from-[#C87A5B] to-[#8C462D] flex items-center justify-center font-bold text-sm text-white shadow-md">
                 T
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-slate-900 rounded-full" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#121216] rounded-full" />
               </div>
               <div>
-                <h3 className="font-bold text-xs text-slate-100 flex items-center space-x-1.5">
-                  <span>Trinetra AI Growth Assistant</span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/30">
-                    Offline Engine
+                <h3 className="font-semibold text-xs text-stone-100 flex items-center gap-1.5">
+                  <span>Trinetra AI Advisor</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-[#C87A5B]/20 text-[#E6A387] font-semibold border border-[#C87A5B]/30">
+                    Edge AI
                   </span>
                 </h3>
-                <p className="text-[10px] text-slate-400">Classical NLP • Local KB Search</p>
+                <p className="text-[10px] text-stone-400 mt-0.5">Restaurant OS • CRM • Web & SEO</p>
               </div>
             </div>
 
             {/* Header Action Controls */}
-            <div className="flex items-center space-x-1.5">
-              {/* Voice TTS Toggle */}
+            <div className="flex items-center gap-1.5">
               <button
+                type="button"
                 onClick={() => setTtsEnabled(!ttsEnabled)}
                 title={ttsEnabled ? 'Mute Speech Output' : 'Enable Voice Readout'}
-                className={`p-1.5 rounded-lg border text-xs transition ${
+                className={`p-1.5 rounded-lg border transition cursor-pointer ${
                   ttsEnabled
-                    ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
-                    : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#C87A5B]/20 border-[#C87A5B]/50 text-[#E6A387]'
+                    : 'bg-white/5 border-white/10 text-stone-400 hover:text-stone-200'
                 }`}
               >
-                {ttsEnabled ? '🔊' : '🔇'}
+                {ttsEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
               </button>
 
-              {/* Admin Portal Launcher */}
               <button
+                type="button"
                 onClick={() => setIsAdminOpen(true)}
-                title="Open Admin & Local CRM Portal"
-                className="p-1.5 rounded-lg bg-slate-800/60 border border-slate-700 hover:border-slate-500 text-slate-300 text-xs transition"
+                title="Open Advisor Settings"
+                className="p-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/25 text-stone-400 hover:text-stone-200 transition cursor-pointer"
               >
-                ⚙️
+                <Settings2 className="w-3.5 h-3.5" />
               </button>
 
-              {/* Clear Memory */}
               <button
+                type="button"
                 onClick={resetChat}
                 title="Reset Chat History"
-                className="p-1.5 rounded-lg bg-slate-800/60 border border-slate-700 hover:border-slate-500 text-slate-400 hover:text-slate-200 text-xs transition"
+                className="p-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/25 text-stone-400 hover:text-stone-200 transition cursor-pointer"
               >
-                🔄
+                <RotateCcw className="w-3.5 h-3.5" />
               </button>
 
-              {/* Close Drawer */}
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-7 h-7 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-100 flex items-center justify-center text-xs transition"
+                aria-label="Close Trinetra AI Advisor"
+                className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/15 text-stone-400 hover:text-white flex items-center justify-center transition cursor-pointer"
               >
-                ✕
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -146,64 +145,62 @@ export const ChatWidget: React.FC = () => {
                 <div
                   className={`max-w-[85%] p-3.5 rounded-2xl shadow-sm ${
                     msg.sender === 'user'
-                      ? 'bg-indigo-600 text-white rounded-br-none font-medium'
-                      : 'bg-slate-900/90 border border-slate-800 text-slate-200 rounded-bl-none'
+                      ? 'bg-[#C87A5B] text-white rounded-br-none font-medium'
+                      : 'bg-[#151519] border border-white/10 text-stone-200 rounded-bl-none'
                   }`}
                 >
                   <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>
 
-                  {/* Highlights Callout if available */}
                   {msg.highlights && msg.highlights.length > 0 && (
-                    <div className="mt-2.5 pt-2 border-t border-slate-800/60 flex flex-wrap gap-1.5">
+                    <div className="mt-2.5 pt-2 border-t border-white/10 flex flex-wrap gap-1.5">
                       {msg.highlights.map((h, i) => (
                         <span
                           key={i}
-                          className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-[10px]"
+                          className="px-2 py-0.5 rounded-md bg-[#C87A5B]/15 text-[#E6A387] border border-[#C87A5B]/25 text-[10px]"
                         >
-                          ✦ {h}
+                          {h}
                         </span>
                       ))}
                     </div>
                   )}
 
-                  {/* Confidence Badge for bot answers */}
-                  {msg.sender === 'bot' && msg.confidence !== undefined && (
-                    <div className="mt-2 flex items-center justify-between text-[9px] text-slate-500">
-                      <span>Search Confidence: {msg.confidence}%</span>
+                  {msg.sender === 'bot' && (
+                    <div className="mt-2 flex items-center justify-end text-[9px] text-stone-500">
                       <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Inline Action Card Triggers */}
                 {msg.actionType === 'lead_capture' && !activeFormCard && (
                   <button
+                    type="button"
                     onClick={() => setActiveFormCard('lead_capture')}
-                    className="mt-2 px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-semibold hover:bg-emerald-500/30 transition shadow-lg"
+                    className="mt-2 px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/35 text-xs font-semibold hover:bg-emerald-500/25 transition cursor-pointer"
                   >
-                    📋 Fill Quick Quote Form
+                    Fill Quick Quote Form
                   </button>
                 )}
 
                 {msg.actionType === 'appointment_form' && !activeFormCard && (
                   <button
+                    type="button"
                     onClick={() => setActiveFormCard('appointment_form')}
-                    className="mt-2 px-3 py-1.5 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs font-semibold hover:bg-indigo-500/30 transition shadow-lg"
+                    className="mt-2 px-3 py-1.5 rounded-xl bg-[#C87A5B]/20 text-[#E6A387] border border-[#C87A5B]/40 text-xs font-semibold hover:bg-[#C87A5B]/30 transition cursor-pointer"
                   >
-                    📅 Schedule 1-on-1 Strategy Call
+                    Schedule 1-on-1 Consultation
                   </button>
                 )}
 
-                {/* Suggested Questions Chips attached to bot responses */}
                 {msg.sender === 'bot' && msg.suggestedQuestions && msg.suggestedQuestions.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5 max-w-[90%]">
+                  <div className="mt-2 flex flex-wrap gap-1.5 max-w-[92%]">
                     {msg.suggestedQuestions.map((sq, i) => (
                       <button
                         key={i}
+                        type="button"
                         onClick={() => handleChipClick(sq)}
-                        className="px-2.5 py-1 rounded-full bg-slate-900 hover:bg-indigo-600/30 border border-slate-800 hover:border-indigo-500/50 text-slate-300 hover:text-indigo-200 text-[11px] transition duration-200"
+                        className="px-2.5 py-1 rounded-full bg-[#151519] hover:bg-[#C87A5B]/20 border border-white/10 hover:border-[#C87A5B]/45 text-stone-300 hover:text-stone-100 text-[11px] transition duration-200 cursor-pointer"
                       >
-                        💡 {sq}
+                        {sq}
                       </button>
                     ))}
                   </div>
@@ -211,7 +208,6 @@ export const ChatWidget: React.FC = () => {
               </div>
             ))}
 
-            {/* Active Form Cards Embedded */}
             {activeFormCard === 'lead_capture' && (
               <LeadCaptureCard
                 initialMemory={userMemory}
@@ -228,55 +224,53 @@ export const ChatWidget: React.FC = () => {
               />
             )}
 
-            {/* Typing Indicator */}
             {isTyping && (
-              <div className="flex items-center space-x-2 text-slate-400 p-2 text-xs">
-                <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" />
-                <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:0.2s]" />
-                <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:0.4s]" />
-                <span className="text-[10px] text-slate-500 ml-1">Analyzing knowledge base...</span>
+              <div className="flex items-center space-x-2 text-stone-400 p-2 text-xs">
+                <div className="w-2 h-2 rounded-full bg-[#C87A5B] animate-bounce" />
+                <div className="w-2 h-2 rounded-full bg-[#C87A5B] animate-bounce [animation-delay:0.2s]" />
+                <div className="w-2 h-2 rounded-full bg-[#C87A5B] animate-bounce [animation-delay:0.4s]" />
+                <span className="text-[10px] text-stone-500 ml-1">Thinking...</span>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Input Form Bar */}
-          <form onSubmit={handleFormSubmit} className="p-3 bg-slate-900/90 border-t border-slate-800 flex items-center space-x-2">
+          <form onSubmit={handleFormSubmit} className="p-3 bg-[#121216] border-t border-white/10 flex items-center gap-2">
             {isVoiceSupported && (
               <button
                 type="button"
                 onClick={startListening}
-                className={`p-2 rounded-xl border text-xs transition ${
+                className={`p-2.5 rounded-xl border transition cursor-pointer ${
                   isListening
                     ? 'bg-rose-500 border-rose-400 text-white animate-pulse'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-100'
+                    : 'bg-white/5 border-white/10 text-stone-400 hover:text-stone-100'
                 }`}
-                title="Voice Input (Speech to Text)"
+                title="Voice Input"
               >
-                🎙️
+                <Mic className="w-3.5 h-3.5" />
               </button>
             )}
 
             <input
               type="text"
-              placeholder="Ask about websites, SEO, pricing, CRM..."
+              placeholder="Ask about Restaurant OS, CRM, pricing..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition placeholder:text-slate-500"
+              className="flex-1 px-3.5 py-2.5 bg-[#09090B] border border-white/10 rounded-xl text-xs text-stone-100 focus:outline-none focus:border-[#C87A5B] transition placeholder:text-stone-500"
             />
 
             <button
               type="submit"
               disabled={!input.trim() || isTyping}
-              className="px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 disabled:opacity-40 text-slate-950 font-bold text-xs transition shadow-lg shadow-indigo-500/20"
+              className="px-3.5 py-2.5 rounded-xl bg-[#C87A5B] hover:bg-[#D48768] disabled:opacity-40 text-white font-semibold text-xs transition flex items-center gap-1 cursor-pointer"
             >
-              Send
+              <Send className="w-3.5 h-3.5" />
             </button>
           </form>
         </div>
       )}
 
-      {/* Admin & Local CRM Modal */}
       <AdminPanelModal isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
     </>
   );

@@ -3,8 +3,9 @@
 import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { 
-  LogOut, Utensils, ChefHat, LayoutDashboard, AlertCircle, Menu, X, ArrowLeft, Smartphone 
+  LogOut, Utensils, ChefHat, LayoutDashboard, AlertCircle, Menu, X, ArrowLeft, Smartphone, Sparkles 
 } from "lucide-react";
+import { RestroAiAssistantDrawer } from "@/components/restaurant-os/RestroAiAssistantDrawer";
 import { useDynamicManifest } from "@/hooks/useDynamicManifest";
 import RestaurantDashboard from "../../../trinetra-business-os/packages/verticals/restaurant-os/components/admin/RestaurantDashboard";
 
@@ -24,6 +25,7 @@ export default function RestaurantPortal() {
   const [userName, setUserName] = useState<string>("");
   const [planTier, setPlanTier] = useState<string>("pro");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [aiOpsOpen, setAiOpsOpen] = useState(false);
 
   const resolveRestaurantContext = async (activeSession: any) => {
     try {
@@ -371,6 +373,16 @@ export default function RestaurantPortal() {
             </div>
           </div>
           <div className="flex items-center gap-2.5 shrink-0">
+            {["owner", "admin", "manager"].includes((userRole || "").toLowerCase()) && (
+              <button
+                type="button"
+                onClick={() => setAiOpsOpen(true)}
+                className="text-xs font-semibold text-slate-900 bg-amber-100 border border-amber-300 hover:bg-amber-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs cursor-pointer transition-all"
+              >
+                <Sparkles size={13} className="text-amber-700" />
+                AI Ops
+              </button>
+            )}
             {canInstall && !isInstalled && (
               <button
                 type="button"
@@ -408,6 +420,12 @@ export default function RestaurantPortal() {
           }}
         />
       </main>
+      <RestroAiAssistantDrawer
+        open={aiOpsOpen}
+        onClose={() => setAiOpsOpen(false)}
+        accessToken={session?.access_token || null}
+        restaurantName={restaurant.name}
+      />
     </div>
   );
 }

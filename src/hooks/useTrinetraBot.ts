@@ -130,6 +130,27 @@ export function useTrinetraBot() {
         memoryManager.addMessage(botMsg);
         setIsTyping(false);
 
+        if (!topHit || topHit.confidence < 45) {
+          const kbContext = searchHits
+            .slice(0, 2)
+            .map((h) => `${h.item.title}: ${(h.item.content || "").slice(0, 300)}`)
+            .join("\n");
+          fetch("/api/chat", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ message: trimmedQuery, knowledgeContext: kbContext }),
+          })
+            .then((r) => r.json())
+            .then((data) => {
+              if (data?.ok && data?.reply) {
+                setMessages((prev) =>
+                  prev.map((m) => (m.id === botMsg.id ? { ...m, text: data.reply } : m))
+                );
+              }
+            })
+            .catch(() => {});
+        }
+
         if (composed.actionType) {
           setActiveFormCard(composed.actionType === 'appointment_form' ? 'appointment_form' : 'lead_capture');
         }

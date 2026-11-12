@@ -15,7 +15,8 @@ async function postOrGetJson(
   fetchImpl: typeof fetch,
   url: string,
   method: "GET" | "POST",
-  bearerSecret?: string
+  bearerSecret?: string,
+  bodyPayload: Record<string, unknown> = {}
 ): Promise<{ endpoint: string; status: number }> {
   const headers: Record<string, string> = {
     "content-type": "application/json",
@@ -28,7 +29,7 @@ async function postOrGetJson(
   const response = await fetchImpl(url, {
     method,
     headers,
-    ...(method === "POST" ? { body: JSON.stringify({}) } : {}),
+    ...(method === "POST" ? { body: JSON.stringify(bodyPayload) } : {}),
   });
 
   if (!response.ok) {
@@ -64,6 +65,33 @@ export async function runCronSchedule(
         cron,
         results: [syncRes],
         ...(syncRes.status >= 300 ? { error: `Bhash sync returned HTTP ${syncRes.status}` } : {}),
+      };
+    }
+
+    if (cron === "0 */6 * * *") {
+      if (!env.JOB_SECRET_KEY) {
+        return { ok: false, cron, error: "JOB_SECRET_KEY is required" };
+      }
+      const healthRes = await postOrGetJson(fetchImpl, `${baseUrl}/api/health`, "GET");
+      const cleanupRes = await postOrGetJson(
+        fetchImpl,
+        `${baseUrl}/api/jobs/run`,
+        "POST",
+        env.JOB_SECRET_KEY,
+        { mode: "cleanup" }
+      );
+      const allOk =
+        healthRes.status >= 200 &&
+        healthRes.status < 300 &&
+        cleanupRes.status >= 200 &&
+        cleanupRes.status < 300;
+      return {
+        ok: allOk,
+        cron,
+        results: [healthRes, cleanupRes],
+        ...(allOk
+          ? {}
+          : { error: `Maintenance partial failure (health=${healthRes.status}, cleanup=${cleanupRes.status})` }),
       };
     }
 
