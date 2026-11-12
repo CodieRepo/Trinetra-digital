@@ -22,6 +22,10 @@ import {
   TrendingDown,
   ShoppingBag,
 } from "lucide-react";
+import {
+  extractMenuItemsFromResponse,
+  type InventoryMenuDish,
+} from "./menu-item-parser";
 
 interface InventoryItem {
   id: string;
@@ -57,13 +61,7 @@ interface StockMovement {
   };
 }
 
-interface MenuItem {
-  id: string;
-  name: string;
-  price: number;
-  category_id?: string;
-  is_available: boolean;
-}
+type MenuItem = InventoryMenuDish;
 
 interface RecipeBOMGroup {
   menu_item_id: string;
@@ -231,15 +229,7 @@ export function InventoryManagementWorkspace({
 
       if (menuRes.ok) {
         const menuData = await menuRes.json();
-        const itemsList: MenuItem[] = [];
-        if (Array.isArray(menuData.categories)) {
-          for (const cat of menuData.categories) {
-            if (Array.isArray(cat.menu_items)) {
-              itemsList.push(...cat.menu_items);
-            }
-          }
-        }
-        setMenuItems(itemsList);
+        setMenuItems(extractMenuItemsFromResponse(menuData));
       }
     } catch (e) {
       console.error("Failed to load recipes/menu:", e);
