@@ -15,6 +15,10 @@ import {
   Sparkles,
   ChevronRight,
   UtensilsCrossed,
+  MapPin,
+  Coffee,
+  Flame,
+  ChefHat,
 } from "lucide-react";
 import SessionSummaryBar, {
   type SessionOrderSummary,
@@ -96,6 +100,99 @@ function formatCurrency(amount: number, currency: string) {
     currency: currency || "INR",
     maximumFractionDigits: 0,
   }).format(amount ?? 0);
+}
+
+function getRestaurantMonogram(name: string) {
+  const words = String(name || "TR")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length >= 2) {
+    return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  }
+  return (words[0] || "TR").slice(0, 2).toUpperCase();
+}
+
+function DishImageFrame({
+  item,
+  categoryName,
+}: {
+  item: MenuItem;
+  categoryName: string;
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const showPhoto = Boolean(item.image_url && !imgFailed);
+  const catLower = `${categoryName} ${item.name}`.toLowerCase();
+  const isBeverage = /(coffee|latte|tea|chai|shake|juice|mocktail|drink|beverage|mojito|soda)/.test(catLower);
+  const isGrill = /(tikka|tandoor|grill|kebab|biryani|spicy|chili|curry|pizza|burger)/.test(catLower);
+
+  const fallbackGradient = isBeverage
+    ? "from-amber-100 via-orange-50 to-stone-200 text-amber-900"
+    : item.is_veg
+      ? "from-emerald-50 via-amber-50 to-stone-100 text-emerald-900"
+      : "from-rose-50 via-orange-50 to-amber-100 text-rose-900";
+
+  return (
+    <div className="relative h-40 sm:h-44 w-full overflow-hidden rounded-2xl bg-stone-100 border border-stone-200/70">
+      {showPhoto ? (
+        <>
+          <img
+            src={item.image_url!}
+            alt={item.name}
+            loading="lazy"
+            onError={() => setImgFailed(true)}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
+        </>
+      ) : (
+        <div
+          className={`h-full w-full bg-gradient-to-br ${fallbackGradient} flex flex-col items-center justify-center relative overflow-hidden`}
+        >
+          <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/45 blur-xl" />
+          <div className="absolute -left-6 -bottom-6 h-24 w-24 rounded-full bg-amber-300/20 blur-xl" />
+          <div className="h-12 w-12 rounded-2xl bg-white/85 backdrop-blur-xs shadow-xs border border-white/80 flex items-center justify-center mb-2">
+            {isBeverage ? (
+              <Coffee size={22} className="text-amber-700" />
+            ) : isGrill ? (
+              <Flame size={22} className="text-orange-600" />
+            ) : (
+              <ChefHat size={22} className="text-stone-700" />
+            )}
+          </div>
+          <span className="text-[11px] font-bold uppercase tracking-widest opacity-70 px-3 text-center truncate max-w-full">
+            {categoryName}
+          </span>
+        </div>
+      )}
+
+      {/* Floating Dietary Pill */}
+      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-xs px-2.5 py-1 shadow-xs border border-stone-200/80">
+        <span
+          className={`flex h-3.5 w-3.5 items-center justify-center rounded-[3px] border-[1.5px] ${
+            item.is_veg ? "border-emerald-600" : "border-rose-600"
+          }`}
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              item.is_veg ? "bg-emerald-600" : "bg-rose-600"
+            }`}
+          />
+        </span>
+        <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-800">
+          {item.is_veg ? "Veg" : "Non-Veg"}
+        </span>
+      </div>
+
+      {!item.is_available && (
+        <div className="absolute inset-0 bg-stone-950/55 backdrop-blur-[1px] flex items-center justify-center">
+          <span className="rounded-full bg-white px-3.5 py-1 text-xs font-black uppercase tracking-wider text-rose-700 shadow-md">
+            Sold Out
+          </span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function PublicRestaurantMenu({
@@ -548,16 +645,22 @@ export default function PublicRestaurantMenu({
   return (
     <div className="min-h-screen bg-[#faf8f5] text-stone-900 font-sans antialiased pb-32">
       {/* ── 1. Top Restaurant Header ── */}
-      <header className="sticky top-0 z-30 border-b border-stone-200/90 bg-white/95 backdrop-blur-md px-4 py-3 shadow-xs">
+      <header className="sticky top-0 z-30 border-b border-stone-200/80 bg-white/90 backdrop-blur-md px-4 py-2.5 shadow-xs">
         <div className="mx-auto max-w-5xl flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-base sm:text-lg font-black uppercase tracking-tight text-stone-900 truncate">
-              {payload.restaurant.name}
-            </h1>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 border border-amber-200/80 px-2.5 py-0.5 text-[11px] font-black text-amber-950 uppercase tracking-wide">
-                Table {payload.table.table_number} • {payload.table.floor_name || "Main Dining"}
-              </span>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-stone-900 via-stone-800 to-amber-900 text-amber-300 font-black text-sm flex items-center justify-center shadow-xs shrink-0 ring-1 ring-amber-500/20">
+              {getRestaurantMonogram(payload.restaurant.name)}
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-stone-900 truncate capitalize">
+                {payload.restaurant.name}
+              </h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200/90 px-2.5 py-0.5 text-[11px] font-bold text-amber-900">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Table {payload.table.table_number} · {payload.table.floor_name || "Main Dining"}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -566,7 +669,7 @@ export default function PublicRestaurantMenu({
               <button
                 type="button"
                 onClick={() => setIsCartDrawerOpen(true)}
-                className="min-h-[42px] px-3.5 py-1.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+                className="min-h-[42px] px-3.5 py-1.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-amber-300 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer"
               >
                 <ShoppingBag size={15} />
                 <span>{cartItemsCount}</span>
@@ -577,24 +680,39 @@ export default function PublicRestaurantMenu({
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4 sm:pt-6 space-y-5">
-        {/* ── 2. Compact Welcome & Table Hero ── */}
-        <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 shadow-xs relative overflow-hidden">
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-amber-800 flex items-center gap-1.5">
-                <Sparkles size={14} className="text-amber-600" />
-                Digital Dining Table
-              </p>
-              <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-1">
-                Order from your table
+        {/* ── 2. Signature Editorial Restaurant Hero ── */}
+        <div className="rounded-3xl bg-gradient-to-br from-stone-950 via-stone-900 to-amber-950 text-white p-5 sm:p-7 shadow-lg relative overflow-hidden border border-stone-800">
+          <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-amber-500/20 blur-3xl" />
+          <div className="pointer-events-none absolute -left-10 -bottom-12 h-40 w-40 rounded-full bg-orange-500/10 blur-2xl" />
+
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div className="min-w-0">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-amber-300 backdrop-blur-xs">
+                <Sparkles size={13} className="text-amber-400" />
+                <span>Dine-In Digital Menu</span>
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mt-2.5 capitalize leading-tight">
+                {payload.restaurant.name}
               </h2>
-              <p className="text-xs sm:text-sm text-stone-600 font-medium mt-1">
-                Select your favorite dishes, customize options, and dispatch orders directly to the kitchen.
-              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-300 font-medium">
+                {payload.restaurant.address && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin size={13} className="text-amber-400 shrink-0" />
+                    <span className="truncate max-w-[260px] sm:max-w-md">{payload.restaurant.address}</span>
+                  </span>
+                )}
+                <span>Freshly prepared · Sent directly to kitchen</span>
+              </div>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-xs font-black text-stone-800 shrink-0 self-start sm:self-auto">
-              <QrCode size={16} className="text-amber-700" />
-              <span>Table #{payload.table.table_number} · {payload.restaurant.currency || "INR"}</span>
+
+            <div className="inline-flex items-center gap-2.5 rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-4 py-2.5 text-xs font-bold text-white shrink-0 self-start sm:self-auto">
+              <QrCode size={16} className="text-amber-400" />
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-stone-300">Active Table</div>
+                <div className="text-sm font-extrabold text-white">
+                  #{payload.table.table_number} · {payload.table.floor_name || "Main"}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -703,50 +821,43 @@ export default function PublicRestaurantMenu({
                   </span>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {category.items.map((item) => {
                     const inCartQty = cart[item.id]?.quantity ?? 0;
                     return (
                       <div
                         key={item.id}
-                        className="rounded-3xl border border-stone-200 bg-white p-4.5 sm:p-5 shadow-xs flex flex-col justify-between transition hover:border-amber-300"
+                        className="group rounded-3xl border border-stone-200/90 bg-white p-3.5 shadow-xs flex flex-col justify-between transition hover:border-amber-300 hover:shadow-md"
                       >
                         <div>
-                          {/* Dietary & Title */}
-                          <div className="flex items-start gap-2.5 justify-between">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span
-                                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border-2 ${
-                                    item.is_veg ? "border-emerald-600" : "border-rose-600"
-                                  }`}
-                                  title={item.is_veg ? "Vegetarian" : "Non-Vegetarian"}
-                                >
-                                  <span
-                                    className={`h-1.5 w-1.5 rounded-full ${
-                                      item.is_veg ? "bg-emerald-600" : "bg-rose-600"
-                                    }`}
-                                  />
-                                </span>
-                                <h4 className="font-black text-stone-900 text-base sm:text-lg uppercase tracking-tight leading-snug">
-                                  {item.name}
-                                </h4>
-                              </div>
+                          <DishImageFrame item={item} categoryName={category.name} />
 
-                              {item.description && (
-                                <p className="mt-1.5 text-xs text-stone-600 line-clamp-2 font-medium leading-relaxed">
-                                  {item.description}
-                                </p>
-                              )}
-                            </div>
+                          <div className="mt-3 px-0.5">
+                            <h4 className="font-bold text-stone-900 text-base tracking-tight leading-snug line-clamp-1">
+                              {item.name}
+                            </h4>
+                            {item.description ? (
+                              <p className="mt-1 text-xs text-stone-500 line-clamp-2 font-medium leading-relaxed min-h-[2.25rem]">
+                                {item.description}
+                              </p>
+                            ) : (
+                              <p className="mt-1 text-xs text-stone-400 font-medium">
+                                Freshly prepared to order
+                              </p>
+                            )}
                           </div>
                         </div>
 
                         {/* Price & Add / Stepper Controls */}
-                        <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between gap-3">
-                          <p className="text-base sm:text-lg font-black text-stone-900 tracking-tight">
-                            {formatCurrency(Number(item.price), payload.restaurant.currency)}
-                          </p>
+                        <div className="mt-3.5 pt-3 border-t border-stone-100 flex items-center justify-between gap-3 px-0.5">
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block">
+                              Price
+                            </span>
+                            <p className="text-lg font-extrabold text-stone-900 tracking-tight leading-none mt-0.5">
+                              {formatCurrency(Number(item.price), payload.restaurant.currency)}
+                            </p>
+                          </div>
 
                           <div>
                             {!item.is_available ? (
@@ -757,29 +868,29 @@ export default function PublicRestaurantMenu({
                               <button
                                 type="button"
                                 onClick={() => updateQuantity(item.id, 1)}
-                                className="min-h-[44px] min-w-[96px] rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider px-4 py-2 transition cursor-pointer shadow-xs active:scale-95 flex items-center justify-center gap-1.5"
+                                className="min-h-[42px] min-w-[96px] rounded-2xl bg-stone-900 hover:bg-amber-500 hover:text-stone-950 text-white font-bold text-xs uppercase tracking-wider px-4 py-2 transition cursor-pointer shadow-xs active:scale-95 flex items-center justify-center gap-1.5"
                               >
                                 <Plus size={14} />
                                 <span>Add</span>
                               </button>
                             ) : (
-                              <div className="flex items-center gap-2 bg-stone-100 border border-stone-200 rounded-2xl p-1 shadow-xs">
+                              <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-300 rounded-2xl p-1 shadow-xs">
                                 <button
                                   type="button"
                                   onClick={() => updateQuantity(item.id, -1)}
-                                  className="h-10 w-10 rounded-xl bg-white hover:bg-stone-200 text-stone-900 flex items-center justify-center font-black transition cursor-pointer active:scale-95 shadow-xs"
+                                  className="h-9 w-9 rounded-xl bg-white hover:bg-stone-100 text-stone-900 flex items-center justify-center font-black transition cursor-pointer active:scale-95 shadow-xs"
                                 >
-                                  <Minus size={15} />
+                                  <Minus size={14} />
                                 </button>
-                                <span className="w-8 text-center font-black text-stone-900 text-sm">
+                                <span className="w-7 text-center font-black text-stone-950 text-sm">
                                   {inCartQty}
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => updateQuantity(item.id, 1)}
-                                  className="h-10 w-10 rounded-xl bg-stone-900 hover:bg-stone-800 text-white flex items-center justify-center font-black transition cursor-pointer active:scale-95 shadow-xs"
+                                  className="h-9 w-9 rounded-xl bg-stone-900 hover:bg-stone-800 text-white flex items-center justify-center font-black transition cursor-pointer active:scale-95 shadow-xs"
                                 >
-                                  <Plus size={15} />
+                                  <Plus size={14} />
                                 </button>
                               </div>
                             )}
