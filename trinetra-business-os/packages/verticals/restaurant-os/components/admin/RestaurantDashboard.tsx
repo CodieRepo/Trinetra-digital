@@ -1645,6 +1645,86 @@ export default function RestaurantDashboard({
             onDeleteTable={async (tableId: string) => {
               await deleteTable(tableId);
             }}
+            onAddFloor={async (name: string) => {
+              try {
+              const res = await fetch("/api/client/restaurant/floors", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  name,
+                  restaurant_id: restaurantId,
+                  tenant_id: tenantId,
+                }),
+              });
+              const data = await readJson<{ floor?: FloorRecord; error?: string }>(res);
+              if (!res.ok || !data?.floor) {
+                throw new Error(data?.error || "Failed to add floor");
+              }
+              setFloors((prev) => [...prev, data.floor!]);
+              setToastMessage(`Floor "${data.floor.name}" added`);
+              return true;
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to add floor");
+                return false;
+              }
+            }}
+            onDeleteFloor={async (floorId: string) => {
+              const res = await fetch("/api/client/restaurant/floors", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  floor_id: floorId,
+                  restaurant_id: restaurantId,
+                  tenant_id: tenantId,
+                }),
+              });
+              const data = await readJson<{ success?: boolean; error?: string }>(res);
+              if (!res.ok) {
+                throw new Error(data?.error || "Failed to delete floor");
+              }
+              setFloors((prev) => prev.filter((f) => f.id !== floorId));
+              setTables((prev) =>
+                prev.map((t) =>
+                  t.floor_id === floorId
+                    ? { ...t, floor_id: null, floor_name: null }
+                    : t
+                )
+              );
+              setToastMessage("Floor removed (tables moved to Unassigned)");
+            }}
+            onAssignTableFloor={async (tableId: string, floorId: string | null) => {
+              setBusyKey(`floor:${tableId}`);
+              try {
+                const res = await fetch("/api/client/restaurant/tables", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    table_id: tableId,
+                    floor_id: floorId,
+                    restaurant_id: restaurantId,
+                    tenant_id: tenantId,
+                  }),
+                });
+                const data = await readJson<{ table?: TableRecord; error?: string }>(res);
+                if (!res.ok || !data?.table) {
+                  throw new Error(data?.error || "Failed to update table floor");
+                }
+                setTables((prev) =>
+                  prev.map((t) => (t.id === tableId ? data.table! : t))
+                );
+                setToastMessage(
+                  data.table.floor_name
+                    ? `Moved to ${data.table.floor_name}`
+                    : "Moved to Unassigned"
+                );
+              } catch (err) {
+                setError(
+                  err instanceof Error ? err.message : "Failed to update table floor"
+                );
+              } finally {
+                setBusyKey(null);
+              }
+            }}
             onExportAllQrs={generateQrs}
             onRefresh={() => void loadAll(false)}
             onSelectTableSession={(_session) => {

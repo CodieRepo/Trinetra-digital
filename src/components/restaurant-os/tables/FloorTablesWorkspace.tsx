@@ -62,6 +62,9 @@ interface FloorTablesWorkspaceProps {
   currency: string;
   onAddTable: (tableNumber: string, floorId: string | null) => Promise<boolean>;
   onDeleteTable: (tableId: string) => Promise<void>;
+  onAddFloor?: (name: string) => Promise<boolean>;
+  onDeleteFloor?: (floorId: string) => Promise<void>;
+  onAssignTableFloor?: (tableId: string, floorId: string | null) => Promise<void>;
   onExportAllQrs: () => Promise<void>;
   onRefresh: () => void;
   onSelectTableSession?: (session: SessionData) => void;
@@ -79,6 +82,9 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
   currency,
   onAddTable,
   onDeleteTable,
+  onAddFloor,
+  onDeleteFloor,
+  onAssignTableFloor,
   onExportAllQrs,
   onRefresh,
   onSelectTableSession,
@@ -94,6 +100,10 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
   // Modals state
   const [qrModalTable, setQrModalTable] = useState<TableItem | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAddFloorOpen, setIsAddFloorOpen] = useState(false);
+  const [newFloorName, setNewFloorName] = useState('');
+  const [isAddingFloor, setIsAddingFloor] = useState(false);
+  const [assigningTableId, setAssigningTableId] = useState<string | null>(null);
   const [deleteModalTable, setDeleteModalTable] = useState<TableItem | null>(null);
   const [startSessionTable, setStartSessionTable] = useState<TableItem | null>(null);
   const [transferSession, setTransferSession] = useState<SessionData | null>(null);
@@ -274,6 +284,16 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
               <Download className="h-3.5 w-3.5 text-amber-700" />
               Export All QRs
             </button>
+            {onAddFloor && (
+              <button
+                type="button"
+                onClick={() => setIsAddFloorOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+              >
+                <Plus className="h-3.5 w-3.5 text-amber-600" />
+                Add Floor
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
@@ -289,27 +309,46 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
         <div className="mt-5 flex flex-col gap-3 pt-4 border-t border-slate-100 lg:flex-row lg:items-center lg:justify-between">
           {/* Section pill tabs */}
           <div className="flex flex-wrap items-center gap-1.5">
-            {sections.map((sec) => (
-              <button
-                key={sec.id}
-                type="button"
-                onClick={() => setSelectedSection(sec.id)}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
-                  selectedSection === sec.id
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
-                }`}
-              >
-                <span>{sec.label}</span>
-                <span
-                  className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
-                    selectedSection === sec.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  {sec.count}
-                </span>
-              </button>
-            ))}
+            {sections.map((sec) => {
+              const isCustomFloor = sec.id !== 'all' && sec.id !== 'unassigned';
+              return (
+                <div key={sec.id} className="inline-flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSection(sec.id)}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                      selectedSection === sec.id
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                    }`}
+                  >
+                    <span>{sec.label}</span>
+                    <span
+                      className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                        selectedSection === sec.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {sec.count}
+                    </span>
+                  </button>
+                  {isCustomFloor && onDeleteFloor && selectedSection === sec.id && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (window.confirm(`Delete floor "${sec.label}"? Tables on it will move to Unassigned.`)) {
+                          await onDeleteFloor(sec.id);
+                          setSelectedSection('all');
+                        }
+                      }}
+                      title={`Delete floor ${sec.label}`}
+                      className="ml-1 rounded-md px-1.5 py-1 text-[11px] font-bold text-rose-600 hover:bg-rose-50 cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Search and Status Filters */}
@@ -375,7 +414,30 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
                         <h3 className="text-sm font-bold text-slate-900 font-mono">
                           Table {table.table_number}
                         </h3>
-                        {table.floor_name ? (
+                        {floors.length > 0 && onAssignTableFloor ? (
+                          <select
+                            aria-label={`Assign floor for Table ${table.table_number}`}
+                            value={table.floor_id || ''}
+                            disabled={assigningTableId === table.id}
+                            onChange={async (e) => {
+                              const nextFloorId = e.target.value || null;
+                              setAssigningTableId(table.id);
+                              try {
+                                await onAssignTableFloor(table.id, nextFloorId);
+                              } finally {
+                                setAssigningTableId(null);
+                              }
+                            }}
+                            className="mt-0.5 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 outline-none focus:border-amber-500 cursor-pointer disabled:opacity-50"
+                          >
+                            <option value="">Unassigned</option>
+                            {floors.map((f) => (
+                              <option key={f.id} value={f.id}>
+                                {f.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : table.floor_name ? (
                           <p className="text-[10px] text-amber-700 font-semibold">
                             {table.floor_name}
                           </p>
@@ -593,6 +655,62 @@ export const FloorTablesWorkspace: React.FC<FloorTablesWorkspaceProps> = ({
         floors={floors}
         defaultFloorId={defaultFloorForModal}
       />
+
+      {isAddFloorOpen && onAddFloor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const trimmed = newFloorName.trim();
+              if (!trimmed || isAddingFloor) return;
+              setIsAddingFloor(true);
+              try {
+                const ok = await onAddFloor(trimmed);
+                if (ok) {
+                  setNewFloorName('');
+                  setIsAddFloorOpen(false);
+                }
+              } finally {
+                setIsAddingFloor(false);
+              }
+            }}
+            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl border border-slate-200 space-y-4"
+          >
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900">Add Dining Floor / Section</h3>
+              <p className="text-xs text-slate-500 mt-0.5">e.g. Ground Floor, Rooftop, AC Hall, Garden</p>
+            </div>
+            <input
+              type="text"
+              autoFocus
+              required
+              value={newFloorName}
+              onChange={(e) => setNewFloorName(e.target.value)}
+              placeholder="Enter floor name..."
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-amber-500 focus:bg-white"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddFloorOpen(false);
+                  setNewFloorName('');
+                }}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isAddingFloor || !newFloorName.trim()}
+                className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+              >
+                {isAddingFloor ? 'Creating...' : 'Create Floor'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <DeleteTableModal
         isOpen={!!deleteModalTable}
