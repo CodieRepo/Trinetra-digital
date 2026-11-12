@@ -758,66 +758,59 @@ export default function RestaurantDashboard({
   return (
     <div className="space-y-6">
       <div className="mx-auto max-w-7xl space-y-5">
-        {/* Compact High-Density Operational KPI Bar */}
+        {/* Executive Operational KPI Strip */}
         <section className="grid gap-3.5 grid-cols-2 md:grid-cols-5">
           {[
             {
               label: "Active Orders",
               value: metrics.activeOrders,
-              icon: <UtensilsCrossed className="h-4 w-4 text-white" />,
-              iconBg: "bg-amber-500 shadow-xs",
-              cardBg: "bg-[#FFF9EE] border-amber-200/90",
-              textColor: "text-amber-950",
-              labelColor: "text-amber-800",
+              icon: <UtensilsCrossed className="h-4 w-4 text-amber-600" />,
+              iconBg: "bg-amber-50 border border-amber-200/80",
+              accentBar: "bg-amber-500",
             },
             {
               label: "Kitchen Queue",
               value: metrics.kitchenQueue,
-              icon: <ChefHat className="h-4 w-4 text-white" />,
-              iconBg: "bg-indigo-600 shadow-xs",
-              cardBg: "bg-[#F2F5FF] border-indigo-200/90",
-              textColor: "text-indigo-950",
-              labelColor: "text-indigo-800",
+              icon: <ChefHat className="h-4 w-4 text-indigo-600" />,
+              iconBg: "bg-indigo-50 border border-indigo-200/80",
+              accentBar: "bg-indigo-500",
             },
             {
               label: "Ready to Serve",
               value: metrics.readyOrders,
-              icon: <LayoutGrid className="h-4 w-4 text-white" />,
-              iconBg: "bg-emerald-600 shadow-xs",
-              cardBg: "bg-[#F2FBF7] border-emerald-200/90",
-              textColor: "text-emerald-950",
-              labelColor: "text-emerald-800",
+              icon: <LayoutGrid className="h-4 w-4 text-emerald-600" />,
+              iconBg: "bg-emerald-50 border border-emerald-200/80",
+              accentBar: "bg-emerald-500",
             },
             {
               label: "Active Tables",
               value: sessions.length,
-              icon: <CreditCard className="h-4 w-4 text-white" />,
-              iconBg: "bg-purple-600 shadow-xs",
-              cardBg: "bg-[#FAF5FF] border-purple-200/90",
-              textColor: "text-purple-950",
-              labelColor: "text-purple-800",
+              icon: <CreditCard className="h-4 w-4 text-purple-600" />,
+              iconBg: "bg-purple-50 border border-purple-200/80",
+              accentBar: "bg-purple-500",
             },
             {
               label: "Tracked Revenue",
               value: formatCurrency(metrics.revenue, currency),
-              icon: <Users className="h-4 w-4 text-white" />,
-              iconBg: "bg-teal-600 shadow-xs",
-              cardBg: "bg-[#F0FDF9] border-teal-200/90",
-              textColor: "text-teal-950",
-              labelColor: "text-teal-800",
+              icon: <Users className="h-4 w-4 text-teal-600" />,
+              iconBg: "bg-teal-50 border border-teal-200/80",
+              accentBar: "bg-teal-500",
             },
           ].map((metric) => (
             <div
               key={metric.label}
-              className={`rounded-xl border p-4 shadow-xs transition-all hover:shadow-sm ${metric.cardBg}`}
+              className="group relative overflow-hidden rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xs transition-all hover:border-stone-300 hover:shadow-sm"
             >
-              <div className="flex items-center justify-between">
-                <span className={`text-xs font-bold ${metric.labelColor}`}>{metric.label}</span>
-                <div className={`p-1.5 rounded-lg ${metric.iconBg}`}>
+              <div className={`absolute inset-x-0 top-0 h-1 ${metric.accentBar}`} />
+              <div className="flex items-center justify-between pt-0.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                  {metric.label}
+                </span>
+                <div className={`p-1.5 rounded-xl ${metric.iconBg}`}>
                   {metric.icon}
                 </div>
               </div>
-              <p className={`mt-2 text-2xl font-black tracking-tight font-mono ${metric.textColor}`}>
+              <p className="mt-2.5 text-2xl font-extrabold tracking-tight text-stone-900 tabular-nums">
                 {metric.value}
               </p>
             </div>
@@ -838,96 +831,114 @@ export default function RestaurantDashboard({
           </div>
         ) : null}
 
-        {/* Global Search Bar */}
-        <div className="relative my-4">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-600/80" size={16} />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search active orders, table #, customer name, phone, or menu items..."
-            className="w-full h-11 pl-11 pr-12 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 placeholder:text-slate-400 transition-all shadow-xs"
-          />
-          {searchQuery && (
+        {/* Global Search & Utility Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 my-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search active orders, table #, customer name, phone, or menu items..."
+              className="w-full h-11 pl-11 pr-14 text-xs bg-white border border-stone-200/90 rounded-2xl text-stone-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 placeholder:text-stone-400 transition-all shadow-xs"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-600 hover:text-stone-900 text-xs font-bold px-2 py-0.5 bg-stone-100 hover:bg-stone-200 rounded-lg transition-all cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0 justify-end">
+            <NotificationCenter restaurantId={restaurantId} role={userRole} />
             <button
               type="button"
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-900 text-xs font-bold px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded-md transition-all cursor-pointer"
+              onClick={() => void loadAll(true)}
+              className="h-11 rounded-2xl border border-stone-200/90 bg-white hover:bg-stone-50 px-4 text-xs font-bold text-stone-700 shadow-xs transition-all cursor-pointer"
             >
-              Clear
+              Refresh
             </button>
-          )}
+          </div>
         </div>
 
         {/* Tab navigation */}
-        <nav className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/90 bg-[#F8F9FA] p-1.5 shadow-xs my-4">
+        <nav className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-200/90 bg-white p-1.5 shadow-xs my-4">
           <div className="flex flex-wrap items-center gap-1">
             {[
               {
                 id: "live" as const,
                 label: "Live Operations",
-                icon: <UtensilsCrossed className="h-4 w-4 text-amber-600" />,
+                icon: <UtensilsCrossed className="h-4 w-4" />,
               },
               {
                 id: "pos" as const,
                 label: "POS Register",
-                icon: <CreditCard className="h-4 w-4 text-emerald-600" />,
+                icon: <CreditCard className="h-4 w-4" />,
               },
               {
                 id: "tables" as const,
                 label: "Floor & Tables",
-                icon: <LayoutGrid className="h-4 w-4 text-slate-600" />,
+                icon: <LayoutGrid className="h-4 w-4" />,
               },
               {
                 id: "menu" as const,
                 label: "Menu Catalog",
-                icon: <ChefHat className="h-4 w-4 text-slate-600" />,
+                icon: <ChefHat className="h-4 w-4" />,
               },
               {
                 id: "inventory" as const,
                 label: "Inventory & BOM",
-                icon: <Boxes className="h-4 w-4 text-slate-600" />,
+                icon: <Boxes className="h-4 w-4" />,
               },
               {
                 id: "history" as const,
                 label: "History & Records",
-                icon: <History className="h-4 w-4 text-slate-600" />,
+                icon: <History className="h-4 w-4" />,
               },
               {
                 id: "staff" as const,
                 label: "Staff Access",
-                icon: <Users className="h-4 w-4 text-slate-600" />,
+                icon: <Users className="h-4 w-4" />,
               },
               {
                 id: "payment" as const,
                 label: "Profile & Settings",
-                icon: <Building2 className="h-4 w-4 text-slate-600" />,
+                icon: <Building2 className="h-4 w-4" />,
               },
             ].map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
                   activeTab === tab.id
-                    ? "bg-white text-amber-950 shadow-xs border border-amber-200/90 ring-1 ring-amber-500/10"
-                    : "text-slate-600 hover:bg-white/80 hover:text-slate-900"
+                    ? "bg-stone-900 text-amber-300 shadow-sm"
+                    : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
                 }`}
               >
                 {tab.icon}
                 {tab.label}
                 {tab.id === "live" && metrics.activeOrders > 0 && (
-                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 text-amber-800 border border-amber-300 px-1.5 text-[10px] font-bold">
+                  <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
+                    activeTab === tab.id ? "bg-amber-400 text-stone-950" : "bg-amber-100 text-amber-800 border border-amber-300"
+                  }`}>
                     {metrics.activeOrders}
                   </span>
                 )}
                 {tab.id === "tables" && tables.length > 0 && (
-                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 text-slate-700 border border-slate-300 px-1.5 text-[10px] font-bold">
+                  <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
+                    activeTab === tab.id ? "bg-white/15 text-white" : "bg-stone-100 text-stone-700 border border-stone-200"
+                  }`}>
                     {tables.length}
                   </span>
                 )}
                 {tab.id === "history" && historySessions.length > 0 && (
-                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-1.5 text-[10px] font-bold">
+                  <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
+                    activeTab === tab.id ? "bg-emerald-400/20 text-emerald-300" : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  }`}>
                     {historySessions.length}
                   </span>
                 )}
@@ -935,38 +946,27 @@ export default function RestaurantDashboard({
             ))}
           </div>
 
-          <div className="flex items-center gap-2">
-            <NotificationCenter restaurantId={restaurantId} role={userRole} />
-            {activeTab === "live" && (
-              <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs shadow-xs">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2">Filter:</span>
-                {(["all", "placed", "preparing", "ready"] as const).map((status) => (
-                  <button
-                    key={status}
-                    type="button"
-                    onClick={() => setOrderStatusFilter(status)}
-                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase transition cursor-pointer ${
-                      orderStatusFilter === status
-                        ? "bg-amber-50 text-amber-900 shadow-xs border border-amber-200"
-                        : "text-slate-500 hover:text-slate-900"
-                    }`}
-                  >
-                    {status}
-                  </button>
-                ))}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => void loadAll(true)}
-              className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition-all cursor-pointer"
-            >
-              Refresh
-            </button>
-          </div>
+          {activeTab === "live" && (
+            <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200/80 text-xs">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 px-2">Filter:</span>
+              {(["all", "placed", "preparing", "ready"] as const).map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setOrderStatusFilter(status)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition cursor-pointer ${
+                    orderStatusFilter === status
+                      ? "bg-white text-stone-900 shadow-xs border border-stone-200"
+                      : "text-stone-500 hover:text-stone-900"
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          )}
         </nav>
 
-        {/* ═══════════ LIVE TAB — orders + active sessions ═══════════ */}
         {activeTab === "live" && (() => {
           const displayOrders = orders.filter((o) => {
             if (!["placed", "accepted", "preparing", "ready"].includes(o.status)) return false;

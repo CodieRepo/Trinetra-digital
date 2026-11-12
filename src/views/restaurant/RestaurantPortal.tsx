@@ -246,12 +246,12 @@ export default function RestaurantPortal() {
   const sidebar = (
     <>
       {/* Mobile close button */}
-      <div className="flex items-center justify-between p-4 lg:hidden border-b border-slate-200">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Navigation</span>
+      <div className="flex items-center justify-between p-4 lg:hidden border-b border-zinc-800">
+        <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Navigation</span>
         <button
           type="button"
           onClick={() => setSidebarOpen(false)}
-          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+          className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
           aria-label="Close menu"
         >
           <X size={16} />
@@ -260,14 +260,14 @@ export default function RestaurantPortal() {
 
       <div className="px-4 lg:px-0">
         {/* Header Branding */}
-        <div className="p-4 lg:p-5 lg:border-b lg:border-slate-200/90 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-white flex items-center justify-center font-black text-base shrink-0 shadow-xs border border-amber-600/30">
+        <div className="p-4 lg:p-5 lg:border-b lg:border-zinc-800/90 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-stone-950 flex items-center justify-center font-black text-base shrink-0 shadow-sm">
             {restaurant.name ? restaurant.name[0].toUpperCase() : <ChefHat size={20} />}
           </div>
           <div className="min-w-0">
-            <h2 className="font-extrabold text-sm text-slate-900 tracking-tight line-clamp-1">{restaurant.name}</h2>
-            <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <h2 className="font-bold text-sm text-white tracking-tight line-clamp-1 capitalize">{restaurant.name}</h2>
+            <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Live Operations
             </div>
           </div>
@@ -276,11 +276,11 @@ export default function RestaurantPortal() {
         {/* Navigation Controls info */}
         <nav className="p-3 lg:p-4 space-y-1.5">
           {[
-            { label: "Operations Cockpit", active: true, icon: <LayoutDashboard size={15} className="text-amber-700" /> }
+            { label: "Operations Cockpit", active: true, icon: <LayoutDashboard size={15} className="text-amber-400" /> }
           ].map(item => (
             <div
               key={item.label}
-              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-950 border border-amber-500/20 shadow-xs cursor-default"
+              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/10 text-white border border-white/10 shadow-xs cursor-default"
             >
               {item.icon}
               {item.label}
@@ -290,49 +290,49 @@ export default function RestaurantPortal() {
       </div>
 
       {/* Footer Profile & Logout */}
-      <div className="p-4 border-t border-slate-200/90 bg-amber-50/20">
-        <div className="flex items-center gap-3 mb-3 p-2.5 rounded-xl bg-white border border-slate-200/90 shadow-xs">
-          <div className="h-8 w-8 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 flex items-center justify-center font-bold text-xs uppercase">
+      <div className="p-4 border-t border-zinc-800/90 bg-zinc-950/40">
+        <div className="flex items-center gap-3 mb-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800">
+          <div className="h-8 w-8 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 flex items-center justify-center font-bold text-xs uppercase">
             {(userName || "OU").slice(0, 2)}
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-slate-900 truncate">{userName || "Staff User"}</p>
-            <p className="text-[10px] font-medium text-slate-500 capitalize">{userRole || "Staff"}</p>
+            <p className="text-xs font-semibold text-white truncate">{userName || "Staff User"}</p>
+            <p className="text-[11px] font-medium text-zinc-400 capitalize">{userRole || "Staff"}</p>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 h-9 border border-slate-200 hover:border-rose-300 bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-700 rounded-xl font-semibold text-xs cursor-pointer transition-all shadow-xs"
+          className="w-full flex items-center justify-center gap-2 h-9 border border-zinc-800 hover:border-rose-500/40 bg-zinc-900 hover:bg-rose-500/10 text-zinc-300 hover:text-rose-300 rounded-xl font-semibold text-xs cursor-pointer transition-all"
         >
           <LogOut size={13} />
           Sign Out
         </button>
         <div className="text-center mt-3">
-          <span className="text-[10px] text-slate-400 font-medium">Powered by Trinetra</span>
+          <span className="text-[11px] text-zinc-500 font-medium">Trinetra Restaurant OS</span>
         </div>
       </div>
     </>
   );
 
   return (
-    <div className="min-h-screen bg-[#F4F5F7] text-slate-900 flex font-sans">
+    <div className="min-h-screen bg-[#F6F5F1] text-stone-900 flex font-sans">
       {/* Mobile overlay backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-xs lg:hidden"
+          className="fixed inset-0 z-30 bg-stone-950/50 backdrop-blur-xs lg:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden
         />
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 border-r border-slate-200/90 bg-[#FAF9F6] flex-col justify-between shrink-0 select-none">
+      <aside className="hidden lg:flex w-64 border-r border-zinc-800 bg-[#0F1115] text-zinc-100 flex-col justify-between shrink-0 select-none">
         {sidebar}
       </aside>
 
       {/* Mobile Drawer Sidebar */}
       {sidebarOpen && (
-        <aside className="fixed inset-y-0 left-0 z-40 w-72 border-r border-slate-200 bg-[#FAF9F6] flex-col justify-between shrink-0 select-none shadow-xl flex">
+        <aside className="fixed inset-y-0 left-0 z-40 w-72 border-r border-zinc-800 bg-[#0F1115] text-zinc-100 flex-col justify-between shrink-0 select-none shadow-2xl flex">
           {sidebar}
         </aside>
       )}
@@ -340,36 +340,36 @@ export default function RestaurantPortal() {
       {/* Main Operations Window */}
       <main className="flex-1 overflow-y-auto p-4 md:p-6 relative">
         {/* Persistent Top Restaurant Identity Bar */}
-        <div className="flex justify-between items-center gap-4 mb-5 bg-gradient-to-r from-amber-50/50 via-white to-orange-50/30 border border-amber-900/10 rounded-2xl px-5 py-3.5 shadow-xs">
+        <div className="mx-auto max-w-7xl flex flex-wrap justify-between items-center gap-4 mb-5 bg-white/95 backdrop-blur-md border border-stone-200/90 rounded-2xl px-5 py-3.5 shadow-xs">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden rounded-xl p-2 bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+              className="lg:hidden rounded-xl p-2 bg-stone-100 border border-stone-200 text-stone-700 hover:bg-stone-200 transition-colors cursor-pointer"
               aria-label="Open menu"
             >
               <Menu size={18} />
             </button>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="text-base md:text-lg font-black text-slate-900 tracking-tight truncate">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-base md:text-xl font-extrabold text-stone-900 tracking-tight truncate capitalize">
                   {restaurant.name}
                 </h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/90 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Live
                 </span>
-                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
                   planTier === "enterprise"
-                    ? "bg-amber-100 text-amber-900 border-amber-300 font-black"
+                    ? "bg-amber-50 text-amber-900 border-amber-200"
                     : planTier === "starter"
-                    ? "bg-emerald-100 text-emerald-900 border-emerald-300 font-black"
-                    : "bg-indigo-100 text-indigo-900 border-indigo-300 font-black"
+                    ? "bg-stone-100 text-stone-700 border-stone-200"
+                    : "bg-indigo-50 text-indigo-800 border-indigo-200"
                 }`}>
-                  {planTier === "enterprise" ? "👑 Enterprise" : planTier === "starter" ? "🌱 Starter" : "🚀 Pro Plan"}
+                  {planTier === "enterprise" ? "Enterprise" : planTier === "starter" ? "Starter" : "Pro Plan"}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 truncate mt-0.5">Real-time table orders, kitchen queue & settlement</p>
+              <p className="text-xs text-stone-500 truncate mt-0.5">Real-time table orders, kitchen queue &amp; settlement</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5 shrink-0">
@@ -377,9 +377,9 @@ export default function RestaurantPortal() {
               <button
                 type="button"
                 onClick={() => setAiOpsOpen(true)}
-                className="text-xs font-semibold text-slate-900 bg-amber-100 border border-amber-300 hover:bg-amber-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs cursor-pointer transition-all"
+                className="text-xs font-bold text-amber-300 bg-gradient-to-r from-stone-900 to-stone-800 hover:from-stone-800 hover:to-amber-950 border border-stone-800 px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
               >
-                <Sparkles size={13} className="text-amber-700" />
+                <Sparkles size={13} className="text-amber-400" />
                 AI Ops
               </button>
             )}
@@ -387,15 +387,12 @@ export default function RestaurantPortal() {
               <button
                 type="button"
                 onClick={installApp}
-                className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs cursor-pointer transition-all"
+                className="text-xs font-semibold text-stone-700 bg-stone-100 border border-stone-200 hover:bg-stone-200 px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all"
               >
                 <Smartphone size={13} className="text-amber-600" />
                 Install App
               </button>
             )}
-            <div className="text-[11px] text-slate-500 bg-white border border-slate-200/80 px-2.5 py-1 rounded-md font-medium shadow-xs">
-              Powered by Trinetra
-            </div>
           </div>
         </div>
 
