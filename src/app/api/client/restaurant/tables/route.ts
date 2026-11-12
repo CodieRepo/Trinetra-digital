@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { getCloudflareBindings } from "@/lib/cloudflare/bindings";
+import { invalidateRestaurantMenuCache } from "@/lib/cache/kv-menu-cache";
 import {
   resolveRestaurantContext,
   requireStaffRole,
@@ -19,7 +21,7 @@ export async function GET(request: Request) {
       .from("restaurant_tables")
       .select("id, table_number, table_token, floor_id, is_active, created_at, restaurant_floors ( id, name )")
       .eq("tenant_id", tenantId)
-      .eq("restaurant_id", restaurantId)
+      .eq("restaurant_id", restaurantId).neq("is_active", false)
       .order("table_number", { ascending: true });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -54,7 +56,7 @@ export async function POST(request: Request) {
         .select("id")
         .eq("id", floorId)
         .eq("tenant_id", tenantId)
-        .eq("restaurant_id", restaurantId)
+        .eq("restaurant_id", restaurantId).neq("is_active", false)
         .maybeSingle();
       if (!floor) {
         return NextResponse.json({ error: "Invalid floor for this restaurant" }, { status: 400 });
@@ -103,7 +105,7 @@ export async function PATCH(request: Request) {
         .select("id")
         .eq("id", floorId)
         .eq("tenant_id", tenantId)
-        .eq("restaurant_id", restaurantId)
+        .eq("restaurant_id", restaurantId).neq("is_active", false)
         .maybeSingle();
       if (!floor) {
         return NextResponse.json({ error: "Invalid floor for this restaurant" }, { status: 400 });
@@ -134,7 +136,7 @@ export async function DELETE(request: Request) {
   try {
     const db = getSupabaseAdmin();
     const body = await request.json();
-    const { tenantId } = await requireStaffRole(request, ["owner", "manager"], body);
+    const { tenantId, restaurantId } = await requireStaffRole(request, ["owner", "manager"], body);
     const tableId = body.table_id;
 
     if (!tableId) {
@@ -167,6 +169,7 @@ export async function DELETE(request: Request) {
         .eq("tenant_id", tenantId);
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (restaurantId) { const cf = await getCloudflareBindings(); await invalidateRestaurantMenuCache(cf?.MENU_CACHE, restaurantId); }
       return NextResponse.json({ success: true, archived: true, message: "Table archived — historical data preserved." });
     } else {
       // No historical data: safe to hard delete
@@ -177,6 +180,7 @@ export async function DELETE(request: Request) {
         .eq("tenant_id", tenantId);
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (restaurantId) { const cf = await getCloudflareBindings(); await invalidateRestaurantMenuCache(cf?.MENU_CACHE, restaurantId); }
       return NextResponse.json({ success: true, archived: false });
     }
   } catch (err: unknown) {
