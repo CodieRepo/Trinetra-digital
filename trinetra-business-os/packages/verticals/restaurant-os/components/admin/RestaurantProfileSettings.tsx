@@ -304,8 +304,8 @@ export default function RestaurantProfileSettings({
       });
 
       if (!settingsRes.ok) {
-        const errJson = await settingsRes.json();
-        console.warn("[Settings Save Warning]:", errJson.error);
+        const errJson = await settingsRes.json().catch(() => ({}));
+        throw new Error(errJson.error || "Failed to save payment, tax, or UPI settings.");
       }
 
       // 5. Notify parent portal & dashboard to update header/shell immediately

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { getCloudflareBindings } from "@/lib/cloudflare/bindings";
+import { invalidateRestaurantMenuCache } from "@/lib/cache/kv-menu-cache";
 import {
   resolveRestaurantContext,
   requireStaffRole,
@@ -57,8 +59,12 @@ export async function GET(request: Request) {
         .eq("tenant_id", restaurant.tenant_id)
         .maybeSingle();
 
-      if (tenantSettings?.feature_flags?.payment_settings) {
-        paymentSettings = tenantSettings.feature_flags.payment_settings;
+      if (tenantSettings?.feature_flags) {
+        const flags = tenantSettings.feature_flags as Record<string, any>;
+        paymentSettings =
+          flags.payment_settings_by_restaurant?.[restaurantId] ||
+          flags.payment_settings ||
+          {};
       }
     }
 
@@ -230,8 +236,10 @@ export async function POST(request: Request) {
         .eq("tenant_id", tenantId)
         .maybeSingle();
 
-      const currentFlags = existingTenantSettings?.feature_flags || {};
-      const currentPaymentSettings = currentFlags.payment_settings || {};
+      const currentFlags = (existingTenantSettings?.feature_flags || {}) as Record<string, any>;
+      const currentByRestaurant = currentFlags.payment_settings_by_restaurant || {};
+      const currentPaymentSettings =
+        currentByRestaurant[restaurantId] || currentFlags.payment_settings || {};
 
       const updatedPaymentSettings = {
         ...currentPaymentSettings,
@@ -248,9 +256,13 @@ export async function POST(request: Request) {
       const newFeatureFlags = {
         ...currentFlags,
         payment_settings: updatedPaymentSettings,
+        payment_settings_by_restaurant: {
+          ...currentByRestaurant,
+          [restaurantId]: updatedPaymentSettings,
+        },
       };
 
-      await db
+      const { error: tsUpsertErr } = await db
         .from("tenant_settings")
         .upsert(
           {
@@ -260,7 +272,17 @@ export async function POST(request: Request) {
           },
           { onConflict: "tenant_id" }
         );
+
+      if (tsUpsertErr) {
+        return NextResponse.json(
+          { error: tsUpsertErr.message || "Failed to save payment settings" },
+          { status: 500 }
+        );
+      }
     }
+
+    const cf = await getCloudflareBindings();
+    await invalidateRestaurantMenuCache(cf?.MENU_CACHE, restaurantId);
 
     return NextResponse.json({ success: true, message: "Restaurant settings updated successfully" });
   } catch (err: unknown) {

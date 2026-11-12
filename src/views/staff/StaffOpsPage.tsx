@@ -112,7 +112,10 @@ export default function StaffOpsPage() {
     async function fetchRestaurantInfo() {
       if (!token) return;
       try {
-        const res = await fetch("/api/client/restaurant/settings", {
+        const settingsUrl = restaurantId
+          ? `/api/client/restaurant/settings?restaurant_id=${encodeURIComponent(restaurantId)}`
+          : "/api/client/restaurant/settings";
+        const res = await fetch(settingsUrl, {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         });
@@ -131,7 +134,7 @@ export default function StaffOpsPage() {
       }
     }
     void fetchRestaurantInfo();
-  }, [token, handleUnauthorized]);
+  }, [token, restaurantId, handleUnauthorized]);
 
   // 3. Handle PIN Digit Press
   const handleDigitPress = (digit: string) => {

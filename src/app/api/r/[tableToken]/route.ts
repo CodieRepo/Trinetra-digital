@@ -39,7 +39,7 @@ export async function GET(
       return NextResponse.json(cached, {
         headers: {
           "x-trinetra-cache": "HIT",
-          "cache-control": "public, s-maxage=30, stale-while-revalidate=60",
+          "cache-control": "public, max-age=0, must-revalidate",
         },
       });
     }
@@ -79,10 +79,15 @@ export async function GET(
           .eq("tenant_id", restaurant.tenant_id)
           .maybeSingle();
 
-        if (tenantSettings?.feature_flags?.payment_settings) {
-          const ps = tenantSettings.feature_flags.payment_settings;
-          upiId = ps.upi_id || null;
-          upiQrUrl = ps.upi_qr_url || null;
+        if (tenantSettings?.feature_flags) {
+          const flags = tenantSettings.feature_flags as Record<string, any>;
+          const ps =
+            flags.payment_settings_by_restaurant?.[table.restaurant_id] ||
+            flags.payment_settings;
+          if (ps) {
+            upiId = ps.upi_id || null;
+            upiQrUrl = ps.upi_qr_url || null;
+          }
         }
       } catch (tsErr) {
         console.warn("[TableRoute] Tenant settings lookup note:", tsErr);
@@ -132,7 +137,7 @@ export async function GET(
     return NextResponse.json(payload, {
       headers: {
         "x-trinetra-cache": "MISS",
-        "cache-control": "public, s-maxage=30, stale-while-revalidate=60",
+        "cache-control": "public, max-age=0, must-revalidate",
       },
     });
   } catch (err: any) {

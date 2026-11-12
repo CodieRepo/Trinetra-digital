@@ -352,9 +352,10 @@ export default function StaffOrdersPanel({
     try {
       setLoadingStructure(true);
       const headers = { Authorization: `Bearer ${effectiveToken}` };
+      const qs = restaurantId ? `?restaurant_id=${encodeURIComponent(restaurantId)}` : "";
       const [floorsRes, tablesRes] = await Promise.all([
-        fetch("/api/client/restaurant/floors", { headers, cache: "no-store" }),
-        fetch("/api/client/restaurant/tables", { headers, cache: "no-store" }),
+        fetch(`/api/client/restaurant/floors${qs}`, { headers, cache: "no-store" }),
+        fetch(`/api/client/restaurant/tables${qs}`, { headers, cache: "no-store" }),
       ]);
 
       if (floorsRes.status === 401 || tablesRes.status === 401) {
@@ -375,7 +376,7 @@ export default function StaffOrdersPanel({
     } finally {
       setLoadingStructure(false);
     }
-  }, [effectiveToken, handleAuthEviction]);
+  }, [effectiveToken, restaurantId, handleAuthEviction]);
 
   // --- Load Menu ---
   const loadMenu = useCallback(async () => {
@@ -383,7 +384,8 @@ export default function StaffOrdersPanel({
     try {
       setLoadingMenu(true);
       const headers = { Authorization: `Bearer ${effectiveToken}` };
-      const res = await fetch("/api/client/restaurant/menu", { headers, cache: "no-store" });
+      const qs = restaurantId ? `?restaurant_id=${encodeURIComponent(restaurantId)}` : "";
+      const res = await fetch(`/api/client/restaurant/menu${qs}`, { headers, cache: "no-store" });
       if (res.status === 401) {
         handleAuthEviction();
         return;
@@ -398,7 +400,7 @@ export default function StaffOrdersPanel({
     } finally {
       setLoadingMenu(false);
     }
-  }, [effectiveToken, handleAuthEviction]);
+  }, [effectiveToken, restaurantId, handleAuthEviction]);
 
   // --- Load Orders ---
   const loadOrders = useCallback(async () => {
@@ -670,6 +672,7 @@ export default function StaffOrdersPanel({
       setOrderToast(null);
 
       const payload = {
+        ...(restaurantId ? { restaurant_id: restaurantId } : {}),
         table_id: orderTargetTable.id,
         notes: orderNotes.trim() || undefined,
         items: cart.map((i) => ({
@@ -1462,6 +1465,7 @@ export default function StaffOrdersPanel({
                                     Authorization: `Bearer ${effectiveToken}`,
                                   },
                                   body: JSON.stringify({
+                                    ...(restaurantId ? { restaurant_id: restaurantId } : {}),
                                     session_id: session.id,
                                     payment_method: method,
                                   }),
@@ -1512,7 +1516,10 @@ export default function StaffOrdersPanel({
                                   "Content-Type": "application/json",
                                   Authorization: `Bearer ${effectiveToken}`,
                                 },
-                                body: JSON.stringify({ session_id: session.id }),
+                                body: JSON.stringify({
+                                  ...(restaurantId ? { restaurant_id: restaurantId } : {}),
+                                  session_id: session.id,
+                                }),
                               });
                               const d = await res.json().catch(() => ({}));
                               if (res.status === 401) {

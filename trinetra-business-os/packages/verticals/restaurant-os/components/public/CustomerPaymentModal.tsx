@@ -37,8 +37,14 @@ export default function CustomerPaymentModal({
   onClose,
   onPaymentSubmitted,
 }: PaymentModalProps) {
+  const cleanUpiId = upiId?.trim() || "";
+  const cleanQrUrl = upiQrUrl?.trim() || "";
+  const hasUpiConfigured = Boolean(cleanUpiId || cleanQrUrl);
+
   const [copied, setCopied] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<"upi_qr" | "upi_app" | "cash">("upi_qr");
+  const [selectedMethod, setSelectedMethod] = useState<"upi_qr" | "upi_app" | "cash">(
+    hasUpiConfigured ? "upi_qr" : "cash"
+  );
   const [utrNumber, setUtrNumber] = useState("");
   const [tipAmount, setTipAmount] = useState<number>(0);
   const [customTip, setCustomTip] = useState<string>("");
@@ -60,15 +66,18 @@ export default function CustomerPaymentModal({
     maximumFractionDigits: 0,
   }).format(totalPayable);
 
-  const cleanUpiId = upiId || "spicegarden@upi";
-
   // Format standard UPI payment intent string with total payable (bill + tip)
-  const upiIntentString = `upi://pay?pa=${encodeURIComponent(cleanUpiId)}&pn=${encodeURIComponent(restaurantName)}&am=${totalPayable}&cu=INR&tn=${encodeURIComponent(`Table ${tableNumber || ""} Bill - ${sessionId.slice(0, 6)}`)}`;
+  const amountParam = Number.isFinite(totalPayable) && totalPayable > 0 ? `&am=${totalPayable.toFixed(2)}` : "";
+  const upiIntentString = cleanUpiId
+    ? `upi://pay?pa=${encodeURIComponent(cleanUpiId)}&pn=${encodeURIComponent(restaurantName)}${amountParam}&cu=INR&tn=${encodeURIComponent(`Table ${tableNumber || ""} Bill - ${sessionId.slice(0, 6)}`)}`
+    : "";
 
   // Generated dynamic QR code URL
   const generatedQrUrl =
-    upiQrUrl ||
-    `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiIntentString)}`;
+    cleanQrUrl ||
+    (upiIntentString
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiIntentString)}`
+      : "");
 
   const handleCopyUpi = () => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -203,46 +212,64 @@ export default function CustomerPaymentModal({
             {/* Mode 1: Scan UPI QR */}
             {selectedMethod === "upi_qr" && (
               <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-center space-y-3">
-                <div className="bg-white p-3 rounded-2xl border border-stone-200 inline-block shadow-xs">
-                  <img
-                    src={generatedQrUrl}
-                    alt="UPI QR Code"
-                    className="w-44 h-44 object-contain mx-auto"
-                  />
-                </div>
+                {generatedQrUrl ? (
+                  <>
+                    <div className="bg-white p-3 rounded-2xl border border-stone-200 inline-block shadow-xs">
+                      <img
+                        src={generatedQrUrl}
+                        alt="UPI QR Code"
+                        className="w-44 h-44 object-contain mx-auto"
+                      />
+                    </div>
 
-                <div>
-                  <p className="text-xs font-black text-stone-900">
-                    Scan with any UPI App (GPay, PhonePe, Paytm)
+                    <div>
+                      <p className="text-xs font-black text-stone-900">
+                        Scan with any UPI App (GPay, PhonePe, Paytm)
+                      </p>
+                      {cleanUpiId && (
+                        <div className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700">
+                          <span className="font-mono text-[11px]">{cleanUpiId}</span>
+                          <button
+                            type="button"
+                            onClick={handleCopyUpi}
+                            className="text-amber-800 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            {copied ? <Check size={13} className="text-emerald-700" /> : <Copy size={13} />}
+                            <span>{copied ? "Copied!" : "Copy"}</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-stone-600 font-medium py-4">
+                    Online UPI QR is not configured by the restaurant yet. Please pay Cash at Table or ask staff for the counter QR.
                   </p>
-                  <div className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700">
-                    <span className="font-mono text-[11px]">{cleanUpiId}</span>
-                    <button
-                      type="button"
-                      onClick={handleCopyUpi}
-                      className="text-amber-800 font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      {copied ? <Check size={13} className="text-emerald-700" /> : <Copy size={13} />}
-                      <span>{copied ? "Copied!" : "Copy"}</span>
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
             )}
 
             {/* Mode 2: Launch UPI App */}
             {selectedMethod === "upi_app" && (
               <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-center space-y-3">
-                <p className="text-xs text-stone-600 font-medium">
-                  Tap below to open your preferred UPI payment app directly on your device:
-                </p>
-                <a
-                  href={upiIntentString}
-                  className="min-h-[52px] w-full rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition active:scale-95"
-                >
-                  <Smartphone size={16} />
-                  <span>Open UPI Payment App ({formattedTotalPayable})</span>
-                </a>
+                {upiIntentString ? (
+                  <>
+                    <p className="text-xs text-stone-600 font-medium">
+                      Tap below to open your preferred UPI payment app directly on your device:
+                    </p>
+                    <a
+                      href={upiIntentString}
+                      className="min-h-[52px] w-full rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition active:scale-95"
+                    >
+                      <Smartphone size={16} />
+                      <span>Open UPI Payment App ({formattedTotalPayable})</span>
+                    </a>
+                  </>
+                ) : (
+                  <p className="text-xs text-stone-600 font-medium py-4">
+                    UPI ID is not configured by the restaurant yet. Please pay Cash at Table or ask staff for the counter QR.
+                  </p>
+                )}
               </div>
             )}
 
