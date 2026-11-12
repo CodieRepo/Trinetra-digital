@@ -170,7 +170,7 @@ export default function AboutPage() {
         <div className="max-w-[1200px] mx-auto px-4 md:px-10">
           <div className="grid gap-6 md:grid-cols-3 text-center max-w-4xl mx-auto">
             {[
-              { value: "2", label: "Verified Projects", sub: "Vaastu Infra & Akuafi" },
+              { value: "3", label: "Verified Projects", sub: "MUDDLY™, Vaastu Infra & Akuafi" },
               { value: "5+", label: "Services Offered", sub: "Website, SEO, Social, CRM, Software" },
               { value: "Gorakhpur", label: "Based In", sub: "Uttar Pradesh, India" },
             ].map((s, i) => (
